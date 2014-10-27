@@ -1,0 +1,16 @@
+implement imc
+implement asr
+implement face
+implement digits
+find clean default config to make all clients<->services
+implement persistent sockets even after client exits
+implement multithreaded sockets for multiple requests
+implement CPU/GPU toggle
+implment patch for kaldi - done
+retrain asr model in kaldi with full dataset
+add a readme and install for kaldi's installation and running
+do feature transformation on full test set and push the input
+modify the socket library to add a few things: debug flag, send/recv any type of data - done
+load/save all models into .caffemodel (proto) to have accurate size comparison
+big multicore inference setup
+remove hardpath in Makefile for libs

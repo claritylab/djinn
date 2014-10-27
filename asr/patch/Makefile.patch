@@ -1,0 +1,11 @@
+--- Makefile.bkp	2014-10-24 19:18:21.861777898 -0400
++++ Makefile	2014-10-21 23:23:09.742387705 -0400
+@@ -4,7 +4,7 @@
+ include ../kaldi.mk
+ 
+ LDFLAGS += $(CUDA_LDFLAGS)
+-LDLIBS += $(CUDA_LDLIBS)
++LDLIBS += $(CUDA_LDLIBS) ./libsocket.a
+ 
+ BINFILES = nnet-train-frmshuff \
+         nnet-train-perutt \

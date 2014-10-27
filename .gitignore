@@ -1,0 +1,15 @@
+# dnn-service gitignore
+
+# executables
+face-client
+img-client
+nlp-client
+dnn-server
+
+# datasets
+*/weights/*
+*/images/*
+*/hash/*
+*/input/*
+*/data/*
+*/log/*
