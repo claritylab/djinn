@@ -5,7 +5,7 @@ Defaults:
     NLP PORT: 8080
     IMC PORT: 8081
 
-Communication Protocal:
+Communication Protocol:
 Client should execute the following in specific order
 1. Connect to the server
 2. Send request type as enum/int (refer to src/thread.h)
