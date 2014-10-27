@@ -16,7 +16,6 @@
 #include "boost/program_options.hpp" 
 #include "socket.h"
 #include "dnn.h"
-#include "thread.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -50,36 +49,6 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main(int argc , char *argv[])
 {
-    // Main thread for the server
-    // Spawn a new thread for each request
-    po::variables_map vm = parse_opts(argc, argv);
-    
-    int server_sock = SERVER_init(vm["portno"].as<int>());
-    
-/*    struct sockaddr_in sock_addr;
-    if(getsockname(server_sock, (struct sockaddr*) &sock_addr, (socklen_t*)sizeof(sock_addr)) == -1){
-      printf("Failed to get socket name.\n");
-      exit(0);
-    }
-  */
-    // Listen on socket
-    listen(server_sock, 10);
-    printf("Server is listening for request on %d\n", 8080);
-
-    // Main Loop
-    while(1){
-      int client_sock;
-      client_sock = accept(server_sock, (sockaddr*) 0, (unsigned int *) 0);
-      if(client_sock == -1){
-        printf("Failed to accept.\n");
-      }else{
-        // Create a new thread, pass the socket number to it
-        if(request_thread_init(client_sock) == -1){
-          printf("Failed to accept.\n");
-        }
-      }
-    }
-/*
 	po::variables_map vm = parse_opts(argc, argv);
 
     Caffe::set_phase(Caffe::TEST);
@@ -158,6 +127,5 @@ int main(int argc , char *argv[])
     free(in);
     free(out);
     
-*/
     return 0;
 }

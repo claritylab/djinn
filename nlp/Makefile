@@ -1,7 +1,6 @@
 CXX = g++
 CXX_FLAGS = -fpermissive
 LINK_FLAGS = ../libsocket.a -lrt -lpthread -lboost_program_options -lboost_filesystem -lboost_system
-# LINK_FLAGS = -lrt -lpthread -lboost_program_options -lboost_filesystem -lboost_system
 
 SRC=src
 

@@ -1,8 +1,30 @@
 # dnn-service gitignore
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
 
-# executables
-face-client
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*~
 img-client
+asr-client
 nlp-client
 dnn-server
 
