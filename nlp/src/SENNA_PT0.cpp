@@ -1,21 +1,28 @@
+#include <sys/time.h>
 #include "SENNA_PT0.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
+#include "timing.h"
 
 int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {
     int idx;
+    struct timeval tv1, tv2;
 
+  gettimeofday(&tv1,NULL);
     pt0->input_state = SENNA_realloc(pt0->input_state, sizeof(float), (sentence_size+pt0->window_size-1)*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
     pt0->output_state = SENNA_realloc(pt0->output_state, sizeof(float), sentence_size*pt0->output_state_size);
 
     SENNA_nn_lookup(pt0->input_state, pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size, pt0->ll_word_weight, pt0->ll_word_size, pt0->ll_word_max_idx, sentence_words, sentence_size, pt0->ll_word_padding_idx, (pt0->window_size-1)/2);
     SENNA_nn_lookup(pt0->input_state+pt0->ll_word_size, pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size, pt0->ll_caps_weight, pt0->ll_caps_size, pt0->ll_caps_max_idx, sentence_caps,  sentence_size, pt0->ll_caps_padding_idx, (pt0->window_size-1)/2);
     SENNA_nn_lookup(pt0->input_state+pt0->ll_word_size+pt0->ll_caps_size, pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size, pt0->ll_posl_weight, pt0->ll_posl_size, pt0->ll_posl_max_idx, sentence_posl,  sentence_size, pt0->ll_posl_padding_idx, (pt0->window_size-1)/2);
+  gettimeofday(&tv2,NULL);
+  pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
     for(idx = 0; idx < sentence_size; idx++)
     {
+        gettimeofday(&tv1,NULL);
         if(pt0->service) {
             SOCKET_send(socketfd,
                         (char*)(pt0->input_state+idx*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size)),
@@ -44,12 +51,17 @@ int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sen
                             pt0->hidden_state,
                             pt0->hidden_state_size);
         }
+        gettimeofday(&tv2,NULL);
+        pt0->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+        pt0->calls++;
 
+        gettimeofday(&tv1,NULL);
         pt0->labels = SENNA_realloc(pt0->labels, sizeof(int), sentence_size);
         SENNA_nn_viterbi(pt0->labels, pt0->viterbi_score_init, pt0->viterbi_score_trans, pt0->output_state, pt0->output_state_size, sentence_size);
-
+        gettimeofday(&tv2,NULL);
+        pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
     }
-        return pt0->labels;
+    return pt0->labels;
 }
 
 SENNA_PT0* SENNA_PT0_new(const char *path, const char *subpath)
@@ -102,6 +114,9 @@ SENNA_PT0* SENNA_PT0_new(const char *path, const char *subpath)
     pt0->service = false;
     pt0->debug = false;
     pt0->socketfd = -1;
+    pt0->calls = 0;
+    pt0->dnntime = 0;
+    pt0->apptime = 0;
 
     return pt0;
 }

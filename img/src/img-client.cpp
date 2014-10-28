@@ -29,6 +29,8 @@ using namespace std;
 
 namespace po = boost::program_options;
 
+#define TIMING 1
+
 po::variables_map parse_opts( int ac, char** av )
 {
 	// Declare the supported options.
@@ -60,6 +62,10 @@ po::variables_map parse_opts( int ac, char** av )
 int main( int argc, char** argv )
 {
 	po::variables_map vm = parse_opts(argc, argv);
+    /* Timing */
+	struct timeval tv1, tv2;
+    unsigned int apptime = 0;
+    unsigned int txtime = 0;
 
     assert(vm.count("hostname"));
 
@@ -68,6 +74,7 @@ int main( int argc, char** argv )
     if(socketfd < 0)
         exit(0);
 
+    gettimeofday(&tv1,NULL);
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>())
         Caffe::set_mode(Caffe::GPU);
@@ -78,15 +85,21 @@ int main( int argc, char** argv )
     assert(vm.count("imcin"));
     Net<float>* espresso = new Net<float>(vm["imcin"].as<string>());
     const caffe::LayerParameter& in_params = espresso->layers()[0]->layer_param();
-    ifstream img_list ();
 
     // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
     // $cmt: still tries to do facial recognition if no faces or landmarks found.
-    if(vm["task"].as<string>() == "face")
+    string task = vm["task"].as<string>();
+    if(task == "face")
         if(preprocess(vm, in_params.image_data_param().source()) == false)
             exit(0);
 
+    gettimeofday(&tv2,NULL);
+    apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+    
+    // not timed disk I/O stuff
     vector<Blob<float>* > img_blobs = espresso->ForwardPrefilled(&loss);
+
+    gettimeofday(&tv1,NULL);
     // send size
     SOCKET_txsize(socketfd, img_blobs[0]->count());
 
@@ -97,7 +110,10 @@ int main( int argc, char** argv )
     vector<Blob<float>* > in_blobs = espresso->output_blobs();
     float *preds = (float *) malloc(in_blobs[0]->num() * sizeof(float));
     SOCKET_receive(socketfd, (char*)preds, in_blobs[0]->num() * sizeof(float), vm["debug"].as<bool>());
+    gettimeofday(&tv2,null);
+    txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+    gettimeofday(&tv1,NULL);
     // check correct
     for(int j = 0; j < in_blobs[0]->num(); ++j)
         LOG(INFO) << " Image: " << j << " class: " << preds[j];
@@ -105,6 +121,15 @@ int main( int argc, char** argv )
     SOCKET_close(socketfd, false);
 
     free(preds);
+    gettimeofday(&tv2,NULL);
+    apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+#ifdef TIMING
+    cout << "task " << task
+         << " size_kb " << (img_blobs[0]->count()*sizeof(float))/1024
+         << " total_t " << (apptime+txtime)/1000
+         << " app_t " << apptime/1000
+         << " tx_t " << txtime/1000 << endl;
+#endif
     
 	return 0;
 }

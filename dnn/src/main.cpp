@@ -116,7 +116,7 @@ int main(int argc , char *argv[])
     while(1)
     {
         int rcvd = SOCKET_receive(socketfd, (char*) in, in_elts*sizeof(float), vm["debug"].as<bool>());
-        if(rcvd == 0) continue;
+        // if(rcvd == 0) continue;
         SERVICE_fwd(in, in_elts, out, out_elts, espresso);
         SOCKET_send(socketfd, (char*) out, out_elts*sizeof(float), vm["debug"].as<bool>());
     }

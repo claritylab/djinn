@@ -1,19 +1,26 @@
+#include <sys/time.h>
 #include "SENNA_VBS.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
+#include "timing.h"
 
 int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {
     int idx;
+    struct timeval tv1, tv2;
 
+    gettimeofday(&tv1,NULL);
     vbs->input_state = SENNA_realloc(vbs->input_state, sizeof(float), (sentence_size+vbs->window_size-1)*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
     vbs->output_state = SENNA_realloc(vbs->output_state, sizeof(float), sentence_size*vbs->output_state_size);
 
     SENNA_nn_lookup(vbs->input_state,vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size, vbs->ll_word_weight, vbs->ll_word_size, vbs->ll_word_max_idx, sentence_words, sentence_size, vbs->ll_word_padding_idx, (vbs->window_size-1)/2);
     SENNA_nn_lookup(vbs->input_state+vbs->ll_word_size, vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size, vbs->ll_caps_weight, vbs->ll_caps_size, vbs->ll_caps_max_idx, sentence_caps, sentence_size, vbs->ll_caps_padding_idx, (vbs->window_size-1)/2);
     SENNA_nn_lookup(vbs->input_state+vbs->ll_word_size+vbs->ll_caps_size, vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size, vbs->ll_posl_weight, vbs->ll_posl_size, vbs->ll_posl_max_idx, sentence_posl,  sentence_size, vbs->ll_posl_padding_idx, (vbs->window_size-1)/2);
+    gettimeofday(&tv2,NULL);
+    vbs->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  gettimeofday(&tv1,NULL);
     for(idx = 0; idx < sentence_size; idx++)
     {
         if(vbs->service) {
@@ -45,11 +52,17 @@ int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sen
                         vbs->hidden_state,
                         vbs->hidden_state_size);
         }
+        vbs->calls++;
     }
+    gettimeofday(&tv2,NULL);
+    vbs->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+    gettimeofday(&tv1,NULL);
     vbs->labels = SENNA_realloc(vbs->labels, sizeof(int), sentence_size);
     for(idx = 0; idx < sentence_size; idx++)
         SENNA_nn_max(NULL, &vbs->labels[idx], vbs->output_state+idx*vbs->output_state_size, vbs->output_state_size);
+    gettimeofday(&tv2,NULL);
+    vbs->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
     return vbs->labels;
 }
@@ -100,6 +113,9 @@ SENNA_VBS* SENNA_VBS_new(const char *path, const char *subpath)
     vbs->service = false;
     vbs->debug = false;
     vbs->socketfd = -1;
+    vbs->calls = 0;
+    vbs->dnntime = 0;
+    vbs->apptime = 0;
 
     return vbs;
 }

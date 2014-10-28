@@ -43,6 +43,12 @@ typedef struct SENNA_POS_
 
     /* internal socket */
     int socketfd;
+
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_POS;
 
 SENNA_POS* SENNA_POS_new(const char *path, const char *subpath);

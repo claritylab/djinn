@@ -31,7 +31,7 @@ int SOCKET_send(int socket, char* data, int size, bool debug)
 		if(sent <= 0)
 			break;
 		total += sent;
-    if(debug) printf("Sent %d bytes of %d toal via socket %d\n", total, size, socket);
+    if(debug) printf("Sent data with size of %d via socket %d\n", total, socket);
 	}
   if(total != size){
     printf("Sent size not equal to expected.\n");
@@ -56,7 +56,7 @@ int SOCKET_receive(int socket, char* data, int size, bool debug)
 		if(got < 0)
 			break;
 		rcvd += got;
-    if(debug && rcvd != 0) printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);
+    if(debug && rcvd != 0) printf("Received data with size of %d via socket %d\n", rcvd, socket);
 	}
   if(rcvd != size){
     printf("Received size not equal to expected.\n");
@@ -118,9 +118,8 @@ int SERVER_init(int portno)
          printf("ERROR on binding\n");
          exit(0);
      }
-     return sockfd;
-   
-    /*
+
+     listen(sockfd, 5);
      clilen = sizeof(cli_addr);
      newsockfd = accept(sockfd, 
                         (struct sockaddr *) &cli_addr, 
@@ -131,8 +130,7 @@ int SERVER_init(int portno)
      }
      else {
          return newsockfd;
-     }*/
-     return 0;
+     }
 }
 
 int SOCKET_close(int socket, bool debug)

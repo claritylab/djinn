@@ -209,7 +209,6 @@ Net<float>* SERVICE_init(po::variables_map& vm)
 void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
     float loss;
-    LOG(INFO) << in_size;
     vector<Blob<float>* > in_blobs = net->input_blobs();
     in_blobs[0]->set_cpu_data(in);
     vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
