@@ -7,7 +7,7 @@
 #include <iostream>
 #include <assert.h>
 #include <glog/logging.h>
-
+#include <ctime>
 #define DEBUG 0
 
 using namespace std;
@@ -52,7 +52,7 @@ void* request_handler(void* sock)
 
   // Now we proceed differently based on the type of request
   net = new Net<float>(config_file_name);
-
+  std::clock_t model_ld_start = clock();
   switch(req_type){
     
     case IMC:{
@@ -81,7 +81,7 @@ void* request_handler(void* sock)
           line = line.substr(loc+1, line.length() - (loc+1));
           int width = atoi(line.c_str());
             
-          cout<<"Dimension "<<length<<" "<<width<<endl;
+          if(DEBUG) cout<<"Dimension "<<length<<" "<<width<<endl;
                       
           getline(weight_file, line); // <AffineTransform::param>
   
@@ -100,7 +100,7 @@ void* request_handler(void* sock)
             }
           }
           // Check if the total number of weights read-in is correct
-          cout<<"Number of weights read in: "<<float_cnt
+          if(DEBUG) cout<<"Number of weights read in: "<<float_cnt
                   <<" and expected number is " <<width*length<<endl;
           assert((float_cnt == (width*length)) 
                           && "Total number of weights not equal to expected\n");
@@ -128,7 +128,7 @@ void* request_handler(void* sock)
           } 
 
           // Check if the total number of bias read-in is correct
-          cout<<"Number of bias read in: "<<float_cnt
+          if(DEBUG) cout<<"Number of bias read in: "<<float_cnt
                 <<" and expected number is " <<length<<endl;
           assert((float_cnt == length) 
                           && "Total Number of biase not equal to expected\n");
@@ -237,6 +237,9 @@ void* request_handler(void* sock)
            printf("Illegal request type\n");
            return -1; 
   }
+  std::clock_t model_ld_end = clock(); 
+
+  std::clock_t model_ld_time = model_ld_end - model_ld_start;
 
   Net<float>* espresso = net;
 
@@ -248,7 +251,6 @@ void* request_handler(void* sock)
 
   // Now we receive the input data length (in float)
   int sock_elts = SOCKET_rxsize(socknum);
-  cout << sock_elts << endl;
   if(sock_elts < 0){
     printf("Error num incoming elts\n");
     exit(1);
@@ -259,14 +261,29 @@ void* request_handler(void* sock)
   // 2. Do forward pass
   // 3. Send back the result
   // 4. Repeat 1-3
+  std::clock_t fwd_pass_time = 0;
   while(1){
+    if(DEBUG) printf("Receiving input features from client...\n");
     int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
     if(rcvd == 0) break; // Client closed the socket
+    
+    if(DEBUG) printf("Start neural network forward pass...\n");
+    
+    std::clock_t fwd_pass_start = std::clock();
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
+    std::clock_t fwd_pass_end = std::clock();
+    fwd_pass_time += (fwd_pass_end - fwd_pass_start);
+    
+    if(DEBUG) printf("Sending result back to client...\n");
     SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
   }
 
   // Client has finished and close the socket
+  // Print timing info
+  unsigned int thread_id = (unsigned int) pthread_self();
+  printf("Request type: %s, thread ID: %d\n", request_name[req_type], thread_id);
+  printf("Model loading time: %d clock cycles, %.4fms\n", model_ld_time, (1000 * (float)model_ld_time)/CLOCKS_PER_SEC);
+  printf("Forward pass time: %d clock cycles, %.4fms\n", fwd_pass_time, (1000 * (float)fwd_pass_time)/CLOCKS_PER_SEC);
   // Exit the thread
 
   if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");

@@ -53,7 +53,7 @@ int SOCKET_receive(int socket, char* data, int size, bool debug)
 	while(rcvd < size)
 	{
 		int got = recv(socket, data + rcvd, size - rcvd, 0);
-		if(got < 0)
+		if(got <= 0)
 			break;
 		rcvd += got;
     if(debug && rcvd != 0) printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);

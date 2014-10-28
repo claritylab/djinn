@@ -19,5 +19,4 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc", "asr", "pos", "ner", "ch
 int request_thread_init(int sock);
 void* request_handler(void* sock);
 
-
 #endif // #define _THREAD_H_
