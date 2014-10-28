@@ -9,15 +9,11 @@ Communication Protocol:
 Client should execute the following in specific order
 1. Connect to the server
 2. Send request type as enum/int (refer to src/thread.h)
-3. Send the name of the network model file to load in (e.g asr.prototxt)
-4. Send the name of the weight file to load in (e.g asr.dat)
-5. Send hardware option "cpu" - server use only cpu for the computation
-                        "gpu" - server will use GPU for the computation
-6. Send the size of the input feature, 
+3. Send the size of the input feature, 
 this should agree with the input dim of the first layer in the config file
-7. Enter the main loop
-  7.1 Send feature vector
-  7.2 Wait for inference to finish
-  7.3 Receive the result
-8. Close the socket if the application is done using the service. 
+4. Enter the main loop
+  4.1 Send feature vector
+  4.2 Wait for inference to finish
+  4.3 Receive the result
+5. Close the socket if the application is done using the service. 
                         

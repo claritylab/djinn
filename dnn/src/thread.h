@@ -13,7 +13,9 @@
 
 using namespace std;
 
-enum request_type {IMC, ASR, POS, NER, CHK, SRL, PT0, VBS, FACE, DIG};
+enum request_type {IMC=0, ASR, POS, NER, CHK, SRL, PT0, VBS, FACE, DIG, SIZE_OF_ENUM};
+static const char* request_name[SIZE_OF_ENUM] = {"imc", "asr", "pos", "ner", "chk", "srl", "pt0", "vbs",
+                                                "face", "dig"};
 int request_thread_init(int sock);
 void* request_handler(void* sock);
 

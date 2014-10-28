@@ -36,9 +36,8 @@ void* request_handler(void* sock)
   
   // A client is supposed to follow the following protocol  
   // 1. Send the application type
-  // 2. Send the name of the model
-  // 3. Send if use GPU or not // 3. Send the input data
-  // 4. Receive the result
+  // 2. Send the size of input features
+  // 3. Loop sending input and receive result
 
   Net<float>* net;
 
@@ -46,38 +45,14 @@ void* request_handler(void* sock)
   int req_type;
   SOCKET_receive(socknum, (char*)&req_type, sizeof(int), DEBUG);  
    
-  // 2. Receive the configuration file to load in
-  // First is the length of the file
-  int len;
-  SOCKET_receive(socknum, (char*)&len, sizeof(int), DEBUG);
-  char* rcvd_config_file = new char[len];
-  printf("length is %d\n", len);
-  // Now receive the file name
-  SOCKET_receive(socknum, rcvd_config_file, len, DEBUG);
-  printf("Loading network configuration from file: %s\n", rcvd_config_file);
-  char* config_file_name = new char[len+12];
-  printf("rcvd_file name is %s\n", rcvd_config_file);
-  sprintf(config_file_name, "net-configs/%s", rcvd_config_file);
+  char* config_file_name = new char[30];
+  sprintf(config_file_name, "net-configs/%s.prototxt", request_name[req_type]);
+  char* weight_file_name = new char[30];
+  sprintf(weight_file_name, "weights/%s.dat", request_name[req_type]);
 
-  // 3. Receive the weights file to load in
-  // Again, first is the length of the file
-  SOCKET_receive(socknum, (char*)&len, sizeof(int), DEBUG);
-
-  // Then the weight file name
-  char* rcvd_weight_file = new char[len];
-  SOCKET_receive(socknum, rcvd_weight_file, len, DEBUG);
-  printf("Loading weights from file: %s\n", rcvd_weight_file);
- 
-  char* weight_file_name = new char[len+8];
-  sprintf(weight_file_name, "weights/%s", rcvd_weight_file);
-
-  // 4. We receive if this is a GPU request or not
-  char* hw_opt = new char(20);
-  std::string test_str("cpu");
-  SOCKET_receive(socknum, hw_opt, sizeof(test_str.c_str()), DEBUG);
-    
   // Now we proceed differently based on the type of request
   net = new Net<float>(config_file_name);
+
   switch(req_type){
     
     case IMC:{
@@ -86,6 +61,7 @@ void* request_handler(void* sock)
     }
     case ASR:{
       ifstream weight_file (weight_file_name);
+      printf("%s\n", weight_file_name);
       if(!weight_file.is_open()){
         printf("No weight file found.\n");
         exit(1);
@@ -263,16 +239,6 @@ void* request_handler(void* sock)
   }
 
   Net<float>* espresso = net;
-
-  Caffe::set_phase(Caffe::TEST);
-  cout<<hw_opt<<endl;
-  if(hw_opt == "gpu"){
-    Caffe::set_mode(Caffe::GPU);
-    printf("Going to use GPU\n");
-  }else{
-    Caffe::set_mode(Caffe::CPU);
-    printf("Going to use CPU\n");
-  }
 
   // get elts for top layer
   int in_elts = espresso->input_blobs()[0]->count();

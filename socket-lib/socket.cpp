@@ -119,20 +119,6 @@ int SERVER_init(int portno)
          exit(0);
      }
      return sockfd;
-   
-    /*
-     clilen = sizeof(cli_addr);
-     newsockfd = accept(sockfd, 
-                        (struct sockaddr *) &cli_addr, 
-                        &clilen);
-     if (newsockfd < 0) {
-          printf("ERROR on accept\n");
-          return -1;
-     }
-     else {
-         return newsockfd;
-     }*/
-     return 0;
 }
 
 int SOCKET_close(int socket, bool debug)
