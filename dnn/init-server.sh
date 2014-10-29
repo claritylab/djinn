@@ -1,5 +1,1 @@
-./dnn-server --service $1 \
-             --portno $2 \
-             --model net-configs/$1.prototxt \
-             --weights weights/$1.dat \
-             --debug 0
+./dnn-server --portno $1 --debug 1

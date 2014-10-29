@@ -3,7 +3,6 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
-#include "timing.h"
 
 int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {
@@ -89,8 +88,7 @@ int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sen
   return chk->labels;
 }
 
-SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath)
-{
+SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath){
   SENNA_CHK *chk = SENNA_malloc(sizeof(SENNA_CHK), 1);
   FILE *f;
   float dummy;

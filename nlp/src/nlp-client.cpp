@@ -128,23 +128,35 @@ int main(int argc , char *argv[])
         exit(0);
     int len = 0;
     string task = vm["task"].as<string>();
+    // send req_type
+    int req_type;
+    if(task == "imc") req_type = 0;
+    else if(task == "face") req_type = 1;
+    else if(task == "digit") req_type = 2;
 
     if(task == "pos") {
+        req_type = 4;
         len = pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size);
         pos->service = true;
         pos->debug = vm["debug"].as<bool>();
     }
     else if(task == "chk") {
+        req_type = 6;
         pos->service = true;
         chk->service = true;
         pos->debug = chk->debug = vm["debug"].as<bool>();
         if(pos->service)
             pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 1, vm["debug"].as<bool>());
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
         len = chk->window_size*(chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size);
     }
     else if(task == "ner") {
+        req_type = 5;
         int input_size = ner->ll_word_size+ner->ll_caps_size
                                           +ner->ll_gazl_size+ner->ll_gazm_size+ner->ll_gazo_size+ner->ll_gazp_size;
         len = ner->window_size*input_size;
@@ -152,6 +164,7 @@ int main(int argc , char *argv[])
         ner->debug = vm["debug"].as<bool>();
     }
     else if(task == "srl") {
+        req_type = 7;
         pos->service = true;
         pt0->service = true;
         vbs->service = true;
@@ -163,21 +176,29 @@ int main(int argc , char *argv[])
             pt0->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 2, vm["debug"].as<bool>());
         if(vbs->service)
             vbs->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 3, vm["debug"].as<bool>());
-        if(pos->socketfd < 0 && pos->service)
-            exit(1);
-        if(vbs->socketfd < 0 && vbs->service)
-            exit(1);
-        if(pt0->socketfd < 0 && pt0->service)
-            exit(1);
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
-        SOCKET_txsize(pt0->socketfd,
-                      pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
-        SOCKET_txsize(vbs->socketfd,
-                      vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
+
+        if(vbs->socketfd > 0 && vbs->service) {
+            int internal_req = 9;
+            SOCKET_send(vbs->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(vbs->socketfd,
+                          vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+        }
+        if(pt0->socketfd > 0 && pt0->service) {
+            int internal_req = 8;
+            SOCKET_send(pt0->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pt0->socketfd,
+                    pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
+        }
         len = srl->hidden_state1_size;
     }
 
+    SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
     SOCKET_txsize(socketfd, len);
 
     while(fgets(sentence, MAX_SENTENCE_SIZE, stdin))
@@ -208,25 +229,23 @@ int main(int argc , char *argv[])
             srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
         }
 
-        if(vm["debug"].as<bool>()) {
-            for(int i = 0; i < tokens->n; i++)
-            {
-                printf("%15s", tokens->words[i]);
-                if(task == "pos")
-                    printf("\t%10s", SENNA_Hash_key(pos_hash, pos_labels[i]));
-                else if(task == "chk")
-                    printf("\t%10s", SENNA_Hash_key(chk_hash, chk_labels[i]));
-                else if(task == "ner")
-                    printf("\t%10s", SENNA_Hash_key(ner_hash, ner_labels[i]));
-                else if(task == "srl") {
-                    printf("\t%15s", (vbs_labels[i] ? tokens->words[i] : "-"));
-                    for(int j = 0; j < n_verbs; j++)
-                        printf("\t%10s", SENNA_Hash_key(srl_hash, srl_labels[j][i]));
-                }
-                printf("\n");
+        for(int i = 0; i < tokens->n; i++)
+        {
+            printf("%15s", tokens->words[i]);
+            if(task == "pos")
+                printf("\t%10s", SENNA_Hash_key(pos_hash, pos_labels[i]));
+            else if(task == "chk")
+                printf("\t%10s", SENNA_Hash_key(chk_hash, chk_labels[i]));
+            else if(task == "ner")
+                printf("\t%10s", SENNA_Hash_key(ner_hash, ner_labels[i]));
+            else if(task == "srl") {
+                printf("\t%15s", (vbs_labels[i] ? tokens->words[i] : "-"));
+                for(int j = 0; j < n_verbs; j++)
+                    printf("\t%10s", SENNA_Hash_key(srl_hash, srl_labels[j][i]));
             }
-            printf("\n"); /* end of sentence */
+            printf("\n");
         }
+        printf("\n"); /* end of sentence */
     }
 #ifdef TIMING
     if(task == "pos")
@@ -321,7 +340,6 @@ int main(int argc , char *argv[])
             << endl;
     }
 #endif
-
 
     // clean up
     SENNA_Tokenizer_free(tokenizer);

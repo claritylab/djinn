@@ -5,6 +5,8 @@ Defaults:
     NLP PORT: 8080
     IMC PORT: 8081
 
+request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS, SIZE_OF_ENUM};
+
 Communication Protocol:
 Client should execute the following in specific order
 1. Connect to the server

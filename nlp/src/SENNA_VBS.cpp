@@ -3,7 +3,6 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
-#include "timing.h"
 
 int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {

@@ -3,7 +3,6 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
-#include "timing.h"
 
 int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {

@@ -4,7 +4,6 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
-#include "timing.h"
 
 int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd)
 {

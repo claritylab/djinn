@@ -16,7 +16,6 @@
  *   See <http://www.opensource.org/licenses/bsd-license>
  */
 
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -30,6 +29,24 @@
 
 using namespace cv;
 using namespace std;
+
+//------------------------------------------------------------------------------
+// Record the execution time of some code, in milliseconds. By Shervin Emami, May 4th 2011.
+// eg:
+//	DECLARE_TIMING(myTimer);
+//	START_TIMING(myTimer);
+//	  printf("A slow calc = %f\n", 1.0/sqrt(2.0) );
+//	STOP_TIMING(myTimer);
+//	SHOW_TIMING(myTimer, "My Timer");
+//------------------------------------------------------------------------------
+#define DECLARE_TIMING(s)	int64 timeStart_##s; int64 timeDiff_##s; int64 timeTally_##s = 0; int64 countTally_##s = 0
+#define START_TIMING(s)		timeStart_##s = cvGetTickCount()
+#define STOP_TIMING(s)		timeDiff_##s = (cvGetTickCount() - timeStart_##s); timeTally_##s += timeDiff_##s; countTally_##s++
+#define GET_TIMING(s)		(double)(0.001 * ( (double)timeDiff_##s / (double)cvGetTickFrequency() ))
+#define GET_AVERAGE_TIMING(s)	(double)(countTally_##s ? 0.001 * ( (double)timeTally_##s / ((double)countTally_##s * cvGetTickFrequency()) ) : 0)
+#define GET_TIMING_COUNT(s)	(int)(countTally_##s)
+#define CLEAR_AVERAGE_TIMING(s)	timeTally_##s = 0; countTally_##s = 0
+#define SHOW_TIMING(s, msg)	printf("%s time: \t %dms \t (%dms average across %d runs).\n", msg, cvRound(GET_TIMING(s)), cvRound(GET_AVERAGE_TIMING(s)), GET_TIMING_COUNT(s) )
 
 /** enum with all landmarks (0-7)--> flandmarks and 8,9 added */
 enum landmark_pos {

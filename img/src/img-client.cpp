@@ -100,7 +100,15 @@ int main( int argc, char** argv )
     vector<Blob<float>* > img_blobs = espresso->ForwardPrefilled(&loss);
 
     gettimeofday(&tv1,NULL);
-    // send size
+    // send req_type
+    int req_type;
+    if(task == "imc") req_type = 0;
+    else if(task == "face") req_type = 1;
+    else if(task == "digit") req_type = 2;
+
+    SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
+
+    // send len
     SOCKET_txsize(socketfd, img_blobs[0]->count());
 
     // send image
@@ -110,13 +118,14 @@ int main( int argc, char** argv )
     vector<Blob<float>* > in_blobs = espresso->output_blobs();
     float *preds = (float *) malloc(in_blobs[0]->num() * sizeof(float));
     SOCKET_receive(socketfd, (char*)preds, in_blobs[0]->num() * sizeof(float), vm["debug"].as<bool>());
-    gettimeofday(&tv2,null);
+
+    gettimeofday(&tv2,NULL);
     txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
     gettimeofday(&tv1,NULL);
     // check correct
     for(int j = 0; j < in_blobs[0]->num(); ++j)
-        LOG(INFO) << " Image: " << j << " class: " << preds[j];
+        cout << "Image: " << j << " class: " << preds[j] << endl;;
 
     SOCKET_close(socketfd, false);
 
@@ -124,11 +133,12 @@ int main( int argc, char** argv )
     gettimeofday(&tv2,NULL);
     apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 #ifdef TIMING
+    cout << "TIMING:" << endl;
     cout << "task " << task
-         << " size_kb " << (img_blobs[0]->count()*sizeof(float))/1024
-         << " total_t " << (apptime+txtime)/1000
-         << " app_t " << apptime/1000
-         << " tx_t " << txtime/1000 << endl;
+         << " size_kb " << (float)(img_blobs[0]->count()*sizeof(float))/1024
+         << " total_t " << (float)(apptime+txtime)/1000
+         << " app_t " << (float)(apptime/1000)
+         << " tx_t " << (float)(txtime/1000) << endl;
 #endif
     
 	return 0;

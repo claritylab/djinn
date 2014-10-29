@@ -3,7 +3,6 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
-#include "timing.h"
 
 int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *sentence_caps, const int *sentence_chkl, const int *sentence_isvb, int sentence_size, int socketfd)
 {
