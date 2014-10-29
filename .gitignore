@@ -27,6 +27,7 @@ img-client
 asr-client
 nlp-client
 dnn-server
+run-*.sh
 
 # datasets
 */weights/*
