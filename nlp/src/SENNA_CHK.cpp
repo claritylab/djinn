@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include "SENNA_CHK.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
@@ -6,7 +7,9 @@
 int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd)
 {
   int idx;
+  struct timeval tv1, tv2;
 
+  gettimeofday(&tv1,NULL);
   chk->input_state = SENNA_realloc(chk->input_state, sizeof(float), (sentence_size+chk->window_size-1)*(chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size));
   chk->output_state = SENNA_realloc(chk->output_state, sizeof(float), sentence_size*chk->output_state_size);
   
@@ -37,7 +40,10 @@ int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sen
                   sentence_size,
                   chk->ll_posl_padding_idx,
                   (chk->window_size-1)/2);
+  gettimeofday(&tv2,NULL);
+  chk->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  gettimeofday(&tv1,NULL);
   for(idx = 0; idx < sentence_size; idx++)
   {
       if(chk->service) {
@@ -68,16 +74,21 @@ int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sen
                           chk->hidden_state,
                           chk->hidden_state_size);
       }
+      chk->calls++;
   }
+  gettimeofday(&tv2,NULL);
+  chk->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  gettimeofday(&tv1,NULL);
   chk->labels = SENNA_realloc(chk->labels, sizeof(int), sentence_size);
   SENNA_nn_viterbi(chk->labels, chk->viterbi_score_init, chk->viterbi_score_trans, chk->output_state, chk->output_state_size, sentence_size);
+  gettimeofday(&tv2,NULL);
+  chk->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
   return chk->labels;
 }
 
-SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath)
-{
+SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath){
   SENNA_CHK *chk = SENNA_malloc(sizeof(SENNA_CHK), 1);
   FILE *f;
   float dummy;
@@ -125,6 +136,9 @@ SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath)
 
   chk->service = false;
   chk->debug = false;
+  chk->calls = 0;
+  chk->dnntime = 0;
+  chk->apptime = 0;
 
   return chk;
 }

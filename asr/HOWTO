@@ -4,6 +4,7 @@
 2. Get voxforge related data from Yiping and put them into a subfolder called voxforge_data
 
 3. Apply path by running kaldi_patch.sh. Change the kaldi root dir in the script first.
+   (You do need to run ./deploy.sh in socket-lib and change the kaldi root there also)
 
 4. And the above script will also copy multiple data and graph dir to your kaldi directory
    It copies over the following things

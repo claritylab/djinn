@@ -1,5 +1,6 @@
 // socket lib
-// jahausw@umich.edu ypkang@umich.edu
+// jahausw@umich.edu
+// ypkang@umich.edu
 // 2014
 
 #include <stdio.h>
@@ -24,20 +25,20 @@ int SOCKET_txsize(int socket, int len)
 
 int SOCKET_send(int socket, char* data, int size, bool debug)
 {
-	int total = 0;
-  while(total < size)
-	{
-		int sent = send(socket, data + total, size - total, MSG_NOSIGNAL);
-		if(sent <= 0)
-			break;
-		total += sent;
-    if(debug) printf("Sent %d bytes of %d toal via socket %d\n", total, size, socket);
-	}
-  if(total != size){
-    printf("Sent size not equal to expected.\n");
-    printf("Sent: %d, Expected: %d\n", total, size);
-  }
-  return total;
+    int total = 0;
+    while(total < size)
+    {
+        int sent = send(socket, data + total, size - total, MSG_NOSIGNAL);
+        if(sent <= 0)
+            break;
+        total += sent;
+        if(debug) printf("Sent %d bytes of %d toal via socket %d\n", total, size, socket);
+    }
+    if(total != size){
+        printf("Sent size not equal to expected.\n");
+        printf("Sent: %d, Expected: %d\n", total, size);
+    }
+    return total;
 }
 
 int SOCKET_rxsize(int socket)
@@ -49,20 +50,20 @@ int SOCKET_rxsize(int socket)
 
 int SOCKET_receive(int socket, char* data, int size, bool debug)
 {
-  int rcvd = 0;
-	while(rcvd < size)
-	{
-		int got = recv(socket, data + rcvd, size - rcvd, 0);
-		if(got <= 0)
-			break;
-		rcvd += got;
-    if(debug && rcvd != 0) printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);
-	}
-  if(rcvd != size){
-    printf("Received size not equal to expected.\n");
-    printf("Received: %d, Expected: %d\n", rcvd, size);
-  }
-  return rcvd;
+    int rcvd = 0;
+    while(rcvd < size)
+    {
+        int got = recv(socket, data + rcvd, size - rcvd, 0);
+        if(got <= 0)
+            break;
+        rcvd += got;
+        if(debug && rcvd != 0) printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);
+    }
+    if(debug && rcvd != size){
+        printf("Received size not equal to expected.\n");
+        printf("Received: %d, Expected: %d\n", rcvd, size);
+    }
+    return rcvd;
 }
 
 int CLIENT_init(char* hostname, int portno, bool debug)
@@ -85,83 +86,44 @@ int CLIENT_init(char* hostname, int portno, bool debug)
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, 
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
+            (char *)&serv_addr.sin_addr.s_addr,
+            server->h_length);
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
         printf("ERROR connecting\n");
         return -1;
     }
     else {
-      if(debug) printf("Connected to %s:%d\n", hostname, portno);
-      return sockfd;
+        if(debug) printf("Connected to %s:%d\n", hostname, portno);
+        return sockfd;
     }
 }
 
 int SERVER_init(int portno)
 {
-     int sockfd, newsockfd;
-     socklen_t clilen;
-     struct sockaddr_in serv_addr, cli_addr;
+    int sockfd, newsockfd;
+    socklen_t clilen;
+    struct sockaddr_in serv_addr, cli_addr;
 
-     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-     if (sockfd < 0){
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0){
         printf("ERROR opening socket");
         exit(0);
-     }
+    }
 
-     bzero((char *) &serv_addr, sizeof(serv_addr));
-     serv_addr.sin_family = AF_INET;
-     serv_addr.sin_addr.s_addr = INADDR_ANY;
-     serv_addr.sin_port = htons( portno );
-     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-         printf("ERROR on binding\n");
-         exit(0);
-     }
-     return sockfd;
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons( portno );
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        printf("ERROR on binding\n");
+        exit(0);
+    }
+    return sockfd;
 }
 
 int SOCKET_close(int socket, bool debug)
 {
     if(debug) printf("Closing socket %d\n", socket);
     close(socket);
-}
-
-bool SOCKET_starttx(int socket)
-{
-    char buffer[] = "s";
-    return (write(socket, &buffer, sizeof(char)) > 0);
-}
-
-bool SOCKET_startrx(int socket)
-{
-    char buffer[1];
-    read(socket, &buffer, sizeof(char));
-    return (buffer[0] == 's');
-}
-
-int SOCKET_pausetx(int socket)
-{
-    char buffer[] = "p";
-    return (write(socket, &buffer, sizeof(char)) > 0);
-}
-
-int SOCKET_pauserx(int socket)
-{
-    char buffer[1];
-    read(socket, &buffer, sizeof(char));
-    return (buffer[0] == 'p');
-}
-
-int SOCKET_termtx(int socket)
-{
-    char buffer[] = "t";
-    return (write(socket, &buffer, sizeof(char)) > 0);
-}
-
-int SOCKET_termrx(int socket)
-{
-    char buffer[1];
-    int stat = read(socket, &buffer, sizeof(char));
-    return (stat>0 && buffer[0] == 't');
 }
