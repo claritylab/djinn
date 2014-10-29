@@ -39,7 +39,7 @@ po::variables_map parse_opts( int ac, char** av )
 		("help,h", "Produce help message")
         ("hostname,h", po::value<string>(), "Server IP addr")
         ("portno,p", po::value<int>()->default_value(8080), "Server port (default: 8080)")
-        ("task,t", po::value<string>(), "Image task: imc (ImageNet), face (DeepFace)")
+        ("task,t", po::value<string>(), "Image task: imc (ImageNet), face (DeepFace), dig (LeNet)")
         ("imcin,i", po::value<string>(), "Mini net for input")
         ("haar,c", po::value<string>(), "(face) Haar Cascade model")
         ("flandmark,f", po::value<string>(), "(face) Flandmarks trained data")
@@ -74,7 +74,6 @@ int main( int argc, char** argv )
     if(socketfd < 0)
         exit(0);
 
-    gettimeofday(&tv1,NULL);
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>())
         Caffe::set_mode(Caffe::GPU);
@@ -86,6 +85,7 @@ int main( int argc, char** argv )
     Net<float>* espresso = new Net<float>(vm["imcin"].as<string>());
     const caffe::LayerParameter& in_params = espresso->layers()[0]->layer_param();
 
+    gettimeofday(&tv1,NULL);
     // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
     // $cmt: still tries to do facial recognition if no faces or landmarks found.
     string task = vm["task"].as<string>();
@@ -104,7 +104,8 @@ int main( int argc, char** argv )
     int req_type;
     if(task == "imc") req_type = 0;
     else if(task == "face") req_type = 1;
-    else if(task == "digit") req_type = 2;
+    else if(task == "dig") req_type = 2;
+    else { printf("unrecognized task.\n"); exit(1); }
 
     SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
 
@@ -122,7 +123,6 @@ int main( int argc, char** argv )
     gettimeofday(&tv2,NULL);
     txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
-    gettimeofday(&tv1,NULL);
     // check correct
     for(int j = 0; j < in_blobs[0]->num(); ++j)
         cout << "Image: " << j << " class: " << preds[j] << endl;;
@@ -130,8 +130,6 @@ int main( int argc, char** argv )
     SOCKET_close(socketfd, false);
 
     free(preds);
-    gettimeofday(&tv2,NULL);
-    apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 #ifdef TIMING
     cout << "TIMING:" << endl;
     cout << "task " << task

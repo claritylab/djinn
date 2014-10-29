@@ -69,6 +69,13 @@ void* request_handler(void* sock)
       net->CopyTrainedLayersFrom(weight_file_name);
       break;
     }
+    case DIG:{
+      net->CopyTrainedLayersFrom(weight_file_name);
+      break;
+    }
+    case FACE:
+        printf("not implemented\n");
+        return 0;
     case ASR:{
       ifstream weight_file (weight_file_name);
       printf("%s\n", weight_file_name);
@@ -241,8 +248,6 @@ void* request_handler(void* sock)
         ip2_bias->set_cpu_data(pt0->l2_bias);
         break;
     }
-    case FACE:
-    case DIG:
     default:
            printf("Illegal request type\n");
            return -1; 

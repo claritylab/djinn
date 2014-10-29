@@ -1,0 +1,2 @@
+input/imc/tp.jpg 0
+input/imc/dog.jpg 0
