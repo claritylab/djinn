@@ -26,6 +26,8 @@
 #define MAX_SENTENCE_SIZE 1024
 #define MAX_TARGET_VB_SIZE 256
 
+#define TIMING 1
+
 using namespace std;
 namespace po = boost::program_options;
 
@@ -117,66 +119,90 @@ int main(int argc , char *argv[])
                                                      gazp_hash, 
                                                      opt_usrtokens
                                                      );
+
+    bool service = vm.count("hostname");
     int socketfd = -1;
     /* open socket */
-    socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
+    if(service)
+        socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
+    else
+        printf("No hostname provided, default to local DNN.\n");
 
     // send len over socket
-    if(socketfd < 0)
+    if(service && socketfd < 0)
         exit(0);
     int len = 0;
     string task = vm["task"].as<string>();
+    // send req_type
+    int req_type;
+    if(task == "imc") req_type = 0;
+    else if(task == "face") req_type = 1;
+    else if(task == "digit") req_type = 2;
 
     if(task == "pos") {
+        req_type = 4;
         len = pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size);
-        pos->service = true;
+        pos->service = service;
         pos->debug = vm["debug"].as<bool>();
     }
     else if(task == "chk") {
-        pos->service = false;
-        chk->service = true;
+        req_type = 6;
+        pos->service = chk->service = service;
         pos->debug = chk->debug = vm["debug"].as<bool>();
         if(pos->service)
-            pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 1, vm["debug"].as<bool>());
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+            pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
         len = chk->window_size*(chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size);
     }
     else if(task == "ner") {
+        req_type = 5;
         int input_size = ner->ll_word_size+ner->ll_caps_size
                                           +ner->ll_gazl_size+ner->ll_gazm_size+ner->ll_gazo_size+ner->ll_gazp_size;
         len = ner->window_size*input_size;
-        ner->service = true;
+        ner->service = service;
         ner->debug = vm["debug"].as<bool>();
     }
     else if(task == "srl") {
-        pos->service = false;
-        pt0->service = false;
-        vbs->service = false;
-        srl->service = true;
+        req_type = 7;
+        pos->service = pt0->service = vbs->service = srl->service = service;
         pos->debug = pt0->debug = vbs->debug = srl->debug = vm["debug"].as<bool>();
         if(pos->service)
-            pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 1, vm["debug"].as<bool>());
+            pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
         if(pt0->service)
-            pt0->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 2, vm["debug"].as<bool>());
+            pt0->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
         if(vbs->service)
-            vbs->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 3, vm["debug"].as<bool>());
-        if(pos->socketfd < 0 && pos->service)
-            exit(1);
-        if(vbs->socketfd < 0 && vbs->service)
-            exit(1);
-        if(pt0->socketfd < 0 && pt0->service)
-            exit(1);
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
-        SOCKET_txsize(pt0->socketfd,
-                      pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
-        SOCKET_txsize(vbs->socketfd,
-                      vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+            vbs->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
+
+        if(vbs->socketfd > 0 && vbs->service) {
+            int internal_req = 9;
+            SOCKET_send(vbs->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(vbs->socketfd,
+                          vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+        }
+        if(pt0->socketfd > 0 && pt0->service) {
+            int internal_req = 8;
+            SOCKET_send(pt0->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pt0->socketfd,
+                    pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
+        }
         len = srl->hidden_state1_size;
     }
 
-    SOCKET_txsize(socketfd, len);
+    if(service) {
+        SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
+        SOCKET_txsize(socketfd, len);
+    }
 
     while(fgets(sentence, MAX_SENTENCE_SIZE, stdin))
     {
@@ -206,24 +232,119 @@ int main(int argc , char *argv[])
             srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
         }
 
-        for(int i = 0; i < tokens->n; i++)
-        {
-            printf("%15s", tokens->words[i]);
-            if(task == "pos")
-                printf("\t%10s", SENNA_Hash_key(pos_hash, pos_labels[i]));
-            else if(task == "chk")
-                printf("\t%10s", SENNA_Hash_key(chk_hash, chk_labels[i]));
-            else if(task == "ner")
-                printf("\t%10s", SENNA_Hash_key(ner_hash, ner_labels[i]));
-            else if(task == "srl") {
-                printf("\t%15s", (vbs_labels[i] ? tokens->words[i] : "-"));
-                for(int j = 0; j < n_verbs; j++)
-                    printf("\t%10s", SENNA_Hash_key(srl_hash, srl_labels[j][i]));
+        if(vm["debug"].as<bool>()) {
+            for(int i = 0; i < tokens->n; i++)
+            {
+                printf("%15s", tokens->words[i]);
+                if(task == "pos")
+                    printf("\t%10s", SENNA_Hash_key(pos_hash, pos_labels[i]));
+                else if(task == "chk")
+                    printf("\t%10s", SENNA_Hash_key(chk_hash, chk_labels[i]));
+                else if(task == "ner")
+                    printf("\t%10s", SENNA_Hash_key(ner_hash, ner_labels[i]));
+                else if(task == "srl") {
+                    printf("\t%15s", (vbs_labels[i] ? tokens->words[i] : "-"));
+                    for(int j = 0; j < n_verbs; j++)
+                        printf("\t%10s", SENNA_Hash_key(srl_hash, srl_labels[j][i]));
+                }
+                printf("\n");
             }
-            printf("\n");
+            printf("\n"); /* end of sentence */
         }
-        printf("\n"); /* end of sentence */
     }
+#ifdef TIMING
+    if(task == "pos")
+        cout << "task " << task
+            << " size_kb " << (len*sizeof(float))/1024
+            << " total_t " << (float)(pos->apptime+pos->dnntime)/1000
+            << " app_t " << (float)(pos->apptime/1000)
+            << " dnn_t " << (float)(pos->dnntime/1000)
+            << " calls " << pos->calls
+            << endl;
+    else if(task == "chk") {
+        cout << "task pos"
+            << " size_kb " << (float)(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float))/1024
+            << " total_t " << (float)(pos->apptime+pos->dnntime)/1000
+            << " app_t " << ((float)pos->apptime/1000)
+            << " dnn_t " << ((float)pos->dnntime/1000)
+            << " calls " << pos->calls
+            << endl;
+        cout << "task " << task
+            << " size_kb " << (float)(len*sizeof(float))/1024
+            << " total_t " << (float)(chk->apptime+chk->dnntime)/1000
+            << " app_t " << ((float)chk->apptime/1000)
+            << " dnn_t " << ((float)chk->dnntime/1000)
+            << " calls " << chk->calls
+            << endl;
+        cout << "task pos+chk"
+            << " total_t " << (float)(pos->apptime+pos->dnntime
+                             + chk->apptime+chk->dnntime)/1000
+            << " app_t " << (float)(pos->apptime
+                            + chk->apptime)/1000
+            << " dnn_t " << (float)(pos->dnntime
+                            + chk->dnntime)/1000
+            << " calls " << (float)(pos->calls
+                            + chk->calls)
+            << endl;
+    }
+    else if(task == "ner") {
+        cout << "task " << task
+            << " size_kb " << (float)(len*sizeof(float))/1024
+            << " total_t " << (float)(ner->apptime+ner->dnntime)/1000
+            << " app_t " << (float)(ner->apptime)/1000
+            << " dnn_t " << (float)(ner->dnntime)/1000
+            << " calls " << ner->calls
+            << endl;
+    }
+    else if(task == "srl") {
+        cout << "task pos"
+            << " size_kb " << (pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float))/1024
+            << " total_t " << (pos->apptime+pos->dnntime)/1000
+            << " app_t " << pos->apptime/1000
+            << " dnn_t " << pos->dnntime/1000
+            << " calls " << pos->calls
+            << endl;
+        cout << "task pt0"
+            << " size_kb " << (pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size)*sizeof(float))/1024
+            << " total_t " << (pt0->apptime+pt0->dnntime)/1000
+            << " app_t " << pt0->apptime/1000
+            << " dnn_t " << pt0->dnntime/1000
+            << " calls " << pt0->calls
+            << endl;
+        cout << "task vbs"
+            << " size_kb " << (vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size)*sizeof(float))/1024
+            << " total_t " << (vbs->apptime+vbs->dnntime)/1000
+            << " app_t " << vbs->apptime/1000
+            << " dnn_t " << vbs->dnntime/1000
+            << " calls " << vbs->calls
+            << endl;
+        cout << "task " << task
+            << " size_kb " << (len*sizeof(float))/1024
+            << " total_t " << (srl->apptime+srl->dnntime)/1000
+            << " app_t " << srl->apptime/1000
+            << " dnn_t " << srl->dnntime/1000
+            << " calls " << srl->calls
+            << endl;
+        cout << "task pos+pt0+vbs+srl"
+            << " total_t " << (float)(pos->apptime+pos->dnntime
+                             + pt0->apptime+pt0->dnntime
+                             + vbs->apptime+vbs->dnntime
+                             + srl->apptime+srl->dnntime)/1000
+            << " app_t " << (float)(pos->apptime
+                            + pt0->apptime
+                            + vbs->apptime
+                            + srl->apptime)/1000
+            << " dnn_t " << (float)(pos->dnntime
+                            + pt0->dnntime
+                            + vbs->dnntime
+                            + srl->dnntime)/1000
+            << " calls " << (float)(pos->calls
+                            + pt0->calls
+                            + vbs->calls
+                            + srl->calls)
+            << endl;
+    }
+#endif
 
     // clean up
     SENNA_Tokenizer_free(tokenizer);

@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <unistd.h>
 #include "SENNA_POS.h"
 #include "SENNA_utils.h"
@@ -7,7 +8,9 @@
 int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd)
 {
   int idx;
+  struct timeval tv1, tv2;
 
+  gettimeofday(&tv1,NULL);
   pos->input_state = SENNA_realloc(pos->input_state,
                                    sizeof(float),
                                    (sentence_size+pos->window_size-1)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
@@ -47,7 +50,10 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
                   pos->ll_suff_padding_idx,
                   (pos->window_size-1)/2
                   );
+  gettimeofday(&tv2,NULL);
+  pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  gettimeofday(&tv1,NULL);
   for(idx = 0; idx < sentence_size; idx++)
   {
       if(pos->service) {
@@ -61,7 +67,8 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
                        pos->output_state_size*sizeof(float),
                        pos->debug
                        );
-      } else {
+      }
+      else {
           SENNA_nn_linear(pos->hidden_state,
                   pos->hidden_state_size,
                   pos->l1_weight,
@@ -81,8 +88,12 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
                   pos->hidden_state_size
                   );
       }
+      pos->calls++;
   }
+  gettimeofday(&tv2,NULL);
+  pos->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  gettimeofday(&tv1,NULL);
   pos->labels = SENNA_realloc(pos->labels, sizeof(int), sentence_size);
   SENNA_nn_viterbi(pos->labels,
                    pos->viterbi_score_init,
@@ -91,6 +102,8 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
                    pos->output_state_size,
                    sentence_size
                    );
+  gettimeofday(&tv2,NULL);
+  pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
   return pos->labels;
 }
@@ -145,6 +158,9 @@ SENNA_POS* SENNA_POS_new(const char *path, const char *subpath)
   pos->service = false;
   pos->debug = false;
   pos->socketfd = -1;
+  pos->calls = 0;
+  pos->dnntime = 0;
+  pos->apptime = 0;
 
   return pos;
 }

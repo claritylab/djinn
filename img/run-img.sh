@@ -4,4 +4,4 @@
              --imcin input/$1-inputnet.prototxt \
              --flandmark data/flandmark.dat \
              --haar data/haar.xml \
-             --debug 0
+             --debug 1

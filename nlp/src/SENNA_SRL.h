@@ -65,6 +65,11 @@ typedef struct SENNA_SRL_
     bool service;
     bool debug;
 
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_SRL;
 
 SENNA_SRL* SENNA_SRL_new(const char *path, const char *subpath);

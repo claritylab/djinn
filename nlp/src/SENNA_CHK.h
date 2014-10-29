@@ -41,6 +41,11 @@ typedef struct SENNA_CHK_
     bool service;
     bool debug;
 
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_CHK;
 
 SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath);

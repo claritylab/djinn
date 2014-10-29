@@ -1,0 +1,10 @@
+input/dig/0.png 0
+input/dig/1.png 0
+input/dig/2.png 0
+input/dig/3.png 0
+input/dig/4.png 0
+input/dig/5.png 0
+input/dig/6.png 0
+input/dig/7.png 0
+input/dig/8.png 0
+input/dig/9.png 0

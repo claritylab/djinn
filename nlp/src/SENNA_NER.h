@@ -50,6 +50,11 @@ typedef struct SENNA_NER_
     bool service;
     bool debug;
 
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_NER;
 
 SENNA_NER* SENNA_NER_new(const char *path, const char *subpath);
