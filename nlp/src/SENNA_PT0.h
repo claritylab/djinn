@@ -43,6 +43,11 @@ typedef struct SENNA_PT0_
     /* internal socket */
     int socketfd;
 
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_PT0;
 
 SENNA_PT0* SENNA_PT0_new(const char *path, const char *subpath);

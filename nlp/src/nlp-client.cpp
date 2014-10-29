@@ -26,6 +26,8 @@
 #define MAX_SENTENCE_SIZE 1024
 #define MAX_TARGET_VB_SIZE 256
 
+#define TIMING 1
+
 using namespace std;
 namespace po = boost::program_options;
 
@@ -126,23 +128,35 @@ int main(int argc , char *argv[])
         exit(0);
     int len = 0;
     string task = vm["task"].as<string>();
+    // send req_type
+    int req_type;
+    if(task == "imc") req_type = 0;
+    else if(task == "face") req_type = 1;
+    else if(task == "digit") req_type = 2;
 
     if(task == "pos") {
+        req_type = 4;
         len = pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size);
         pos->service = true;
         pos->debug = vm["debug"].as<bool>();
     }
     else if(task == "chk") {
-        pos->service = false;
+        req_type = 6;
+        pos->service = true;
         chk->service = true;
         pos->debug = chk->debug = vm["debug"].as<bool>();
         if(pos->service)
             pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 1, vm["debug"].as<bool>());
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
         len = chk->window_size*(chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size);
     }
     else if(task == "ner") {
+        req_type = 5;
         int input_size = ner->ll_word_size+ner->ll_caps_size
                                           +ner->ll_gazl_size+ner->ll_gazm_size+ner->ll_gazo_size+ner->ll_gazp_size;
         len = ner->window_size*input_size;
@@ -150,9 +164,10 @@ int main(int argc , char *argv[])
         ner->debug = vm["debug"].as<bool>();
     }
     else if(task == "srl") {
-        pos->service = false;
-        pt0->service = false;
-        vbs->service = false;
+        req_type = 7;
+        pos->service = true;
+        pt0->service = true;
+        vbs->service = true;
         srl->service = true;
         pos->debug = pt0->debug = vbs->debug = srl->debug = vm["debug"].as<bool>();
         if(pos->service)
@@ -161,21 +176,29 @@ int main(int argc , char *argv[])
             pt0->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 2, vm["debug"].as<bool>());
         if(vbs->service)
             vbs->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>() + 3, vm["debug"].as<bool>());
-        if(pos->socketfd < 0 && pos->service)
-            exit(1);
-        if(vbs->socketfd < 0 && vbs->service)
-            exit(1);
-        if(pt0->socketfd < 0 && pt0->service)
-            exit(1);
-        SOCKET_txsize(pos->socketfd,
-                      pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
-        SOCKET_txsize(pt0->socketfd,
-                      pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
-        SOCKET_txsize(vbs->socketfd,
-                      vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+        if(pos->socketfd > 0 && pos->service) {
+            int internal_req = 4;
+            SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pos->socketfd,
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+        }
+
+        if(vbs->socketfd > 0 && vbs->service) {
+            int internal_req = 9;
+            SOCKET_send(vbs->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(vbs->socketfd,
+                          vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
+        }
+        if(pt0->socketfd > 0 && pt0->service) {
+            int internal_req = 8;
+            SOCKET_send(pt0->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
+            SOCKET_txsize(pt0->socketfd,
+                    pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
+        }
         len = srl->hidden_state1_size;
     }
 
+    SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
     SOCKET_txsize(socketfd, len);
 
     while(fgets(sentence, MAX_SENTENCE_SIZE, stdin))
@@ -224,6 +247,99 @@ int main(int argc , char *argv[])
         }
         printf("\n"); /* end of sentence */
     }
+#ifdef TIMING
+    if(task == "pos")
+        cout << "task " << task
+            << " size_kb " << (len*sizeof(float))/1024
+            << " total_t " << (float)(pos->apptime+pos->dnntime)/1000
+            << " app_t " << (float)(pos->apptime/1000)
+            << " tx_t " << (float)(pos->dnntime/1000)
+            << " calls " << pos->calls
+            << endl;
+    else if(task == "chk") {
+        cout << "task pos"
+            << " size_kb " << (float)(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float))/1024
+            << " total_t " << (float)(pos->apptime+pos->dnntime)/1000
+            << " app_t " << (float)(pos->apptime/1000)
+            << " tx_t " << (float)(pos->dnntime/1000)
+            << " calls " << pos->calls
+            << endl;
+        cout << "task " << task
+            << " size_kb " << (float)(len*sizeof(float))/1024
+            << " total_t " << (float)(chk->apptime+chk->dnntime)/1000
+            << " app_t " << (float)(chk->apptime/1000)
+            << " tx_t " << (float)(chk->dnntime/1000)
+            << " calls " << chk->calls
+            << endl;
+        cout << "task pos+chk"
+            << " total_t " << (float)(pos->apptime+pos->dnntime
+                             + chk->apptime+chk->dnntime)/1000
+            << " app_t " << (float)(pos->apptime
+                            + chk->apptime)/1000
+            << " dnn_t " << (float)(pos->dnntime
+                            + chk->dnntime)/1000
+            << " calls " << (float)(pos->calls
+                            + chk->calls)
+            << endl;
+    }
+    else if(task == "ner") {
+        cout << "task " << task
+            << " size_kb " << (float)(len*sizeof(float))/1024
+            << " total_t " << (float)(ner->apptime+ner->dnntime)/1000
+            << " app_t " << (float)(ner->apptime/1000)
+            << " tx_t " << (float)(ner->dnntime/1000)
+            << " calls " << ner->calls
+            << endl;
+    }
+    else if(task == "srl") {
+        cout << "task pos"
+            << " size_kb " << (pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float))/1024
+            << " total_t " << (pos->apptime+pos->dnntime)/1000
+            << " app_t " << pos->apptime/1000
+            << " tx_t " << pos->dnntime/1000
+            << " calls " << pos->calls
+            << endl;
+        cout << "task pt0"
+            << " size_kb " << (pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size)*sizeof(float))/1024
+            << " total_t " << (pt0->apptime+pt0->dnntime)/1000
+            << " app_t " << pt0->apptime/1000
+            << " tx_t " << pt0->dnntime/1000
+            << " calls " << pt0->calls
+            << endl;
+        cout << "task vbs"
+            << " size_kb " << (vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size)*sizeof(float))/1024
+            << " total_t " << (vbs->apptime+vbs->dnntime)/1000
+            << " app_t " << vbs->apptime/1000
+            << " tx_t " << vbs->dnntime/1000
+            << " calls " << vbs->calls
+            << endl;
+        cout << "task " << task
+            << " size_kb " << (len*sizeof(float))/1024
+            << " total_t " << (srl->apptime+srl->dnntime)/1000
+            << " app_t " << srl->apptime/1000
+            << " tx_t " << srl->dnntime/1000
+            << " calls " << srl->calls
+            << endl;
+        cout << "task pos+pt0+vbs+srl"
+            << " total_t " << (float)(pos->apptime+pos->dnntime
+                             + pt0->apptime+pt0->dnntime
+                             + vbs->apptime+vbs->dnntime
+                             + srl->apptime+srl->dnntime)/1000
+            << " app_t " << (float)(pos->apptime
+                            + pt0->apptime
+                            + vbs->apptime
+                            + srl->apptime)/1000
+            << " dnn_t " << (float)(pos->dnntime
+                            + pt0->dnntime
+                            + vbs->dnntime
+                            + srl->dnntime)/1000
+            << " calls " << (float)(pos->calls
+                            + pt0->calls
+                            + vbs->calls
+                            + srl->calls)
+            << endl;
+    }
+#endif
 
     // clean up
     SENNA_Tokenizer_free(tokenizer);

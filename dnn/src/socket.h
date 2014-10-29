@@ -22,22 +22,4 @@ int SOCKET_receive(int socket, char* data, int size, bool debug);
 // close the socket
 int SOCKET_close(int socket, bool debug);
 
-// begin tx
-bool SOCKET_starttx(int socket);
-
-// begin rx
-bool SOCKET_startrx(int socket);
-
-// pause tx
-bool SOCKET_pausetx(int socket);
-
-// pause rx
-bool SOCKET_pauserx(int socket);
-
-// terminate tx
-bool SOCKET_termtx(int socket);
-
-// terminate rx
-bool SOCKET_termrx(int socket);
-
 #endif

@@ -44,6 +44,11 @@ typedef struct SENNA_VBS_
     /* internal socket */
     int socketfd;
 
+    /* profiling */
+    int calls;
+    unsigned int apptime;
+    unsigned int dnntime;
+
 } SENNA_VBS;
 
 SENNA_VBS* SENNA_VBS_new(const char *path, const char *subpath);

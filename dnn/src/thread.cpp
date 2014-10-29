@@ -1,6 +1,4 @@
-#include "thread.h"
 #include <pthread.h>
-#include "socket.h"
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
@@ -8,10 +6,22 @@
 #include <assert.h>
 #include <glog/logging.h>
 #include <ctime>
+#include "thread.h"
+#include "socket.h"
+
 #define DEBUG 0
 
 using namespace std;
 
+void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
+{
+    float loss;
+    vector<Blob<float>* > in_blobs = net->input_blobs();
+    in_blobs[0]->set_cpu_data(in);
+    vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
+    assert(out_size == out_blobs[0]->count());
+    memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
+}
 
 int request_thread_init(int sock)
 {
@@ -242,18 +252,54 @@ void* request_handler(void* sock)
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
 
   Net<float>* espresso = net;
-
-  // get elts for top layer
-  int in_elts = espresso->input_blobs()[0]->count();
-  int out_elts = espresso->output_blobs()[0]->count();
-  float *in = (float*) malloc(in_elts * sizeof(float));
-  float *out = (float*) malloc(out_elts * sizeof(float));
-
+  
   // Now we receive the input data length (in float)
   int sock_elts = SOCKET_rxsize(socknum);
   if(sock_elts < 0){
     printf("Error num incoming elts\n");
     exit(1);
+  }
+
+  int n_in = espresso->input_blobs()[0]->num();
+  int c_in = espresso->input_blobs()[0]->channels();
+  int w_in = espresso->input_blobs()[0]->width();
+  int h_in = espresso->input_blobs()[0]->height();
+  int in_elts = espresso->input_blobs()[0]->count();
+  int n_out = espresso->output_blobs()[0]->num();
+  int c_out = espresso->output_blobs()[0]->channels();
+  int w_out = espresso->output_blobs()[0]->width();
+  int h_out = espresso->output_blobs()[0]->height();
+  int out_elts = espresso->output_blobs()[0]->count();
+  float *in = (float*) malloc(in_elts * sizeof(float));
+  float *out = (float*) malloc(out_elts * sizeof(float));
+
+  // reshape input dims if incoming data > current net config
+  // TODO(johann): this is (only) useful for img stuff currently
+  if(sock_elts/(c_in*w_in*h_in) > n_in)
+  {
+      n_in = sock_elts/(c_in*w_in*h_in);
+      printf("Reshaping input to dims %d %d %d %d...\n", n_in, c_in, w_in, h_in);
+      espresso->input_blobs()[0]->Reshape(n_in, c_in, w_in, h_in);
+      in_elts = espresso->input_blobs()[0]->count();
+      float *tmp = realloc(in, sock_elts * sizeof(float));
+      if(tmp != NULL)
+          in = tmp;
+      else {
+          printf("Can't realloc\n");
+          exit(1);
+      }
+
+      n_out = n_in;
+      printf("Reshaping output to dims %d %d %d %d...\n", n_out, c_out, w_out, h_out);
+      espresso->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
+      out_elts = espresso->output_blobs()[0]->count();
+      tmp = realloc(out, out_elts * sizeof(float));
+      if(tmp != NULL)
+          out = tmp;
+      else {
+          printf("Can't realloc\n");
+          exit(1);
+      }
   }
 
   // Now we enter the main loop of the thread, following this order
