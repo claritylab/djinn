@@ -32,6 +32,7 @@ use_gpu="no" # yes|no|optionaly
 use_srvice="false"
 hostname=
 portno=
+use_service=
 
 # End configuration section.
 

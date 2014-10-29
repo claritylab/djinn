@@ -18,6 +18,7 @@
 // limitations under the License.
 
 #include <limits>
+#include <ctime>
 
 #include "nnet/nnet-nnet.h"
 #include "nnet/nnet-loss.h"
@@ -28,6 +29,7 @@
 #include "base/timer.h"
 #include "socket.h"
 
+#define DEBUG 0
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -146,8 +148,10 @@ int main(int argc, char *argv[]) {
 
     Timer time;
     double time_now = 0;
+    double time_comm = 0;
+    double time_nn = 0;
     int32 num_done = 0;
- 
+    
     // iterate over all feature files
     for (; !feature_reader.Done(); feature_reader.Next()) {
       // read
@@ -167,44 +171,66 @@ int main(int argc, char *argv[]) {
       // fwd-pass
       // Preprocessing feature transformation      
       nnet_transf.Feedforward(feats, &feats_transf);
-      
+      KALDI_LOG << "Input feature with dimension: "<<feats_transf.NumCols(); 
       if(use_service){
         KALDI_LOG << "Use remote dnn service to inference.";
         // Connect to the server
         int socket;
         char* hostname_cstr = new char [hostname.length() + 1];
         std::strcpy(hostname_cstr, hostname.c_str());
-        socket = CLIENT_init(hostname_cstr, portno);
+        socket = CLIENT_init(hostname_cstr, portno, DEBUG);
         if(socket < 0){
           KALDI_ERR << "Socket return as zero.";
           exit(1);
         }  
         KALDI_LOG << "Establish socket with server at "
                 << hostname << ":" << portno;
+        // 1. Send the request type (1)
+        int req_type = 3;
+        SOCKET_send(socket, (char*)&req_type, sizeof(int), DEBUG);
+        KALDI_LOG << "Send request type: "<<req_type; 
 
+        // 5. Send the length of the input feature 
         recv_mat.Resize(feats_transf.NumRows(), 1706);
-        // Send features to the service frame by frame
-        SOCKET_txsize(socket, feats_transf.NumCols());
-        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-          SOCKET_send(socket, feats_transf.Row(i).Data(), feats_transf.NumCols());
 
+        SOCKET_txsize(socket, feats_transf.NumCols());
+
+        // 6. Start to send the feature and get result frame by frame
+        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+
+          Timer time_comm_temp;
+
+          int sent = SOCKET_send(socket, (char*) feats_transf.Row(i).Data(), 
+                          feats_transf.NumCols()*sizeof(float), DEBUG);
+          if(DEBUG){
+            KALDI_LOG<<"Sent "<<sent << " data";
+          }
           // Receive neural network output
           Vector<BaseFloat> cur_row(1706);
-          SOCKET_receive(socket, cur_row.Data(), 1706);
+          int rcvd = SOCKET_receive(socket, (char*) cur_row.Data(), 1706*sizeof(float), DEBUG);
+          if(DEBUG){
+            KALDI_LOG<<"Recv "<<rcvd << " data";
+          }
+          
+          time_comm += time_comm_temp.Elapsed();
+
           recv_mat.CopyRowFromVec(cur_row, i);
         }
         nnet_out.Resize(recv_mat.NumRows(), recv_mat.NumCols()); 
         nnet_out.CopyFromMat(recv_mat);
      
         // Close the socket, don't need it anymore
-        SOCKET_close(socket);
+        SOCKET_close(socket,DEBUG);
         KALDI_LOG << "DNN service finishes. Socket closed.";
       }else{
         // Use local(kaldi's) dnn to inference
         KALDI_LOG << "Use local dnn service to inference.";
+        Timer nn_timer;
         nnet.Feedforward(feats_transf, &nnet_out);
+        time_nn += nn_timer.Elapsed();
       }
       
+
       // convert posteriors to log-posteriors
       if (apply_log) {
         nnet_out.ApplyLog();
@@ -228,10 +254,10 @@ int main(int argc, char *argv[]) {
             KALDI_ERR << "inf in NNet coutput of : " << feature_reader.Key();
         }
       }
-
-      // write
+      
+     // write
       feature_writer.Write(feature_reader.Key(), nnet_out_host);
-
+      
       // progress log
       if (num_done % 100 == 0) {
         time_now = time.Elapsed();
@@ -247,6 +273,9 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done " << num_done << " files" 
               << " in " << time.Elapsed()/60 << "min," 
               << " (fps " << tot_t/time.Elapsed() << ")"; 
+    KALDI_LOG << "Total app time is " << time_now*1000 << "ms";
+    KALDI_LOG << "Communication time is " << time_comm*1000 << "ms";
+    KALDI_LOG << "Local neural net time is " << time_nn*1000 << "ms";
 
 #if HAVE_CUDA==1
     if (kaldi::g_kaldi_verbose_level >= 1) {

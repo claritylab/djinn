@@ -1,0 +1,22 @@
+1. Install Kaldi on your macine. 
+   Follow the instruction here http://kaldi.sourceforge.net/tutorial_setup.html
+
+2. Get voxforge related data from Yiping and put them into a subfolder called voxforge_data
+
+3. Apply path by running kaldi_patch.sh. Change the kaldi root dir in the script first.
+   (You do need to run ./deploy.sh in socket-lib and change the kaldi root there also)
+
+4. And the above script will also copy multiple data and graph dir to your kaldi directory
+   It copies over the following things
+   1) raw mfcc data -> voxforge/s5/data_set/mfcc
+   2) target data set (deepblue_set) -> voxforge/s5/data/deepblue_test
+   3) graph dir -> voxforge/s5/exp/tri3b
+   4) decode config file -> voxforge/s5/conf/decode_dnn.config
+   5) Feature transfomration network and local dnn -> voxforge/s5/exp/dnn5b_pretrain-dbn_dnn/
+   6)* It change the directory pointer sed -i 's~/home/ypkang/kaldi-trunk/~NEW_KALDI_ROOT~g' file
+
+5. Navigate to src/nnetbin and type make to recompile nnet-forward binary
+
+6. Navigate to kaldi_root/egs/voxforge and run_client.sh like the following
+  ./run_client.sh <server-addr> <portno> <use-service?> <debug>
+  e.g. ./run_client.sh localhost 8080 true 1
