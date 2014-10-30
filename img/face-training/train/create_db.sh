@@ -4,8 +4,8 @@
 
 TOOLS=/home/jahausw/projects/caffe/build/tools
 
-TRAIN_DATA_ROOT=/home/jahausw/datasets/faces/lfw/lfw_a/
-VAL_DATA_ROOT=/home/jahausw/datasets/faces/lfw/lfw_a/
+TRAIN_DATA_ROOT=/home/jahausw/datasets/faces/lfw/lfw/
+VAL_DATA_ROOT=/home/jahausw/datasets/faces/lfw/lfw/
 
 RESIZE=true
 if $RESIZE; then
@@ -37,8 +37,8 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $TRAIN_DATA_ROOT \
-    data/train_small.txt \
-    data/deepface_train_small_lmdb
+    data/train_s.txt \
+    data/deepface_train_sample_lmdb
 
 echo "Creating val lmdb..."
 
@@ -47,7 +47,7 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $VAL_DATA_ROOT \
-    data/val_small.txt \
-    data/deepface_val_small_lmdb
+    data/val_s.txt \
+    data/deepface_val_sample_lmdb
 
 echo "Done."

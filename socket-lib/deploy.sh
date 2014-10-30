@@ -1,5 +1,5 @@
-DIR=/home/ypkang/git/deep-ipa
-KALDI_DIR=/home/ypkang/kaldi-trunk/src/nnetbin
+DIR=/home/jahausw/projects/deep-ipa
+KALDI_DIR=/home/jahausw/projects/kaldi-trunk/src/nnetbin
 
 cp libsocket.a $DIR
 cp socket.h $DIR/img/src

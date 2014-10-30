@@ -58,21 +58,12 @@ void* request_handler(void* sock)
   char* config_file_name = new char[30];
   sprintf(config_file_name, "net-configs/%s.prototxt", request_name[req_type]);
   char* weight_file_name = new char[30];
-  sprintf(weight_file_name, "weights/%s.dat", request_name[req_type]);
+  sprintf(weight_file_name, "weights/%s.caffemodel", request_name[req_type]);
 
   // Now we proceed differently based on the type of request
   net = new Net<float>(config_file_name);
   std::clock_t model_ld_start = clock();
   switch(req_type){
-    
-    case IMC:{
-      net->CopyTrainedLayersFrom(weight_file_name);
-      break;
-    }
-    case DIG:{
-      net->CopyTrainedLayersFrom(weight_file_name);
-      break;
-    }
     case FACE:
         printf("not implemented\n");
         return 0;
@@ -161,102 +152,24 @@ void* request_handler(void* sock)
       // Give control to caffe
       break; 
     }
-    case POS:{
-
-        SENNA_POS *pos = SENNA_POS_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(pos->l1_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(pos->l1_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(pos->l2_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(pos->l2_bias);
-        
-        break;  
-    }
-    case NER:{
-
-        SENNA_NER *ner = SENNA_NER_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(ner->l1_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(ner->l1_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(ner->l2_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(ner->l2_bias);
-        
-        break; 
-    }
-    case CHK:{
-
-        SENNA_CHK *chk = SENNA_CHK_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(chk->l1_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(chk->l1_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(chk->l2_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(chk->l2_bias);
-           
-        break; 
-    }
-    case SRL:{
-
-        SENNA_SRL *srl = SENNA_SRL_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(srl->l3_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(srl->l3_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(srl->l4_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(srl->l4_bias);
-        break;
-    }
-    case VBS:{
-  
-        SENNA_VBS *vbs = SENNA_VBS_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(vbs->l1_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(vbs->l1_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(vbs->l2_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(vbs->l2_bias);
-        break; 
-    }
-    case PT0:{
-        
-        SENNA_PT0 *pt0 = SENNA_PT0_new(weight_file_name);
-
-        Blob<float> *ip1_weights = net->layers()[0]->blobs()[0].get();
-        ip1_weights->set_cpu_data(pt0->l1_weight);
-        Blob<float> *ip1_bias = net->layers()[0]->blobs()[1].get();
-        ip1_bias->set_cpu_data(pt0->l1_bias);
-        Blob<float> *ip2_weights = net->layers()[2]->blobs()[0].get();
-        ip2_weights->set_cpu_data(pt0->l2_weight);
-        Blob<float> *ip2_bias = net->layers()[2]->blobs()[1].get();
-        ip2_bias->set_cpu_data(pt0->l2_bias);
-        break;
+    case IMC: case DIG: case POS: case NER: case CHK: case SRL: case VBS: case PT0: {
+         net->CopyTrainedLayersFrom(weight_file_name);
+         break;
     }
     default:
-           printf("Illegal request type\n");
-           return -1; 
+        printf("Illegal request type\n");
+        return -1; 
   }
   std::clock_t model_ld_end = clock(); 
 
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
 
   Net<float>* espresso = net;
+  // Dump the network
+  // caffe::NetParameter output_net_param;
+  // espresso->ToProto(&output_net_param, true);
+  // WriteProtoToBinaryFile(output_net_param,
+  //         weight_file_name + output_net_param.name());
   
   // Now we receive the input data length (in float)
   int sock_elts = SOCKET_rxsize(socknum);

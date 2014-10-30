@@ -7,7 +7,7 @@
 # and copy over new scripts
 
 # ATTENTION. Change this into your kaldi root directory before running the script
-kaldi_root=/home/ypkang/kaldi-trunk
+kaldi_root=/home/jahausw/projects/kaldi-trunk
 
 echo "Specified kaldi root is at ${kaldi_root}"
 
