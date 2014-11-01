@@ -1,10 +1,9 @@
-implement asr
 implement face
 find clean default config to make all clients<->services
-implment patch for kaldi - done
 retrain asr model in kaldi with full dataset
 add a readme and install for kaldi's installation and running
 do feature transformation on full test set and push the input
-load/save all models into .caffemodel (proto) to have accurate size comparison
-big multicore inference setup
 remove all hardpaths in scripts and ignore volatile scripts
+Implement live models
+Try double in ASR
+Check accuracy for NLP
