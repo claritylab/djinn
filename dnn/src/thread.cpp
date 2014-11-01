@@ -8,6 +8,7 @@
 #include <ctime>
 #include "thread.h"
 #include "socket.h"
+#include "utils.h"
 
 #define DEBUG 0
 
@@ -62,97 +63,16 @@ void* request_handler(void* sock)
 
   // Now we proceed differently based on the type of request
   net = new Net<float>(config_file_name);
+
+  // If you need to update model, uncomment/change the next line and the model name above
+  //translate_kaldi_model(weight_file_name, net, true);
+
   std::clock_t model_ld_start = clock();
   switch(req_type){
     case FACE:
         printf("not implemented\n");
         return 0;
-    case ASR:{
-      ifstream weight_file (weight_file_name);
-      printf("%s\n", weight_file_name);
-      if(!weight_file.is_open()){
-        printf("No weight file found.\n");
-        exit(1);
-      }
-      // Read in line by line
-      std::string line;
-      getline(weight_file, line); // <Nnet>
-      for(int i = 0; i < 7; i++){ // 6 is the number of hidden layers
-          getline(weight_file, line); // <AffineTransform>
-          // Split the first line to get the dimension of the weights matrix
-          int loc = line.find_first_of(" ");
-          line = line.substr(loc+1, line.length() - (loc+1));
-          
-          loc = line.find_first_of(" ");
-          int length = atoi(line.substr(0, loc).c_str());
-
-          line = line.substr(loc+1, line.length() - (loc+1));
-          int width = atoi(line.c_str());
-            
-          if(DEBUG) cout<<"Dimension "<<length<<" "<<width<<endl;
-                      
-          getline(weight_file, line); // <AffineTransform::param>
-  
-          // Initialize the large weights array
-          float* weight_vec = (float*)malloc(sizeof(float)*width*length);
-          int float_cnt = 0;
-          for(int j = 0; j < length; j++){
-            getline(weight_file, line);
-            // String stream out each float in the line
-            std::stringstream sstream;
-            sstream.str(line);
-            float num;
-            while(sstream >> num){
-              weight_vec[float_cnt] = num; 
-              float_cnt++;
-            }
-          }
-          // Check if the total number of weights read-in is correct
-          if(DEBUG) cout<<"Number of weights read in: "<<float_cnt
-                  <<" and expected number is " <<width*length<<endl;
-          assert((float_cnt == (width*length)) 
-                          && "Total number of weights not equal to expected\n");
-          // Push the weight to caffe 
-          Blob<float> *ip1_weights = net->layers()[2*i]->blobs()[0].get();
-          ip1_weights->set_cpu_data(weight_vec);
-            
-
-          if(i == 6) break;
-          // Initialize the less large bias array
-          float* bias_vec = (float*) malloc(sizeof(float)*length);
-          float_cnt = 0;
-          getline(weight_file, line);
-          std::stringstream sstream;
-          sstream.str(line);
-          float num;
-          // Get rid of the [ at the begining of the line
-          char trash;
-          sstream >> trash;
-
-          // Now starts read float
-          while(sstream >> num){
-            bias_vec[float_cnt] = num;
-            float_cnt++;
-          } 
-
-          // Check if the total number of bias read-in is correct
-          if(DEBUG) cout<<"Number of bias read in: "<<float_cnt
-                <<" and expected number is " <<length<<endl;
-          assert((float_cnt == length) 
-                          && "Total Number of biase not equal to expected\n");
-          // Push the bias to caffe
-          Blob<float> *ip1_bias = net->layers()[2*i]->blobs()[1].get();
-          ip1_bias->set_cpu_data(bias_vec);
-          
-          // Then just get rid of the sigmoid line
-          getline(weight_file, line);
-      }
-
-      // Now the weights and bias are in and set in the neural nets
-      // Give control to caffe
-      break; 
-    }
-    case IMC: case DIG: case POS: case NER: case CHK: case SRL: case VBS: case PT0: {
+    case ASR: case IMC: case DIG: case POS: case NER: case CHK: case SRL: case VBS: case PT0: {
          net->CopyTrainedLayersFrom(weight_file_name);
          break;
     }
