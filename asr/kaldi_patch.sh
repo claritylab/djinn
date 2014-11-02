@@ -7,7 +7,7 @@
 # and copy over new scripts
 
 # ATTENTION. Change this into your kaldi root directory before running the script
-kaldi_root=/home/jahausw/projects/kaldi-trunk
+kaldi_root=/home/ypkang/kaldi-bkp
 
 echo "Specified kaldi root is at ${kaldi_root}"
 
@@ -41,17 +41,21 @@ echo "Done copy over socket library"
 # one_utt_test only has one utterance and it is for testing purpose. 
 # deepblue_test has several tenth of utterance, so it's better for timing and experiments.
 # Bigger test set will be added later after I test them out
+mkdir ${voxforge_root}/data/
+
 cp -r voxforge_data/one_utt_test/ ${voxforge_root}/data/
 cp -r voxforge_data/deepblue_test/ ${voxforge_root}/data/
 
 echo "Done copy over selected test set"
 
 # 2. Copy over the raw mfcc features. This will be referenced by the two data set above.
+mkdir ${voxforge_root}/data_set/
 cp -r voxforge_data/mfcc/ ${voxforge_root}/data_set/
 
 echo "Done copy over raw mfcc features"
 
 # 3. Copy over the graph/gmm dir 
+mkdir ${voxforge_root}/exp/
 cp -r voxforge_data/tri3b/ ${voxforge_root}/exp/
 
 echo "Done copy over graph/gmm dir"
@@ -70,17 +74,19 @@ echo "Done copy over decode_dnn.config"
 SCP_FILES=${voxforge_root}/data/*/*.scp
 for file in $SCP_FILES
 do
-  sed -i 's~/home/ypkang/kaldi-trunk~${kaldi_root}~g' $file
+  sed -i "s~/home/ypkang/kaldi-trunk~${kaldi_root}~g" $file
 done
 
 SCP_FILES=${voxforge_root}/data_set/mfcc/*.scp
 for file in $SCP_FILES
 do
-  sed -i 's~/home/ypkang/kaldi-trunk~${kaldi_root}~g' $file
+  sed -i "s~/home/ypkang/kaldi-trunk~${kaldi_root}~g" $file
 done
 
 # Also change the data set pointer in path.sh
-sed -i 's~/home/ypkang/kaldi-trunk/egs/voxforge/data_set~${voxforge_root}/data_set~g$' ${voxforge_root}/path.sh
+sed -i "s~/home/ypkang/kaldi-trunk/egs/voxforge/s5/data_set~${voxforge_root}/data_set~g" ${voxforge_root}/path.sh
+
+echo "Done changing the directory pointer in scp files"
 
 echo "You should now naviagte to src/nnetbin and re-make"
 echo "Then you will be able to run the client in voxforge/s5/ with run_client.sh and arguments"
