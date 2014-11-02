@@ -66,5 +66,21 @@ cp voxforge_data/decode_dnn.config ${voxforge_root}/conf/
 
 echo "Done copy over decode_dnn.config"
 
+# Change the directory pointer in the feature scp files
+SCP_FILES=${voxforge_root}/data/*/*.scp
+for file in $SCP_FILES
+do
+  sed -i 's~/home/ypkang/kaldi-trunk~${kaldi_root}~g' $file
+done
+
+SCP_FILES=${voxforge_root}/data_set/mfcc/*.scp
+for file in $SCP_FILES
+do
+  sed -i 's~/home/ypkang/kaldi-trunk~${kaldi_root}~g' $file
+done
+
+# Also change the data set pointer in path.sh
+sed -i 's~/home/ypkang/kaldi-trunk/egs/voxforge/data_set~${voxforge_root}/data_set~g$' ${voxforge_root}/path.sh
+
 echo "You should now naviagte to src/nnetbin and re-make"
 echo "Then you will be able to run the client in voxforge/s5/ with run_client.sh and arguments"
