@@ -20,6 +20,7 @@ cp ./scripts/run_client.sh ${voxforge_root}/
 cp ./scripts/decode.sh ${voxforge_root}/steps/nnet/
 cp ./src/Makefile ${kaldi_root}/src/nnetbin/
 cp ./scripts/path.sh ${voxforge_root}/
+cp ./scripts/cmd.sh ${voxforge_root}/
 
 echo "Done copy over voxforge related scripts"
 
