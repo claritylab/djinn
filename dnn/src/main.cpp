@@ -13,12 +13,10 @@
 #include <unistd.h>  
 #include <errno.h>
 
-#include "boost/program_options.hpp" 
 #include "socket.h"
 #include "thread.h"
 
 using namespace std;
-namespace po = boost::program_options;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -27,11 +25,11 @@ po::variables_map parse_opts( int ac, char** av )
     desc.add_options()
         ("help,h", "Produce help message")
 
-        ("portno,p", po::value<int>()->default_value(8080), "Open server on port (default: 8080)")
+        ("porno,p", po::value<int>()->default_value(8080), "Open server on port (default: 8080)")
 
         ("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
-        ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
-        ;
+        ("id,d", po::value<int>()->default_value(0), "Set GPU Device ID (default: 0)")
+        ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug (modify src for additional thread-level debug)") ;
 
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);
@@ -49,28 +47,25 @@ int main(int argc , char *argv[])
     // Main thread for the server
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
-
-    Caffe::set_phase(Caffe::TEST);
-    if(vm["gpu"].as<bool>())
-        Caffe::set_mode(Caffe::GPU);
-    else
-        Caffe::set_mode(Caffe::CPU);
-
-    int server_sock = SERVER_init(vm["portno"].as<int>());
+    int server_sock = SERVER_init(vm["porno"].as<int>());
 
     // Listen on socket
     listen(server_sock, 10);
-    printf("Server is listening for request on %d\n", vm["portno"].as<int>());
+    printf("Server is listening for request on %d\n", vm["porno"].as<int>());
 
     // Main Loop
-    while(1) {
-        int client_sock;
-        client_sock = accept(server_sock, (sockaddr*) 0, (unsigned int *) 0);
-        if(client_sock == -1)
+    while(1)
+    {
+        ThreadParams in;
+        in.sock = accept(server_sock, (sockaddr*) 0, (unsigned int *) 0);
+        in.gpu = vm["gpu"].as<bool>();
+        in.debug = vm["debug"].as<bool>();
+        in.gpuid = vm["id"].as<int>();
+        if(in.sock == -1)
             printf("Failed to accept.\n");
         else {
             // Create a new thread, pass the socket number to it
-            if(request_thread_init(client_sock) == -1)
+            if(request_thread_init(in) == -1)
                 printf("Failed to accept.\n");
         }
     }

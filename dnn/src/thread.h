@@ -3,16 +3,9 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include "boost/program_options.hpp" 
+
 #include "caffe/caffe.hpp"
-
-using caffe::Blob;
-using caffe::Caffe;
-using caffe::Net;
-using caffe::Layer;
-using caffe::shared_ptr;
-using caffe::Timer;
-using caffe::vector;
-
 #include "SENNA_POS.h"
 #include "SENNA_CHK.h"
 #include "SENNA_NER.h"
@@ -21,6 +14,23 @@ using caffe::vector;
 #include "SENNA_SRL.h"
 
 using namespace std;
+using caffe::Blob;
+using caffe::Caffe;
+using caffe::Net;
+using caffe::Layer;
+using caffe::shared_ptr;
+using caffe::Timer;
+using caffe::vector;
+
+namespace po = boost::program_options;
+
+struct ThreadParams
+{
+    int sock;
+    int gpuid;
+    bool gpu;
+    bool debug;
+};
 
 enum request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS, SIZE_OF_ENUM};
 
@@ -35,7 +45,7 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc",
                                                  "pt0",
                                                  "vbs"};
 
-int request_thread_init(int sock);
-void* request_handler(void* sock);
+int request_thread_init(ThreadParams in);
+void* request_handler(void* ThreadParams);
 
 #endif // #define _THREAD_H_

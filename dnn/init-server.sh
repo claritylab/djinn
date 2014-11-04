@@ -1,1 +1,1 @@
-./dnn-server --portno $1 --debug 1
+./dnn-server --porno $1 --gpuid 0 --debug 0
