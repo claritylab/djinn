@@ -2,10 +2,7 @@ Defaults:
     Server IP:
     Server PORT: 8080
 
-    NLP PORT: 8080
-    IMC PORT: 8081
-
-request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS, SIZE_OF_ENUM};
+request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS};
 
 Communication Protocol:
 Client should execute the following in specific order
@@ -18,4 +15,7 @@ this should agree with the input dim of the first layer in the config file
   4.2 Wait for inference to finish
   4.3 Receive the result
 5. Close the socket if the application is done using the service. 
-                        
+
+Service now read from pre-dumped caffemodel.
+If you wish to update model, create a method in utils.cpp/h and 
+call the function in request_handler().

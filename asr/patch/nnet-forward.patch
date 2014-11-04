@@ -1,5 +1,5 @@
---- bkp/nnet-forward.cc.bkp	2014-10-28 22:34:13.228508978 -0400
-+++ src/nnet-forward.cc	2014-10-28 23:44:00.524498535 -0400
+--- bkp/nnet-forward.cc.bkp	2014-10-29 00:23:25.292492637 -0400
++++ src/nnet-forward.cc	2014-11-01 15:16:36.151712544 -0400
 @@ -18,23 +18,32 @@
  // limitations under the License.
  

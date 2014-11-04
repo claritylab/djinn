@@ -28,6 +28,13 @@ asr-client
 nlp-client
 dnn-server
 
+# Popular scripts with hardpaths
+run-*.sh
+socket-lib/lib.sh
+socket-lib/deploy.sh
+asr/kaldi_patch.sh
+
+
 # datasets
 */weights/*
 */images/*
@@ -35,3 +42,4 @@ dnn-server
 */input/*
 */data/*
 */log/*
+*/voxforge_data/*
