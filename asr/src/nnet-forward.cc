@@ -193,8 +193,13 @@ int main(int argc, char *argv[]) {
         // 5. Send the length of the input feature 
         recv_mat.Resize(feats_transf.NumRows(), 1706);
 
-        SOCKET_txsize(socket, feats_transf.NumCols());
+        int total_input_features = feats_transf.NumCols() * feats_transf.NumRows();
+        SOCKET_txsize(socket, total_input_features);
 
+        // The following block of code is commented out 
+        // and reserved for future reference
+        // This is the old implementation where features are sent vector by vector
+        /*
         // 6. Start to send the feature and get result frame by frame
         for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
 
@@ -216,9 +221,32 @@ int main(int argc, char *argv[]) {
 
           recv_mat.CopyRowFromVec(cur_row, i);
         }
-        nnet_out.Resize(recv_mat.NumRows(), recv_mat.NumCols()); 
-        nnet_out.CopyFromMat(recv_mat);
-     
+        */
+
+        // Now we send the entire sentence over for batch processing
+        int total_sent = 0;
+        nnet_out.Resize(feats_transf.NumRows(), 1706); 
+        
+        Timer time_comm_temp;
+
+        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+          int sent = SOCKET_send(socket, (char*)feats_transf.Row(i).Data(),
+                        feats_transf.NumCols() * sizeof(float), DEBUG);
+          total_sent += sent;
+        }
+        assert(total_sent == total_input_features*sizeof(float) && "Not sending enough features.");
+
+        // Now we receive the result, again with the matrix as a whole
+        int total_rcvd = 0;
+        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+         int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(),
+                        1706 * sizeof(float), DEBUG);
+          total_rcvd += rcvd; 
+        }
+        assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
+        
+        time_comm += time_comm_temp.Elapsed();
+
         // Close the socket, don't need it anymore
         SOCKET_close(socket,DEBUG);
         KALDI_LOG << "DNN service finishes. Socket closed.";
