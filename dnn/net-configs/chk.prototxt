@@ -1,4 +1,4 @@
-name: "IpaCHKNet"
+name: "chk"
 input: "data"
 input_dim: 1
 input_dim: 1

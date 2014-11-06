@@ -1,9 +1,9 @@
-name: "IpaASRNet"
+name: "asr"
 input: "data"
-input_dim: 1
-input_dim: 1
-input_dim: 1
+input_dim: 548
 input_dim: 440
+input_dim: 1
+input_dim: 1
 layers {
   name: "inner1"
   type: INNER_PRODUCT

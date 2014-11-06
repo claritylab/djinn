@@ -2,9 +2,9 @@ CAFFE=/home/jahausw/projects/caffe/distribute
 CUDA=/usr/local/cuda
 CXX = g++
 CXX_FLAGS = -w -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -g
-LINK_FLAGS = -lpthread -ldl $(CAFFE)/lib/libcaffe.so ../libsocket.a -lrt -lboost_program_options -lboost_filesystem -lboost_system -lglog
+LINK_FLAGS = -lpthread -ldl $(CAFFE)/lib/libcaffe.so -lrt -lglog -lthrift -lgflags
 
-SRC=src
+SRC= src
 
 # File names
 EXEC = dnn-server

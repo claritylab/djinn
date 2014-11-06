@@ -1,0 +1,9 @@
+net-configs/asr.prototxt
+net-configs/chk.prototxt
+net-configs/dig.prototxt
+net-configs/imc.prototxt
+net-configs/ner.prototxt
+net-configs/pos.prototxt
+net-configs/pt0.prototxt
+net-configs/srl.prototxt
+net-configs/vbs.prototxt

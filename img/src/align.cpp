@@ -206,9 +206,7 @@ vector<cv::Point2d> detectLandmarks(FLANDMARK_Model* model, const Mat & image, c
 }
 
 /** preprocesses the image by calling correct functions*/
-bool preprocess(po::variables_map& vm, string list) {
-    assert(vm.count("flandmark"));
-    assert(vm.count("haar"));
+bool preprocess(string haar, string fland, string list) {
 
     ifstream img_list (list.c_str());
     // Read in line by line
@@ -236,11 +234,10 @@ bool preprocess(po::variables_map& vm, string list) {
 
         // Get cascade for face detection
         CascadeClassifier face_cascade;
-        face_cascade.load(vm["haar"].as<string>());
+        face_cascade.load(haar);
 
         // Initialize flandmarks with the model
-        string flandmarks_model_name = vm["flandmark"].as<string>();
-        FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
+        FLANDMARK_Model* model = flandmark_init(fland.c_str());
 
         // Find face in image:
         Rect r = detect_face(image, face_cascade);
