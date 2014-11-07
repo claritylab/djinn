@@ -4,8 +4,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/TBufferTransports.h>
-
+#include <thrift/transport/TBufferTransports.h> 
 #include "Dnn.h"
 #include "caffe/caffe.hpp"
 
@@ -53,7 +52,26 @@ class DnnHandler : virtual public DnnIf
 
         void fwd(std::vector<double> & _return, const Work& input) {
             cout << "Task " << input.op << " foward pass.\n";
+
             vector<Blob<double>* > in_blobs = nets[input.op]->input_blobs();
+            
+            // Reshape the input dimension if neccessaray
+            int n_in = in_blobs[0]->num();
+            int c_in = in_blobs[0]->channels();
+            int w_in = in_blobs[0]->width();
+            int h_in = in_blobs[0]->height();
+            int in_elts = in_blobs[0]->count();
+            
+            if(input.n_in != n_in || 
+                            input.c_in != c_in ||
+                            input.w_in != w_in ||
+                            input.h_in != h_in){
+              printf("Reshaping input and output dims to num:%d channel:%d width:%d height:%d\n",
+                              input.n_in, input.c_in, input.w_in, input.h_in);
+              in_blobs[0]->Reshape(input.n_in, input.c_in, input.w_in, input.h_in);
+              nets[input.op]->output_blobs()[0]->Reshape(input.n_in, input.c_in, input.w_in, input.h_in);
+            }
+            
             double* in = &input.data[0];
             in_blobs[0]->set_cpu_data(in);
             double loss;
