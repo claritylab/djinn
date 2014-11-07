@@ -1,6 +1,9 @@
 #ifndef SENNA_CHK_H
 #define SENNA_CHK_H
 
+#include "Dnn.h"
+using namespace dnn;
+
 typedef struct SENNA_CHK_
 {
     /* sizes */
@@ -16,20 +19,20 @@ typedef struct SENNA_CHK_
     int output_state_size;
 
     /* weights */
-    float *ll_word_weight;
-    float *ll_caps_weight;
-    float *ll_posl_weight;
-    float *l1_weight;
-    float *l1_bias;
-    float *l2_weight;
-    float *l2_bias;
-    float *viterbi_score_init;
-    float *viterbi_score_trans;
+    double *ll_word_weight;
+    double *ll_caps_weight;
+    double *ll_posl_weight;
+    double *l1_weight;
+    double *l1_bias;
+    double *l2_weight;
+    double *l2_bias;
+    double *viterbi_score_init;
+    double *viterbi_score_trans;
 
     /* states */
-    float *input_state;
-    float *hidden_state;
-    float *output_state;
+    double *input_state;
+    double *hidden_state;
+    double *output_state;
     int *labels;
 
     /* padding indices */
@@ -50,12 +53,7 @@ typedef struct SENNA_CHK_
 
 SENNA_CHK* SENNA_CHK_new(const char *path, const char *subpath);
 
-int* SENNA_CHK_forward(SENNA_CHK *chk,
-                       const int *sentence_words,
-                       const int *sentence_caps,
-                       const int *sentence_posl,
-                       int sentence_size,
-                       int socketfd);
+int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, DnnClient client, bool service);
 
 void SENNA_CHK_free(SENNA_CHK *chk);
 

@@ -1,7 +1,6 @@
 #include "SENNA_NER.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
-#include "socket.h"
 #include <sys/time.h>
 
 int* SENNA_NER_forward(SENNA_NER *ner, const int *sentence_words, const int *sentence_caps, 
@@ -9,15 +8,17 @@ int* SENNA_NER_forward(SENNA_NER *ner, const int *sentence_words, const int *sen
         const int *sentence_gazm,
         const int *sentence_gazo,
         const int *sentence_gazp,
-        int sentence_size, int socketfd)
+        int sentence_size, DnnClient client, bool service)
 {
     struct timeval tv1, tv2;
     int idx;
     int input_size = ner->ll_word_size+ner->ll_caps_size+ner->ll_gazl_size+ner->ll_gazm_size+ner->ll_gazo_size+ner->ll_gazp_size;
+    Work work;
+    work.op = "ner";
 
     gettimeofday(&tv1,NULL);
-    ner->input_state = SENNA_realloc(ner->input_state, sizeof(float), (sentence_size+ner->window_size-1)*input_size);
-    ner->output_state = SENNA_realloc(ner->output_state, sizeof(float), sentence_size*ner->output_state_size);
+    ner->input_state = SENNA_realloc(ner->input_state, sizeof(double), (sentence_size+ner->window_size-1)*input_size);
+    ner->output_state = SENNA_realloc(ner->output_state, sizeof(double), sentence_size*ner->output_state_size);
 
     SENNA_nn_lookup(ner->input_state,
             input_size, ner->ll_word_weight, ner->ll_word_size, ner->ll_word_max_idx, sentence_words, sentence_size, ner->ll_word_padding_idx, (ner->window_size-1)/2);
@@ -37,17 +38,16 @@ int* SENNA_NER_forward(SENNA_NER *ner, const int *sentence_words, const int *sen
     gettimeofday(&tv1,NULL);
     for(idx = 0; idx < sentence_size; idx++)
     {
-        if(ner->service) {
-            SOCKET_send(socketfd,
-                        (char*)(ner->input_state+idx*input_size),
-                        ner->window_size*input_size*sizeof(float),
-                        ner->debug
-                        );
-            SOCKET_receive(socketfd,
-                           (char*)(ner->output_state+idx*ner->output_state_size),
-                           ner->output_state_size*sizeof(float),
-                           ner->debug
-                           );
+        if(service) {
+          for(int i = 0; i < ner->window_size*input_size; ++i)
+              work.data.push_back((ner->input_state+idx*input_size)[i]);
+
+          // forward pass
+          std::vector<double> inc;
+          client.fwd(inc, work);
+          for(int i = 0; i < ner->output_state_size; ++i)
+              (ner->output_state+idx*ner->output_state_size)[i] = inc[i];
+
         } else {
             SENNA_nn_linear(ner->hidden_state, ner->hidden_state_size, ner->l1_weight, ner->l1_bias, ner->input_state+idx*input_size, ner->window_size*input_size);
             SENNA_nn_hardtanh(ner->hidden_state, ner->hidden_state, ner->hidden_state_size);
@@ -71,7 +71,7 @@ SENNA_NER* SENNA_NER_new(const char *path, const char *subpath)
 {
     SENNA_NER *ner = SENNA_malloc(sizeof(SENNA_NER), 1);
     FILE *f;
-    float dummy;
+    double dummy;
 
     memset(ner, 0, sizeof(SENNA_NER));
 
@@ -95,14 +95,14 @@ SENNA_NER* SENNA_NER_new(const char *path, const char *subpath)
     SENNA_fread(&ner->ll_caps_padding_idx, sizeof(int), 1, f);
     SENNA_fread(&ner->ll_gazt_padding_idx, sizeof(int), 1, f);
 
-    SENNA_fread(&dummy, sizeof(float), 1, f);
+    SENNA_fread(&dummy, sizeof(double), 1, f);
     SENNA_fclose(f);
 
     if((int)dummy != 777)
-        SENNA_error("ner: data corrupted (or not IEEE floating computer)");
+        SENNA_error("ner: data corrupted (or not IEEE doubleing computer)");
 
     ner->input_state = NULL;
-    ner->hidden_state = SENNA_malloc(sizeof(float), ner->hidden_state_size);
+    ner->hidden_state = SENNA_malloc(sizeof(double), ner->hidden_state_size);
     ner->output_state = NULL;
     ner->labels = NULL;
 
