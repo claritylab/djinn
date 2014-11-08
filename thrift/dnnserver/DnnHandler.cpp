@@ -74,7 +74,7 @@ namespace dnn {
         vector<Blob<double>* > out_blobs = nets[input.op]->ForwardPrefilled(&loss);
         gettimeofday(&end_time, nullptr);
 
-        timersub(&end)time, &start_time, &diff_time);
+        timersub(&end_time, &start_time, &diff_time);
 
         Result temp_result;
         temp_result.time_ms = diff_time.tv_sec * 1000 + diff_time.tv_usec / 1000;
