@@ -30,6 +30,16 @@ struct Work {
   6: integer h_in,
 }
 
+struct ServerResult {
+  1: list<double> data,
+  2: integer time_ms
+}
+
 service Dnn {
-   list<double> fwd(1:Work input),
+  ServerResult fwd(1:Work input),
+}
+
+service App {
+  AppResult asr(1:Work input)
+  AppResult imc(1:Work input)     
 }

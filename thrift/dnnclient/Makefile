@@ -1,4 +1,4 @@
-CAFFE=/home/ypkang/caffe/distribute
+CAFFE=/home/ypkang/git/caffe/distribute
 CUDA=/usr/local/cuda
 
 # folly path
