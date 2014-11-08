@@ -3,6 +3,9 @@
 
 #include "SENNA_Hash.h"
 
+#include "Dnn.h"
+using namespace dnn;
+
 typedef struct SENNA_VBS_
 {
     /* sizes */
@@ -18,18 +21,18 @@ typedef struct SENNA_VBS_
     int output_state_size;
 
     /* weights */
-    float *ll_word_weight;
-    float *ll_caps_weight;
-    float *ll_posl_weight;
-    float *l1_weight;
-    float *l1_bias;
-    float *l2_weight;
-    float *l2_bias;
+    double *ll_word_weight;
+    double *ll_caps_weight;
+    double *ll_posl_weight;
+    double *l1_weight;
+    double *l1_bias;
+    double *l2_weight;
+    double *l2_bias;
 
     /* states */
-    float *input_state;
-    float *hidden_state;
-    float *output_state;
+    double *input_state;
+    double *hidden_state;
+    double *output_state;
     int *labels;
 
     /* padding indices */
@@ -52,7 +55,7 @@ typedef struct SENNA_VBS_
 } SENNA_VBS;
 
 SENNA_VBS* SENNA_VBS_new(const char *path, const char *subpath);
-int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, int socketfd);
+int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sentence_caps, const int *sentence_posl, int sentence_size, DnnClient client, bool service);
 void SENNA_VBS_free(SENNA_VBS *vbs);
 
 #endif
