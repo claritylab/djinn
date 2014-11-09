@@ -2,16 +2,23 @@ CAFFE=/home/ypkang/git/caffe/distribute
 CUDA=/usr/local/cuda
 
 # folly path
-PATH_FOLLY = /home/yunqi/folly/
+PATH_FOLLY = /usr/local/include/folly/
 # double-conversion path
-PATH_DBCON = /home/yunqi/double-conversion/
+PATH_DBCON = /usr/loca/double-conversion
 
 CXX = g++
 
-INCLUDES   = -I$(PATH_DBCON)src -I$(PATH_FOLLY) -I$(CAFFE)/include -I$(CUDA)/include -g
-LIBRARIES  = -levent -lfolly -lgflags -lglog -lpthread -lrt -lboost_system \
-						 -lthriftcpp2 \
-             -L$(PATH_DBCON) -L/usr/local/lib/ \
+INCLUDES   = -I$(PATH_DBCON)/src -I$(PATH_FOLLY) -I$(CAFFE)/include -I$(CUDA)/include -g
+LIBRARIES  = -levent \
+			 -lfolly \
+			 -lgflags \
+			 -lglog \
+			 -lpthread \
+			 -lrt \
+			 -lboost_system \
+			 -lthriftcpp2 \
+             -L$(PATH_DBCON) \
+			 -L/usr/local/lib/ \
              $(CAFFE)/lib/libcaffe.so
 
 CXX_CFLAGS = -std=c++11 -Wall -D_GNU_SOURCE $(INCLUDES)

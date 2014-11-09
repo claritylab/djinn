@@ -26,7 +26,6 @@
 img-client
 asr-client
 nlp-client
-dnn-server
 
 # Popular scripts with hardpaths
 run-*.sh

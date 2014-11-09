@@ -13,7 +13,6 @@ class DnnHandler : public DnnSvAsyncIf {
   public:
     DnnHandler();
 
- 
     folly::wangle::Future<Result> future_fwd(Work input);
 };
 

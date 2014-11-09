@@ -23,6 +23,7 @@ namespace treadmill {
 namespace services {
 namespace dnn {
 
+  map<string, Net<double>* > nets;
   DnnHander::DnnHandler() {
     ifstream file (FLAGS_net_list.c_str());
 

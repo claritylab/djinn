@@ -56,7 +56,7 @@ DEFINE_string(flandmark, "data/flandmark.dat", "flandmarks");
 int main(int argc, char** argv)
 {
     // parse command line
-    google::ParseCommandLineFlags(&argc, &argv, true);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     shared_ptr<TTransport> socket(new TSocket(FLAGS_hostname, FLAGS_porno));
     shared_ptr<TTransport> transport(new TBufferedTransport(socket));
