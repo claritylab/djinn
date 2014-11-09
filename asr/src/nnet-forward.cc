@@ -27,9 +27,26 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "base/timer.h"
+
 #include "socket.h"
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+
+#include "Dnn.h"
+#include "dnn_types.h"
+#include "dnn_constants.h"
 
 #define DEBUG 0
+
+using namespace std;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+
+using namespace dnn;
+using namespace boost;
+
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -173,7 +190,44 @@ int main(int argc, char *argv[]) {
       nnet_transf.Feedforward(feats, &feats_transf);
       KALDI_LOG << "Input feature with dimension: "<<feats_transf.NumCols(); 
       if(use_service){
-        KALDI_LOG << "Use remote dnn service to inference.";
+        shared_ptr<TTransport> socket(new TSocket(hostname, portno));
+        shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+
+        DnnClient client(protocol);
+
+        transport->open();
+        
+        Work work;
+        work.op = "asr";
+        work.c_in = 440;
+        work.n_in = feats_transf.NumRows();
+        work.w_in = 1;
+        work.h_in = 1;
+
+        // "Send data"
+        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+          for(MatrixIndexT j = 0; j < feats_transf.NumCols(); j++){
+            work.data.push_back(feats_transf.Row(i)(j)); 
+          }
+        }
+
+        // "Forward pass"
+        vector<double> inc;
+        client.fwd(inc, work);
+
+        // Resize the result matrix
+        nnet_out.Resize(feats_transf.NumRows(), 1706); 
+
+        for(MatrixIndexT i = 0; i < nnet_out.NumRows(); i++){
+          for(MatrixIndexT j = 0; j < nnet_out.NumCols(); j++){
+            nnet_out.Row(i)(j) = inc[i*nnet_out.NumCols() + j];
+          }
+        }
+
+        transport->close();
+
+/*        KALDI_LOG << "Use remote dnn service to inference.";
         // Connect to the server
         int socket;
         char* hostname_cstr = new char [hostname.length() + 1];
@@ -193,35 +247,37 @@ int main(int argc, char *argv[]) {
         // 5. Send the length of the input feature 
         recv_mat.Resize(feats_transf.NumRows(), 1706);
 
-        SOCKET_txsize(socket, feats_transf.NumCols());
+        int total_input_features = feats_transf.NumCols() * feats_transf.NumRows();
+        SOCKET_txsize(socket, total_input_features);
 
-        // 6. Start to send the feature and get result frame by frame
+        // Now we send the entire sentence over for batch processing
+        int total_sent = 0;
+        nnet_out.Resize(feats_transf.NumRows(), 1706); 
+        
+        Timer time_comm_temp;
+
         for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-
-          Timer time_comm_temp;
-
-          int sent = SOCKET_send(socket, (char*) feats_transf.Row(i).Data(), 
-                          feats_transf.NumCols()*sizeof(float), DEBUG);
-          if(DEBUG){
-            KALDI_LOG<<"Sent "<<sent << " data";
-          }
-          // Receive neural network output
-          Vector<BaseFloat> cur_row(1706);
-          int rcvd = SOCKET_receive(socket, (char*) cur_row.Data(), 1706*sizeof(float), DEBUG);
-          if(DEBUG){
-            KALDI_LOG<<"Recv "<<rcvd << " data";
-          }
-          
-          time_comm += time_comm_temp.Elapsed();
-
-          recv_mat.CopyRowFromVec(cur_row, i);
+          int sent = SOCKET_send(socket, (char*)feats_transf.Row(i).Data(),
+                        feats_transf.NumCols() * sizeof(float), DEBUG);
+          total_sent += sent;
         }
-        nnet_out.Resize(recv_mat.NumRows(), recv_mat.NumCols()); 
-        nnet_out.CopyFromMat(recv_mat);
-     
+        assert(total_sent == total_input_features*sizeof(float) && "Not sending enough features.");
+
+        // Now we receive the result, again with the matrix as a whole
+        int total_rcvd = 0;
+        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+         int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(),
+                        1706 * sizeof(float), DEBUG);
+          total_rcvd += rcvd; 
+        }
+        assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
+        
+        time_comm += time_comm_temp.Elapsed();
+
         // Close the socket, don't need it anymore
         SOCKET_close(socket,DEBUG);
         KALDI_LOG << "DNN service finishes. Socket closed.";
+        */
       }else{
         // Use local(kaldi's) dnn to inference
         KALDI_LOG << "Use local dnn service to inference.";

@@ -1,6 +1,8 @@
+CAFFE=/home/jahausw/projects/caffe/distribute
+CUDA=/usr/local/cuda
 CXX = g++
-CXX_FLAGS = -fpermissive
-LINK_FLAGS = ../libsocket.a -lrt -lpthread -lboost_program_options -lboost_filesystem -lboost_system
+CXX_FLAGS = -w -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -g
+LINK_FLAGS = -lpthread -ldl $(CAFFE)/lib/libcaffe.so -lrt -lglog -lthrift -lgflags
 
 SRC=src
 

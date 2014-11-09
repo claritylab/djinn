@@ -1,6 +1,9 @@
 #ifndef SENNA_SRL_H
 #define SENNA_SRL_H
 
+#include "Dnn.h"
+using namespace dnn;
+
 typedef struct SENNA_SRL_
 {
     /* sizes */
@@ -21,38 +24,38 @@ typedef struct SENNA_SRL_
     int output_state_size;
 
     /* weights */
-    float *ll_word_weight;
-    float *ll_caps_weight;
-    float *ll_chkl_weight;
-    float *ll_posv_weight;
-    float *ll_posw_weight;
-    float *l1_weight_wcc;
-    float *l1_weight_pw;
-    float *l1_weight_pv;
-    float *l1_bias;
-    float *l3_weight;
-    float *l3_bias;
-    float *l4_weight;
-    float *l4_bias;
-    float *viterbi_score_init;
-    float *viterbi_score_trans;
+    double *ll_word_weight;
+    double *ll_caps_weight;
+    double *ll_chkl_weight;
+    double *ll_posv_weight;
+    double *ll_posw_weight;
+    double *l1_weight_wcc;
+    double *l1_weight_pw;
+    double *l1_weight_pv;
+    double *l1_bias;
+    double *l3_weight;
+    double *l3_bias;
+    double *l4_weight;
+    double *l4_bias;
+    double *viterbi_score_init;
+    double *viterbi_score_trans;
 
     /* extra inputs */
     int *sentence_posv;    
     int *sentence_posw;
 
     /* states */
-    float *input_state;
-    float *input_state_wcc;
-    float *input_state_pw;
-    float *input_state_pv;
-    float *hidden_state1;
-    float *hidden_state1_wcc;
-    float *hidden_state1_pw;
-    float *hidden_state1_pv;
-    float *hidden_state2;
-    float *hidden_state3;
-    float *output_state;
+    double *input_state;
+    double *input_state_wcc;
+    double *input_state_pw;
+    double *input_state_pv;
+    double *hidden_state1;
+    double *hidden_state1_wcc;
+    double *hidden_state1_pw;
+    double *hidden_state1_pv;
+    double *hidden_state2;
+    double *hidden_state3;
+    double *output_state;
     int **labels;
     int labels_size;
 
@@ -73,7 +76,7 @@ typedef struct SENNA_SRL_
 } SENNA_SRL;
 
 SENNA_SRL* SENNA_SRL_new(const char *path, const char *subpath);
-int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *sentence_caps, const int *sentence_chkl, const int *sentence_isvb, int sentence_size, int socketfd);
+int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *sentence_caps, const int *sentence_chkl, const int *sentence_isvb, int sentence_size, DnnClient client, bool service);
 void SENNA_SRL_free(SENNA_SRL *srl);
 
 #endif

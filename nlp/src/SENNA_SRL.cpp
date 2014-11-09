@@ -2,30 +2,31 @@
 #include "SENNA_SRL.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
-#include "socket.h"
 
-int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *sentence_caps, const int *sentence_chkl, const int *sentence_isvb, int sentence_size, int socketfd)
+int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *sentence_caps, const int *sentence_chkl, const int *sentence_isvb, int sentence_size, DnnClient client, bool service)
 {
   int vbidx;
   int idx;
   int n_verbs = 0;
   int i;
   struct timeval tv1, tv2;
+  Work work;
+  work.op = "srl";
 
   gettimeofday(&tv1,NULL);
   srl->sentence_posv = SENNA_realloc(srl->sentence_posv, sizeof(int), sentence_size+srl->window_size-1);
   srl->sentence_posw = SENNA_realloc(srl->sentence_posw, sizeof(int), sentence_size+srl->window_size-1);
 
-  srl->input_state_wcc = SENNA_realloc(srl->input_state_wcc, sizeof(float), (sentence_size+srl->window_size-1)*(srl->ll_word_size+srl->ll_caps_size+srl->ll_chkl_size));
-  srl->input_state_pv = SENNA_realloc(srl->input_state_pv, sizeof(float), (sentence_size+srl->window_size-1)*srl->ll_posv_size);
-  srl->input_state_pw = SENNA_realloc(srl->input_state_pw, sizeof(float), (sentence_size+srl->window_size-1)*srl->ll_posw_size);
-  srl->hidden_state1_wcc = SENNA_realloc(srl->hidden_state1_wcc, sizeof(float), sentence_size*srl->hidden_state1_size);
-  srl->hidden_state1_pv = SENNA_realloc(srl->hidden_state1_pv, sizeof(float), sentence_size*srl->hidden_state1_size);
-  srl->hidden_state1_pw = SENNA_realloc(srl->hidden_state1_pw, sizeof(float), sentence_size*srl->hidden_state1_size);
-  srl->hidden_state1 = SENNA_realloc(srl->hidden_state1, sizeof(float), sentence_size*srl->hidden_state1_size);
-  srl->hidden_state2 = SENNA_realloc(srl->hidden_state2, sizeof(float), srl->hidden_state1_size);
-  srl->hidden_state3 = SENNA_realloc(srl->hidden_state3, sizeof(float), srl->hidden_state3_size);
-  srl->output_state = SENNA_realloc(srl->output_state, sizeof(float), sentence_size*srl->output_state_size);
+  srl->input_state_wcc = SENNA_realloc(srl->input_state_wcc, sizeof(double), (sentence_size+srl->window_size-1)*(srl->ll_word_size+srl->ll_caps_size+srl->ll_chkl_size));
+  srl->input_state_pv = SENNA_realloc(srl->input_state_pv, sizeof(double), (sentence_size+srl->window_size-1)*srl->ll_posv_size);
+  srl->input_state_pw = SENNA_realloc(srl->input_state_pw, sizeof(double), (sentence_size+srl->window_size-1)*srl->ll_posw_size);
+  srl->hidden_state1_wcc = SENNA_realloc(srl->hidden_state1_wcc, sizeof(double), sentence_size*srl->hidden_state1_size);
+  srl->hidden_state1_pv = SENNA_realloc(srl->hidden_state1_pv, sizeof(double), sentence_size*srl->hidden_state1_size);
+  srl->hidden_state1_pw = SENNA_realloc(srl->hidden_state1_pw, sizeof(double), sentence_size*srl->hidden_state1_size);
+  srl->hidden_state1 = SENNA_realloc(srl->hidden_state1, sizeof(double), sentence_size*srl->hidden_state1_size);
+  srl->hidden_state2 = SENNA_realloc(srl->hidden_state2, sizeof(double), srl->hidden_state1_size);
+  srl->hidden_state3 = SENNA_realloc(srl->hidden_state3, sizeof(double), srl->hidden_state3_size);
+  srl->output_state = SENNA_realloc(srl->output_state, sizeof(double), sentence_size*srl->output_state_size);
 
   /* words and caps are common for all words and all verbs */
   SENNA_nn_lookup(srl->input_state_wcc,
@@ -119,7 +120,7 @@ int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *se
                   sentence_size+srl->window_size-1,
                   srl->window_size);
 
-          memcpy(srl->hidden_state1, srl->hidden_state1_wcc, sizeof(float)*srl->hidden_state1_size*sentence_size);
+          memcpy(srl->hidden_state1, srl->hidden_state1_wcc, sizeof(double)*srl->hidden_state1_size*sentence_size);
 
           for(i = 0; i < srl->hidden_state1_size*sentence_size; i++)
               srl->hidden_state1[i] += srl->hidden_state1_pv[i];
@@ -132,17 +133,15 @@ int** SENNA_SRL_forward(SENNA_SRL *srl, const int *sentence_words, const int *se
           srl->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
           gettimeofday(&tv1,NULL);
-          if(srl->service) {
-              SOCKET_send(socketfd,
-                      (char*)(srl->hidden_state2),
-                      srl->hidden_state1_size*sizeof(float),
-                      srl->debug
-                      );
-              SOCKET_receive(socketfd,
-                      (char*)(srl->output_state+idx*srl->output_state_size),
-                      srl->output_state_size*sizeof(float),
-                      srl->debug
-                      );
+          if(service) {
+              for(int i = 0; i < srl->hidden_state1_size; ++i)
+                  work.data.push_back((srl->hidden_state2)[i]);
+
+              // forward pass
+              std::vector<double> inc;
+              client.fwd(inc, work);
+              for(int i = 0; i < srl->output_state_size; ++i)
+                  (srl->output_state+idx*srl->output_state_size)[i] = inc[i];
           } else {
               SENNA_nn_linear(srl->hidden_state3,
                       srl->hidden_state3_size,
@@ -188,7 +187,7 @@ SENNA_SRL* SENNA_SRL_new(const char *path, const char *subpath)
 {
   SENNA_SRL *srl = SENNA_malloc(sizeof(SENNA_SRL), 1);
   FILE *f;
-  float dummy;
+  double dummy;
   int dummy_size;
 
   f = SENNA_fopen(path, subpath, "rb");
@@ -214,11 +213,11 @@ SENNA_SRL* SENNA_SRL_new(const char *path, const char *subpath)
   SENNA_fread(&srl->ll_caps_padding_idx, sizeof(int), 1, f);
   SENNA_fread(&srl->ll_chkl_padding_idx, sizeof(int), 1, f);
 
-  SENNA_fread(&dummy, sizeof(float), 1, f);
+  SENNA_fread(&dummy, sizeof(double), 1, f);
   SENNA_fclose(f);
 
   if((int)dummy != 777)
-    SENNA_error("srl: data corrupted (or not IEEE floating computer)");
+    SENNA_error("srl: data corrupted (or not IEEE doubleing computer)");
 
   /* states */
   srl->sentence_posv = NULL;    
