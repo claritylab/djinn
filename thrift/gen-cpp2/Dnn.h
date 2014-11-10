@@ -16,14 +16,14 @@
 
 
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 class DnnSvAsyncIf {
  public:
   virtual ~DnnSvAsyncIf() {}
-  virtual void async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>> callback, std::unique_ptr< ::dnn::cpp2::Work> input) = 0;
-  virtual void async_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>> callback, std::unique_ptr< ::dnn::cpp2::Work> input) = delete;
-  virtual folly::wangle::Future<std::unique_ptr<std::vector<double>>> future_fwd(std::unique_ptr< ::dnn::cpp2::Work> input) = 0;
+  virtual void async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>> callback, std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) = 0;
+  virtual void async_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>> callback, std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) = delete;
+  virtual folly::wangle::Future<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>> future_fwd(std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) = 0;
 };
 
 class DnnAsyncProcessor;
@@ -35,9 +35,9 @@ class DnnSvIf : public DnnSvAsyncIf, public apache::thrift::ServerInterface {
   virtual ~DnnSvIf() {}
   virtual std::unique_ptr<apache::thrift::AsyncProcessor> getProcessor();
   apache::thrift::concurrency::PriorityThreadManager::PRIORITY getprio_fwd(apache::thrift::Cpp2RequestContext* reqCtx);
-  virtual void fwd(std::vector<double>& _return, std::unique_ptr< ::dnn::cpp2::Work> input) = delete;
-  folly::wangle::Future<std::unique_ptr<std::vector<double>>> future_fwd(std::unique_ptr< ::dnn::cpp2::Work> input);
-  virtual void async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>> callback, std::unique_ptr< ::dnn::cpp2::Work> input);
+  virtual void fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) = delete;
+  folly::wangle::Future<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>> future_fwd(std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input);
+  virtual void async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>> callback, std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input);
 };
 
 class DnnSvNull : public DnnSvIf {
@@ -63,7 +63,7 @@ class DnnAsyncProcessor : public ::apache::thrift::GeneratedAsyncProcessor {
   template <typename ProtocolIn_, typename ProtocolOut_>
   void process_fwd(std::unique_ptr<apache::thrift::ResponseChannel::Request> req, std::unique_ptr<folly::IOBuf> buf, std::unique_ptr<ProtocolIn_> iprot,apache::thrift::Cpp2RequestContext* ctx,apache::thrift::async::TEventBase* eb, apache::thrift::concurrency::ThreadManager* tm);
   template <class ProtocolIn_, class ProtocolOut_>
-  static folly::IOBufQueue return_fwd(int32_t protoSeqId, std::unique_ptr<apache::thrift::ContextStack> ctx, std::vector<double> const& _return);
+  static folly::IOBufQueue return_fwd(int32_t protoSeqId, std::unique_ptr<apache::thrift::ContextStack> ctx,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult const& _return);
   template <class ProtocolIn_, class ProtocolOut_>
   static void throw_fwd(std::unique_ptr<apache::thrift::ResponseChannel::Request> req,int32_t protoSeqId,std::unique_ptr<apache::thrift::ContextStack> ctx,std::exception_ptr ep,apache::thrift::Cpp2RequestContext* reqCtx);
   template <class ProtocolIn_, class ProtocolOut_>
@@ -90,26 +90,26 @@ class DnnAsyncClient : public apache::thrift::TClientBase {
   apache::thrift::RequestChannel*  getChannel() {
     return this->channel_.get();
   }
-  virtual void fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input);
-  virtual void callback_fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input);
-  virtual void fwd(const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input);
-  virtual void sync_fwd(std::vector<double>& _return, const  ::dnn::cpp2::Work& input);
-  virtual void sync_fwd(const apache::thrift::RpcOptions& rpcOptions, std::vector<double>& _return, const  ::dnn::cpp2::Work& input);
-  virtual void fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::dnn::cpp2::Work& input);
-  virtual void functor_fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::dnn::cpp2::Work& input);
-  virtual folly::wangle::Future<std::vector<double>> future_fwd(const  ::dnn::cpp2::Work& input);
-  virtual folly::wangle::Future<std::vector<double>> future_fwd(const apache::thrift::RpcOptions& rpcOptions, const  ::dnn::cpp2::Work& input);
-  static folly::exception_wrapper recv_wrapped_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
-  static void recv_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
+  virtual void fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void callback_fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void fwd(const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void sync_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void sync_fwd(const apache::thrift::RpcOptions& rpcOptions,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual void functor_fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual folly::wangle::Future< ::facebook::windtunnel::treadmill::services::dnn::ServerResult> future_fwd(const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  virtual folly::wangle::Future< ::facebook::windtunnel::treadmill::services::dnn::ServerResult> future_fwd(const apache::thrift::RpcOptions& rpcOptions, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
+  static folly::exception_wrapper recv_wrapped_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
+  static void recv_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
   // Mock friendly virtual instance method
-  virtual void recv_instance_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
-  virtual folly::exception_wrapper recv_instance_wrapped_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
+  virtual void recv_instance_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
+  virtual folly::exception_wrapper recv_instance_wrapped_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
   template <typename Protocol_>
-  void fwdT(Protocol_* prot, const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input);
+  void fwdT(Protocol_* prot, const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input);
   template <typename Protocol_>
-  static folly::exception_wrapper recv_wrapped_fwdT(Protocol_* prot, std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
+  static folly::exception_wrapper recv_wrapped_fwdT(Protocol_* prot,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
   template <typename Protocol_>
-  static void recv_fwdT(Protocol_* prot, std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state);
+  static void recv_fwdT(Protocol_* prot,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state);
  protected:
   std::unique_ptr<apache::thrift::server::TConnectionContext>connectionContext_;
   std::shared_ptr<apache::thrift::RequestChannel> channel_;
@@ -121,7 +121,7 @@ class Dnn_fwd_args : private boost::totally_ordered<Dnn_fwd_args> {
   Dnn_fwd_args() {}
   // FragileConstructor for use in initialization lists only
 
-  Dnn_fwd_args(apache::thrift::FragileConstructor,  ::dnn::cpp2::Work input__arg) :
+  Dnn_fwd_args(apache::thrift::FragileConstructor,  ::facebook::windtunnel::treadmill::services::dnn::Work input__arg) :
       input(std::move(input__arg)) {}
 
   Dnn_fwd_args(Dnn_fwd_args&&) = default;
@@ -135,7 +135,7 @@ class Dnn_fwd_args : private boost::totally_ordered<Dnn_fwd_args> {
 
   virtual ~Dnn_fwd_args() throw() {}
 
-   ::dnn::cpp2::Work input;
+   ::facebook::windtunnel::treadmill::services::dnn::Work input;
 
   struct __isset {
     __isset() {
@@ -165,7 +165,7 @@ class Dnn_fwd_pargs : private boost::totally_ordered<Dnn_fwd_pargs> {
  public:
   virtual ~Dnn_fwd_pargs() throw() {}
 
-   ::dnn::cpp2::Work* input;
+   ::facebook::windtunnel::treadmill::services::dnn::Work* input;
 
   struct __isset {
     __isset() {
@@ -193,7 +193,7 @@ class Dnn_fwd_presult : private boost::totally_ordered<Dnn_fwd_presult> {
  public:
   virtual ~Dnn_fwd_presult() throw() {}
 
-  std::vector<double>* success;
+   ::facebook::windtunnel::treadmill::services::dnn::ServerResult* success;
 
   struct __isset {
     __isset() {
@@ -223,7 +223,7 @@ class Dnn_fwd_result : private boost::totally_ordered<Dnn_fwd_result> {
   Dnn_fwd_result() {}
   // FragileConstructor for use in initialization lists only
 
-  Dnn_fwd_result(apache::thrift::FragileConstructor, std::vector<double> success__arg) :
+  Dnn_fwd_result(apache::thrift::FragileConstructor,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult success__arg) :
       success(std::move(success__arg)) {}
 
   Dnn_fwd_result(Dnn_fwd_result&&) = default;
@@ -237,7 +237,7 @@ class Dnn_fwd_result : private boost::totally_ordered<Dnn_fwd_result> {
 
   virtual ~Dnn_fwd_result() throw() {}
 
-  std::vector<double> success;
+   ::facebook::windtunnel::treadmill::services::dnn::ServerResult success;
 
   struct __isset {
     __isset() {
@@ -251,13 +251,7 @@ class Dnn_fwd_result : private boost::totally_ordered<Dnn_fwd_result> {
     bool success;
   } __isset;
   bool operator==(const Dnn_fwd_result& rhs) const;
-
-  bool operator < (const Dnn_fwd_result& rhs) const {
-    if (!(success == rhs.success)) {
-      return success < rhs.success;
-    }
-    return false;
-  }
+  bool operator < (const Dnn_fwd_result& rhs) const;
 
   template <class Protocol_>
   uint32_t read(Protocol_* iprot);
@@ -269,70 +263,70 @@ class Dnn_fwd_result : private boost::totally_ordered<Dnn_fwd_result> {
   uint32_t write(Protocol_* prot_) const;
 };
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_args>::write(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_args* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args* obj) {
   return obj->write(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_args>::read(Protocol* proto,   ::dnn::cpp2::Dnn_fwd_args* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args* obj) {
   return obj->read(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_args>::serializedSize(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_args* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args* obj) {
   return obj->serializedSize(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_args>::serializedSizeZC(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_args* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_args* obj) {
   return obj->serializedSizeZC(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_pargs>::write(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_pargs* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs* obj) {
   return obj->write(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_pargs>::read(Protocol* proto,   ::dnn::cpp2::Dnn_fwd_pargs* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs* obj) {
   return obj->read(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_pargs>::serializedSize(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_pargs* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs* obj) {
   return obj->serializedSize(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_pargs>::serializedSizeZC(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_pargs* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_pargs* obj) {
   return obj->serializedSizeZC(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_presult>::write(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_presult* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult* obj) {
   return obj->write(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_presult>::read(Protocol* proto,   ::dnn::cpp2::Dnn_fwd_presult* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult* obj) {
   return obj->read(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_presult>::serializedSize(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_presult* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult* obj) {
   return obj->serializedSize(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_presult>::serializedSizeZC(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_presult* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_presult* obj) {
   return obj->serializedSizeZC(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_result>::write(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_result* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result* obj) {
   return obj->write(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_result>::read(Protocol* proto,   ::dnn::cpp2::Dnn_fwd_result* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result* obj) {
   return obj->read(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_result>::serializedSize(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_result* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result* obj) {
   return obj->serializedSize(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Dnn_fwd_result>::serializedSizeZC(Protocol* proto, const  ::dnn::cpp2::Dnn_fwd_result* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Dnn_fwd_result* obj) {
   return obj->serializedSizeZC(proto);
 }
 

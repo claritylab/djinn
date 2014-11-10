@@ -7,7 +7,7 @@
 #pragma once
 
 #include "dnn_types.h"
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 class dnnConstants {
  public:
@@ -16,4 +16,4 @@ class dnnConstants {
 
 extern const dnnConstants g_dnn_constants;
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn

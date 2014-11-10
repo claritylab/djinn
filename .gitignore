@@ -26,13 +26,14 @@
 img-client
 asr-client
 nlp-client
+DnnClient
+DnnServer
 
 # Popular scripts with hardpaths
 run-*.sh
 socket-lib/lib.sh
 socket-lib/deploy.sh
 asr/kaldi_patch.sh
-
 
 # datasets
 */weights/*

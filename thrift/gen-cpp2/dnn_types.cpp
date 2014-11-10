@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 template uint32_t Work::read<apache::thrift::BinaryProtocolReader>(apache::thrift::BinaryProtocolReader*);
 template uint32_t Work::write<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
@@ -66,10 +66,100 @@ void swap(Work& a, Work& b) {
   swap(a.__isset, b.__isset);
 }
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
 }} // apache::thrift
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
-}} // dnn::cpp2
+template uint32_t ServerResult::read<apache::thrift::BinaryProtocolReader>(apache::thrift::BinaryProtocolReader*);
+template uint32_t ServerResult::write<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t ServerResult::serializedSize<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t ServerResult::serializedSizeZC<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t ServerResult::read<apache::thrift::CompactProtocolReader>(apache::thrift::CompactProtocolReader*);
+template uint32_t ServerResult::write<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t ServerResult::serializedSize<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t ServerResult::serializedSizeZC<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t ServerResult::write<apache::thrift::DebugProtocolWriter>(apache::thrift::DebugProtocolWriter*) const;
+template uint32_t ServerResult::read<apache::thrift::VirtualReaderBase>(apache::thrift::VirtualReaderBase*);
+
+void ServerResult::__clear() {
+  data.clear();
+  time_ms = 0;
+  __isset.__clear();
+}
+
+bool ServerResult::operator==(const ServerResult& rhs) const {
+  if (!((data == rhs.data))) {
+    return false;
+  }
+  if (!((time_ms == rhs.time_ms))) {
+    return false;
+  }
+  return true;
+}
+
+void swap(ServerResult& a, ServerResult& b) {
+  using ::std::swap;
+  swap(a.data, b.data);
+  swap(a.time_ms, b.time_ms);
+  swap(a.__isset, b.__isset);
+}
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+template uint32_t AppResult::read<apache::thrift::BinaryProtocolReader>(apache::thrift::BinaryProtocolReader*);
+template uint32_t AppResult::write<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t AppResult::serializedSize<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t AppResult::serializedSizeZC<apache::thrift::BinaryProtocolWriter>(apache::thrift::BinaryProtocolWriter*) const;
+template uint32_t AppResult::read<apache::thrift::CompactProtocolReader>(apache::thrift::CompactProtocolReader*);
+template uint32_t AppResult::write<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t AppResult::serializedSize<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t AppResult::serializedSizeZC<apache::thrift::CompactProtocolWriter>(apache::thrift::CompactProtocolWriter*) const;
+template uint32_t AppResult::write<apache::thrift::DebugProtocolWriter>(apache::thrift::DebugProtocolWriter*) const;
+template uint32_t AppResult::read<apache::thrift::VirtualReaderBase>(apache::thrift::VirtualReaderBase*);
+
+void AppResult::__clear() {
+  app_time = 0;
+  comm_time = 0;
+  fwd_time = 0;
+  comm_data_size = 0;
+  __isset.__clear();
+}
+
+bool AppResult::operator==(const AppResult& rhs) const {
+  if (!((app_time == rhs.app_time))) {
+    return false;
+  }
+  if (!((comm_time == rhs.comm_time))) {
+    return false;
+  }
+  if (!((fwd_time == rhs.fwd_time))) {
+    return false;
+  }
+  if (!((comm_data_size == rhs.comm_data_size))) {
+    return false;
+  }
+  return true;
+}
+
+void swap(AppResult& a, AppResult& b) {
+  using ::std::swap;
+  swap(a.app_time, b.app_time);
+  swap(a.comm_time, b.comm_time);
+  swap(a.fwd_time, b.fwd_time);
+  swap(a.comm_data_size, b.comm_data_size);
+  swap(a.__isset, b.__isset);
+}
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn

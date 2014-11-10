@@ -1,3 +1,4 @@
+# cuda path
 CUDA=/usr/local/cuda
 
 # caffe path
@@ -12,11 +13,10 @@ PATH_THRIFT = /usr/local/include/thrift
 
 CXX = g++
 
-INCLUDES   =  -I$(PATH_DBCON)src \
-			  -I$(PATH_FOLLY) \
-			  -I$(PATH_CAFFE) \
-			  -I$(PATH_THRIFT) \
-			  -I$(CUDA)/include \
+INCLUDES   = -I$(PATH_DBCON)src \
+			 -I$(PATH_FOLLY) \
+			 -I$(PATH_CAFFE) \
+			 -I$(CUDA)/include \
 
 LIBRARIES  = -levent \
 			 -lfolly \
@@ -26,26 +26,30 @@ LIBRARIES  = -levent \
 			 -lrt \
 			 -lboost_system \
 			 -lthriftcpp2 \
-			 -L$(PATH_DBCON) \
 			 -lcaffe \
+			 -L$(PATH_DBCON) \
+			 -L$(CUDA)/lib64 \
 			 -L/usr/local/lib/ \
 
-CXX_CFLAGS = -std=c++11 -Wall -D_GNU_SOURCE $(INCLUDES)
+CXX_CFLAGS = -std=c++11 -Wall -D_GNU_SOURCE $(INCLUDES) -fpermissive
 CXX_LFLAGS = $(LIBRARIES)
 CXX_DFLAGS = -DDEBUG -g
 
-SRCS = DnnClient.cpp \
-	   ../gen-cpp2/Dnn.cpp
+EXEC = DnnClient
+SOURCES = src/DnnClient.cpp src/AppImcHandler.cpp ../gen-cpp2/Dnn.cpp ../gen-cpp2/App.cpp ../gen-cpp2/dnn_types.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
 
-BINARY = DnnClient
-
-all: $(BINARY)
+all: $(EXEC)
 
 debug: CXX += $(CXX_DFLAGS)
 debug: $(BINARY)
 
-$(BINARY): $(SRCS)
-	$(CXX) $(CXX_CFLAGS) $(CXX_LFLAGS) -o $@ $?
+# Main target
+$(EXEC): $(OBJECTS) Makefile
+	$(CXX) $(OBJECTS) -o $(EXEC) $(CXX_LFLAGS)
+
+%.o: %.cpp Makefile
+	$(CXX) -c $(CXX_CFLAGS) $(CXX_LFLAGS) $< -o $@ -lpthread
 
 clean:
-	$(RM) *.o *~ $(BINARY)
+	$(RM) src/*.o ../gen-cpp2/*.o *~ $(BINARY)

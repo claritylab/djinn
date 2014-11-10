@@ -10,7 +10,7 @@
 
 #include <thrift/lib/cpp/TApplicationException.h>
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 template <typename ProtocolIn_, typename ProtocolOut_>
 void DnnAsyncProcessor::process_fwd(std::unique_ptr<apache::thrift::ResponseChannel::Request> req, std::unique_ptr<folly::IOBuf> buf, std::unique_ptr<ProtocolIn_> iprot,apache::thrift::Cpp2RequestContext* ctx,apache::thrift::async::TEventBase* eb, apache::thrift::concurrency::ThreadManager* tm) {
@@ -18,7 +18,7 @@ void DnnAsyncProcessor::process_fwd(std::unique_ptr<apache::thrift::ResponseChan
   // so async calls don't accidentally use it
   iface_->setConnectionContext(nullptr);
   Dnn_fwd_pargs args;
-  std::unique_ptr< ::dnn::cpp2::Work> uarg_input(new  ::dnn::cpp2::Work());
+  std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> uarg_input(new  ::facebook::windtunnel::treadmill::services::dnn::Work());
   args.input = uarg_input.get();
   std::unique_ptr<apache::thrift::ContextStack> c(this->getContextStack(this->getServiceName(), "Dnn.fwd", ctx));
   try {
@@ -43,15 +43,15 @@ void DnnAsyncProcessor::process_fwd(std::unique_ptr<apache::thrift::ResponseChan
       LOG(ERROR) << ex.what() << " in oneway function fwd";
     }
   }
-  std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>> callback(new apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>(std::move(req), std::move(c), return_fwd<ProtocolIn_,ProtocolOut_>, throw_fwd<ProtocolIn_, ProtocolOut_>, throw_wrapped_fwd<ProtocolIn_, ProtocolOut_>, iprot->getSeqId(), eb, tm, ctx));
+  std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>> callback(new apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>(std::move(req), std::move(c), return_fwd<ProtocolIn_,ProtocolOut_>, throw_fwd<ProtocolIn_, ProtocolOut_>, throw_wrapped_fwd<ProtocolIn_, ProtocolOut_>, iprot->getSeqId(), eb, tm, ctx));
   iface_->async_eb_fwd(std::move(callback), std::move(uarg_input));
 }
 
 template <class ProtocolIn_, class ProtocolOut_>
-folly::IOBufQueue DnnAsyncProcessor::return_fwd(int32_t protoSeqId, std::unique_ptr<apache::thrift::ContextStack> ctx, std::vector<double> const& _return) {
+folly::IOBufQueue DnnAsyncProcessor::return_fwd(int32_t protoSeqId, std::unique_ptr<apache::thrift::ContextStack> ctx,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult const& _return) {
   ProtocolOut_ prot;
   Dnn_fwd_presult result;
-  result.success = const_cast<std::vector<double>*>(&_return);
+  result.success = const_cast< ::facebook::windtunnel::treadmill::services::dnn::ServerResult*>(&_return);
   result.__isset.success = true;
   return serializeResponse("fwd", &prot, protoSeqId, ctx.get(), result);
 }
@@ -114,10 +114,10 @@ void DnnAsyncProcessor::throw_wrapped_fwd(std::unique_ptr<apache::thrift::Respon
 }
 
 template <typename Protocol_>
-void DnnAsyncClient::fwdT(Protocol_* prot, const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::fwdT(Protocol_* prot, const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   std::unique_ptr<apache::thrift::ContextStack> ctx = this->getContextStack(this->getServiceName(), "Dnn.fwd", connectionContext_.get());
   Dnn_fwd_pargs args;
-  args.input = const_cast< ::dnn::cpp2::Work*>(&input);
+  args.input = const_cast< ::facebook::windtunnel::treadmill::services::dnn::Work*>(&input);
   size_t bufSize = args.serializedSizeZC(prot);
   bufSize += prot->serializedMessageSize("fwd");
   folly::IOBufQueue queue(folly::IOBufQueue::cacheChainLength());
@@ -141,7 +141,7 @@ void DnnAsyncClient::fwdT(Protocol_* prot, const apache::thrift::RpcOptions& rpc
 }
 
 template <typename Protocol_>
-folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwdT(Protocol_* prot, std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwdT(Protocol_* prot,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   if (state.isException()) {
     return state.exceptionWrapper();
   }
@@ -201,7 +201,7 @@ folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwdT(Protocol_* prot, std:
 }
 
 template <typename Protocol_>
-void DnnAsyncClient::recv_fwdT(Protocol_* prot, std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+void DnnAsyncClient::recv_fwdT(Protocol_* prot,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   auto ew = recv_wrapped_fwdT(prot, _return, state);
   if (ew) {
     ew.throwException();
@@ -229,7 +229,7 @@ uint32_t Dnn_fwd_args::read(Protocol_* iprot) {
       case 1:
       {
         if (ftype == apache::thrift::protocol::T_STRUCT) {
-          xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::read(iprot, &this->input);
+          xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::read(iprot, &this->input);
           this->__isset.input = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -254,7 +254,7 @@ uint32_t Dnn_fwd_args::serializedSize(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_args");
   xfer += prot_->serializedFieldSize("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::serializedSize(prot_, &this->input);
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSize(prot_, &this->input);
   xfer += prot_->serializedSizeStop();
   return xfer;
 }
@@ -264,7 +264,7 @@ uint32_t Dnn_fwd_args::serializedSizeZC(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_args");
   xfer += prot_->serializedFieldSize("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::serializedSizeZC(prot_, &this->input);
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSizeZC(prot_, &this->input);
   xfer += prot_->serializedSizeStop();
   return xfer;
 }
@@ -274,7 +274,7 @@ uint32_t Dnn_fwd_args::write(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->writeStructBegin("Dnn_fwd_args");
   xfer += prot_->writeFieldBegin("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::write(prot_, &this->input);
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::write(prot_, &this->input);
   xfer += prot_->writeFieldEnd();
   xfer += prot_->writeFieldStop();
   xfer += prot_->writeStructEnd();
@@ -302,7 +302,7 @@ uint32_t Dnn_fwd_pargs::read(Protocol_* iprot) {
       case 1:
       {
         if (ftype == apache::thrift::protocol::T_STRUCT) {
-          xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::read(iprot, &(*const_cast< ::dnn::cpp2::Work*>(this->input)));
+          xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::read(iprot, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::Work*>(this->input)));
           this->__isset.input = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -327,7 +327,7 @@ uint32_t Dnn_fwd_pargs::serializedSize(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_pargs");
   xfer += prot_->serializedFieldSize("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::serializedSize(prot_, &(*const_cast< ::dnn::cpp2::Work*>(this->input)));
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSize(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::Work*>(this->input)));
   xfer += prot_->serializedSizeStop();
   return xfer;
 }
@@ -337,7 +337,7 @@ uint32_t Dnn_fwd_pargs::serializedSizeZC(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_pargs");
   xfer += prot_->serializedFieldSize("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::serializedSizeZC(prot_, &(*const_cast< ::dnn::cpp2::Work*>(this->input)));
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSizeZC(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::Work*>(this->input)));
   xfer += prot_->serializedSizeStop();
   return xfer;
 }
@@ -347,7 +347,7 @@ uint32_t Dnn_fwd_pargs::write(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->writeStructBegin("Dnn_fwd_pargs");
   xfer += prot_->writeFieldBegin("input", apache::thrift::protocol::T_STRUCT, 1);
-  xfer += ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::write(prot_, &(*const_cast< ::dnn::cpp2::Work*>(this->input)));
+  xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::write(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::Work*>(this->input)));
   xfer += prot_->writeFieldEnd();
   xfer += prot_->writeFieldStop();
   xfer += prot_->writeStructEnd();
@@ -374,17 +374,8 @@ uint32_t Dnn_fwd_presult::read(Protocol_* iprot) {
     switch (fid) {
       case 0:
       {
-        if (ftype == apache::thrift::protocol::T_LIST) {
-          (*const_cast<std::vector<double>*>(this->success)).clear();
-          uint32_t _size17;
-          apache::thrift::protocol::TType _etype20;
-          xfer += iprot->readListBegin(_etype20, _size17);
-          (*const_cast<std::vector<double>*>(this->success)).resize(_size17);
-          uint32_t _i21;
-          for (_i21 = 0; _i21 < _size17; ++_i21) {
-            xfer += iprot->readDouble((*const_cast<std::vector<double>*>(this->success))[_i21]);
-          }
-          xfer += iprot->readListEnd();
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
+          xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::read(iprot, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::ServerResult*>(this->success)));
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -409,12 +400,8 @@ uint32_t Dnn_fwd_presult::serializedSize(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_presult");
   if (this->__isset.success) {
-    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, (*const_cast<std::vector<double>*>(this->success)).size());
-    for (auto _iter22 = (*const_cast<std::vector<double>*>(this->success)).begin(); _iter22 != (*const_cast<std::vector<double>*>(this->success)).end(); ++_iter22) {
-      xfer += prot_->serializedSizeDouble((*_iter22));
-    }
-    xfer += prot_->serializedSizeListEnd();
+    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSize(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::ServerResult*>(this->success)));
   }
   xfer += prot_->serializedSizeStop();
   return xfer;
@@ -425,12 +412,8 @@ uint32_t Dnn_fwd_presult::serializedSizeZC(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_presult");
   if (this->__isset.success) {
-    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, (*const_cast<std::vector<double>*>(this->success)).size());
-    for (auto _iter23 = (*const_cast<std::vector<double>*>(this->success)).begin(); _iter23 != (*const_cast<std::vector<double>*>(this->success)).end(); ++_iter23) {
-      xfer += prot_->serializedSizeDouble((*_iter23));
-    }
-    xfer += prot_->serializedSizeListEnd();
+    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSizeZC(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::ServerResult*>(this->success)));
   }
   xfer += prot_->serializedSizeStop();
   return xfer;
@@ -441,12 +424,8 @@ uint32_t Dnn_fwd_presult::write(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->writeStructBegin("Dnn_fwd_presult");
   if (this->__isset.success) {
-    xfer += prot_->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->writeListBegin(apache::thrift::protocol::T_DOUBLE, (*const_cast<std::vector<double>*>(this->success)).size());
-    for (auto _iter24 = (*const_cast<std::vector<double>*>(this->success)).begin(); _iter24 != (*const_cast<std::vector<double>*>(this->success)).end(); ++_iter24) {
-      xfer += prot_->writeDouble((*_iter24));
-    }
-    xfer += prot_->writeListEnd();
+    xfer += prot_->writeFieldBegin("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::write(prot_, &(*const_cast< ::facebook::windtunnel::treadmill::services::dnn::ServerResult*>(this->success)));
     xfer += prot_->writeFieldEnd();
   }
   xfer += prot_->writeFieldStop();
@@ -474,17 +453,8 @@ uint32_t Dnn_fwd_result::read(Protocol_* iprot) {
     switch (fid) {
       case 0:
       {
-        if (ftype == apache::thrift::protocol::T_LIST) {
-          this->success.clear();
-          uint32_t _size25;
-          apache::thrift::protocol::TType _etype28;
-          xfer += iprot->readListBegin(_etype28, _size25);
-          this->success.resize(_size25);
-          uint32_t _i29;
-          for (_i29 = 0; _i29 < _size25; ++_i29) {
-            xfer += iprot->readDouble(this->success[_i29]);
-          }
-          xfer += iprot->readListEnd();
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
+          xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::read(iprot, &this->success);
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -509,12 +479,8 @@ uint32_t Dnn_fwd_result::serializedSize(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_result");
   if (this->__isset.success) {
-    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, this->success.size());
-    for (auto _iter30 = this->success.begin(); _iter30 != this->success.end(); ++_iter30) {
-      xfer += prot_->serializedSizeDouble((*_iter30));
-    }
-    xfer += prot_->serializedSizeListEnd();
+    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSize(prot_, &this->success);
   }
   xfer += prot_->serializedSizeStop();
   return xfer;
@@ -525,12 +491,8 @@ uint32_t Dnn_fwd_result::serializedSizeZC(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->serializedStructSize("Dnn_fwd_result");
   if (this->__isset.success) {
-    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, this->success.size());
-    for (auto _iter31 = this->success.begin(); _iter31 != this->success.end(); ++_iter31) {
-      xfer += prot_->serializedSizeDouble((*_iter31));
-    }
-    xfer += prot_->serializedSizeListEnd();
+    xfer += prot_->serializedFieldSize("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSizeZC(prot_, &this->success);
   }
   xfer += prot_->serializedSizeStop();
   return xfer;
@@ -541,12 +503,8 @@ uint32_t Dnn_fwd_result::write(Protocol_* prot_) const {
   uint32_t xfer = 0;
   xfer += prot_->writeStructBegin("Dnn_fwd_result");
   if (this->__isset.success) {
-    xfer += prot_->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
-    xfer += prot_->writeListBegin(apache::thrift::protocol::T_DOUBLE, this->success.size());
-    for (auto _iter32 = this->success.begin(); _iter32 != this->success.end(); ++_iter32) {
-      xfer += prot_->writeDouble((*_iter32));
-    }
-    xfer += prot_->writeListEnd();
+    xfer += prot_->writeFieldBegin("success", apache::thrift::protocol::T_STRUCT, 0);
+    xfer += ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::write(prot_, &this->success);
     xfer += prot_->writeFieldEnd();
   }
   xfer += prot_->writeFieldStop();
@@ -554,7 +512,7 @@ uint32_t Dnn_fwd_result::write(Protocol_* prot_) const {
   return xfer;
 }
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
 }} // apache::thrift

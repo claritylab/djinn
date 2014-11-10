@@ -1,0 +1,2 @@
+input/face/face.jpg 0
+input/face/face-original.jpg 0

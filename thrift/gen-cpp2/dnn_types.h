@@ -21,9 +21,11 @@
 
 
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 class Work;
+class ServerResult;
+class AppResult;
 typedef int32_t integer;
 
 class Work : private boost::totally_ordered<Work> {
@@ -36,7 +38,7 @@ class Work : private boost::totally_ordered<Work> {
       h_in(0) {}
   // FragileConstructor for use in initialization lists only
 
-  Work(apache::thrift::FragileConstructor, std::vector<double> data__arg, std::string op__arg,  ::dnn::cpp2::integer n_in__arg,  ::dnn::cpp2::integer c_in__arg,  ::dnn::cpp2::integer w_in__arg,  ::dnn::cpp2::integer h_in__arg) :
+  Work(apache::thrift::FragileConstructor, std::vector<double> data__arg, std::string op__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer n_in__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer c_in__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer w_in__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer h_in__arg) :
       data(std::move(data__arg)),
       op(std::move(op__arg)),
       n_in(std::move(n_in__arg)),
@@ -57,10 +59,10 @@ class Work : private boost::totally_ordered<Work> {
 
   std::vector<double> data;
   std::string op;
-   ::dnn::cpp2::integer n_in;
-   ::dnn::cpp2::integer c_in;
-   ::dnn::cpp2::integer w_in;
-   ::dnn::cpp2::integer h_in;
+   ::facebook::windtunnel::treadmill::services::dnn::integer n_in;
+   ::facebook::windtunnel::treadmill::services::dnn::integer c_in;
+   ::facebook::windtunnel::treadmill::services::dnn::integer w_in;
+   ::facebook::windtunnel::treadmill::services::dnn::integer h_in;
 
   struct __isset {
     __isset() {
@@ -98,30 +100,199 @@ class Work : private boost::totally_ordered<Work> {
 
 void swap(Work& a, Work& b);
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
-template <> inline void Cpp2Ops< ::dnn::cpp2::Work>::clear( ::dnn::cpp2::Work* obj) {
+template <> inline void Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Work>::clear( ::facebook::windtunnel::treadmill::services::dnn::Work* obj) {
   return obj->__clear();
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Work>::write(Protocol* proto, const  ::dnn::cpp2::Work* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Work>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Work* obj) {
   return obj->write(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Work>::read(Protocol* proto,   ::dnn::cpp2::Work* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Work>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::Work* obj) {
   return obj->read(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Work>::serializedSize(Protocol* proto, const  ::dnn::cpp2::Work* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Work* obj) {
   return obj->serializedSize(proto);
 }
 
-template <> template <class Protocol> inline uint32_t Cpp2Ops< ::dnn::cpp2::Work>::serializedSizeZC(Protocol* proto, const  ::dnn::cpp2::Work* obj) {
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::Work>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::Work* obj) {
   return obj->serializedSizeZC(proto);
 }
 
 }} // apache::thrift
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
-}} // dnn::cpp2
+class ServerResult : private boost::totally_ordered<ServerResult> {
+ public:
+
+  ServerResult() :
+      time_ms(0) {}
+  // FragileConstructor for use in initialization lists only
+
+  ServerResult(apache::thrift::FragileConstructor, std::vector<double> data__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer time_ms__arg) :
+      data(std::move(data__arg)),
+      time_ms(std::move(time_ms__arg)) {}
+
+  ServerResult(ServerResult&&) = default;
+
+  ServerResult(const ServerResult&) = default;
+
+  ServerResult& operator=(ServerResult&&) = default;
+
+  ServerResult& operator=(const ServerResult&) = default;
+  void __clear();
+
+  virtual ~ServerResult() throw() {}
+
+  std::vector<double> data;
+   ::facebook::windtunnel::treadmill::services::dnn::integer time_ms;
+
+  struct __isset {
+    __isset() {
+      __clear();
+    }
+
+    void __clear() {
+      data = false;
+      time_ms = false;
+    }
+
+    bool data;
+    bool time_ms;
+  } __isset;
+  bool operator==(const ServerResult& rhs) const;
+  bool operator < (const ServerResult& rhs) const;
+
+  template <class Protocol_>
+  uint32_t read(Protocol_* iprot);
+  template <class Protocol_>
+  uint32_t serializedSize(Protocol_* prot_) const;
+  template <class Protocol_>
+  uint32_t serializedSizeZC(Protocol_* prot_) const;
+  template <class Protocol_>
+  uint32_t write(Protocol_* prot_) const;
+};
+
+void swap(ServerResult& a, ServerResult& b);
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+template <> inline void Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::clear( ::facebook::windtunnel::treadmill::services::dnn::ServerResult* obj) {
+  return obj->__clear();
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::ServerResult* obj) {
+  return obj->write(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::ServerResult* obj) {
+  return obj->read(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::ServerResult* obj) {
+  return obj->serializedSize(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::ServerResult* obj) {
+  return obj->serializedSizeZC(proto);
+}
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+class AppResult : private boost::totally_ordered<AppResult> {
+ public:
+
+  AppResult() :
+      app_time(0),
+      comm_time(0),
+      fwd_time(0),
+      comm_data_size(0) {}
+  // FragileConstructor for use in initialization lists only
+
+  AppResult(apache::thrift::FragileConstructor,  ::facebook::windtunnel::treadmill::services::dnn::integer app_time__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer comm_time__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer fwd_time__arg,  ::facebook::windtunnel::treadmill::services::dnn::integer comm_data_size__arg) :
+      app_time(std::move(app_time__arg)),
+      comm_time(std::move(comm_time__arg)),
+      fwd_time(std::move(fwd_time__arg)),
+      comm_data_size(std::move(comm_data_size__arg)) {}
+
+  AppResult(AppResult&&) = default;
+
+  AppResult(const AppResult&) = default;
+
+  AppResult& operator=(AppResult&&) = default;
+
+  AppResult& operator=(const AppResult&) = default;
+  void __clear();
+
+  virtual ~AppResult() throw() {}
+
+   ::facebook::windtunnel::treadmill::services::dnn::integer app_time;
+   ::facebook::windtunnel::treadmill::services::dnn::integer comm_time;
+   ::facebook::windtunnel::treadmill::services::dnn::integer fwd_time;
+   ::facebook::windtunnel::treadmill::services::dnn::integer comm_data_size;
+
+  struct __isset {
+    __isset() {
+      __clear();
+    }
+
+    void __clear() {
+      app_time = false;
+      comm_time = false;
+      fwd_time = false;
+      comm_data_size = false;
+    }
+
+    bool app_time;
+    bool comm_time;
+    bool fwd_time;
+    bool comm_data_size;
+  } __isset;
+  bool operator==(const AppResult& rhs) const;
+  bool operator < (const AppResult& rhs) const;
+
+  template <class Protocol_>
+  uint32_t read(Protocol_* iprot);
+  template <class Protocol_>
+  uint32_t serializedSize(Protocol_* prot_) const;
+  template <class Protocol_>
+  uint32_t serializedSizeZC(Protocol_* prot_) const;
+  template <class Protocol_>
+  uint32_t write(Protocol_* prot_) const;
+};
+
+void swap(AppResult& a, AppResult& b);
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+template <> inline void Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::AppResult>::clear( ::facebook::windtunnel::treadmill::services::dnn::AppResult* obj) {
+  return obj->__clear();
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::AppResult>::write(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::AppResult* obj) {
+  return obj->write(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::AppResult>::read(Protocol* proto,   ::facebook::windtunnel::treadmill::services::dnn::AppResult* obj) {
+  return obj->read(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::AppResult>::serializedSize(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::AppResult* obj) {
+  return obj->serializedSize(proto);
+}
+
+template <> template <class Protocol> inline uint32_t Cpp2Ops< ::facebook::windtunnel::treadmill::services::dnn::AppResult>::serializedSizeZC(Protocol* proto, const  ::facebook::windtunnel::treadmill::services::dnn::AppResult* obj) {
+  return obj->serializedSizeZC(proto);
+}
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn

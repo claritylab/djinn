@@ -8,36 +8,36 @@
 
 #include "Dnn.tcc"
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 std::unique_ptr<apache::thrift::AsyncProcessor> DnnSvIf::getProcessor() {
   return std::unique_ptr<apache::thrift::AsyncProcessor>(new DnnAsyncProcessor((DnnSvIf*)this));
 }
 
 apache::thrift::concurrency::PriorityThreadManager::PRIORITY DnnSvIf::getprio_fwd(apache::thrift::Cpp2RequestContext* reqCtx) {
-  apache::thrift::concurrency::PRIORITY prio8 = reqCtx->getCallPriority();
-  if (prio8 != apache::thrift::concurrency::N_PRIORITIES) {
-    return prio8;
+  apache::thrift::concurrency::PRIORITY prio16 = reqCtx->getCallPriority();
+  if (prio16 != apache::thrift::concurrency::N_PRIORITIES) {
+    return prio16;
   }
   return apache::thrift::concurrency::NORMAL;
 }
 
-folly::wangle::Future<std::unique_ptr<std::vector<double>>> DnnSvIf::future_fwd(std::unique_ptr< ::dnn::cpp2::Work> input) {
-  folly::wangle::Promise<std::unique_ptr<std::vector<double>>> promise9;
-  auto future10 = promise9.getFuture();
+folly::wangle::Future<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>> DnnSvIf::future_fwd(std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) {
+  folly::wangle::Promise<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>> promise17;
+  auto future18 = promise17.getFuture();
   apache::thrift::TApplicationException ex("Function fwd is unimplemented");
-  promise9.setException(ex);
-  return future10;
+  promise17.setException(ex);
+  return future18;
 }
 
-void DnnSvIf::async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr<std::vector<double>>>> callback, std::unique_ptr< ::dnn::cpp2::Work> input) {
+void DnnSvIf::async_eb_fwd(std::unique_ptr<apache::thrift::HandlerCallback<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>> callback, std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::Work> input) {
   auto callbackp = callback.release();
   setConnectionContext(callbackp->getConnectionContext());
   setThreadManager(callbackp->getThreadManager());
   setEventBase(callbackp->getEventBase());
   try {
-    auto future11 = future_fwd(std::move(input));
-    future11.then([=](folly::wangle::Try<std::unique_ptr<std::vector<double>>>&& _return) {
+    auto future19 = future_fwd(std::move(input));
+    future19.then([=](folly::wangle::Try<std::unique_ptr< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>>&& _return) {
       try {
         callbackp->resultInThread(std::move(_return.value()));
       } catch(...) {
@@ -265,15 +265,15 @@ std::string DnnAsyncClient::getServiceName() {
   return "Dnn";
 }
 
-void DnnAsyncClient::fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   fwd(::apache::thrift::RpcOptions(), std::move(callback), input);
 }
 
-void DnnAsyncClient::callback_fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::callback_fwd(std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   fwd(::apache::thrift::RpcOptions(), std::move(callback), input);
 }
 
-void DnnAsyncClient::fwd(const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::fwd(const apache::thrift::RpcOptions& rpcOptions, std::unique_ptr<apache::thrift::RequestCallback> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   switch(getChannel()->getProtocolId()) {
     case apache::thrift::protocol::T_BINARY_PROTOCOL:
     {
@@ -294,14 +294,14 @@ void DnnAsyncClient::fwd(const apache::thrift::RpcOptions& rpcOptions, std::uniq
   }
 }
 
-void DnnAsyncClient::sync_fwd(std::vector<double>& _return, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::sync_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   sync_fwd(::apache::thrift::RpcOptions(), _return, input);
 }
 
-void DnnAsyncClient::sync_fwd(const apache::thrift::RpcOptions& rpcOptions, std::vector<double>& _return, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::sync_fwd(const apache::thrift::RpcOptions& rpcOptions,  ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   apache::thrift::ClientReceiveState _returnState;
-  std::unique_ptr<apache::thrift::RequestCallback> callback12(new apache::thrift::ClientSyncCallback(&_returnState, getChannel()->getEventBase(), false));
-  fwd(rpcOptions, std::move(callback12), input);
+  std::unique_ptr<apache::thrift::RequestCallback> callback20(new apache::thrift::ClientSyncCallback(&_returnState, getChannel()->getEventBase(), false));
+  fwd(rpcOptions, std::move(callback20), input);
   getChannel()->getEventBase()->loopForever();
   if (!_returnState.buf()) {
     assert(_returnState.exception());
@@ -310,27 +310,27 @@ void DnnAsyncClient::sync_fwd(const apache::thrift::RpcOptions& rpcOptions, std:
   recv_fwd(_return, _returnState);
 }
 
-void DnnAsyncClient::fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   fwd(std::unique_ptr<apache::thrift::RequestCallback>(new apache::thrift::FunctionReplyCallback(std::move(callback))),input);
 }
 
-void DnnAsyncClient::functor_fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::dnn::cpp2::Work& input) {
+void DnnAsyncClient::functor_fwd(std::function<void (::apache::thrift::ClientReceiveState&&)> callback, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   fwd(std::unique_ptr<apache::thrift::RequestCallback>(new apache::thrift::FunctionReplyCallback(std::move(callback))),input);
 }
 
-folly::wangle::Future<std::vector<double>> DnnAsyncClient::future_fwd(const  ::dnn::cpp2::Work& input) {
+folly::wangle::Future< ::facebook::windtunnel::treadmill::services::dnn::ServerResult> DnnAsyncClient::future_fwd(const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
   return future_fwd(::apache::thrift::RpcOptions(), input);
 }
 
-folly::wangle::Future<std::vector<double>> DnnAsyncClient::future_fwd(const apache::thrift::RpcOptions& rpcOptions, const  ::dnn::cpp2::Work& input) {
-  folly::wangle::Promise<std::vector<double>> promise13;
-  auto future14 = promise13.getFuture();
-  std::unique_ptr<apache::thrift::RequestCallback> callback15(new apache::thrift::FutureCallback<std::vector<double>>(std::move(promise13), recv_fwd));
-  fwd(rpcOptions, std::move(callback15), input);
-  return std::move(future14);
+folly::wangle::Future< ::facebook::windtunnel::treadmill::services::dnn::ServerResult> DnnAsyncClient::future_fwd(const apache::thrift::RpcOptions& rpcOptions, const  ::facebook::windtunnel::treadmill::services::dnn::Work& input) {
+  folly::wangle::Promise< ::facebook::windtunnel::treadmill::services::dnn::ServerResult> promise21;
+  auto future22 = promise21.getFuture();
+  std::unique_ptr<apache::thrift::RequestCallback> callback23(new apache::thrift::FutureCallback< ::facebook::windtunnel::treadmill::services::dnn::ServerResult>(std::move(promise21), recv_fwd));
+  fwd(rpcOptions, std::move(callback23), input);
+  return std::move(future22);
 }
 
-folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   auto ew = state.exceptionWrapper();
   if (ew) {
     return ew;
@@ -356,18 +356,18 @@ folly::exception_wrapper DnnAsyncClient::recv_wrapped_fwd(std::vector<double>& _
   return folly::make_exception_wrapper<apache::thrift::TApplicationException>("Could not find Protocol");
 }
 
-void DnnAsyncClient::recv_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+void DnnAsyncClient::recv_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   auto ew = recv_wrapped_fwd(_return, state);
   if (ew) {
     ew.throwException();
   }
 }
 
-void DnnAsyncClient::recv_instance_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+void DnnAsyncClient::recv_instance_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   return recv_fwd(_return, state);
 }
 
-folly::exception_wrapper DnnAsyncClient::recv_instance_wrapped_fwd(std::vector<double>& _return, ::apache::thrift::ClientReceiveState& state) {
+folly::exception_wrapper DnnAsyncClient::recv_instance_wrapped_fwd( ::facebook::windtunnel::treadmill::services::dnn::ServerResult& _return, ::apache::thrift::ClientReceiveState& state) {
   return recv_wrapped_fwd(_return, state);
 }
 
@@ -383,7 +383,7 @@ template uint32_t Dnn_fwd_args::write<apache::thrift::DebugProtocolWriter>(apach
 template uint32_t Dnn_fwd_args::read<apache::thrift::VirtualReaderBase>(apache::thrift::VirtualReaderBase*);
 
 void Dnn_fwd_args::__clear() {
-  ::apache::thrift::Cpp2Ops<  ::dnn::cpp2::Work>::clear(&input);
+  ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::Work>::clear(&input);
   __isset.__clear();
 }
 
@@ -428,7 +428,7 @@ template uint32_t Dnn_fwd_result::write<apache::thrift::DebugProtocolWriter>(apa
 template uint32_t Dnn_fwd_result::read<apache::thrift::VirtualReaderBase>(apache::thrift::VirtualReaderBase*);
 
 void Dnn_fwd_result::__clear() {
-  success.clear();
+  ::apache::thrift::Cpp2Ops<  ::facebook::windtunnel::treadmill::services::dnn::ServerResult>::clear(&success);
   __isset.__clear();
 }
 
@@ -439,7 +439,7 @@ bool Dnn_fwd_result::operator==(const Dnn_fwd_result& rhs) const {
   return true;
 }
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
 }} // apache::thrift

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-namespace cpp dnn
+namespace cpp2 facebook.windtunnel.treadmill.services.dnn
 
 typedef i32 integer
 
@@ -27,7 +27,7 @@ struct Work {
   3: integer n_in,
   4: integer c_in,
   5: integer w_in,
-  6: integer h_in,
+  6: integer h_in
 }
 
 struct ServerResult {
@@ -35,11 +35,24 @@ struct ServerResult {
   2: integer time_ms
 }
 
+struct AppResult {
+  1:integer app_time,
+  2:integer comm_time,
+  3:integer fwd_time,
+  4:integer comm_data_size
+}
+
 service Dnn {
-  ServerResult fwd(1:Work input),
+  ServerResult fwd(1:Work input)
 }
 
 service App {
-  AppResult asr(1:Work input)
-  AppResult imc(1:Work input)     
+  AppResult asr(),
+  AppResult imc(),
+  AppResult dig(),
+  AppResult face(),
+  AppResult pos(),
+  AppResult ner(),
+  AppResult chk(),
+  AppResult srl(),
 }

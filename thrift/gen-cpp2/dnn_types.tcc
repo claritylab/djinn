@@ -11,7 +11,7 @@
 #include <thrift/lib/cpp/TApplicationException.h>
 
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 template <class Protocol_>
 uint32_t Work::read(Protocol_* iprot) {
@@ -192,10 +192,257 @@ uint32_t Work::write(Protocol_* prot_) const {
   return xfer;
 }
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
 namespace apache { namespace thrift {
 
 }} // apache::thrift
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
-}} // dnn::cpp2
+template <class Protocol_>
+uint32_t ServerResult::read(Protocol_* iprot) {
+  uint32_t xfer = 0;
+  std::string fname;
+  apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using apache::thrift::TProtocolException;
+
+
+  while (true) {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid) {
+      case 1:
+      {
+        if (ftype == apache::thrift::protocol::T_LIST) {
+          this->data.clear();
+          uint32_t _size8;
+          apache::thrift::protocol::TType _etype11;
+          xfer += iprot->readListBegin(_etype11, _size8);
+          this->data.resize(_size8);
+          uint32_t _i12;
+          for (_i12 = 0; _i12 < _size8; ++_i12) {
+            xfer += iprot->readDouble(this->data[_i12]);
+          }
+          xfer += iprot->readListEnd();
+          this->__isset.data = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      case 2:
+      {
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->time_ms);
+          this->__isset.time_ms = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      default:
+      {
+        xfer += iprot->skip(ftype);
+        break;
+      }
+    }
+    xfer += iprot->readFieldEnd();
+  }
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t ServerResult::serializedSize(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->serializedStructSize("ServerResult");
+  xfer += prot_->serializedFieldSize("data", apache::thrift::protocol::T_LIST, 1);
+  xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, this->data.size());
+  for (auto _iter13 = this->data.begin(); _iter13 != this->data.end(); ++_iter13) {
+    xfer += prot_->serializedSizeDouble((*_iter13));
+  }
+  xfer += prot_->serializedSizeListEnd();
+  xfer += prot_->serializedFieldSize("time_ms", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->serializedSizeI32(this->time_ms);
+  xfer += prot_->serializedSizeStop();
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t ServerResult::serializedSizeZC(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->serializedStructSize("ServerResult");
+  xfer += prot_->serializedFieldSize("data", apache::thrift::protocol::T_LIST, 1);
+  xfer += prot_->serializedSizeListBegin(apache::thrift::protocol::T_DOUBLE, this->data.size());
+  for (auto _iter14 = this->data.begin(); _iter14 != this->data.end(); ++_iter14) {
+    xfer += prot_->serializedSizeDouble((*_iter14));
+  }
+  xfer += prot_->serializedSizeListEnd();
+  xfer += prot_->serializedFieldSize("time_ms", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->serializedSizeI32(this->time_ms);
+  xfer += prot_->serializedSizeStop();
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t ServerResult::write(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->writeStructBegin("ServerResult");
+  xfer += prot_->writeFieldBegin("data", apache::thrift::protocol::T_LIST, 1);
+  xfer += prot_->writeListBegin(apache::thrift::protocol::T_DOUBLE, this->data.size());
+  for (auto _iter15 = this->data.begin(); _iter15 != this->data.end(); ++_iter15) {
+    xfer += prot_->writeDouble((*_iter15));
+  }
+  xfer += prot_->writeListEnd();
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldBegin("time_ms", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->writeI32(this->time_ms);
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldStop();
+  xfer += prot_->writeStructEnd();
+  return xfer;
+}
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+template <class Protocol_>
+uint32_t AppResult::read(Protocol_* iprot) {
+  uint32_t xfer = 0;
+  std::string fname;
+  apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using apache::thrift::TProtocolException;
+
+
+  while (true) {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid) {
+      case 1:
+      {
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->app_time);
+          this->__isset.app_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      case 2:
+      {
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->comm_time);
+          this->__isset.comm_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      case 3:
+      {
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->fwd_time);
+          this->__isset.fwd_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      case 4:
+      {
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->comm_data_size);
+          this->__isset.comm_data_size = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      }
+      default:
+      {
+        xfer += iprot->skip(ftype);
+        break;
+      }
+    }
+    xfer += iprot->readFieldEnd();
+  }
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t AppResult::serializedSize(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->serializedStructSize("AppResult");
+  xfer += prot_->serializedFieldSize("app_time", apache::thrift::protocol::T_I32, 1);
+  xfer += prot_->serializedSizeI32(this->app_time);
+  xfer += prot_->serializedFieldSize("comm_time", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->serializedSizeI32(this->comm_time);
+  xfer += prot_->serializedFieldSize("fwd_time", apache::thrift::protocol::T_I32, 3);
+  xfer += prot_->serializedSizeI32(this->fwd_time);
+  xfer += prot_->serializedFieldSize("comm_data_size", apache::thrift::protocol::T_I32, 4);
+  xfer += prot_->serializedSizeI32(this->comm_data_size);
+  xfer += prot_->serializedSizeStop();
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t AppResult::serializedSizeZC(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->serializedStructSize("AppResult");
+  xfer += prot_->serializedFieldSize("app_time", apache::thrift::protocol::T_I32, 1);
+  xfer += prot_->serializedSizeI32(this->app_time);
+  xfer += prot_->serializedFieldSize("comm_time", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->serializedSizeI32(this->comm_time);
+  xfer += prot_->serializedFieldSize("fwd_time", apache::thrift::protocol::T_I32, 3);
+  xfer += prot_->serializedSizeI32(this->fwd_time);
+  xfer += prot_->serializedFieldSize("comm_data_size", apache::thrift::protocol::T_I32, 4);
+  xfer += prot_->serializedSizeI32(this->comm_data_size);
+  xfer += prot_->serializedSizeStop();
+  return xfer;
+}
+
+template <class Protocol_>
+uint32_t AppResult::write(Protocol_* prot_) const {
+  uint32_t xfer = 0;
+  xfer += prot_->writeStructBegin("AppResult");
+  xfer += prot_->writeFieldBegin("app_time", apache::thrift::protocol::T_I32, 1);
+  xfer += prot_->writeI32(this->app_time);
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldBegin("comm_time", apache::thrift::protocol::T_I32, 2);
+  xfer += prot_->writeI32(this->comm_time);
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldBegin("fwd_time", apache::thrift::protocol::T_I32, 3);
+  xfer += prot_->writeI32(this->fwd_time);
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldBegin("comm_data_size", apache::thrift::protocol::T_I32, 4);
+  xfer += prot_->writeI32(this->comm_data_size);
+  xfer += prot_->writeFieldEnd();
+  xfer += prot_->writeFieldStop();
+  xfer += prot_->writeStructEnd();
+  return xfer;
+}
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn
+namespace apache { namespace thrift {
+
+}} // apache::thrift
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
+
+}}}}} // facebook::windtunnel::treadmill::services::dnn

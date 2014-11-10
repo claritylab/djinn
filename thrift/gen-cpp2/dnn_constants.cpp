@@ -6,8 +6,8 @@
  */
 #include "dnn_constants.h"
 
-namespace dnn { namespace cpp2 {
+namespace facebook { namespace windtunnel { namespace treadmill { namespace services { namespace dnn {
 
 const dnnConstants g_dnn_constants;
 
-}} // dnn::cpp2
+}}}}} // facebook::windtunnel::treadmill::services::dnn
