@@ -24,6 +24,14 @@ void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* n
     memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 }
 
+pthread_mutex_t mutex;
+int finished_threads=0;
+
+void init_mutex()
+{
+  pthread_mutex_init(&mutex, NULL);
+}
+
 int request_thread_init(int sock)
 {
   // Prepare to create a new pthread
@@ -31,13 +39,18 @@ int request_thread_init(int sock)
   pthread_attr_init(&attr);
   pthread_attr_setstacksize(&attr, 1024*1024);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  
+  void *status;
+ 
   // Create a new thread starting with the function request_handler
-  pthread_t thread_id;
-  if(pthread_create(&thread_id, &attr, request_handler, (void *)sock) != 0){
+  pthread_t tid;
+  if(pthread_create(&tid, &attr, request_handler, (void *)sock) != 0){
     printf("Failed to create a request handler thread.\n");
     return -1;
   }
+
+  while(finished_threads<1) ;
+
+//  pthread_join(tid, &status);  
   return 0;
 }
 
@@ -165,12 +178,16 @@ void* request_handler(void* sock)
   // Client has finished and close the socket
   // Print timing info
   unsigned int thread_id = (unsigned int) pthread_self();
-  printf("Request type: %s, thread ID: %d\n", request_name[req_type], thread_id);
+  printf("Request type: %s, thread ID: %ld\n", request_name[req_type], thread_id);
   printf("Model loading time: %d clock cycles, %.4fms\n", model_ld_time, (1000 * (float)model_ld_time)/CLOCKS_PER_SEC);
   printf("Forward pass time: %d clock cycles, %.4fms\n", fwd_pass_time, (1000 * (float)fwd_pass_time)/CLOCKS_PER_SEC);
   // Exit the thread
 
   if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
+
+  pthread_mutex_lock(&mutex);
+  finished_threads ++;
+  pthread_mutex_unlock(&mutex);
 
   free(in);
   free(out);

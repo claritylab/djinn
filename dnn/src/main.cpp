@@ -49,6 +49,7 @@ int main(int argc , char *argv[])
     // Main thread for the server
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
+    int ret;
 
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>())
@@ -62,6 +63,8 @@ int main(int argc , char *argv[])
     listen(server_sock, 10);
     printf("Server is listening for request on %d\n", vm["portno"].as<int>());
 
+    init_mutex();
+
     // Main Loop
     while(1) {
         int client_sock;
@@ -70,8 +73,14 @@ int main(int argc , char *argv[])
             printf("Failed to accept.\n");
         else {
             // Create a new thread, pass the socket number to it
-            if(request_thread_init(client_sock) == -1)
+            ret = request_thread_init(client_sock);
+
+            if(ret == -1)
                 printf("Failed to accept.\n");
+	    else {
+		printf("~~~finish current request~~~\n");
+		break;
+	    }
         }
     }
     return 0;
