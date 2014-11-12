@@ -41,5 +41,5 @@ asr/kaldi_patch.sh
 */hash/*
 */input/*
 */data/*
-*/log/*
+*log*
 */voxforge_data/*

@@ -1,19 +1,17 @@
 # cuda path
 CUDA=/usr/local/cuda
-
 # caffe path
 PATH_CAFFE = /usr/local/include/caffe
 # folly path
 PATH_FOLLY = /usr/local/include/folly/
 # double-conversion path
-# PATH_DBCON = /usr/local/include/double-conversion
-PATH_DBCON = /home/yunqi/double-conversion/
+PATH_DBCON = /usr/local/include/double-conversion
 # thrift
 PATH_THRIFT = /usr/local/include/thrift
 
 CXX = g++
 
-INCLUDES   = -I$(PATH_DBCON)src \
+INCLUDES   = -I$(PATH_DBCON) \
 			 -I$(PATH_FOLLY) \
 			 -I$(PATH_CAFFE) \
 			 -I$(CUDA)/include \
@@ -36,13 +34,14 @@ CXX_LFLAGS = $(LIBRARIES)
 CXX_DFLAGS = -DDEBUG -g
 
 EXEC = DnnClient
-SOURCES = src/DnnClient.cpp src/AppImcHandler.cpp ../gen-cpp2/Dnn.cpp ../gen-cpp2/App.cpp ../gen-cpp2/dnn_types.cpp
+SRC = src
+SOURCES = $(wildcard $(SRC)/*.cpp) ../gen-cpp2/Dnn.cpp ../gen-cpp2/App.cpp ../gen-cpp2/dnn_types.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 all: $(EXEC)
 
 debug: CXX += $(CXX_DFLAGS)
-debug: $(BINARY)
+debug: $(EXEC)
 
 # Main target
 $(EXEC): $(OBJECTS) Makefile

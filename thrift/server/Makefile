@@ -28,6 +28,7 @@ LIBRARIES = -levent \
 			      -lthriftcpp2 \
 			      -lcaffe \
 			      -L$(PATH_DBCON) \
+						-lcudart \
 			      -L$(CUDA)/lib64 \
 			      -L/usr/local/lib/ \
 
@@ -42,7 +43,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 all: $(EXEC)
 
 debug: CXX += $(CXX_DFLAGS)
-debug: $(BINARY)
+debug: $(EXEC)
 
 # Main target
 $(EXEC): $(OBJECTS) Makefile

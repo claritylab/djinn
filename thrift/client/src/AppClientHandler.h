@@ -10,7 +10,8 @@
 
 class AppClientHandler : public facebook::windtunnel::treadmill::services::dnn::AppSvIf {
  public:
-  AppClientHandler() {
+  AppClientHandler() { }
+  AppClientHandler(std::string hostname, int port) {
     // Let's just load all the data for all the apps <---
     espresso = new caffe::Net<double>("input/imc-inputnet.prototxt");
     img_blobs = espresso->ForwardPrefilled(&loss);
@@ -23,6 +24,9 @@ class AppClientHandler : public facebook::windtunnel::treadmill::services::dnn::
 
     //TODO change?
     n_in = 1; c_in = 3; w_in = 227; h_in = 227;
+    hostname_ = hostname;
+    port_ = port;
+  
   }
 
   /*
@@ -50,7 +54,7 @@ class AppClientHandler : public facebook::windtunnel::treadmill::services::dnn::
   int h_in;
   int w_in;
   double loss;
-  std::string hostname = "127.0.0.1";
-  int port = 8081;
+  std::string hostname_;
+  int port_;
   std::shared_ptr<facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient> client_;
 };

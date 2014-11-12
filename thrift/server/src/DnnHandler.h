@@ -7,7 +7,7 @@
 class DnnHandler : public facebook::windtunnel::treadmill::services::dnn::DnnSvIf {
  public:
   DnnHandler();
-  // DnnHandler(bool gpu, int gpuid);
+  DnnHandler(bool gpu, int gpuid);
 
   folly::wangle::Future<
     std::unique_ptr<facebook::windtunnel::treadmill::services::dnn::ServerResult> >

@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <folly/wangle/Future.h>
+#include <glog/logging.h>
 
 #include "AppClientHandler.h"
 #include "caffe/caffe.hpp"
@@ -23,8 +24,8 @@ Future<std::unique_ptr<AppResult> > AppClientHandler::future_imc() {
   if (client_ == nullptr) {
     std::shared_ptr<apache::thrift::async::TAsyncSocket> socket(
         apache::thrift::async::TAsyncSocket::newSocket(this->getEventBase(),
-                                                             hostname,
-                                                             port));
+                                                             hostname_,
+                                                             port_));
 
     client_ = std::shared_ptr<
                   facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient>(
@@ -80,10 +81,9 @@ Future<std::unique_ptr<AppResult> > AppClientHandler::future_imc() {
       ret->comm_data_size = network_data_size;
 
       for(unsigned int j = 0; j < t.value().data.size(); ++j)
-        std::cout << "Image: " << j << " class: " << t.value().data[j] << std::endl;
+        LOG(INFO) << "Image: " << j << " class: " << t.value().data[j];
 
       promise->setValue(std::move(ret));
-      //promise->fulfilTry(Try<std::unique_ptr<facebook::windtunnel::treadmill::services::dnn::AppResult> >(std::move(ret)));
     });
     return f;
   });

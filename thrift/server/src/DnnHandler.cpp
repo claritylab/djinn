@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <string>
 #include <map>
+#include <glog/logging.h>
 
 #include "DnnHandler.h"
 #include "caffe/caffe.hpp"
@@ -20,13 +21,13 @@ using caffe::shared_ptr;
 using caffe::Timer;
 using caffe::vector;
 
-DnnHandler::DnnHandler()
+DnnHandler::DnnHandler(bool gpu, int gpuid)
 {
   // set caffe status and gpu
   Caffe::set_phase(Caffe::TEST);
   if(gpu) {
     Caffe::set_mode(Caffe::GPU);
-    Caffe::SetDevice(0);
+    Caffe::SetDevice(gpuid);
   }else
     Caffe::set_mode(Caffe::CPU);
 
@@ -51,7 +52,8 @@ folly::wangle::Future<std::unique_ptr<ServerResult> > DnnHandler::future_fwd(
     Work p_work = *input;
     this->getEventBase()->runInEventBaseThread(
       [this, promise, p_work]() mutable {
-        std::cout << "Task " << p_work.op << " forward pass.\n";
+        // LOG(INFO) << "Task " << p_work.op << " forward pass.";
+        // set caffe status and gpu
 
         vector<Blob<double>* > in_blobs = nets[p_work.op]->input_blobs();
 
