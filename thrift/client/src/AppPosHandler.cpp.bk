@@ -1,0 +1,182 @@
+#include <unistd.h>
+#include <sys/time.h>
+#include <fstream>
+#include <folly/wangle/Future.h>
+
+#include "AppClientHandler.h"
+#include "SENNA_utils.h"
+#include "SENNA_Hash.h"
+#include "SENNA_Tokenizer.h"
+#include "SENNA_POS.h"
+#include "SENNA_nn.h"
+// #include "SENNA_CHK.h"
+// #include "SENNA_NER.h"
+// #include "SENNA_VBS.h"
+// #include "SENNA_PT0.h"
+// #include "SENNA_SRL.h"
+
+using namespace folly::wangle;
+using namespace apache::thrift;
+using namespace apache::thrift::async;
+using namespace facebook::windtunnel::treadmill::services::dnn;
+
+Future<std::unique_ptr<AppResult> > AppClientHandler::future_pos() {
+  folly::MoveWrapper<Promise<std::unique_ptr<AppResult>>> promise;
+  auto future = promise->getFuture();
+
+  this->getEventBase()->runInEventBaseThread(
+    [promise, this]() mutable {
+      
+    struct timeval app_start_time, app_end_time, app_diff_time;
+    struct timeval comm_start_time, comm_end_time, comm_diff_time;
+    Work work;
+
+    // start of application
+    gettimeofday(&app_start_time, nullptr);
+    if(client == nullptr) {
+      char *opt_path = NULL;
+      int opt_usrtokens = 0;
+      SENNA_Hash *word_hash = SENNA_Hash_new(opt_path, "hash/words.lst");
+      SENNA_Hash *caps_hash = SENNA_Hash_new(opt_path, "hash/caps.lst");
+      SENNA_Hash *suff_hash = SENNA_Hash_new(opt_path, "hash/suffix.lst");
+      SENNA_Hash *gazt_hash = SENNA_Hash_new(opt_path, "hash/gazetteer.lst");
+
+      SENNA_Hash *gazl_hash = SENNA_Hash_new_with_admissible_keys(opt_path, "hash/ner.loc.lst", "data/ner.loc.dat");
+      SENNA_Hash *gazm_hash = SENNA_Hash_new_with_admissible_keys(opt_path, "hash/ner.msc.lst", "data/ner.msc.dat");
+      SENNA_Hash *gazo_hash = SENNA_Hash_new_with_admissible_keys(opt_path, "hash/ner.org.lst", "data/ner.org.dat");
+      SENNA_Hash *gazp_hash = SENNA_Hash_new_with_admissible_keys(opt_path, "hash/ner.per.lst", "data/ner.per.dat");
+
+      SENNA_POS *pos = SENNA_POS_new(opt_path, "data/pos.dat");
+      /* tokenizer */
+      SENNA_Tokenizer *tokenizer = SENNA_Tokenizer_new(word_hash,
+                                                       caps_hash,
+                                                       suff_hash,
+                                                       gazt_hash,
+                                                       gazl_hash,
+                                                       gazm_hash,
+                                                       gazo_hash,
+                                                       gazp_hash, 
+                                                       opt_usrtokens
+                                                       );
+
+      /* labels */
+
+      std::ifstream file ("input/nlp-input.txt");
+      std::string sentence, all;
+      while(file >> sentence)
+        all = all + " " + sentence;
+
+      SENNA_Tokens* tokens = SENNA_Tokenizer_tokenize(tokenizer, all.c_str());
+      std::cout << all << std::endl;
+
+      const int * sentence_words = tokens->word_idx;
+      const int *sentence_caps = tokens->caps_idx;
+      const int *sentence_suff = tokens->suff_idx;
+      int sentence_size = tokens->n;
+      pos->input_state = SENNA_realloc(pos->input_state,sizeof(float),(sentence_size+pos->window_size-1)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
+      pos->output_state = SENNA_realloc(pos->output_state,
+                                        sizeof(float),
+                                        sentence_size*pos->output_state_size
+                                        );
+      SENNA_nn_lookup(pos->input_state,
+                      pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+                      pos->ll_word_weight,
+                      pos->ll_word_size,
+                      pos->ll_word_max_idx,
+                      sentence_words,
+                      sentence_size,
+                      pos->ll_word_padding_idx,
+                      (pos->window_size-1)/2
+                      );
+      SENNA_nn_lookup(pos->input_state+pos->ll_word_size,
+                      pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+                      pos->ll_caps_weight,
+                      pos->ll_caps_size,
+                      pos->ll_caps_max_idx,
+                      sentence_caps,
+                      sentence_size,
+                      pos->ll_caps_padding_idx,
+                      (pos->window_size-1)/2
+                      );
+      SENNA_nn_lookup(pos->input_state+pos->ll_word_size+pos->ll_caps_size, 
+                      pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+                      pos->ll_suff_weight,
+                      pos->ll_suff_size,
+                      pos->ll_suff_max_idx,
+                      sentence_suff,
+                      sentence_size,
+                      pos->ll_suff_padding_idx,
+                      (pos->window_size-1)/2
+                      );
+
+      input_len = sentence_size*pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size);
+      data = (double*)malloc(input_len * sizeof(double));
+      for(int i = 0; i < sentence_size; ++i) {
+        for(int j = 0; j < pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size); ++j) {
+            data[i] = (pos->input_state+i*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))[j];
+        }
+      }
+
+      n_in = sentence_size; c_in = 1; w_in = 1; h_in = 300;
+
+      std::shared_ptr<apache::thrift::async::TAsyncSocket> socket(
+          apache::thrift::async::TAsyncSocket::newSocket(&event_base, hostname, port));
+      client = std::unique_ptr<
+                    facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient>(
+                      new facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient(
+                        std::unique_ptr<apache::thrift::HeaderClientChannel,
+                        apache::thrift::TDelayedDestruction::Destructor>(
+                            new apache::thrift::HeaderClientChannel(socket)
+                          )
+                        )
+                      );
+    }
+
+    // prepare data
+    work.op = "pos";
+    // hardcoded, whatever.
+    work.n_in = n_in; work.c_in = c_in; work.w_in = w_in; work.h_in = h_in;
+
+    for(int i = 0; i < input_len; ++i)
+      work.data.push_back(data[i]);
+
+    int network_data_size = work.data.size() * sizeof(double);
+
+    gettimeofday(&comm_start_time, nullptr);
+
+    auto f = client->future_fwd(work);
+
+    while (!f.isReady()) {
+      event_base.loop();
+    }
+
+    f.then(
+      [promise, app_start_time, app_end_time, app_diff_time,
+       comm_start_time, comm_end_time, comm_diff_time, this,
+       network_data_size](folly::wangle::Try<ServerResult>&& t) mutable {
+
+      // end of application
+      gettimeofday(&app_end_time, nullptr);
+      timersub(&app_end_time, &app_start_time, &app_diff_time);
+
+      std::unique_ptr<AppResult> ret(new AppResult());;
+      ret->app_time = app_diff_time.tv_sec * 1000 + app_diff_time.tv_usec / 1000; 
+
+      ret->comm_time = (comm_diff_time.tv_sec * 1000 + comm_diff_time.tv_usec / 1000)
+        - t.value().time_ms;
+      ret->fwd_time = t.value().time_ms;
+      ret->comm_data_size = network_data_size;
+
+      std::cout << t.value().data.size() << std::endl;
+      SENNA_Hash *pos_hash = SENNA_Hash_new(NULL, "hash/pos.lst");
+      for(int i = 0; i < n_in; i++)
+      {
+        printf("\t%10s\n", SENNA_Hash_key(pos_hash, t.value().data[i]));
+      }
+
+      promise->setValue(std::move(ret));
+    });
+});
+
+  return future;
+}

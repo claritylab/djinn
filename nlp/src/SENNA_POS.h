@@ -1,9 +1,6 @@
 #ifndef SENNA_POS_H
 #define SENNA_POS_H
 
-#include "Dnn.h"
-using namespace dnn;
-
 typedef struct SENNA_POS_
 {
     /* sizes */
@@ -19,20 +16,20 @@ typedef struct SENNA_POS_
     int output_state_size;
 
     /* weights */
-    double *ll_word_weight;
-    double *ll_caps_weight;
-    double *ll_suff_weight;
-    double *l1_weight;
-    double *l1_bias;
-    double *l2_weight;
-    double *l2_bias;
-    double *viterbi_score_init;
-    double *viterbi_score_trans;
+    float *ll_word_weight;
+    float *ll_caps_weight;
+    float *ll_suff_weight;
+    float *l1_weight;
+    float *l1_bias;
+    float *l2_weight;
+    float *l2_bias;
+    float *viterbi_score_init;
+    float *viterbi_score_trans;
 
     /* states */
-    double *input_state;
-    double *hidden_state;
-    double *output_state;
+    float *input_state;
+    float *hidden_state;
+    float *output_state;
     int *labels;
 
     /* padding indices */
@@ -55,7 +52,7 @@ typedef struct SENNA_POS_
 } SENNA_POS;
 
 SENNA_POS* SENNA_POS_new(const char *path, const char *subpath);
-int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, DnnClient client, bool service);
+int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd);
 void SENNA_POS_free(SENNA_POS *pos);
 
 #endif

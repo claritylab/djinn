@@ -1,120 +1,117 @@
 #include <sys/time.h>
 #include <unistd.h>
-
 #include "SENNA_POS.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 
-int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, DnnAsyncClient client, Work input)
-{
-  int idx;
-  struct timeval tv1, tv2;
-  bool service = true;
-
-  gettimeofday(&tv1,NULL);
-  pos->input_state = SENNA_realloc(pos->input_state,
-                                   sizeof(double),
-                                   (sentence_size+pos->window_size-1)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
-                                   );
-  pos->output_state = SENNA_realloc(pos->output_state,
-                                    sizeof(double),
-                                    sentence_size*pos->output_state_size
-                                    );
-  
-  SENNA_nn_lookup(pos->input_state,
-                  pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
-                  pos->ll_word_weight,
-                  pos->ll_word_size,
-                  pos->ll_word_max_idx,
-                  sentence_words,
-                  sentence_size,
-                  pos->ll_word_padding_idx,
-                  (pos->window_size-1)/2
-                  );
-  SENNA_nn_lookup(pos->input_state+pos->ll_word_size,
-                  pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
-                  pos->ll_caps_weight,
-                  pos->ll_caps_size,
-                  pos->ll_caps_max_idx,
-                  sentence_caps,
-                  sentence_size,
-                  pos->ll_caps_padding_idx,
-                  (pos->window_size-1)/2
-                  );
-  SENNA_nn_lookup(pos->input_state+pos->ll_word_size+pos->ll_caps_size, 
-                  pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
-                  pos->ll_suff_weight,
-                  pos->ll_suff_size,
-                  pos->ll_suff_max_idx,
-                  sentence_suff,
-                  sentence_size,
-                  pos->ll_suff_padding_idx,
-                  (pos->window_size-1)/2
-                  );
-  gettimeofday(&tv2,NULL);
-  pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
-
-  gettimeofday(&tv1,NULL);
-  for(idx = 0; idx < sentence_size; idx++)
-  {
-      if(service) {
-          for(int i = 0; i < pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size); ++i)
-              input.data.push_back((pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))[i]);
-
-          // forward pass
-          ServerResult service_result = client.future_fwd(input);
-          for(int i = 0; i < pos->output_state_size; ++i){
-              (pos->output_state+idx*pos->output_state_size)[i] = service_result.data[i];
-          }
-      }
-      else {
-          SENNA_nn_linear(pos->hidden_state,
-                  pos->hidden_state_size,
-                  pos->l1_weight,
-                  pos->l1_bias,
-                  pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size),
-                  pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
-                  );
-          SENNA_nn_hardtanh(pos->hidden_state,
-                  pos->hidden_state,
-                  pos->hidden_state_size
-                  );
-          SENNA_nn_linear(pos->output_state+idx*pos->output_state_size,
-                  pos->output_state_size,
-                  pos->l2_weight,
-                  pos->l2_bias,
-                  pos->hidden_state,
-                  pos->hidden_state_size
-                  );
-          for(int i = 0; i < pos->output_state_size; ++i){
-              std::cout <<(pos->output_state+idx*pos->output_state_size)[i] <<std::endl;
-          }
-      }
-      pos->calls++;
-  }
-  gettimeofday(&tv2,NULL);
-  pos->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
-
-  gettimeofday(&tv1,NULL);
-  pos->labels = SENNA_realloc(pos->labels, sizeof(int), sentence_size);
-  SENNA_nn_viterbi(pos->labels,
-                   pos->viterbi_score_init,
-                   pos->viterbi_score_trans,
-                   pos->output_state,
-                   pos->output_state_size,
-                   sentence_size
-                   );
-  gettimeofday(&tv2,NULL);
-  pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
-
-  return pos->labels;
-}
+// int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd)
+// {
+//   int idx;
+//   struct timeval tv1, tv2;
+//
+//   gettimeofday(&tv1,NULL);
+//   pos->input_state = SENNA_realloc(pos->input_state,
+//                                    sizeof(float),
+//                                    (sentence_size+pos->window_size-1)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
+//                                    );
+//   pos->output_state = SENNA_realloc(pos->output_state,
+//                                     sizeof(float),
+//                                     sentence_size*pos->output_state_size
+//                                     );
+//   
+//   SENNA_nn_lookup(pos->input_state,
+//                   pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+//                   pos->ll_word_weight,
+//                   pos->ll_word_size,
+//                   pos->ll_word_max_idx,
+//                   sentence_words,
+//                   sentence_size,
+//                   pos->ll_word_padding_idx,
+//                   (pos->window_size-1)/2
+//                   );
+//   SENNA_nn_lookup(pos->input_state+pos->ll_word_size,
+//                   pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+//                   pos->ll_caps_weight,
+//                   pos->ll_caps_size,
+//                   pos->ll_caps_max_idx,
+//                   sentence_caps,
+//                   sentence_size,
+//                   pos->ll_caps_padding_idx,
+//                   (pos->window_size-1)/2
+//                   );
+//   SENNA_nn_lookup(pos->input_state+pos->ll_word_size+pos->ll_caps_size, 
+//                   pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size,
+//                   pos->ll_suff_weight,
+//                   pos->ll_suff_size,
+//                   pos->ll_suff_max_idx,
+//                   sentence_suff,
+//                   sentence_size,
+//                   pos->ll_suff_padding_idx,
+//                   (pos->window_size-1)/2
+//                   );
+//   gettimeofday(&tv2,NULL);
+//   pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+//
+//   gettimeofday(&tv1,NULL);
+//   for(idx = 0; idx < sentence_size; idx++)
+//   {
+//       if(pos->service) {
+//         SOCKET_send(socketfd,
+//                     (char*)(pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)),
+//                     pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float),
+//                     pos->debug
+//                     );
+//         SOCKET_receive(socketfd,
+//                        (char*)(pos->output_state+idx*pos->output_state_size),
+//                        pos->output_state_size*sizeof(float),
+//                        pos->debug
+//                        );
+//       }
+//       else {
+//           SENNA_nn_linear(pos->hidden_state,
+//                   pos->hidden_state_size,
+//                   pos->l1_weight,
+//                   pos->l1_bias,
+//                   pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size),
+//                   pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
+//                   );
+//           SENNA_nn_hardtanh(pos->hidden_state,
+//                   pos->hidden_state,
+//                   pos->hidden_state_size
+//                   );
+//           SENNA_nn_linear(pos->output_state+idx*pos->output_state_size,
+//                   pos->output_state_size,
+//                   pos->l2_weight,
+//                   pos->l2_bias,
+//                   pos->hidden_state,
+//                   pos->hidden_state_size
+//                   );
+//       }
+//       pos->calls++;
+//   }
+//   gettimeofday(&tv2,NULL);
+//   pos->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+//
+//   gettimeofday(&tv1,NULL);
+//   pos->labels = SENNA_realloc(pos->labels, sizeof(int), sentence_size);
+//   SENNA_nn_viterbi(pos->labels,
+//                    pos->viterbi_score_init,
+//                    pos->viterbi_score_trans,
+//                    pos->output_state,
+//                    pos->output_state_size,
+//                    sentence_size
+//                    );
+//   gettimeofday(&tv2,NULL);
+//   pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+//
+//   return pos->labels;
+// }
 
 SENNA_POS* SENNA_POS_new(const char *path, const char *subpath)
 {
   SENNA_POS *pos = SENNA_malloc(sizeof(SENNA_POS), 1);
   FILE *f;
-  double dummy;
+  float dummy;
 
   memset(pos, 0, sizeof(SENNA_POS));
 
@@ -135,14 +132,14 @@ SENNA_POS* SENNA_POS_new(const char *path, const char *subpath)
   SENNA_fread(&pos->ll_caps_padding_idx, sizeof(int), 1, f);
   SENNA_fread(&pos->ll_suff_padding_idx, sizeof(int), 1, f);
 
-  SENNA_fread(&dummy, sizeof(double), 1, f);
+  SENNA_fread(&dummy, sizeof(float), 1, f);
   SENNA_fclose(f);
 
   if((int)dummy != 777)
-    SENNA_error("pos: data corrupted (or not IEEE doubleing computer)");
+    SENNA_error("pos: data corrupted (or not IEEE floating computer)");
 
   pos->input_state = NULL;
-  pos->hidden_state = SENNA_malloc(sizeof(double), pos->hidden_state_size);
+  pos->hidden_state = SENNA_malloc(sizeof(float), pos->hidden_state_size);
   pos->output_state = NULL;
   pos->labels = NULL;
 

@@ -14,7 +14,7 @@
 #include "mkl_cblas.h"
 #endif
 
-void SENNA_nn_lookup(double *dest, int dest_stride, const double *wordweights, int wordsize, int maxwordidx, const int *wordindices, int nword, int padidx, int npad)
+void SENNA_nn_lookup(float *dest, int dest_stride, const float *wordweights, int wordsize, int maxwordidx, const int *wordindices, int nword, int padidx, int npad)
 {
   int i;
 
@@ -22,7 +22,7 @@ void SENNA_nn_lookup(double *dest, int dest_stride, const double *wordweights, i
     SENNA_error("lookup: padding index out of range");
 
   for(i = 0; i < npad; i++)
-    memcpy(dest+i*dest_stride, wordweights+padidx*wordsize, wordsize*sizeof(double));
+    memcpy(dest+i*dest_stride, wordweights+padidx*wordsize, wordsize*sizeof(float));
 
   for(i = 0; i < nword; i++)
   {
@@ -30,20 +30,20 @@ void SENNA_nn_lookup(double *dest, int dest_stride, const double *wordweights, i
     if(wordidx < 0 || wordidx >= maxwordidx)
       SENNA_error("lookup: index out of range");
 
-    memcpy(dest+(i+npad)*dest_stride, wordweights+wordidx*wordsize, wordsize*sizeof(double));
+    memcpy(dest+(i+npad)*dest_stride, wordweights+wordidx*wordsize, wordsize*sizeof(float));
   }
 
   for(i = 0; i < npad; i++)
-    memcpy(dest+(i+npad+nword)*dest_stride, wordweights+padidx*wordsize, wordsize*sizeof(double));
+    memcpy(dest+(i+npad+nword)*dest_stride, wordweights+padidx*wordsize, wordsize*sizeof(float));
 }
 
-void SENNA_nn_hardtanh(double *output, double *input, int size)
+void SENNA_nn_hardtanh(float *output, float *input, int size)
 {
   int i;
 
   for(i = 0; i < size; i++)
   {
-    double z = input[i];
+    float z = input[i];
     if(z >= -1 && z <= 1)
       output[i] = z;
     else if(z < -1)
@@ -53,7 +53,7 @@ void SENNA_nn_hardtanh(double *output, double *input, int size)
   }
 }
 
-void SENNA_nn_linear(double *output, int output_size, double *weights, double *biases, double *input, int input_size)
+void SENNA_nn_linear(float *output, int output_size, float *weights, float *biases, float *input, int input_size)
 {
 #ifdef USE_BLAS
   if(biases)
@@ -64,8 +64,8 @@ void SENNA_nn_linear(double *output, int output_size, double *weights, double *b
   
   for(i = 0; i < output_size; i++)
   {
-    double z = (biases ? biases[i] : 0);
-    double *weights_row = weights + i*input_size;
+    float z = (biases ? biases[i] : 0);
+    float *weights_row = weights + i*input_size;
     for(j = 0; j < input_size; j++)
       z += input[j]*weights_row[j];
     output[i] = z;
@@ -73,9 +73,9 @@ void SENNA_nn_linear(double *output, int output_size, double *weights, double *b
 #endif
 }
 
-void SENNA_nn_max(double *value_, int *idx_, double *input, int input_size)
+void SENNA_nn_max(float *value_, int *idx_, float *input, int input_size)
 {
-  double value = -DBL_MAX;
+  float value = -DBL_MAX;
   int idx = -1;
   int i;
 
@@ -95,7 +95,7 @@ void SENNA_nn_max(double *value_, int *idx_, double *input, int input_size)
     *idx_ = idx;
 }
 
-void SENNA_nn_temporal_convolution(double *output, int output_frame_size, double *weights, double *biases, double *input, int input_frame_size, int n_frames, int k_w)
+void SENNA_nn_temporal_convolution(float *output, int output_frame_size, float *weights, float *biases, float *input, int input_frame_size, int n_frames, int k_w)
 {
 #ifdef USE_BLAS
   if(k_w == 1)
@@ -118,7 +118,7 @@ void SENNA_nn_temporal_convolution(double *output, int output_frame_size, double
   }
 }
 
-void SENNA_nn_temporal_max_convolution(double *output, double *bias, double *input, int input_frame_size, int n_frames, int k_w)
+void SENNA_nn_temporal_max_convolution(float *output, float *bias, float *input, int input_frame_size, int n_frames, int k_w)
 {
   int i, j, k;
   int h_k_w = (k_w-1)/2;
@@ -127,12 +127,12 @@ void SENNA_nn_temporal_max_convolution(double *output, double *bias, double *inp
   {
     for(i = 0; i < input_frame_size; i++)
     {
-      double maxval = -DBL_MAX;
+      float maxval = -DBL_MAX;
       for(j = -k; j < n_frames-k; j++)
       {
         int jbias = j + h_k_w;
         int jinput = k+j;
-        double z;
+        float z;
         
         if(jbias < 0)
           jbias = 0;
@@ -148,13 +148,13 @@ void SENNA_nn_temporal_max_convolution(double *output, double *bias, double *inp
   }
 }
 
-void SENNA_nn_temporal_max(double *output, double *input, int N, int T)
+void SENNA_nn_temporal_max(float *output, float *input, int N, int T)
 {
   int n, t;
 
   for(n = 0; n < N; n++)
   {
-    double z = -DBL_MAX;
+    float z = -DBL_MAX;
     for(t = 0; t < T; t++)
     {
       if(input[t*N+n] > z)
@@ -183,16 +183,16 @@ void SENNA_nn_distance(int *dest, int idx, int max_idx, int sentence_size, int p
     dest[i+padding_size+sentence_size] = NN_MAX( NN_MIN(i+sentence_size-idx, max_idx), -max_idx) + max_idx;
 }
 
-void SENNA_nn_viterbi(int *path, double *init, double *transition, double *emission, int N, int T)
+void SENNA_nn_viterbi(int *path, float *init, float *transition, float *emission, int N, int T)
 {
-  double *delta, *deltap;
+  float *delta, *deltap;
   int *phi;
   int i, j, t;
      
   /* misc allocations */
-  delta = SENNA_malloc(sizeof(double), N);
-  deltap = SENNA_malloc(sizeof(double), N);
-  phi = SENNA_malloc(sizeof(double), N*T);
+  delta = SENNA_malloc(sizeof(float), N);
+  deltap = SENNA_malloc(sizeof(float), N);
+  phi = SENNA_malloc(sizeof(float), N*T);
   
   /* init */
   for(i = 0; i < N; i++)
@@ -201,14 +201,14 @@ void SENNA_nn_viterbi(int *path, double *init, double *transition, double *emiss
   /* recursion */
   for(t = 1; t < T; t++)
   {
-    double *deltan = delta;
+    float *deltan = delta;
     for(j = 0; j < N; j++)
     {
-      double maxValue = -DBL_MAX;
+      float maxValue = -DBL_MAX;
       int maxIndex = 0;
       for(i = 0; i < N; i++)
       {
-        double z = deltap[i] + transition[i+j*N];
+        float z = deltap[i] + transition[i+j*N];
         if(z > maxValue)
         {
           maxValue = z;
@@ -223,7 +223,7 @@ void SENNA_nn_viterbi(int *path, double *init, double *transition, double *emiss
   }
 
   {
-    double maxValue = -DBL_MAX;
+    float maxValue = -DBL_MAX;
     int maxIndex = 0;
     for(j = 0; j < N; j++)
     {

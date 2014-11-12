@@ -6,11 +6,12 @@
 
 class DnnHandler : public facebook::windtunnel::treadmill::services::dnn::DnnSvIf {
  public:
-  DnnHandler() { };
+  DnnHandler();
+  // DnnHandler(bool gpu, int gpuid);
 
   folly::wangle::Future<
     std::unique_ptr<facebook::windtunnel::treadmill::services::dnn::ServerResult> >
-      future_fwd(facebook::windtunnel::treadmill::services::dnn::Work input);
+      future_fwd(std::unique_ptr<facebook::windtunnel::treadmill::services::dnn::Work> input);
 
  private:
   std::map<std::string, caffe::Net<double>* > nets;

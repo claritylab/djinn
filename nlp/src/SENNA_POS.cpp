@@ -1,25 +1,22 @@
 #include <sys/time.h>
 #include <unistd.h>
-
 #include "SENNA_POS.h"
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
+#include "socket.h"
 
-
-int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, DnnClient client, bool service)
+int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd)
 {
   int idx;
   struct timeval tv1, tv2;
-  Work work;
-  work.op = "pos";
 
   gettimeofday(&tv1,NULL);
   pos->input_state = SENNA_realloc(pos->input_state,
-                                   sizeof(double),
+                                   sizeof(float),
                                    (sentence_size+pos->window_size-1)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)
                                    );
   pos->output_state = SENNA_realloc(pos->output_state,
-                                    sizeof(double),
+                                    sizeof(float),
                                     sentence_size*pos->output_state_size
                                     );
   
@@ -59,17 +56,17 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
   gettimeofday(&tv1,NULL);
   for(idx = 0; idx < sentence_size; idx++)
   {
-      if(service) {
-          for(int i = 0; i < pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size); ++i)
-              work.data.push_back((pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))[i]);
-
-          // forward pass
-          std::vector<double> inc;
-          client.fwd(inc, work);
-          for(int i = 0; i < pos->output_state_size; ++i){
-              (pos->output_state+idx*pos->output_state_size)[i] = inc[i];
-              std::cout <<(pos->output_state+idx*pos->output_state_size)[i] <<std::endl;
-          }
+      if(pos->service) {
+        SOCKET_send(socketfd,
+                    (char*)(pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)),
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float),
+                    pos->debug
+                    );
+        SOCKET_receive(socketfd,
+                       (char*)(pos->output_state+idx*pos->output_state_size),
+                       pos->output_state_size*sizeof(float),
+                       pos->debug
+                       );
       }
       else {
           SENNA_nn_linear(pos->hidden_state,
@@ -90,9 +87,6 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
                   pos->hidden_state,
                   pos->hidden_state_size
                   );
-          for(int i = 0; i < pos->output_state_size; ++i){
-              std::cout <<(pos->output_state+idx*pos->output_state_size)[i] <<std::endl;
-          }
       }
       pos->calls++;
   }
@@ -118,7 +112,7 @@ SENNA_POS* SENNA_POS_new(const char *path, const char *subpath)
 {
   SENNA_POS *pos = SENNA_malloc(sizeof(SENNA_POS), 1);
   FILE *f;
-  double dummy;
+  float dummy;
 
   memset(pos, 0, sizeof(SENNA_POS));
 
@@ -139,14 +133,14 @@ SENNA_POS* SENNA_POS_new(const char *path, const char *subpath)
   SENNA_fread(&pos->ll_caps_padding_idx, sizeof(int), 1, f);
   SENNA_fread(&pos->ll_suff_padding_idx, sizeof(int), 1, f);
 
-  SENNA_fread(&dummy, sizeof(double), 1, f);
+  SENNA_fread(&dummy, sizeof(float), 1, f);
   SENNA_fclose(f);
 
   if((int)dummy != 777)
-    SENNA_error("pos: data corrupted (or not IEEE doubleing computer)");
+    SENNA_error("pos: data corrupted (or not IEEE floating computer)");
 
   pos->input_state = NULL;
-  pos->hidden_state = SENNA_malloc(sizeof(double), pos->hidden_state_size);
+  pos->hidden_state = SENNA_malloc(sizeof(float), pos->hidden_state_size);
   pos->output_state = NULL;
   pos->labels = NULL;
 

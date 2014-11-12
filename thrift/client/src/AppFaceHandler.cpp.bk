@@ -1,0 +1,118 @@
+#include <unistd.h>
+#include <sys/time.h>
+#include <folly/wangle/Future.h>
+
+#include "AppClientHandler.h"
+#include "opencv2/opencv.hpp"
+#include "caffe/caffe.hpp"
+#include "align.h"
+
+using namespace folly::wangle;
+using namespace apache::thrift;
+using namespace apache::thrift::async;
+using namespace facebook::windtunnel::treadmill::services::dnn;
+
+using caffe::Blob;
+using caffe::Caffe;
+using caffe::Net;
+using caffe::Layer;
+using caffe::shared_ptr;
+using caffe::Timer;
+using caffe::vector;
+
+Future<std::unique_ptr<AppResult> > AppClientHandler::future_imc() {
+  folly::MoveWrapper<Promise<std::unique_ptr<AppResult>>> promise;
+  auto future = promise->getFuture();
+
+  /* CascadeClassifier face_cascade; */
+  /* face_cascade.load(haar); */
+  // Initialize flandmarks with the model
+  // FLANDMARK_Model* fland_model = flandmark_init(fland.c_str());
+
+  this->getEventBase()->runInEventBaseThread(
+    [promise, this]() mutable {
+      
+    struct timeval app_start_time, app_end_time, app_diff_time;
+    struct timeval comm_start_time, comm_end_time, comm_diff_time;
+    Work work;
+    Net<double>* espresso;
+    vector<Blob<double>* > img_blobs;
+
+    // start of application
+    gettimeofday(&app_start_time, nullptr);
+    if(client == nullptr) {
+      espresso = new Net<double>("input/face-inputnet.prototxt");
+      double loss;
+      img_blobs = espresso->ForwardPrefilled(&loss);
+      
+      input_len = img_blobs[0]->count();
+      data = (double*)malloc(input_len * sizeof(double));
+      for(int i = 0; i < input_len; ++i)
+          data[i] = img_blobs[0]->cpu_data()[i];
+
+      face_cascade.load("data/haar.xml");
+      fland_model = flandmark_init("data/flandmark.dat");
+
+      std::shared_ptr<apache::thrift::async::TAsyncSocket> socket(
+          apache::thrift::async::TAsyncSocket::newSocket(&event_base, hostname, port));
+      client = std::unique_ptr<
+                    facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient>(
+                      new facebook::windtunnel::treadmill::services::dnn::DnnAsyncClient(
+                        std::unique_ptr<apache::thrift::HeaderClientChannel,
+                        apache::thrift::TDelayedDestruction::Destructor>(
+                            new apache::thrift::HeaderClientChannel(socket)
+                          )
+                        )
+                      );
+      n_in = 1; c_in = 3; w_in = 152; h_in = 152;
+    }
+
+    // prepare data
+    work.op = "face";
+    // hardcoded, whatever.
+    work.n_in = n_in; work.c_in = c_in; work.w_in = w_in; work.h_in = h_in;
+
+    for(int i = 0; i < input_len; ++i)
+      work.data.push_back(data[i]);
+
+    cvMat img = CvMat(w_in, h_in, CV_8UC3, (void*)(&work.data[0]));
+    preprocess(img, face_cascade, model)
+    for(int i = 0; i < input_len; ++i)
+      work.data.push_back(data[i]);
+
+    int network_data_size = work.data.size() * sizeof(float);
+
+    gettimeofday(&comm_start_time, nullptr);
+
+    auto f = client->future_fwd(work);
+
+    while (!f.isReady()) {
+      event_base.loop();
+    }
+
+    f.then(
+      [promise, app_start_time, app_end_time, app_diff_time,
+       comm_start_time, comm_end_time, comm_diff_time,
+       network_data_size](folly::wangle::Try<ServerResult>&& t) mutable {
+
+      // end of application
+      gettimeofday(&app_end_time, nullptr);
+      timersub(&app_end_time, &app_start_time, &app_diff_time);
+
+      std::unique_ptr<AppResult> ret(new AppResult());;
+      ret->app_time = app_diff_time.tv_sec * 1000 + app_diff_time.tv_usec / 1000; 
+
+      ret->comm_time = (comm_diff_time.tv_sec * 1000 + comm_diff_time.tv_usec / 1000)
+        - t.value().time_ms;
+      ret->fwd_time = t.value().time_ms;
+      ret->comm_data_size = network_data_size;
+
+      for(unsigned int j = 0; j < t.value().data.size(); ++j)
+        std::cout << "Image: " << j << " class: " << t.value().data[j] << std::endl;
+
+      promise->setValue(std::move(ret));
+    });
+});
+
+  return future;
+}

@@ -64,7 +64,7 @@ FILE *SENNA_fopen(const char *path, const char *subpath, const char *mode)
     SENNA_error("int size is not 4, sorry can't load binary files");
 
   if(sizeof(float) != 4)
-    SENNA_error("double size is not 1, sorry can't load binary files");
+    SENNA_error("float size is not 1, sorry can't load binary files");
 
   SENNA_free(complete_path);
   return f;
@@ -95,18 +95,18 @@ void SENNA_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     buffer_reverse_memory(ptr, size, nmemb);
 }
 
-void SENNA_fread_tensor_1d(double **ptr, int *n_row, FILE *stream)
+void SENNA_fread_tensor_1d(float **ptr, int *n_row, FILE *stream)
 {
   SENNA_fread(n_row, sizeof(int), 1, stream);
-  *ptr = SENNA_malloc(sizeof(double), *n_row);
+  *ptr = SENNA_malloc(sizeof(float), *n_row);
   SENNA_fread(*ptr, sizeof(float), *n_row, stream);
 }
 
-void SENNA_fread_tensor_2d(double **ptr, int *n_row, int *n_column, FILE *stream)
+void SENNA_fread_tensor_2d(float **ptr, int *n_row, int *n_column, FILE *stream)
 {
   SENNA_fread(n_row, sizeof(int), 1, stream);
   SENNA_fread(n_column, sizeof(int), 1, stream);
-  *ptr = SENNA_malloc(sizeof(double), (*n_row)*(*n_column));
+  *ptr = SENNA_malloc(sizeof(float), (*n_row)*(*n_column));
   SENNA_fread(*ptr, sizeof(float), (*n_row)*(*n_column), stream);
 }
 
@@ -197,7 +197,7 @@ static int is_little_endian_cpu()
     return 1;
 }
 
-void SENNA_print_tensor_1d(double *tensor, int nrow)
+void SENNA_print_tensor_1d(float *tensor, int nrow)
 {
   int r;
   
@@ -207,7 +207,7 @@ void SENNA_print_tensor_1d(double *tensor, int nrow)
   printf("[Tensor of size %d]\n", nrow);
 }
 
-void SENNA_print_tensor_2d(double *tensor, int nrow, int ncolumn)
+void SENNA_print_tensor_2d(float *tensor, int nrow, int ncolumn)
 {
   int c, r;
   
