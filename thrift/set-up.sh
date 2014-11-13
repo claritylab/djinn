@@ -19,7 +19,7 @@ do
     numrunners=$numclients
     rps=$rps
     # in seconds
-    runtime=1200
+    runtime=300
 
     echo "Setting up server and clients..."
     cd server > /dev/null;
