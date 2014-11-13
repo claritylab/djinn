@@ -53,10 +53,11 @@ Future<std::unique_ptr<AppResult> > AppClientHandler::future_imc() {
 
     // prepare data
     work.op = "imc";
-    work.n_in = n_in; work.c_in = c_in; work.w_in = w_in; work.h_in = h_in;
+    dim_t dim = dimensions["imc"];
+    work.n_in = dim.n_in; work.c_in = dim.c_in; work.w_in = dim.w_in; work.h_in = dim.h_in;
 
-    for(int i = 0; i < input_len; ++i)
-      work.data.push_back(data[i]);
+    for(int i = 0; i < dim.input_len; ++i)
+      work.data.push_back(data["imc"][i]);
 
     int network_data_size = work.data.size() * sizeof(float);
 
