@@ -37,5 +37,6 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc",
 
 pthread_t request_thread_init(int sock);
 void* request_handler(void* sock);
+void init_mutex(void);
 
 #endif // #define _THREAD_H_

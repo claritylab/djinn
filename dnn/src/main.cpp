@@ -50,9 +50,8 @@ int main(int argc , char *argv[])
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
  
-    std::cout << "1" << std::endl;
     Caffe::SetDevice(0);
-    std::cout << "2" << std::endl;
+
     Caffe::set_phase(Caffe::TEST);
     std::cout << "3" << std::endl;
     if(vm["gpu"].as<bool>()){
@@ -67,6 +66,8 @@ int main(int argc , char *argv[])
     listen(server_sock, 10);
     printf("Server is listening for request on %d\n", vm["portno"].as<int>());
 
+    init_mutex();
+
     // Main Loop
     int thread_cnt = 0;
     while(1) {
@@ -78,6 +79,7 @@ int main(int argc , char *argv[])
         else {
             // Create a new thread, pass the socket number to it
             new_thread_id = request_thread_init(client_sock);
+
         }
        thread_cnt++;
         /*
