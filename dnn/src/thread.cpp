@@ -68,18 +68,7 @@ void* request_handler(void* sock)
   //translate_kaldi_model(weight_file_name, net, true);
 
   std::clock_t model_ld_start = clock();
-  switch(req_type){
-    case FACE:
-        printf("not implemented\n");
-        return 0;
-    case ASR: case IMC: case DIG: case POS: case NER: case CHK: case SRL: case VBS: case PT0: {
-         net->CopyTrainedLayersFrom(weight_file_name);
-         break;
-    }
-    default:
-        printf("Illegal request type\n");
-        return -1; 
-  }
+  net->CopyTrainedLayersFrom(weight_file_name);
   std::clock_t model_ld_end = clock(); 
 
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
