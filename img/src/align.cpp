@@ -206,71 +206,42 @@ vector<cv::Point2d> detectLandmarks(FLANDMARK_Model* model, const Mat & image, c
 }
 
 /** preprocesses the image by calling correct functions*/
-bool preprocess(po::variables_map& vm, string list) {
+bool preprocess(po::variables_map& vm, float* data) {
     assert(vm.count("flandmark"));
     assert(vm.count("haar"));
 
-    ifstream img_list (list.c_str());
-    // Read in line by line
-    string img_name;
-    while(!img_list.eof())
-    {
-        getline(img_list, img_name);
-        if(img_name.length() < 0)
-            break;
-        int loc = img_name.find(" ");
-        img_name = img_name.substr(0, loc);
-        cout << img_name << endl;
+    // Get arguments
+    Mat image = Mat(Size(152,152), CV_8UC3, (void*)data);
 
-        // Get arguments
-        Mat image = imread(img_name);
+    // Get cascade for face detection
+    CascadeClassifier face_cascade;
+    face_cascade.load(vm["haar"].as<string>());
 
-        if(image.empty()){
-            cout << "error loading image. Check path"<<endl;
-            return false;
-        }
+    // Initialize flandmarks with the model
+    string flandmarks_model_name = vm["flandmark"].as<string>();
+    FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
 
-        // Get grayscale image
-        Mat gray_image;
-        cvtColor(image, gray_image, CV_BGR2GRAY);
+    // Find face in image:
+    Rect r = detect_face(image, face_cascade);
 
-        // Get cascade for face detection
-        CascadeClassifier face_cascade;
-        face_cascade.load(vm["haar"].as<string>());
-
-        // Initialize flandmarks with the model
-        string flandmarks_model_name = vm["flandmark"].as<string>();
-        FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
-
-        // Find face in image:
-        Rect r = detect_face(image, face_cascade);
-
-        if(r == Rect()) {
-            cout << "no faces found in " << img_name << endl;
-            return true;
-        }
-
-        // Detect landmarks
-        vector<cv::Point2d> landmarks = detectLandmarks(model, gray_image, Rect(r.x,r.y,r.width,r.height));
-
-        if(landmarks.size() == 0) {
-            cout << "no landmarks found in " << img_name << endl;
-            return true;
-        }
-
-        Mat aligned_image;
-        vector<cv::Point2d> aligned_landmarks;
-
-        //align the face
-        align(image, aligned_image, landmarks, aligned_landmarks);
-
-        // TODO: overwrite?
-        // int pos = img_name.find(".jpg");
-        // if(pos != std::string::npos)
-        //     img_name = img_name.substr(0, pos) + "_a.jpg";
-        imwrite(img_name, aligned_image);
-        // show_landmarks(aligned_landmarks, aligned_image, "aligned landmarks");
+    if(r == Rect()) {
+      cout << "no faces found in image" << endl;
+      return true;
     }
+
+    // Detect landmarks
+    vector<cv::Point2d> landmarks = detectLandmarks(model, image, Rect(r.x,r.y,r.width,r.height));
+
+    if(landmarks.size() == 0) {
+      cout << "no landmarks found in image " << endl;
+      return true;
+    }
+
+    Mat aligned_image;
+    vector<cv::Point2d> aligned_landmarks;
+
+    //align the face
+    align(image, aligned_image, landmarks, aligned_landmarks);
 
     return true;
 }

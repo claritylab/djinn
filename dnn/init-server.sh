@@ -1,1 +1,1 @@
-./dnn-server --portno $1 --debug 1
+./dnn-server --portno $1 --gpu 1 --debug 0

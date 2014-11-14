@@ -17,14 +17,6 @@
 #include "align.h"
 #include "socket.h"
 
-using caffe::Blob;
-using caffe::Caffe;
-using caffe::Net;
-using caffe::Layer;
-using caffe::shared_ptr;
-using caffe::Timer;
-using caffe::vector;
-
 using namespace std;
 
 namespace po = boost::program_options;
@@ -40,7 +32,8 @@ po::variables_map parse_opts( int ac, char** av )
         ("hostname,h", po::value<string>(), "Server IP addr")
         ("portno,p", po::value<int>()->default_value(8080), "Server port (default: 8080)")
         ("task,t", po::value<string>(), "Image task: imc (ImageNet), face (DeepFace), dig (LeNet)")
-        ("imcin,i", po::value<string>(), "Mini net for input")
+        ("input,i", po::value<string>(), "input image (.bin)")
+        ("num,n", po::value<int>()->default_value(1), "num images (default=1)")
         ("haar,c", po::value<string>(), "(face) Haar Cascade model")
         ("flandmark,f", po::value<string>(), "(face) Flandmarks trained data")
 
@@ -74,66 +67,63 @@ int main( int argc, char** argv )
     if(socketfd < 0)
         exit(0);
 
-    Caffe::set_phase(Caffe::TEST);
-    if(vm["gpu"].as<bool>())
-        Caffe::set_mode(Caffe::GPU);
-    else
-        Caffe::set_mode(Caffe::CPU);
-
-    float loss;
-    assert(vm.count("imcin"));
-    Net<float>* espresso = new Net<float>(vm["imcin"].as<string>());
-    const caffe::LayerParameter& in_params = espresso->layers()[0]->layer_param();
+    assert(vm.count("input"));
+    int NUM_IMGS = vm["num"].as<int>();
 
     gettimeofday(&tv1,NULL);
-    // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
-    // $cmt: still tries to do facial recognition if no faces or landmarks found.
-    string task = vm["task"].as<string>();
-    if(task == "face")
-        if(preprocess(vm, in_params.image_data_param().source()) == false)
-            exit(0);
 
     gettimeofday(&tv2,NULL);
     apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
     
-    // not timed disk I/O stuff
-    vector<Blob<float>* > img_blobs = espresso->ForwardPrefilled(&loss);
-
-    gettimeofday(&tv1,NULL);
+    string task = vm["task"].as<string>();
     // send req_type
     int req_type;
-    if(task == "imc") req_type = 0;
-    else if(task == "face") req_type = 1;
-    else if(task == "dig") req_type = 2;
+    // read in image
+    int IMG_SIZE = 0;                          // c * w * h
+    if(task == "imc") { req_type = 0; IMG_SIZE = 3 * 227 * 227; } //hardcoded for AlexNet;
+    else if(task == "face") { req_type = 1; IMG_SIZE = 3 * 152 * 152; } //hardcoded for DeepFace;
+    else if(task == "dig") { req_type = 2; NUM_IMGS = 100; IMG_SIZE = 1 * 28 * 28; } //hardcoded for Mnist;
     else { printf("unrecognized task.\n"); exit(1); }
 
+    float *arr = (float*) malloc(NUM_IMGS * IMG_SIZE * sizeof(float));
+    std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary);
+    for(int i = 0; i < NUM_IMGS * IMG_SIZE; ++i)
+        img.read((char*)&(arr[i]), sizeof(float));
+
+    // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
+    // $cmt: still tries to do facial recognition if no faces or landmarks found.
+    if(task == "face")
+        if(preprocess(vm, arr) == false)
+            exit(0);
+
+    gettimeofday(&tv1,NULL);
     SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
 
     // send len
-    SOCKET_txsize(socketfd, img_blobs[0]->count());
+    SOCKET_txsize(socketfd, NUM_IMGS * IMG_SIZE);
 
     // send image
-    SOCKET_send(socketfd, (char*)img_blobs[0]->cpu_data(), img_blobs[0]->count()*sizeof(float), vm["debug"].as<bool>());
+    SOCKET_send(socketfd, (char*)arr, NUM_IMGS * IMG_SIZE * sizeof(float), vm["debug"].as<bool>());
 
     // receive data
-    vector<Blob<float>* > in_blobs = espresso->output_blobs();
-    float *preds = (float *) malloc(in_blobs[0]->num() * sizeof(float));
-    SOCKET_receive(socketfd, (char*)preds, in_blobs[0]->num() * sizeof(float), vm["debug"].as<bool>());
+    float *preds = (float *) malloc(NUM_IMGS  * sizeof(float));
+    SOCKET_receive(socketfd, (char*)preds, NUM_IMGS * sizeof(float), vm["debug"].as<bool>());
 
     gettimeofday(&tv2,NULL);
     txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
     // check correct
-    for(int j = 0; j < in_blobs[0]->num(); ++j)
+    for(int j = 0; j < NUM_IMGS; ++j)
         cout << "Image: " << j << " class: " << preds[j] << endl;;
 
     SOCKET_close(socketfd, false);
 
     free(preds);
+    free(arr);
 #ifdef TIMING
     cout << "TIMING:" << endl;
     cout << "task " << task
-         << " size_kb " << (float)(img_blobs[0]->count()*sizeof(float))/1024
+         << " size_kb " << (float)(IMG_SIZE*sizeof(float))/1024
          << " total_t " << (float)(apptime+txtime)/1000
          << " app_t " << (float)(apptime/1000)
          << " tx_t " << (float)(txtime/1000) << endl;

@@ -1,7 +1,7 @@
-./img-client --hostname 141.212.111.252 \
-             --portno 8080 \
+./img-client --hostname localhost \
+             --portno $2 \
              --task $1 \
-             --imcin input/$1-inputnet.prototxt \
+             --input input/$1-input.bin \
              --flandmark data/flandmark.dat \
              --haar data/haar.xml \
              --debug 1

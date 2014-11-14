@@ -6,6 +6,6 @@
 
 namespace po = boost::program_options;
 
-bool preprocess(po::variables_map& vm, std::string list);
+bool preprocess(po::variables_map& vm, float *data);
 
 #endif
