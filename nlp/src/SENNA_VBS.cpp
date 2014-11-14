@@ -20,6 +20,33 @@ int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sen
     vbs->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
   gettimeofday(&tv1,NULL);
+
+  int input_size =  vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size;
+
+  char* input_data = (char*) malloc(sentence_size*(vbs->window_size*input_size)*sizeof(float));
+
+  for(idx = 0; idx < sentence_size; idx++){
+    memcpy((char*)(input_data+idx*(vbs->window_size)*(input_size)*sizeof(float)),
+                  (char*)(vbs->input_state+idx*input_size),
+                  vbs->window_size*input_size*sizeof(float));               
+  }
+
+
+  if(vbs->service) {
+     SOCKET_send(socketfd,
+                input_data, 
+                sentence_size*(vbs->window_size*input_size*sizeof(float)),
+                vbs->debug
+               );
+    SOCKET_receive(socketfd,
+                (char*)(vbs->output_state),
+                vbs->output_state_size*sizeof(float)*sentence_size,
+                vbs->debug
+                );
+
+  }
+
+  /*
     for(idx = 0; idx < sentence_size; idx++)
     {
         if(vbs->service) {
@@ -53,6 +80,7 @@ int* SENNA_VBS_forward(SENNA_VBS *vbs, const int *sentence_words, const int *sen
         }
         vbs->calls++;
     }
+    */
     gettimeofday(&tv2,NULL);
     vbs->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 

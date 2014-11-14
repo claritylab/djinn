@@ -19,6 +19,30 @@ int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sen
   gettimeofday(&tv2,NULL);
   pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
+  int input_size = pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size;
+  
+  char* input_data = (char*) malloc(sentence_size*(pt0->window_size*(input_size))*sizeof(float));
+
+  for(idx = 0; idx < sentence_size; idx++){
+      memcpy((char*)(input_data+idx*(pt0->window_size)*(input_size)*sizeof(float)),
+                    (char*)(pt0->input_state+idx*input_size),
+                     pt0->window_size*input_size*sizeof(float));               
+  }
+  if(pt0->service){
+        SOCKET_send(socketfd,
+                   input_data,
+                   pt0->window_size*(input_size)*sizeof(float)*sentence_size,
+                   pt0->debug
+                   );
+       SOCKET_receive(socketfd,
+                      (char*)(pt0->output_state),
+                      pt0->output_state_size*sizeof(float)*sentence_size,
+                      pt0->debug
+                      );
+  
+  }
+
+  /*
     for(idx = 0; idx < sentence_size; idx++)
     {
         gettimeofday(&tv1,NULL);
@@ -60,6 +84,10 @@ int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sen
         gettimeofday(&tv2,NULL);
         pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
     }
+    */ 
+    pt0->labels = SENNA_realloc(pt0->labels, sizeof(int), sentence_size);
+    SENNA_nn_viterbi(pt0->labels, pt0->viterbi_score_init, pt0->viterbi_score_trans, pt0->output_state, pt0->output_state_size, sentence_size);
+ 
     return pt0->labels;
 }
 
