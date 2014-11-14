@@ -24,34 +24,21 @@ void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* n
     memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 }
 
-pthread_mutex_t mutex;
-int finished_threads=0;
-
-void init_mutex()
-{
-  pthread_mutex_init(&mutex, NULL);
-}
-
-int request_thread_init(int sock)
+pthread_t request_thread_init(int sock)
 {
   // Prepare to create a new pthread
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setstacksize(&attr, 1024*1024);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  void *status;
- 
+ // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  
   // Create a new thread starting with the function request_handler
   pthread_t tid;
   if(pthread_create(&tid, &attr, request_handler, (void *)sock) != 0){
     printf("Failed to create a request handler thread.\n");
     return -1;
   }
-
-  while(finished_threads<1) ;
-
-//  pthread_join(tid, &status);  
-  return 0;
+  return tid;
 }
 
 void* request_handler(void* sock)
@@ -126,6 +113,8 @@ void* request_handler(void* sock)
 
   // reshape input dims if incoming data > current net config
   // TODO(johann): this is (only) useful for img stuff currently
+  std::cout << "Sock elts is " << sock_elts << std::endl;
+
   if(sock_elts/(c_in*w_in*h_in) > n_in)
   {
       n_in = sock_elts/(c_in*w_in*h_in);
@@ -158,7 +147,8 @@ void* request_handler(void* sock)
   // 2. Do forward pass
   // 3. Send back the result
   // 4. Repeat 1-3
-  std::clock_t fwd_pass_time = 0;
+  std::clock_t second_fwd_pass_time = 0;
+  std::clock_t first_fwd_pass_time = 0;
   while(1){
     if(DEBUG) printf("Receiving input features from client...\n");
     int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
@@ -169,7 +159,12 @@ void* request_handler(void* sock)
     std::clock_t fwd_pass_start = std::clock();
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
     std::clock_t fwd_pass_end = std::clock();
-    fwd_pass_time += (fwd_pass_end - fwd_pass_start);
+    first_fwd_pass_time = fwd_pass_end - fwd_pass_start;
+
+    fwd_pass_start = std::clock();
+    SERVICE_fwd(in, in_elts, out, out_elts, espresso);
+    fwd_pass_end = std::clock();
+    second_fwd_pass_time = (fwd_pass_end - fwd_pass_start);
     
     if(DEBUG) printf("Sending result back to client...\n");
     SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
@@ -180,14 +175,11 @@ void* request_handler(void* sock)
   unsigned int thread_id = (unsigned int) pthread_self();
   printf("Request type: %s, thread ID: %ld\n", request_name[req_type], thread_id);
   printf("Model loading time: %d clock cycles, %.4fms\n", model_ld_time, (1000 * (float)model_ld_time)/CLOCKS_PER_SEC);
-  printf("Forward pass time: %d clock cycles, %.4fms\n", fwd_pass_time, (1000 * (float)fwd_pass_time)/CLOCKS_PER_SEC);
+  printf("1st Forward pass time: %d clock cycles, %.4fms\n", first_fwd_pass_time, (1000 * (float)first_fwd_pass_time)/CLOCKS_PER_SEC);
+  printf("2nd Forward pass time: %d clock cycles, %.4fms\n", second_fwd_pass_time, (1000 * (float)second_fwd_pass_time)/CLOCKS_PER_SEC);
   // Exit the thread
 
   if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
-
-  pthread_mutex_lock(&mutex);
-  finished_threads ++;
-  pthread_mutex_unlock(&mutex);
 
   free(in);
   free(out);

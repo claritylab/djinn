@@ -49,11 +49,13 @@ int main(int argc , char *argv[])
     // Main thread for the server
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
-    int ret;
+ 
+    Caffe::SetDevice(0);
 
     Caffe::set_phase(Caffe::TEST);
-    if(vm["gpu"].as<bool>())
+    if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
+    }
     else
         Caffe::set_mode(Caffe::CPU);
 
@@ -63,24 +65,29 @@ int main(int argc , char *argv[])
     listen(server_sock, 10);
     printf("Server is listening for request on %d\n", vm["portno"].as<int>());
 
-    init_mutex();
 
     // Main Loop
+    int thread_cnt = 0;
     while(1) {
         int client_sock;
+        pthread_t new_thread_id;
         client_sock = accept(server_sock, (sockaddr*) 0, (unsigned int *) 0);
         if(client_sock == -1)
             printf("Failed to accept.\n");
         else {
             // Create a new thread, pass the socket number to it
-            ret = request_thread_init(client_sock);
+            new_thread_id = request_thread_init(client_sock);
 
-            if(ret == -1)
-                printf("Failed to accept.\n");
-	    else {
-		printf("~~~finish current request~~~\n");
-		break;
-	    }
+        }
+       thread_cnt++;
+        
+        if(thread_cnt == 2){
+          if(pthread_join(new_thread_id, NULL) != 0){
+            printf("Failed to join.\n");
+            exit(1);
+          }
+          cudaDeviceReset();
+          break;
         }
     }
     return 0;
