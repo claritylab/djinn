@@ -38,7 +38,7 @@ pthread_t request_thread_init(int sock)
     printf("Failed to create a request handler thread.\n");
     return -1;
   }
-  return thread_id;
+  return tid;
 }
 
 void* request_handler(void* sock)
@@ -180,10 +180,6 @@ void* request_handler(void* sock)
   // Exit the thread
 
   if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
-
-  pthread_mutex_lock(&mutex);
-  finished_threads ++;
-  pthread_mutex_unlock(&mutex);
 
   free(in);
   free(out);

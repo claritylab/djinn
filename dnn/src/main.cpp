@@ -53,7 +53,6 @@ int main(int argc , char *argv[])
     Caffe::SetDevice(0);
 
     Caffe::set_phase(Caffe::TEST);
-    std::cout << "3" << std::endl;
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
     }
@@ -66,7 +65,6 @@ int main(int argc , char *argv[])
     listen(server_sock, 10);
     printf("Server is listening for request on %d\n", vm["portno"].as<int>());
 
-    init_mutex();
 
     // Main Loop
     int thread_cnt = 0;
