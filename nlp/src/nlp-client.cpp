@@ -154,9 +154,7 @@ int main(int argc , char *argv[])
         if(pos->socketfd > 0 && pos->service) {
             int internal_req = 4;
             SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-            SOCKET_txsize(pos->socketfd,
-                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
-        }
+       }
         len = chk->window_size*(chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size);
     }
     else if(task == "ner") {
@@ -180,40 +178,42 @@ int main(int argc , char *argv[])
         if(pos->socketfd > 0 && pos->service) {
             int internal_req = 4;
             SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-            SOCKET_txsize(pos->socketfd,
-                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size));
-        }
+       }
 
         if(vbs->socketfd > 0 && vbs->service) {
             int internal_req = 9;
             SOCKET_send(vbs->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-            SOCKET_txsize(vbs->socketfd,
-                          vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size));
-        }
+       }
         if(pt0->socketfd > 0 && pt0->service) {
             int internal_req = 8;
             SOCKET_send(pt0->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-            SOCKET_txsize(pt0->socketfd,
-                    pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size));
-        }
+       }
         len = srl->hidden_state1_size;
     }
 
     if(service) {
         SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
-        SOCKET_txsize(socketfd, len);
+        if(task == "srl") SOCKET_txsize(socketfd, len);
     }
 
     while(fgets(sentence, MAX_SENTENCE_SIZE, stdin))
     {
         SENNA_Tokens* tokens = SENNA_Tokenizer_tokenize(tokenizer, sentence);
 
+        if(task != "srl")
+          SOCKET_txsize(socketfd, len*tokens->n);
+
         if(tokens->n == 0)
             continue;
 
-        if(task == "pos")
-            pos_labels = SENNA_POS_forward(pos, tokens->word_idx, tokens->caps_idx, tokens->suff_idx, tokens->n, socketfd);
+        if(task == "pos"){
+           pos_labels = SENNA_POS_forward(pos, tokens->word_idx, tokens->caps_idx, tokens->suff_idx, tokens->n, socketfd);
+        }
         else if(task == "chk") {
+
+            SOCKET_txsize(pos->socketfd,
+                    tokens->n*(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)));
+ 
             pos_labels = SENNA_POS_forward(pos, tokens->word_idx, tokens->caps_idx, tokens->suff_idx, tokens->n, pos->socketfd);
             chk_labels = SENNA_CHK_forward(chk, tokens->word_idx, tokens->caps_idx, pos_labels, tokens->n, socketfd);
         }
@@ -221,6 +221,16 @@ int main(int argc , char *argv[])
             ner_labels = SENNA_NER_forward(ner, tokens->word_idx, tokens->caps_idx, tokens->gazl_idx,
                         tokens->gazm_idx, tokens->gazo_idx, tokens->gazp_idx, tokens->n, socketfd);
         else if(task == "srl") {
+
+            SOCKET_txsize(pos->socketfd,
+                    tokens->n * (pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)));
+             
+            SOCKET_txsize(vbs->socketfd,
+                    tokens->n * (vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size)));
+ 
+            SOCKET_txsize(pt0->socketfd,
+                    tokens->n * (pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size)));
+ 
             pos_labels = SENNA_POS_forward(pos, tokens->word_idx, tokens->caps_idx, tokens->suff_idx, tokens->n, pos->socketfd);
             pt0_labels = SENNA_PT0_forward(pt0, tokens->word_idx, tokens->caps_idx, pos_labels, tokens->n, pt0->socketfd);
             vbs_labels = SENNA_VBS_forward(vbs, tokens->word_idx, tokens->caps_idx, pos_labels, tokens->n, vbs->socketfd);
@@ -229,6 +239,9 @@ int main(int argc , char *argv[])
                 vbs_labels[i] = (vbs_labels[i] != vbs_hash_novb_idx);
                 n_verbs += vbs_labels[i];
             }
+
+            std::cout<<"word index is " << tokens->word_idx << std::endl;
+            std::cout<<"pt0 labels is " << pt0_labels << std::endl;
             srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
         }
 

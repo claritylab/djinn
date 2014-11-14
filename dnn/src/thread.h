@@ -35,7 +35,7 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc",
                                                  "pt0",
                                                  "vbs"};
 
-int request_thread_init(int sock);
+pthread_t request_thread_init(int sock);
 void* request_handler(void* sock);
 
 #endif // #define _THREAD_H_

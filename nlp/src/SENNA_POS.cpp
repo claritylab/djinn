@@ -4,6 +4,7 @@
 #include "SENNA_utils.h"
 #include "SENNA_nn.h"
 #include "socket.h"
+#include <assert.h>
 
 int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, int sentence_size, int socketfd)
 {
@@ -54,12 +55,36 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
   pos->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
   gettimeofday(&tv1,NULL);
+
+  char* input_data = (char*) malloc(sentence_size*(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))*sizeof(float));
+
+  for(idx = 0; idx < sentence_size; idx++){
+    memcpy((char*)(input_data+idx*(pos->window_size)*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float)),
+                    (char*)(pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)),
+                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float));               
+  }
+
+  if(pos->service) {
+   SOCKET_send(socketfd,
+              input_data,
+              sentence_size*(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))*sizeof(float),
+              pos->debug
+              );
+
+   int rcvd = SOCKET_receive(socketfd,
+              (char*)(pos->output_state),
+              sentence_size*(pos->output_state_size)*sizeof(float),
+              pos->debug
+              );
+  }
+
+/*
   for(idx = 0; idx < sentence_size; idx++)
   {
       if(pos->service) {
         SOCKET_send(socketfd,
                     (char*)(pos->input_state+idx*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)),
-                    pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)*sizeof(float),
+                    sentence_size*(pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size))*sizeof(float),
                     pos->debug
                     );
         SOCKET_receive(socketfd,
@@ -90,6 +115,7 @@ int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sen
       }
       pos->calls++;
   }
+  */
   gettimeofday(&tv2,NULL);
   pos->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 

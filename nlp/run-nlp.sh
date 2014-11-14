@@ -1,4 +1,4 @@
 ./nlp-client --task $1 \
-             --hostname 141.212.111.252 \
-             --portno 8080 \
+             --hostname localhost \
+             --portno 8398 \
              --debug 1 < input/my-input.txt

@@ -44,6 +44,34 @@ int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sen
   chk->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
   gettimeofday(&tv1,NULL);
+
+
+  int input_size = chk->ll_word_size+chk->ll_caps_size+chk->ll_posl_size;
+
+  char* input_data = (char*) malloc(sentence_size*(chk->window_size*input_size)*sizeof(float));
+
+  for(idx = 0; idx < sentence_size; idx++){
+      memcpy((char*)(input_data+idx*(chk->window_size)*(input_size)*sizeof(float)),
+                    (char*)(chk->input_state+idx*input_size),
+                    chk->window_size*input_size*sizeof(float));               
+  }
+
+
+  if(chk->service) {
+     SOCKET_send(socketfd,
+                input_data,
+                chk->window_size*input_size*sizeof(float)*sentence_size,
+                chk->debug
+                );
+     SOCKET_receive(socketfd,
+                   (char*)(chk->output_state),
+                   chk->output_state_size*sizeof(float)*sentence_size,
+                   chk->debug
+                   );
+  
+  }
+
+  /*
   for(idx = 0; idx < sentence_size; idx++)
   {
       if(chk->service) {
@@ -76,6 +104,7 @@ int* SENNA_CHK_forward(SENNA_CHK *chk, const int *sentence_words, const int *sen
       }
       chk->calls++;
   }
+  */
   gettimeofday(&tv2,NULL);
   chk->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
 
