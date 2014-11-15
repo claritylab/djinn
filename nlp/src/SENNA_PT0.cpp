@@ -85,9 +85,17 @@ int* SENNA_PT0_forward(SENNA_PT0 *pt0, const int *sentence_words, const int *sen
         pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
     }
     */ 
+        gettimeofday(&tv2,NULL);
+        pt0->dnntime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+        pt0->calls++;
+
+        gettimeofday(&tv1,NULL);
+
     pt0->labels = SENNA_realloc(pt0->labels, sizeof(int), sentence_size);
     SENNA_nn_viterbi(pt0->labels, pt0->viterbi_score_init, pt0->viterbi_score_trans, pt0->output_state, pt0->output_state_size, sentence_size);
- 
+         gettimeofday(&tv2,NULL);
+        pt0->apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+
     return pt0->labels;
 }
 
