@@ -35,6 +35,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
+        ("threadcnt,t", po::value<int>()->default_value(0), "Number of threads to spawn before exiting the server.")
         ;
 
     po::variables_map vm;
@@ -75,6 +76,8 @@ int main(int argc , char *argv[])
     fprintf(csv_file, "REQ, PID, FWD_PASS_LAT,\n");
     fclose(csv_file);
 
+    int total_thread_cnt = vm["threadcnt"].as<int>();
+
     int server_sock = SERVER_init(vm["portno"].as<int>());
 
     // Listen on socket
@@ -96,7 +99,7 @@ int main(int argc , char *argv[])
 
         }
        thread_cnt++;
-       if(thread_cnt == 2){
+       if(thread_cnt == total_thread_cnt){
          if(pthread_join(new_thread_id, NULL) != 0){
            printf("Failed to join.\n");
            exit(1);
