@@ -55,8 +55,6 @@ int main(int argc , char *argv[])
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
  
-    Caffe::SetDevice(0);
-
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
@@ -83,7 +81,6 @@ int main(int argc , char *argv[])
     // Listen on socket
     listen(server_sock, 10);
     printf("Server is listening for request on %d\n", vm["portno"].as<int>());
-
 
     // Main Loop
     int thread_cnt = 0;

@@ -1,13 +1,12 @@
 OPENCV=/home/jahausw/opencv/opencv-2.4.9/build
-CAFFE=/home/jahausw/projects/caffe/distribute
+CAFFE=/usr/local/include/caffe
 CUDA=/usr/local/cuda
 CXX = g++
-CXX_FLAGS = -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -I$(OPENCV)/include
+CXX_FLAGS = -fpermissive -I$(CAFFE) -I$(CUDA)/include -I$(OPENCV)/include
 LINK_FLAGS = $(OPENCV)/lib/libopencv_core.so \
 			 $(OPENCV)/lib/libopencv_highgui.so \
 			 $(OPENCV)/lib/libopencv_imgproc.so \
 			 $(OPENCV)/lib/libopencv_objdetect.so \
-			 $(CAFFE)/lib/libcaffe.so \
 			 ../libsocket.a libflandmark.a \
 			 -lboost_program_options -lboost_filesystem -lboost_system \
 			 -lglog -lrt -lpthread
