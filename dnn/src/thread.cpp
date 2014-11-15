@@ -10,6 +10,7 @@
 #include "socket.h"
 #include "utils.h"
 
+#include <boost/chrono/thread_clock.hpp>
 #define DEBUG 0
 
 using namespace std;
@@ -68,18 +69,8 @@ void* request_handler(void* sock)
   //translate_kaldi_model(weight_file_name, net, true);
 
   std::clock_t model_ld_start = clock();
-  switch(req_type){
-    case FACE:
-        printf("not implemented\n");
-        return 0;
-    case ASR: case IMC: case DIG: case POS: case NER: case CHK: case SRL: case VBS: case PT0: {
-         net->CopyTrainedLayersFrom(weight_file_name);
-         break;
-    }
-    default:
-        printf("Illegal request type\n");
-        return -1; 
-  }
+        net->CopyTrainedLayersFrom(weight_file_name);
+        
   std::clock_t model_ld_end = clock(); 
 
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
@@ -147,8 +138,9 @@ void* request_handler(void* sock)
   // 2. Do forward pass
   // 3. Send back the result
   // 4. Repeat 1-3
-  std::clock_t second_fwd_pass_time = 0;
-  std::clock_t first_fwd_pass_time = 0;
+double fwd_pass_time = 0;
+struct timeval start, end, diff;
+
   while(1){
     if(DEBUG) printf("Receiving input features from client...\n");
     int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
@@ -156,29 +148,32 @@ void* request_handler(void* sock)
     
     if(DEBUG) printf("Start neural network forward pass...\n");
     
-    std::clock_t fwd_pass_start = std::clock();
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
-    std::clock_t fwd_pass_end = std::clock();
-    first_fwd_pass_time = fwd_pass_end - fwd_pass_start;
 
-    fwd_pass_start = std::clock();
+    gettimeofday(&start, NULL);
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
-    fwd_pass_end = std::clock();
-    second_fwd_pass_time = (fwd_pass_end - fwd_pass_start);
+    gettimeofday(&end, NULL);
     
+    timersub(&end, &start, &diff);
+    fwd_pass_time += (double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000;
+
     if(DEBUG) printf("Sending result back to client...\n");
     SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
   }
 
   // Client has finished and close the socket
-  // Print timing info
+  // Print timing info to csv
+  // req_type, thread_id, forward_pass_time(ms)
+  
   unsigned int thread_id = (unsigned int) pthread_self();
-  printf("Request type: %s, thread ID: %ld\n", request_name[req_type], thread_id);
-  printf("Model loading time: %d clock cycles, %.4fms\n", model_ld_time, (1000 * (float)model_ld_time)/CLOCKS_PER_SEC);
-  printf("1st Forward pass time: %d clock cycles, %.4fms\n", first_fwd_pass_time, (1000 * (float)first_fwd_pass_time)/CLOCKS_PER_SEC);
-  printf("2nd Forward pass time: %d clock cycles, %.4fms\n", second_fwd_pass_time, (1000 * (float)second_fwd_pass_time)/CLOCKS_PER_SEC);
-  // Exit the thread
 
+  pthread_mutex_lock(&csv_lock);
+  FILE* csv_file = fopen(csv_file_name.c_str(), "a");
+  fprintf(csv_file, "%s, %u, %.4f,\n", request_name[req_type], thread_id, fwd_pass_time);
+  fclose(csv_file);
+  pthread_mutex_unlock(&csv_lock);
+  
+  // Exit the thread
   if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
 
   free(in);

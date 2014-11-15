@@ -20,6 +20,9 @@
 using namespace std;
 namespace po = boost::program_options;
 
+std::string csv_file_name;
+pthread_mutex_t csv_lock;
+
 po::variables_map parse_opts( int ac, char** av )
 {
     // Declare the supported options.
@@ -31,6 +34,7 @@ po::variables_map parse_opts( int ac, char** av )
 
         ("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
+        ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ;
 
     po::variables_map vm;
@@ -59,6 +63,18 @@ int main(int argc , char *argv[])
     else
         Caffe::set_mode(Caffe::CPU);
 
+    // Initialize csv file lock
+    if(pthread_mutex_init(&csv_lock, NULL) != 0){
+      printf("Mutex init failed.\n");
+      exit(1);
+    }
+    // Set csv file name
+    csv_file_name = vm["csv"].as<string>();
+
+    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
+    fprintf(csv_file, "REQ, PID, FWD_PASS_LAT,\n");
+    fclose(csv_file);
+
     int server_sock = SERVER_init(vm["portno"].as<int>());
 
     // Listen on socket
@@ -80,15 +96,14 @@ int main(int argc , char *argv[])
 
         }
        thread_cnt++;
-        /*
-        if(thread_cnt == 2){
-          if(pthread_join(new_thread_id, NULL) != 0){
-            printf("Failed to join.\n");
-            exit(1);
-          }
-          cudaDeviceReset();
-          break;
-        }*/
+       if(thread_cnt == 2){
+         if(pthread_join(new_thread_id, NULL) != 0){
+           printf("Failed to join.\n");
+           exit(1);
+         }
+         cudaDeviceReset();
+         break;
+       }
     }
     return 0;
 }
