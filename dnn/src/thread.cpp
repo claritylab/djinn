@@ -9,6 +9,7 @@
 #include "thread.h"
 #include "socket.h"
 #include "utils.h"
+#include <cmath>
 
 #include <boost/chrono/thread_clock.hpp>
 
@@ -18,14 +19,24 @@ using namespace std;
 extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
 
-void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
+double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
     float loss;
+    struct timeval start, end, diff;
     vector<Blob<float>* > in_blobs = net->input_blobs();
     in_blobs[0]->set_cpu_data(in);
+
+    gettimeofday(&start, NULL);
     vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
+    out_blobs = net->ForwardPrefilled(&loss);
+    out_blobs = net->ForwardPrefilled(&loss);
+    gettimeofday(&end, NULL);
+    timersub(&end, &start, &diff);
+
     assert(out_size == out_blobs[0]->count());
     memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
+
+    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)3;
 }
 
 pthread_t request_thread_init(int sock)
@@ -142,7 +153,7 @@ void* request_handler(void* sock)
   // 4. Repeat 1-3
   double fwd_pass_time = 0;
   struct timeval start, end, diff;
-
+  int srl_word_cnt = 0;
   while(1) {
     if(DEBUG) printf("Receiving input features from client...\n");
     int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
@@ -150,15 +161,17 @@ void* request_handler(void* sock)
 
     if(DEBUG) printf("Start neural network forward pass...\n");
 
+    double ret_time;
     gettimeofday(&start, NULL);
-    SERVICE_fwd(in, in_elts, out, out_elts, espresso);
+    ret_time += SERVICE_fwd(in, in_elts, out, out_elts, espresso);
     gettimeofday(&end, NULL);
-
     timersub(&end, &start, &diff);
-    fwd_pass_time += (double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000;
-
+   
+   // fwd_pass_time += (double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000;
+    fwd_pass_time += ret_time; 
     if(DEBUG) printf("Sending result back to client...\n");
     SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
+    srl_word_cnt++;
   }
 
   // Client has finished and close the socket
@@ -169,7 +182,18 @@ void* request_handler(void* sock)
 
   pthread_mutex_lock(&csv_lock);
   FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-  fprintf(csv_file, "%s, %s, %d, %.4f,\n", request_name[req_type], platform.c_str(), in_elts/10500, fwd_pass_time);
+  int numquery;
+  if(request_name[req_type] == "pos" ||
+                  request_name[req_type] == "chk" ||
+                  request_name[req_type] == "vbs" ||
+                  request_name[req_type] == "pt0")
+          numquery = in_elts/8400;
+  else if(request_name[req_type] == "ner")
+          numquery = in_elts/10500;
+  else if(request_name[req_type] == "srl")
+          numquery = (int)sqrt(srl_word_cnt/112);
+
+  fprintf(csv_file, "%s, %s, %d, %.4f,\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time);
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
   
