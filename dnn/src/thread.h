@@ -43,4 +43,5 @@ extern pthread_mutex_t csv_lock;
 
 extern std::string csv_file_name;
 
+extern std::string platform;
 #endif // #define _THREAD_H_

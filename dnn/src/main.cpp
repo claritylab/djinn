@@ -22,6 +22,7 @@ namespace po = boost::program_options;
 
 std::string csv_file_name;
 pthread_mutex_t csv_lock;
+std::string platform;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -60,9 +61,12 @@ int main(int argc , char *argv[])
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
+        platform = "gpu";
     }
-    else
+    else{
         Caffe::set_mode(Caffe::CPU);
+        platform = "cpu";
+    }
 
     // Initialize csv file lock
     if(pthread_mutex_init(&csv_lock, NULL) != 0){
@@ -72,9 +76,9 @@ int main(int argc , char *argv[])
     // Set csv file name
     csv_file_name = vm["csv"].as<string>();
 
-    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
-    fprintf(csv_file, "REQ, PID, FWD_PASS_LAT,\n");
-    fclose(csv_file);
+//    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
+//    fprintf(csv_file, "REQ, PLAT, NUMQEURY, FWD_PASS_LAT,\n");
+//    fclose(csv_file);
 
     int total_thread_cnt = vm["threadcnt"].as<int>();
 

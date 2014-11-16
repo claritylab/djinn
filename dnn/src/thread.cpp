@@ -163,13 +163,13 @@ struct timeval start, end, diff;
 
   // Client has finished and close the socket
   // Print timing info to csv
-  // req_type, thread_id, forward_pass_time(ms)
+  // req_type, platform, #query(sentences/images), forward_pass_time(ms)
   
   unsigned int thread_id = (unsigned int) pthread_self();
 
   pthread_mutex_lock(&csv_lock);
   FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-  fprintf(csv_file, "%s, %u, %.4f,\n", request_name[req_type], thread_id, fwd_pass_time);
+  fprintf(csv_file, "%s, %s, %d, %.4f,\n", request_name[req_type], platform.c_str(), in_elts/10500, fwd_pass_time);
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
   
