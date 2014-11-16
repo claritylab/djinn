@@ -150,8 +150,6 @@ void* request_handler(void* sock)
 
     if(DEBUG) printf("Start neural network forward pass...\n");
 
-    SERVICE_fwd(in, in_elts, out, out_elts, espresso);
-
     gettimeofday(&start, NULL);
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
     gettimeofday(&end, NULL);
