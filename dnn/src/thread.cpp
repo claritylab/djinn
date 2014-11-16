@@ -34,7 +34,7 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     assert(out_size == out_blobs[0]->count());
     memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 
-    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)3;
+    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000);
 }
 
 pthread_t request_thread_init(int sock)
