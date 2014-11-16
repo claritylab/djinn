@@ -11,9 +11,12 @@
 #include "utils.h"
 
 #include <boost/chrono/thread_clock.hpp>
+
 #define DEBUG 0
 
 using namespace std;
+extern std::vector<std::string> reqs;
+extern map<string, Net<float>* > nets;
 
 void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
@@ -48,14 +51,15 @@ void* request_handler(void* sock)
   
   // A client is supposed to follow the following protocol  
   // 1. Send the application type
-  // 2. Send the size of input features
+  // 2. Send the size of input featuees
   // 3. Loop sending input and receive result
 
-  Net<float>* net;
+  Net<float>* espresso;
 
   // 1. Receive the application type
   int req_type;
   SOCKET_receive(socknum, (char*)&req_type, sizeof(int), DEBUG);  
+  LOG(INFO) << "Task " << reqs[req_type] << " forward pass.";
    
   char* config_file_name = new char[30];
   sprintf(config_file_name, "net-configs/%s.prototxt", request_name[req_type]);
@@ -63,19 +67,17 @@ void* request_handler(void* sock)
   sprintf(weight_file_name, "weights/%s.caffemodel", request_name[req_type]);
 
   // Now we proceed differently based on the type of request
-  net = new Net<float>(config_file_name);
+  espresso = new Net<float>(config_file_name);
 
   // If you need to update model, uncomment/change the next line and the model name above
   //translate_kaldi_model(weight_file_name, net, true);
 
   std::clock_t model_ld_start = clock();
-        net->CopyTrainedLayersFrom(weight_file_name);
-        
-  std::clock_t model_ld_end = clock(); 
-
+  // net->CopyTrainedLayersFrom(weight_file_name);
+  espresso->ShareTrainedLayersWith(nets[reqs[req_type]]);
+  std::clock_t model_ld_end = clock();
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
 
-  Net<float>* espresso = net;
   // Dump the network
   // caffe::NetParameter output_net_param;
   // espresso->ToProto(&output_net_param, true);
@@ -85,7 +87,7 @@ void* request_handler(void* sock)
   // Now we receive the input data length (in float)
   int sock_elts = SOCKET_rxsize(socknum);
   if(sock_elts < 0){
-    printf("Error num incoming elts\n");
+    LOG(ERROR) << "Error num incoming elts.";
     exit(1);
   }
 
@@ -104,7 +106,7 @@ void* request_handler(void* sock)
 
   // reshape input dims if incoming data > current net config
   // TODO(johann): this is (only) useful for img stuff currently
-  std::cout << "Sock elts is " << sock_elts << std::endl;
+  LOG(WARNING) << "Elements received on socket " << sock_elts << std::endl;
 
   if(sock_elts/(c_in*w_in*h_in) > n_in)
   {
@@ -116,7 +118,7 @@ void* request_handler(void* sock)
       if(tmp != NULL)
           in = tmp;
       else {
-          printf("Can't realloc\n");
+          LOG(ERROR) << "Can't realloc.";
           exit(1);
       }
 
@@ -128,7 +130,7 @@ void* request_handler(void* sock)
       if(tmp != NULL)
           out = tmp;
       else {
-          printf("Can't realloc\n");
+          LOG(ERROR) << "Can't realloc.";
           exit(1);
       }
   }
@@ -138,22 +140,22 @@ void* request_handler(void* sock)
   // 2. Do forward pass
   // 3. Send back the result
   // 4. Repeat 1-3
-double fwd_pass_time = 0;
-struct timeval start, end, diff;
+  double fwd_pass_time = 0;
+  struct timeval start, end, diff;
 
-  while(1){
+  while(1) {
     if(DEBUG) printf("Receiving input features from client...\n");
     int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
     if(rcvd == 0) break; // Client closed the socket
-    
+
     if(DEBUG) printf("Start neural network forward pass...\n");
-    
+
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
 
     gettimeofday(&start, NULL);
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
     gettimeofday(&end, NULL);
-    
+
     timersub(&end, &start, &diff);
     fwd_pass_time += (double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000;
 
@@ -178,6 +180,7 @@ struct timeval start, end, diff;
 
   free(in);
   free(out);
+  delete espresso;
 
   return;
 }

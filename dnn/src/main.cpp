@@ -12,6 +12,8 @@
 #include <arpa/inet.h>   
 #include <unistd.h>  
 #include <errno.h>
+#include <map>
+#include <glog/logging.h>
 
 #include "boost/program_options.hpp" 
 #include "socket.h"
@@ -22,6 +24,9 @@ namespace po = boost::program_options;
 
 std::string csv_file_name;
 pthread_mutex_t csv_lock;
+
+std::vector<std::string> reqs;
+map<string, Net<float>* > nets;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -51,10 +56,11 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main(int argc , char *argv[])
 {
+    google::InitGoogleLogging(argv[0]);
+
     // Main thread for the server
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
- 
     Caffe::set_phase(Caffe::TEST);
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
@@ -62,6 +68,28 @@ int main(int argc , char *argv[])
     else
         Caffe::set_mode(Caffe::CPU);
 
+    std::ifstream file ("nets.txt");
+    std::string net_name;
+    while(file >> net_name)
+    {
+      Net<float>* temp = new Net<float>(net_name);
+      const std::string name = temp->name();
+      nets[name] = temp;
+      std::string weights = "weights/" + name + ".caffemodel";
+      nets[name]->CopyTrainedLayersFrom(weights);
+    }
+
+    reqs.push_back("imc");
+    reqs.push_back("face");
+    reqs.push_back("dig");
+    reqs.push_back("asr");
+    reqs.push_back("pos");
+    reqs.push_back("ner");
+    reqs.push_back("chk");
+    reqs.push_back("srl");
+    reqs.push_back("pt0");
+    reqs.push_back("vbs");
+ 
     // Initialize csv file lock
     if(pthread_mutex_init(&csv_lock, NULL) != 0){
       printf("Mutex init failed.\n");
@@ -80,7 +108,7 @@ int main(int argc , char *argv[])
 
     // Listen on socket
     listen(server_sock, 10);
-    printf("Server is listening for request on %d\n", vm["portno"].as<int>());
+    LOG(INFO) << "Server is listening for request on " << vm["portno"].as<int>();
 
     // Main Loop
     int thread_cnt = 0;

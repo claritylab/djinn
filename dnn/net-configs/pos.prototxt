@@ -1,9 +1,9 @@
-name: "IpaPOSNet"
+name: "pos"
 input: "data"
 input_dim: 1
-input_dim: 300
 input_dim: 1
-input_dim: 1   
+input_dim: 1
+input_dim: 300
 layers {
   name: "fc1"
   type: INNER_PRODUCT

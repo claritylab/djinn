@@ -1,4 +1,4 @@
-name: "IpaFACENet"
+name: "face"
 input: "data"
 input_dim: 1
 input_dim: 3
@@ -13,14 +13,6 @@ layers {
     num_output: 32
     kernel_size: 11
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.5
-    }
   }
 }
 layers {
@@ -43,14 +35,6 @@ layers {
     num_output: 16
     kernel_size: 9
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.5
-    }
   }
 }
 layers {
@@ -58,20 +42,10 @@ layers {
   type: LOCAL
   bottom: "conv3"
   top: "local4"
-  blobs_lr: 1
-  blobs_lr: 1
   local_param {
     num_output: 16
     kernel_size: 9
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.5
-    }
   }
 }
 layers {
@@ -79,20 +53,10 @@ layers {
   type: LOCAL
   bottom: "local4"
   top: "local5"
-  blobs_lr: 1
-  blobs_lr: 1
   local_param {
     num_output: 16
     kernel_size: 7
     stride: 2
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.5
-    }
   }
 }
 layers {
@@ -100,20 +64,10 @@ layers {
   type: LOCAL
   bottom: "local5"
   top: "local6"
-  blobs_lr: 1
-  blobs_lr: 1
   local_param {
     num_output: 16
     kernel_size: 5
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.5
-    }
   }
 }
 layers {

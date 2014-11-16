@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include "caffe/caffe.hpp"
+#include <vector>
+#include <string>
 
 using caffe::Blob;
 using caffe::Caffe;
@@ -34,7 +36,6 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc",
                                                  "srl",
                                                  "pt0",
                                                  "vbs"};
-
 pthread_t request_thread_init(int sock);
 void* request_handler(void* sock);
 void init_mutex(void);
