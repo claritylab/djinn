@@ -1,6 +1,6 @@
 numservers=$1
 id=$2
-BASE_PORT=7999
+BASE_PORT=$(( 7999 + $id*100 ))
 
 pkill dnn-server$id
 for i in $(seq 1 $numservers);

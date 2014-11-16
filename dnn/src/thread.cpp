@@ -18,14 +18,23 @@ using namespace std;
 extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
 
-void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
+double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
     float loss;
+    struct timeval start, end, diff;
     vector<Blob<float>* > in_blobs = net->input_blobs();
     in_blobs[0]->set_cpu_data(in);
+
+    gettimeofday(&start, NULL);
     vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
+    out_blobs = net->ForwardPrefilled(&loss);
+    gettimeofday(&end, NULL);
+    timersub(&end, &start, &diff);
+
     assert(out_size == out_blobs[0]->count());
     memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
+
+    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)3;
 }
 
 pthread_t request_thread_init(int sock)
@@ -54,8 +63,6 @@ void* request_handler(void* sock)
   // 2. Send the size of input featuees
   // 3. Loop sending input and receive result
 
-  Net<float>* espresso;
-
   // 1. Receive the application type
   int req_type;
   SOCKET_receive(socknum, (char*)&req_type, sizeof(int), DEBUG);  
@@ -66,14 +73,12 @@ void* request_handler(void* sock)
   char* weight_file_name = new char[30];
   sprintf(weight_file_name, "weights/%s.caffemodel", request_name[req_type]);
 
-  // Now we proceed differently based on the type of request
-  espresso = new Net<float>(config_file_name);
+  Net<float>* espresso = new Net<float>(config_file_name);
 
   // If you need to update model, uncomment/change the next line and the model name above
   //translate_kaldi_model(weight_file_name, net, true);
 
   std::clock_t model_ld_start = clock();
-  // net->CopyTrainedLayersFrom(weight_file_name);
   espresso->ShareTrainedLayersWith(nets[reqs[req_type]]);
   std::clock_t model_ld_end = clock();
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
@@ -149,8 +154,6 @@ void* request_handler(void* sock)
     if(rcvd == 0) break; // Client closed the socket
 
     if(DEBUG) printf("Start neural network forward pass...\n");
-
-    SERVICE_fwd(in, in_elts, out, out_elts, espresso);
 
     gettimeofday(&start, NULL);
     SERVICE_fwd(in, in_elts, out, out_elts, espresso);
