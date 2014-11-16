@@ -13,7 +13,6 @@
 #include <sys/time.h>
 
 #include "boost/program_options.hpp" 
-#include "caffe/caffe.hpp"
 #include "align.h"
 #include "socket.h"
 
