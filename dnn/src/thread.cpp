@@ -160,6 +160,8 @@ void* request_handler(void* sock)
 
 
   bool warmup = true;
+  int srl_word_cnt = 0;
+  int counter = 0;
 
   while(1) {
       if(DEBUG) printf("Receiving input features from client...\n");
@@ -167,7 +169,7 @@ void* request_handler(void* sock)
       if(rcvd == 0) break; // Client closed the socket
 
       if(DEBUG) printf("Start neural network forward pass...\n");
-      if(warmup) {
+      if(warmup || counter == 0) {
           float loss;
           vector<Blob<float>* > in_blobs = espresso->input_blobs();
           in_blobs[0]->set_cpu_data(in);
@@ -181,6 +183,8 @@ void* request_handler(void* sock)
 
       if(DEBUG) printf("Sending result back to client...\n");
       SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
+      srl_word_cnt++;
+      counter++;
   }
 
   // Client has finished and close the socket
