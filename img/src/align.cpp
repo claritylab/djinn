@@ -206,42 +206,42 @@ vector<cv::Point2d> detectLandmarks(FLANDMARK_Model* model, const Mat & image, c
 }
 
 /** preprocesses the image by calling correct functions*/
-bool preprocess(po::variables_map& vm, float* data) {
+void preprocess(po::variables_map& vm, float* data, int NUM_IMGS) {
     assert(vm.count("flandmark"));
     assert(vm.count("haar"));
 
     // Get arguments
-    Mat image = Mat(Size(152,152), CV_8UC3, (void*)data);
+    for(int i = 0; i < NUM_IMGS; ++i) {
+        void *img = &data[i];
+        Mat image = Mat(Size(152,152), CV_8UC3, img);
 
-    // Get cascade for face detection
-    CascadeClassifier face_cascade;
-    face_cascade.load(vm["haar"].as<string>());
+        // Get cascade for face detection
+        CascadeClassifier face_cascade;
+        face_cascade.load(vm["haar"].as<string>());
 
-    // Initialize flandmarks with the model
-    string flandmarks_model_name = vm["flandmark"].as<string>();
-    FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
+        // Initialize flandmarks with the model
+        string flandmarks_model_name = vm["flandmark"].as<string>();
+        FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
 
-    // Find face in image:
-    Rect r = detect_face(image, face_cascade);
+        // Find face in image:
+        Rect r = detect_face(image, face_cascade);
 
-    if(r == Rect()) {
-      cout << "no faces found in image" << endl;
-      return true;
+        if(r == Rect()) {
+            cout << "no faces found in image" << endl;
+        }
+
+        // Detect landmarks
+        vector<cv::Point2d> landmarks = detectLandmarks(model, image, Rect(r.x,r.y,r.width,r.height));
+
+        if(landmarks.size() == 0) {
+            cout << "no landmarks found in image " << endl;
+        }
+
+        Mat aligned_image;
+        vector<cv::Point2d> aligned_landmarks;
+
+        //align the face
+        align(image, aligned_image, landmarks, aligned_landmarks);
+        cout << "done" << endl;
     }
-
-    // Detect landmarks
-    vector<cv::Point2d> landmarks = detectLandmarks(model, image, Rect(r.x,r.y,r.width,r.height));
-
-    if(landmarks.size() == 0) {
-      cout << "no landmarks found in image " << endl;
-      return true;
-    }
-
-    Mat aligned_image;
-    vector<cv::Point2d> aligned_landmarks;
-
-    //align the face
-    align(image, aligned_image, landmarks, aligned_landmarks);
-
-    return true;
 }

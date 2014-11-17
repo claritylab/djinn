@@ -34,12 +34,14 @@ socket-lib/lib.sh
 socket-lib/deploy.sh
 asr/kaldi_patch.sh
 
-
 # datasets
 */weights/*
 */images/*
 */hash/*
 */input/*
 */data/*
-*/log/*
 */voxforge_data/*
+
+# misc
+*/log/*
+*.csv

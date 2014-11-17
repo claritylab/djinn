@@ -13,11 +13,13 @@
 
 #include <boost/chrono/thread_clock.hpp>
 
-#define DEBUG 0
-
 using namespace std;
 extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
+
+#define DEBUG 0
+
+#define NUMPASSES 1
 
 double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
@@ -25,18 +27,22 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     struct timeval start, end, diff;
     vector<Blob<float>* > in_blobs = net->input_blobs();
     in_blobs[0]->set_cpu_data(in);
+    vector<Blob<float>* > out_blobs;
 
     gettimeofday(&start, NULL);
-    vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
-    out_blobs = net->ForwardPrefilled(&loss);
-    out_blobs = net->ForwardPrefilled(&loss);
+
+    for (int i = 0; i < NUMPASSES; ++i)
+        out_blobs = net->ForwardPrefilled(&loss);
+
     gettimeofday(&end, NULL);
     timersub(&end, &start, &diff);
 
-    assert(out_size == out_blobs[0]->count());
-    memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
+    if(out_size != out_blobs[0]->count())
+        LOG(FATAL) << "out_size =! out_blobs[0]->count())";
+    else
+        memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 
-    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)3;
+    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES;
 }
 
 pthread_t request_thread_init(int sock)
@@ -65,8 +71,6 @@ void* request_handler(void* sock)
   // 2. Send the size of input featuees
   // 3. Loop sending input and receive result
 
-  Net<float>* espresso;
-
   // 1. Receive the application type
   int req_type;
   SOCKET_receive(socknum, (char*)&req_type, sizeof(int), DEBUG);  
@@ -77,14 +81,12 @@ void* request_handler(void* sock)
   char* weight_file_name = new char[30];
   sprintf(weight_file_name, "weights/%s.caffemodel", request_name[req_type]);
 
-  // Now we proceed differently based on the type of request
-  espresso = new Net<float>(config_file_name);
+  Net<float>* espresso = new Net<float>(config_file_name);
 
   // If you need to update model, uncomment/change the next line and the model name above
   //translate_kaldi_model(weight_file_name, net, true);
 
   std::clock_t model_ld_start = clock();
-  // net->CopyTrainedLayersFrom(weight_file_name);
   espresso->ShareTrainedLayersWith(nets[reqs[req_type]]);
   std::clock_t model_ld_end = clock();
   std::clock_t model_ld_time = model_ld_end - model_ld_start;
@@ -119,29 +121,31 @@ void* request_handler(void* sock)
   // TODO(johann): this is (only) useful for img stuff currently
   LOG(WARNING) << "Elements received on socket " << sock_elts << std::endl;
 
-  if(sock_elts/(c_in*w_in*h_in) > n_in)
+  if(sock_elts/(c_in*w_in*h_in) != n_in)
   {
       n_in = sock_elts/(c_in*w_in*h_in);
-      printf("Reshaping input to dims %d %d %d %d...\n", n_in, c_in, w_in, h_in);
+      LOG(INFO) << "Reshaping input to dims: "
+                    << n_in << " " << c_in << " " << w_in << " " << h_in;
       espresso->input_blobs()[0]->Reshape(n_in, c_in, w_in, h_in);
       in_elts = espresso->input_blobs()[0]->count();
       float *tmp = realloc(in, sock_elts * sizeof(float));
       if(tmp != NULL)
           in = tmp;
       else {
-          LOG(ERROR) << "Can't realloc.";
+          LOG(ERROR) << "Can't realloc input.";
           exit(1);
       }
 
       n_out = n_in;
-      printf("Reshaping output to dims %d %d %d %d...\n", n_out, c_out, w_out, h_out);
+      LOG(INFO) << "Reshaping input to dims: "
+                    << n_out << " " << c_out << " " << w_out << " " << h_out;
       espresso->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
       out_elts = espresso->output_blobs()[0]->count();
       tmp = realloc(out, out_elts * sizeof(float));
       if(tmp != NULL)
           out = tmp;
       else {
-          LOG(ERROR) << "Can't realloc.";
+          LOG(ERROR) << "Can't realloc output.";
           exit(1);
       }
   }
@@ -153,30 +157,34 @@ void* request_handler(void* sock)
   // 4. Repeat 1-3
   double fwd_pass_time = 0;
   struct timeval start, end, diff;
-  int srl_word_cnt = 0;
+
+
+  bool warmup = true;
+
   while(1) {
-    if(DEBUG) printf("Receiving input features from client...\n");
-    int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
-    if(rcvd == 0) break; // Client closed the socket
+      if(DEBUG) printf("Receiving input features from client...\n");
+      int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
+      if(rcvd == 0) break; // Client closed the socket
 
-    if(DEBUG) printf("Start neural network forward pass...\n");
+      if(DEBUG) printf("Start neural network forward pass...\n");
+      if(warmup) {
+          float loss;
+          vector<Blob<float>* > in_blobs = espresso->input_blobs();
+          in_blobs[0]->set_cpu_data(in);
+          vector<Blob<float>* > out_blobs;
+          out_blobs = espresso->ForwardPrefilled(&loss);
+          warmup = false;
+      }
 
-    double ret_time;
-    gettimeofday(&start, NULL);
-    ret_time += SERVICE_fwd(in, in_elts, out, out_elts, espresso);
-    gettimeofday(&end, NULL);
-    timersub(&end, &start, &diff);
-   
-   // fwd_pass_time += (double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000;
-    fwd_pass_time += ret_time; 
-    if(DEBUG) printf("Sending result back to client...\n");
-    SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
-    srl_word_cnt++;
+      // TODO: this sums if the client is sending multiple queries. del cmt once confirmed
+      fwd_pass_time += SERVICE_fwd(in, in_elts, out, out_elts, espresso);
+
+      if(DEBUG) printf("Sending result back to client...\n");
+      SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
   }
 
   // Client has finished and close the socket
   // Print timing info to csv
-  // req_type, platform, #query(sentences/images), forward_pass_time(ms)
   
   unsigned int thread_id = (unsigned int) pthread_self();
 
@@ -194,6 +202,7 @@ void* request_handler(void* sock)
           numquery = (int)sqrt(srl_word_cnt/112);
 
   fprintf(csv_file, "%s, %s, %d, %.4f,\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time);
+
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
   
