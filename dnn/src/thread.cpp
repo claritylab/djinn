@@ -17,7 +17,6 @@ extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
 
 #define DEBUG 0
-
 #define NUMPASSES 1
 
 double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
@@ -41,7 +40,7 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     else
         memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 
-    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES;
+    return (((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES);
 }
 
 pthread_t request_thread_init(int sock)
@@ -118,7 +117,7 @@ void* request_handler(void* sock)
 
   // reshape input dims if incoming data > current net config
   // TODO(johann): this is (only) useful for img stuff currently
-  LOG(WARNING) << "Elements received on socket " << sock_elts << std::endl;
+  LOG(INFO) << "Elements received on socket " << sock_elts << std::endl;
 
   if(sock_elts/(c_in*w_in*h_in) != n_in)
   {
@@ -158,6 +157,7 @@ void* request_handler(void* sock)
   struct timeval start, end, diff;
 
   bool warmup = true;
+  int queries = 0;
 
   while(1) {
       if(DEBUG) printf("Receiving input features from client...\n");
@@ -174,8 +174,8 @@ void* request_handler(void* sock)
           warmup = false;
       }
 
-      // TODO: this sums if the client is sending multiple queries. del cmt once confirmed
       fwd_pass_time += SERVICE_fwd(in, in_elts, out, out_elts, espresso);
+      if(!warmup) queries += n_in;
 
       if(DEBUG) printf("Sending result back to client...\n");
       SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
@@ -188,8 +188,12 @@ void* request_handler(void* sock)
 
   pthread_mutex_lock(&csv_lock);
   FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-  // req_type, platform, batch_size, forward_pass_time(ms)
-  fprintf(csv_file, "%s, %s, %d, %.4f\n", request_name[req_type], platform.c_str(), n_out, fwd_pass_time);
+  // req_type, platform, batch_size, forward_pass_time(ms),throughput
+  fprintf(csv_file, "%s, %s, %d, %.4f, %.4f\n", request_name[req_type],
+                                               platform.c_str(),
+                                               n_out,
+                                               fwd_pass_time,
+                                               (double)queries/(double)fwd_pass_time);
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
   
