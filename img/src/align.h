@@ -6,6 +6,6 @@
 
 namespace po = boost::program_options;
 
-bool preprocess(po::variables_map& vm, float *data);
+void preprocess(po::variables_map& vm, float* data, int NUM_IMGS);
 
 #endif

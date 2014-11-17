@@ -112,7 +112,7 @@ int main(int argc , char *argv[])
 
     // Listen on socket
     listen(server_sock, 10);
-    LOG(INFO) << "Server is listening for request on " << vm["portno"].as<int>();
+    LOG(INFO) << "Server is listening for requests on " << vm["portno"].as<int>();
 
     // Main Loop
     int thread_cnt = 0;
