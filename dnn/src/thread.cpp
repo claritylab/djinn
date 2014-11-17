@@ -18,7 +18,6 @@ extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
 
 #define DEBUG 0
-
 #define NUMPASSES 1
 
 double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
@@ -42,7 +41,7 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     else
         memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 
-    return ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES;
+    return (((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES);
 }
 
 pthread_t request_thread_init(int sock)
@@ -119,7 +118,7 @@ void* request_handler(void* sock)
 
   // reshape input dims if incoming data > current net config
   // TODO(johann): this is (only) useful for img stuff currently
-  LOG(WARNING) << "Elements received on socket " << sock_elts << std::endl;
+  LOG(INFO) << "Elements received on socket " << sock_elts << std::endl;
 
   if(sock_elts/(c_in*w_in*h_in) != n_in)
   {
@@ -160,7 +159,6 @@ void* request_handler(void* sock)
 
 
   bool warmup = true;
-  int srl_word_cnt = 0;
   int counter = 0;
 
   while(1) {
@@ -169,7 +167,7 @@ void* request_handler(void* sock)
       if(rcvd == 0) break; // Client closed the socket
 
       if(DEBUG) printf("Start neural network forward pass...\n");
-      if(warmup || counter == 0) {
+      if(warmup) {
           float loss;
           vector<Blob<float>* > in_blobs = espresso->input_blobs();
           in_blobs[0]->set_cpu_data(in);
@@ -178,12 +176,10 @@ void* request_handler(void* sock)
           warmup = false;
       }
 
-      // TODO: this sums if the client is sending multiple queries. del cmt once confirmed
       fwd_pass_time += SERVICE_fwd(in, in_elts, out, out_elts, espresso);
 
       if(DEBUG) printf("Sending result back to client...\n");
       SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
-      srl_word_cnt++;
       counter++;
   }
 
@@ -203,9 +199,11 @@ void* request_handler(void* sock)
   else if(request_name[req_type] == "ner")
           numquery = in_elts/10500;
   else if(request_name[req_type] == "srl")
-          numquery = (int)sqrt(srl_word_cnt/112);
+          numquery = (int)sqrt(counter/112);
+  else if(request_name[req_type] == "asr")
+          numquery = in_elts/(548*440);
 
-  fprintf(csv_file, "%s, %s, %d, %.4f,\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time);
+  fprintf(csv_file, "%s, %s, %d, %.4f, %.4f\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time/(double)counter, (double)numquery/(double)fwd_pass_time*(double)counter);
 
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
