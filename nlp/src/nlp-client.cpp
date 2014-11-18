@@ -23,7 +23,7 @@
 #include "socket.h"
 
 /* fgets max sizes */
-#define MAX_SENTENCE_SIZE 1024
+#define MAX_SENTENCE_SIZE 10000000
 #define MAX_TARGET_VB_SIZE 256
 
 #define TIMING 1
