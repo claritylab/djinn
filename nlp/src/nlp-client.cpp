@@ -237,8 +237,6 @@ int main(int argc , char *argv[])
                 n_verbs += vbs_labels[i];
             }
 
-            std::cout<<"word index is " << tokens->word_idx << std::endl;
-            std::cout<<"pt0 labels is " << pt0_labels << std::endl;
             srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
         }
 

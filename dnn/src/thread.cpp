@@ -190,7 +190,7 @@ void* request_handler(void* sock)
 
   pthread_mutex_lock(&csv_lock);
   FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-  int numquery;
+  int numquery = n_in;
   if(request_name[req_type] == "pos" ||
                   request_name[req_type] == "chk" ||
                   request_name[req_type] == "vbs" ||
@@ -202,6 +202,8 @@ void* request_handler(void* sock)
           numquery = (int)sqrt(counter/112);
   else if(request_name[req_type] == "asr")
           numquery = in_elts/(548*440);
+  else if(request_name[req_type] == "dig")
+          numquery = in_elts/100;
 
   fprintf(csv_file, "%s, %s, %d, %.4f, %.4f\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time/(double)counter, (double)numquery/(double)fwd_pass_time*(double)counter);
 
