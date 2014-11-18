@@ -6,5 +6,3 @@ do
     cat $f | grep -v "==" > temp.txt
     mv temp.txt $f
 done
-
-./lists.sh $dir
