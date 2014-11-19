@@ -1,20 +1,19 @@
 #!/bin/bash
 
-metrics="achieved_occupancy,sm_efficiency,ipc,stall_memory_throttle,dram_utilization"
-
-# batch_size=( 1 )
-batch_size=( 1 16 32 128 256 512 1024 )
+metrics="achieved_occupancy,sm_efficiency_instance,ipc_instance,l2_utilization,alu_fu_utilization"
+agg='off'
+batch_size=( 1 2 4 8 16 32 64 128 256 512 )
 pwd=$PWD;
 
-gpuid=7
-export PROF_REQ_TYPE=$task
+gpuid=1
 export CUDA_VISIBLE_DEVICES=$gpuid
 port=$(( 7999 + $gpuid*100 ))
-stats=$pwd/stats/
-mkdir -p $stats
-# rm -rf $stats/*
  
-for task in face; do
+for task in imc dig face; do
+    stats=$pwd/stats-$agg-$task
+    mkdir -p $stats
+    rm -rf $stats/*
+    tcnt=1
     for batch in "${batch_size[@]}";
     do
         echo $task $batch
@@ -22,10 +21,9 @@ for task in face; do
         if [ "$task" == "face" ]; then
             ./change_batch.sh face $batch
         fi
-        ./dnn-server --portno $port --debug 0 --gpu 1 --csv $stats/timing_${task}_${batch}.csv --threadcnt 1 &
+        ./dnn-server --portno $port --debug 0 --gpu 1 --csv $stats/timing_${task}_${batch}.csv --threadcnt $tcnt &
         sid=$!
         sleep 20
-
         cd $pwd; 
 
         export glog_logtostderr=1
@@ -42,9 +40,10 @@ for task in face; do
         kill $sid
         cd ../dnn/
         nvprof --devices 0 \
+        --aggregate-mode $agg \
         --metrics $metrics \
         --csv \
-        --log-file log.csv \
+        --log-file $stats/log.csv \
         ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt 1 &
         sid=$!
         sleep 20
@@ -61,15 +60,17 @@ for task in face; do
         --flandmark data/flandmark.dat \
         --haar data/haar.xml \
         --debug 0
-        mv ../dnn/log.csv $stats/prof_${task}_${batch}.csv
-
+        mv $stats/log.csv $stats/prof_${task}_${batch}.csv
         kill $sid
+
+        # gpu timing pass
         cd ../dnn/
         nvprof --devices 0 \
+        --aggregate-mode $agg \
         --print-gpu-summary \
         --csv \
-        --log-file log.csv \
-        ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt 1 &
+        --log-file $stats/log.csv \
+        ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt $tcnt &
         sid=$!
         sleep 20
 
@@ -85,7 +86,8 @@ for task in face; do
         --flandmark data/flandmark.dat \
         --haar data/haar.xml \
         --debug 0
-        mv ../dnn/log.csv $stats/all_${task}_${batch}.csv
+        sleep 5
+        mv $stats/log.csv $stats/all_${task}_${batch}.csv
         kill $sid
     done
 done
