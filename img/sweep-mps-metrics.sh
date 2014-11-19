@@ -17,20 +17,23 @@ pwd=$PWD;
 port=$(( 7999 + $gpuid*100 ))
 
 cd ../dnn/
+./extra-scripts/clean-mps.sh
 ./make-mps.sh $gpuid
 cd $pwd;
  
-for task in imc dig face; do
+for task in face; do
     stats=$pwd/mps-$task-$agg
     mkdir -p $stats
     rm -rf $stats/*
     if [ "$task" == "imc" ]; then
         batch=16
     elif [ "$task" == "dig" ]; then
-        batch=4
-    elif [ "$task" == "face" ]; then
-        ./change_batch.sh face $batch
         batch=2
+    elif [ "$task" == "face" ]; then
+        cd ../dnn
+        batch=2
+        ./change_batch.sh face $batch
+        cd $pwd
     fi
 
     for s in "${num_servers[@]}";

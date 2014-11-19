@@ -102,9 +102,9 @@ int main(int argc , char *argv[])
     // Set csv file name
     csv_file_name = vm["csv"].as<string>();
 
-//    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
-//    fprintf(csv_file, "REQ, PLAT, NUMQEURY, FWD_PASS_LAT,\n");
-//    fclose(csv_file);
+   FILE* csv_file = fopen(csv_file_name.c_str(), "w");
+   fprintf(csv_file, "app,plat,batch,lat,qpms\n");
+   fclose(csv_file);
 
     int total_thread_cnt = vm["threadcnt"].as<int>();
 

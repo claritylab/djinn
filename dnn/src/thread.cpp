@@ -205,7 +205,7 @@ void* request_handler(void* sock)
   else if(request_name[req_type] == "dig")
           numquery = in_elts/100;
 
-  fprintf(csv_file, "%s, %s, %d, %.4f, %.4f\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time/(double)counter, (double)numquery/(double)fwd_pass_time*(double)counter);
+  fprintf(csv_file, "%s,%s,%d,%.4f,%.4f\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time/(double)counter, (double)numquery/(double)fwd_pass_time*(double)counter);
 
   fclose(csv_file);
   pthread_mutex_unlock(&csv_lock);
