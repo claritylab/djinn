@@ -13,8 +13,8 @@ import matplotlib.cm as cmx
 import matplotlib.colors as cl
 import matplotlib.pyplot as pl
 
-sweep = ('1', '16', '32', '128', '256', '512', '1024', '2048')
-stats = ('achieved_occupancy', 'sm_efficiency')
+stats = ('achieved_occupancy', 'sm_efficiency', 'ipc', 'l2_utilization', 'alu_fu_utilization')
+# stats = ('achieved_occupancy')
 
 def color_maker(count, map='gnuplot2', min=0.100, max=0.900):
     assert(min >= 0.000 and max <= 1.000 and max > min)
@@ -30,40 +30,47 @@ def get_num(x):
     return float(''.join(ele for ele in x if ele.isdigit() or ele == '.'))
 
 def util_single ( stat, profl, timl, app ):
+    col = color_maker(len(profl), map="gnuplot")
     pl.rc("font", family="serif")
     pl.rc("font", size=12)
     pl.rc('legend', fontsize=11)
     fig = pl.figure()
-    fig.set_size_inches(9, 7)
+    fig.set_size_inches(9, 5)
 
-    col = color_maker(len(profl), map="gnuplot")
-
-    agg = []
+    ag = []
     loc = []
     # get average for metric
     for filename in profl:
         batch = get_num(re.findall(r'\d+', filename))
-        loc.append(batch)
+        loc.append(int(batch))
         occ = []
+        dur = 0
         with open(filename, 'rb') as f:
             data = csv.DictReader(f)
             for row in data:
                 if row["Metric Name"] == stat:
-                    p = re.search("%", row["Avg_x"])
-                    if p:
+                    avg = get_num(row["Avg_x"])
+                    if re.search("%", row["Avg_x"]): # if value is 0-100
                         avg = get_num(row["Avg_x"])/100
-                    else:
-                        avg = get_num(row["Avg_x"])
                     occ.append(float(avg)*float(row["Time(%)"]))
-        agg.append(sum(occ))
+                    dur += float(row["Time(%)"])
+        ag.append((int(batch), sum(occ)/float(dur)))
 
     w = 0.5
+    loc.sort()
+    ag.sort()
+    agg = [ a[1] for a in ag ]
     ind = np.arange(len(loc))+w/2
     ax1 = fig.add_subplot(111, title="")
     ax1.bar(ind, agg, w, color="b",label=stat)
     ax1.set_xticks(ind+w/2)
-    ax1.set_xticklabels( sweep )
-    ax1.set_ylim([0,100])
+    ax1.set_xticklabels( loc )
+    if stat == 'ipc':
+        ax1.set_ylim([0,7])
+    elif stat == 'alu_fu_utilization' or stat == 'l2_utilization':
+        ax1.set_ylim([0,10])
+    else:
+        ax1.set_ylim([0,1])
     ax1.set_ylabel(stat)
 
     # get Qps
@@ -72,16 +79,19 @@ def util_single ( stat, profl, timl, app ):
     qps = []
     loc = []
     for filename in timl:
+        s = 0
         with open(filename, 'rb') as f:
             data = csv.DictReader(f)
             for row in data:
-                q=float(row["qpms"])*1000
-                qps.append((int(row["batch"]), q))
+                s += float(row["lat"])
+            q = float((int(row["batch"]))/s*1000)
+            qps.append((int(row["batch"]), q))
 
     qps.sort()
     qs = [ q[1] for q in qps ]
     ax2.scatter(ind+w/2, qs, s=50, c="r", marker='o')
-    ax2.set_ylabel('Qps')
+    ax2.set_yscale('log')
+    ax2.set_ylabel('Qps', rotation=-90, labelpad=15)
 
     pl.xlabel('Batch Size')
     tit = app + "_" + stat
@@ -90,46 +100,49 @@ def util_single ( stat, profl, timl, app ):
     pl.savefig(out)
 
 def util_both ( stat, profl, timl, app ):
+    col = color_maker(len(profl), map="gnuplot")
     pl.rc("font", family="serif")
     pl.rc("font", size=12)
     pl.rc('legend', fontsize=11)
     fig = pl.figure()
-    fig.set_size_inches(9, 7)
-
-    col = color_maker(len(profl), map="gnuplot")
+    fig.set_size_inches(9, 5)
 
     metric = {}
+    time = {}
     loc = []
-    agg = []
+    ag = []
     # get average for metric
     for filename in profl:
         batch = get_num(re.findall(r'\d+', filename))
-        loc.append(batch)
+        loc.append(int(batch))
         for s in stat:
             metric[s] = []
-            time = []
+            time[s] = []
+            dur = 0
             with open(filename, 'rb') as f:
                 data = csv.DictReader(f)
                 for row in data:
                     if row["Metric Name"] == s:
-                        p = re.search("%", row["Avg_x"])
-                        if p:
+                        avg = get_num(row["Avg_x"])
+                        if re.search("%", row["Avg_x"]):
                             avg = get_num(row["Avg_x"])/100
-                        else:
-                            avg = get_num(row["Avg_x"])
                         metric[s].append(float(avg))
-                        time.append(float(row["Time(%)"]))
-        v1 = [s1 * s2 for s1,s2 in zip(metric[stat[0]],metric[stat[1]])]
-        a = [v * t for v,t in zip(v1,time)]
-        agg.append(sum(a))
+                        time[s].append(float(row["Time(%)"]))
+                        dur += float(row["Time(%)"])
+        v1 = [s1 * s2 for s1,s2 in zip(metric[stat[0]], metric[stat[1]])]
+        v2 = [(s1 * s2) for s1,s2 in zip(v1, time[stat[0]])]
+        ag.append((int(batch), sum(v2)/float(dur)))
 
+    loc.sort()
+    ag.sort()
+    agg = [ a[1] for a in ag ]
     w = 0.5
     ind = np.arange(len(loc))+w/2
     ax1 = fig.add_subplot(111, title="")
     ax1.bar(ind, agg, w, color="b",label=stat)
     ax1.set_xticks(ind+w/2)
-    ax1.set_xticklabels( sweep )
-    ax1.set_ylim([0,100])
+    ax1.set_xticklabels( loc )
+    ax1.set_ylim([0,1])
     ax1.set_ylabel(stat)
 
     # get Qps
@@ -138,16 +151,19 @@ def util_both ( stat, profl, timl, app ):
     qps = []
     loc = []
     for filename in timl:
+        s = 0
         with open(filename, 'rb') as f:
             data = csv.DictReader(f)
             for row in data:
-                q=float(row["bqpms"])*1000
-                qps.append((int(row["batch"]), q))
+                s += float(row["lat"])
+            q = float((int(row["batch"]))/s*1000)
+            qps.append((int(row["batch"]), q))
 
     qps.sort()
     qs = [ q[1] for q in qps ]
     ax2.scatter(ind+w/2, qs, s=50, c="r", marker='o')
-    ax2.set_ylabel('Qps')
+    ax2.set_yscale('log')
+    ax2.set_ylabel('Qps', rotation=-90, labelpad=15)
 
     pl.xlabel('Batch Size')
     tit = app + "_agg" 
@@ -184,15 +200,15 @@ def main( args ):
     for p,d in zip(profl,durl):
         p_csv = pd.read_csv(p)
         if len(p_csv.columns) > NUM_FIELDS:
-            break
+            continue
         d_csv = pd.read_csv(d)
         p_csv = p_csv.merge(d_csv, left_on='Kernel', right_on='Name', how='outer')
         p_csv.to_csv(p, sep=",")
 
-    # for s in stats:
-    #     util_single(s, profl, timl, args[2])
+    for s in stats:
+        util_single(s, profl, timl, args[2])
 
-    util_both(stats, profl, timl, args[2])
+    util_both(('achieved_occupancy', 'sm_efficiency'), profl, timl, args[2])
 
     return 0
 
