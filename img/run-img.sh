@@ -1,4 +1,4 @@
-export GLOG_logtostderr=1
+export GLOG_logtostderr=0
 export GLOG_log_dir=`pwd`/log
 ./img-client --hostname localhost \
              --task $1 \

@@ -23,7 +23,7 @@
 #include "socket.h"
 
 /* fgets max sizes */
-#define MAX_SENTENCE_SIZE 1024
+#define MAX_SENTENCE_SIZE 10000000
 #define MAX_TARGET_VB_SIZE 256
 
 #define TIMING 1
@@ -237,8 +237,6 @@ int main(int argc , char *argv[])
                 n_verbs += vbs_labels[i];
             }
 
-            std::cout<<"word index is " << tokens->word_idx << std::endl;
-            std::cout<<"pt0 labels is " << pt0_labels << std::endl;
             srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
         }
 

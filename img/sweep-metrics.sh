@@ -1,26 +1,29 @@
 #!/bin/bash
 
-metrics="achieved_occupancy,sm_efficiency,warp_execution_efficiency"
-
-# batch_size=( 1 )
-batch_size=( 1 16 32 128 256 512 1024 2048 )
+metrics="achieved_occupancy,sm_efficiency_instance,ipc_instance,l2_utilization,alu_fu_utilization"
+agg='off'
+batch_size=( 1 2 4 8 16 32 64 128 256 512 )
 pwd=$PWD;
 
-gpuid=7
-export PROF_REQ_TYPE=$task
+gpuid=1
 export CUDA_VISIBLE_DEVICES=$gpuid
 port=$(( 7999 + $gpuid*100 ))
-stats=$pwd/stats/
-mkdir -p $stats
  
-for task in imc dig; do
+for task in imc dig face; do
+    stats=$pwd/stats-$agg-$task
+    mkdir -p $stats
+    rm -rf $stats/*
+    tcnt=1
     for batch in "${batch_size[@]}";
     do
         echo $task $batch
         cd ../dnn/
-        ./dnn-server --portno $port --debug 0 --gpu 1 --csv $stats/timing_${task}_${batch}.csv --threadcnt 1 &
+        if [ "$task" == "face" ]; then
+            ./change_batch.sh face $batch
+        fi
+        ./dnn-server --portno $port --debug 0 --gpu 1 --csv $stats/timing_${task}_${batch}.csv --threadcnt $tcnt &
+        sid=$!
         sleep 20
-
         cd $pwd; 
 
         export glog_logtostderr=1
@@ -33,16 +36,16 @@ for task in imc dig; do
         --flandmark data/flandmark.dat \
         --haar data/haar.xml \
         --debug 0
-        sleep 5
 
-        pkill nvprof
-        pkill dnn-server
+        kill $sid
         cd ../dnn/
         nvprof --devices 0 \
+        --aggregate-mode $agg \
         --metrics $metrics \
         --csv \
-        --log-file log.csv \
+        --log-file $stats/log.csv \
         ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt 1 &
+        sid=$!
         sleep 20
 
         cd $pwd; 
@@ -57,17 +60,18 @@ for task in imc dig; do
         --flandmark data/flandmark.dat \
         --haar data/haar.xml \
         --debug 0
-        mv ../dnn/log.csv $stats/prof_${task}_${batch}.csv
-        sleep 5
+        mv $stats/log.csv $stats/prof_${task}_${batch}.csv
+        kill $sid
 
-        pkill nvprof
-        pkill dnn-server
+        # gpu timing pass
         cd ../dnn/
         nvprof --devices 0 \
+        --aggregate-mode $agg \
         --print-gpu-summary \
         --csv \
-        --log-file log.csv \
-        ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt 1 &
+        --log-file $stats/log.csv \
+        ./dnn-server --portno $port --debug 0 --gpu 1 --csv trash.csv --threadcnt $tcnt &
+        sid=$!
         sleep 20
 
         cd $pwd; 
@@ -83,7 +87,7 @@ for task in imc dig; do
         --haar data/haar.xml \
         --debug 0
         sleep 5
-        mv ../dnn/log.csv $stats/all_${task}_${batch}.csv
-
+        mv $stats/log.csv $stats/all_${task}_${batch}.csv
+        kill $sid
     done
 done
