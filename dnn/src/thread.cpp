@@ -17,8 +17,8 @@ using namespace std;
 
 extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
-extern float* in;
-extern float* out;
+// extern float* in;
+// extern float* out;
 extern int NUM_QS;
 
 #define DEBUG 0
@@ -114,8 +114,8 @@ void* request_handler(void* sock)
 
     int in_elts = nets[reqs[req_type]]->input_blobs()[0]->count();
     int out_elts = nets[reqs[req_type]]->output_blobs()[0]->count();
-    // float *in = (float*) malloc(in_elts * sizeof(float));
-    // float *out = (float*) malloc(out_elts * sizeof(float));
+    float *in = (float*) malloc(in_elts * sizeof(float));
+    float *out = (float*) malloc(out_elts * sizeof(float));
 
     // reshape input dims if incoming data > current net config
     // TODO(johann): this is (only) useful for img stuff currently
@@ -138,7 +138,7 @@ void* request_handler(void* sock)
 
         n_out = n_in;
         LOG(INFO) << "Reshaping input to dims: "
-            << n_out << " " << c_out << " " << w_out << " " << h_out;
+                  << n_out << " " << c_out << " " << w_out << " " << h_out;
         nets[reqs[req_type]]->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
         out_elts = nets[reqs[req_type]]->output_blobs()[0]->count();
         tmp = realloc(out, out_elts * sizeof(float));
@@ -216,7 +216,11 @@ void* request_handler(void* sock)
     else if(request_name[req_type] == "face")
         numquery = in_elts/(3*152*152);
 
-    fprintf(csv_file, "%s,%s,%d,%.4f,%.4f\n", request_name[req_type], platform.c_str(), numquery, fwd_pass_time/(double)counter, (double)numquery/(double)fwd_pass_time*(double)counter);
+    fprintf(csv_file, "%s,%s,%d,%.4f,%.4f\n", request_name[req_type],
+                                              platform.c_str(),
+                                              numquery,
+                                              fwd_pass_time/(double)counter,
+                                              (double)numquery/(double)fwd_pass_time*(double)counter);
 
     fclose(csv_file);
     pthread_mutex_unlock(&csv_lock);
@@ -224,8 +228,8 @@ void* request_handler(void* sock)
     // Exit the thread
     if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
 
-    // free(in);
-    // free(out);
+    free(in);
+    free(out);
     // delete espresso;
 
     return;

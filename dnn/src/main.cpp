@@ -28,8 +28,8 @@ std::string platform;
 
 std::vector<std::string> reqs;
 map<string, Net<float>* > nets;
-float *in;
-float *out;
+// float *in;
+// float *out;
 int NUM_QS;
 
 po::variables_map parse_opts( int ac, char** av )
@@ -76,7 +76,6 @@ int main(int argc , char *argv[])
         platform = "cpu";
     }
 
-
     std::ifstream file ("nets.txt");
     std::string net_name;
     while(file >> net_name)
@@ -87,9 +86,6 @@ int main(int argc , char *argv[])
       std::string weights = "weights/" + name + ".caffemodel";
       nets[name]->CopyTrainedLayersFrom(weights);
     }
-
-    in = (float*) malloc(1 * sizeof(float));
-    out = (float*) malloc(1 * sizeof(float));
 
     reqs.push_back("imc");
     reqs.push_back("face");
