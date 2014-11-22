@@ -28,6 +28,9 @@ std::string platform;
 
 std::vector<std::string> reqs;
 map<string, Net<float>* > nets;
+float *in;
+float *out;
+int NUM_QS;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -42,6 +45,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ("threadcnt,t", po::value<int>()->default_value(0), "Number of threads to spawn before exiting the server.")
+        ("queries,q", po::value<int>()->default_value(1), "Total num queries (default: 1)")
         ;
 
     po::variables_map vm;
@@ -57,7 +61,7 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main(int argc , char *argv[])
 {
-    google::InitGoogleLogging(argv[0]);
+    // google::InitGoogleLogging(argv[0]);
 
     // Main thread for the server
     // Spawn a new thread for each request
@@ -72,6 +76,7 @@ int main(int argc , char *argv[])
         platform = "cpu";
     }
 
+
     std::ifstream file ("nets.txt");
     std::string net_name;
     while(file >> net_name)
@@ -82,6 +87,9 @@ int main(int argc , char *argv[])
       std::string weights = "weights/" + name + ".caffemodel";
       nets[name]->CopyTrainedLayersFrom(weights);
     }
+
+    in = (float*) malloc(1 * sizeof(float));
+    out = (float*) malloc(1 * sizeof(float));
 
     reqs.push_back("imc");
     reqs.push_back("face");
@@ -102,9 +110,11 @@ int main(int argc , char *argv[])
     // Set csv file name
     csv_file_name = vm["csv"].as<string>();
 
-   FILE* csv_file = fopen(csv_file_name.c_str(), "w");
-   fprintf(csv_file, "app,plat,batch,lat,qpms\n");
-   fclose(csv_file);
+    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
+    fprintf(csv_file, "app,plat,batch,lat,qpms\n");
+    fclose(csv_file);
+
+    NUM_QS = vm["queries"].as<int>();
 
     int total_thread_cnt = vm["threadcnt"].as<int>();
 

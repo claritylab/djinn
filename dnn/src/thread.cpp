@@ -14,11 +14,14 @@
 #include <boost/chrono/thread_clock.hpp>
 
 using namespace std;
+
 extern std::vector<std::string> reqs;
 extern map<string, Net<float>* > nets;
+extern float* in;
+extern float* out;
+extern int NUM_QS;
 
 #define DEBUG 0
-#define NUMPASSES 1
 
 double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
@@ -30,7 +33,7 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
 
     gettimeofday(&start, NULL);
 
-    for (int i = 0; i < NUMPASSES; ++i)
+    for (int i = 0; i < NUM_QS; ++i)
         out_blobs = net->ForwardPrefilled(&loss);
 
     gettimeofday(&end, NULL);
@@ -41,7 +44,7 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     else
         memcpy(out, out_blobs[0]->cpu_data(), out_size*sizeof(float));
 
-    return (((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUMPASSES);
+    return (((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000)/(double)NUM_QS);
 }
 
 pthread_t request_thread_init(int sock)
@@ -72,7 +75,7 @@ void* request_handler(void* sock)
 
     int req_type;
     SOCKET_receive(socknum, (char*)&req_type, sizeof(int), DEBUG);  
-    LOG(INFO) << "Task " << reqs[req_type] << " forward pass.";
+    LOG(INFO) << "Task " << reqs[req_type] << " forward pass. Total queries " << NUM_QS;
 
     char* config_file_name = new char[30];
     sprintf(config_file_name, "net-configs/%s.prototxt", request_name[req_type]);
@@ -111,8 +114,8 @@ void* request_handler(void* sock)
 
     int in_elts = nets[reqs[req_type]]->input_blobs()[0]->count();
     int out_elts = nets[reqs[req_type]]->output_blobs()[0]->count();
-    float *in = (float*) malloc(in_elts * sizeof(float));
-    float *out = (float*) malloc(out_elts * sizeof(float));
+    // float *in = (float*) malloc(in_elts * sizeof(float));
+    // float *out = (float*) malloc(out_elts * sizeof(float));
 
     // reshape input dims if incoming data > current net config
     // TODO(johann): this is (only) useful for img stuff currently
@@ -160,7 +163,10 @@ void* request_handler(void* sock)
 
     while(1) {
         if(DEBUG) printf("Receiving input features from client...\n");
+        LOG(INFO) << "Reading from socket.";
         int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
+        LOG(INFO) << "Done reading from socket.";
+
         if(rcvd == 0) break; // Client closed the socket
 
         if(DEBUG) printf("Start neural network forward pass...\n");
@@ -173,10 +179,14 @@ void* request_handler(void* sock)
             warmup = false;
         }
 
+        LOG(INFO) << "FWD pass start";
         fwd_pass_time += SERVICE_fwd(in, in_elts, out, out_elts, nets[reqs[req_type]]);
+        LOG(INFO) << "FWD pass done";
 
         if(DEBUG) printf("Sending result back to client...\n");
+        LOG(INFO) << "Writing to socket.";
         SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
+        LOG(INFO) << "Done writing to socket.";
         counter++;
     }
 
@@ -214,8 +224,8 @@ void* request_handler(void* sock)
     // Exit the thread
     if(DEBUG) printf("Socket closed by the client. Terminating thread now.\n");
 
-    free(in);
-    free(out);
+    // free(in);
+    // free(out);
     // delete espresso;
 
     return;
