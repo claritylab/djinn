@@ -28,13 +28,17 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     float loss;
     struct timeval start, end, diff;
     vector<Blob<float>* > in_blobs = net->input_blobs();
-    in_blobs[0]->set_cpu_data(in);
+
     vector<Blob<float>* > out_blobs;
 
     gettimeofday(&start, NULL);
 
-    for (int i = 0; i < NUM_QS; ++i)
+    for (int i = 0; i < NUM_QS; ++i) {
+        in[0] += 1;
+        in_blobs[0]->set_cpu_data(in);
         out_blobs = net->ForwardPrefilled(&loss);
+        memcpy(out, out_blobs[0]->cpu_data(), sizeof(float));
+    }
 
     gettimeofday(&end, NULL);
     timersub(&end, &start, &diff);
@@ -202,7 +206,7 @@ void* request_handler(void* sock)
             request_name[req_type] == "chk" ||
             request_name[req_type] == "vbs" ||
             request_name[req_type] == "pt0")
-        numquery = in_elts/8400;
+        numquery = in_elts/8400; // 28 *300
     else if(request_name[req_type] == "ner")
         numquery = in_elts/10500;
     else if(request_name[req_type] == "srl")
