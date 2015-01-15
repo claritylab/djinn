@@ -21,7 +21,7 @@
 #include <ctime>
 
 #include "nnet/nnet-nnet.h"
-#include "nnet/nnet-loss.h"
+//#include "nnet/nnet-loss.h"
 #include "nnet/nnet-pdf-prior.h"
 #include "nnet/nnet-rbm.h"
 #include "base/kaldi-common.h"
@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
     int portno = -1;
     po.Register("portno", &portno, "Port number of the NN service");
 
+    int numquery = 1;
+    po.Register("num-query", &numquery, "Number of query to put into one batch");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -99,6 +102,7 @@ int main(int argc, char *argv[]) {
 
     Nnet nnet_transf;
     if (feature_transform != "") {
+      KALDI_LOG << "FEATURE TRANSFORM READIN STRING IS " << feature_transform; 
       nnet_transf.Read(feature_transform);
     }
 
@@ -168,8 +172,26 @@ int main(int argc, char *argv[]) {
       
       // push it to gpu
       feats = mat;
+/*
+      // Write the input features to file
+      std::string input_file = "/home/ypkang/git/kaldi-trunk/egs/voxforge/s5/data.in";
+      Output ko(input_file, false);
+      mat.Write(ko.Stream(), false);
+
       // fwd-pass
       // Preprocessing feature transformation      
+      // Write post-feats-transform data to file
+      std::string feature_file = "/home/ypkang/git/kaldi-trunk/egs/voxforge/s5/feature.in";
+      Output ko2(feature_file, false);
+      feats_transf.Write(ko2.Stream(), false);
+*/
+      int app_input_size = 0;
+      for(MatrixIndexT i = 0; i < feats.NumRows(); i++){
+        app_input_size += sizeof(feats.Row(i).Data());
+      }
+      KALDI_LOG << "App input with dimensions: "<<feats.NumRows() << " and " << feats.NumCols();
+
+      KALDI_LOG << "App input data size is " << (float)app_input_size/(float)1024 << "KB";
       nnet_transf.Feedforward(feats, &feats_transf);
       KALDI_LOG << "Input feature with dimension: "<<feats_transf.NumCols(); 
       if(use_service){
@@ -193,7 +215,7 @@ int main(int argc, char *argv[]) {
         // 5. Send the length of the input feature 
         recv_mat.Resize(feats_transf.NumRows(), 1706);
 
-        int total_input_features = feats_transf.NumCols() * feats_transf.NumRows();
+        int total_input_features = numquery * feats_transf.NumCols() * feats_transf.NumRows();
         SOCKET_txsize(socket, total_input_features);
 
         // The following block of code is commented out 
@@ -224,26 +246,33 @@ int main(int argc, char *argv[]) {
         */
 
         // Now we send the entire sentence over for batch processing
-        int total_sent = 0;
         nnet_out.Resize(feats_transf.NumRows(), 1706); 
         
         Timer time_comm_temp;
 
-        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-          int sent = SOCKET_send(socket, (char*)feats_transf.Row(i).Data(),
-                        feats_transf.NumCols() * sizeof(float), DEBUG);
-          total_sent += sent;
+        for(int n = 0; n < numquery; n++){  
+          int total_sent = 0;
+          for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+            int sent = SOCKET_send(socket, (char*)feats_transf.Row(i).Data(),
+                          feats_transf.NumCols() * sizeof(float), DEBUG);
+            total_sent += sent;
+          }
+          KALDI_LOG<<"SHITSHIT "<<total_sent<<" "<<total_input_features*sizeof(float);
+          assert(total_sent == total_input_features*sizeof(float)/numquery && "Not sending enough features.");
         }
-        assert(total_sent == total_input_features*sizeof(float) && "Not sending enough features.");
 
         // Now we receive the result, again with the matrix as a whole
-        int total_rcvd = 0;
-        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-         int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(),
-                        1706 * sizeof(float), DEBUG);
-          total_rcvd += rcvd; 
+        for(int n = 0; n < numquery; n++){
+          int total_rcvd = 0;
+          for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+           int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(),
+                          1706 * sizeof(float), DEBUG);
+            total_rcvd += rcvd; 
+          }
+          assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
         }
-        assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
+
+        
         
         time_comm += time_comm_temp.Elapsed();
 
@@ -257,7 +286,12 @@ int main(int argc, char *argv[]) {
         nnet.Feedforward(feats_transf, &nnet_out);
         time_nn += nn_timer.Elapsed();
       }
-      
+/*      
+        std::string result_file = "/home/ypkang/git/deep-ipa/thrift/client/kaldi-result.out";
+        Output kout(result_file, false);
+
+        nnet_out.Write(kout.Stream(), false);
+*/
 
       // convert posteriors to log-posteriors
       if (apply_log) {
