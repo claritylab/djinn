@@ -36,14 +36,11 @@ int main(int argc, char *argv[]) {
   using namespace kaldi::nnet1;
   try {
 
-    // YK
-    // Socket stuff to talk to the server
-   // 
     const char *usage =
         "Perform forward pass through Neural Network.\n"
         "\n"
         "Usage:  nnet-forward [options] <model-in> <feature-rspecifier> <feature-wspecifier>\n"
-        " [options] --hostname --portno"
+        " [options] --hostname --portno --numquery"
         "e.g.: \n"
         " nnet-forward nnet ark:features.ark ark:mlpoutput.ark\n";
 
@@ -172,19 +169,7 @@ int main(int argc, char *argv[]) {
       
       // push it to gpu
       feats = mat;
-/*
-      // Write the input features to file
-      std::string input_file = "/home/ypkang/git/kaldi-trunk/egs/voxforge/s5/data.in";
-      Output ko(input_file, false);
-      mat.Write(ko.Stream(), false);
 
-      // fwd-pass
-      // Preprocessing feature transformation      
-      // Write post-feats-transform data to file
-      std::string feature_file = "/home/ypkang/git/kaldi-trunk/egs/voxforge/s5/feature.in";
-      Output ko2(feature_file, false);
-      feats_transf.Write(ko2.Stream(), false);
-*/
       int app_input_size = 0;
       for(MatrixIndexT i = 0; i < feats.NumRows(); i++){
         app_input_size += sizeof(feats.Row(i).Data());
@@ -212,7 +197,7 @@ int main(int argc, char *argv[]) {
         SOCKET_send(socket, (char*)&req_type, sizeof(int), DEBUG);
         KALDI_LOG << "Send request type: "<<req_type; 
 
-        // 5. Send the length of the input feature 
+        // 2. Send the length of the input feature 
         recv_mat.Resize(feats_transf.NumRows(), 1706);
 
         int total_input_features = numquery * feats_transf.NumCols() * feats_transf.NumRows();
@@ -245,7 +230,7 @@ int main(int argc, char *argv[]) {
         }
         */
 
-        // Now we send the entire sentence over for batch processing
+        // 3. Now we send the entire sentence over for batch processing
         nnet_out.Resize(feats_transf.NumRows(), 1706); 
         
         Timer time_comm_temp;
@@ -257,11 +242,10 @@ int main(int argc, char *argv[]) {
                           feats_transf.NumCols() * sizeof(float), DEBUG);
             total_sent += sent;
           }
-          KALDI_LOG<<"SHITSHIT "<<total_sent<<" "<<total_input_features*sizeof(float);
           assert(total_sent == total_input_features*sizeof(float)/numquery && "Not sending enough features.");
         }
 
-        // Now we receive the result, again with the matrix as a whole
+        // 4. Now we receive the result, again with the matrix as a whole
         for(int n = 0; n < numquery; n++){
           int total_rcvd = 0;
           for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
@@ -272,11 +256,9 @@ int main(int argc, char *argv[]) {
           assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
         }
 
-        
-        
         time_comm += time_comm_temp.Elapsed();
 
-        // Close the socket, don't need it anymore
+        // 5. Close the socket, don't need it anymore
         SOCKET_close(socket,DEBUG);
         KALDI_LOG << "DNN service finishes. Socket closed.";
       }else{
@@ -286,12 +268,6 @@ int main(int argc, char *argv[]) {
         nnet.Feedforward(feats_transf, &nnet_out);
         time_nn += nn_timer.Elapsed();
       }
-/*      
-        std::string result_file = "/home/ypkang/git/deep-ipa/thrift/client/kaldi-result.out";
-        Output kout(result_file, false);
-
-        nnet_out.Write(kout.Stream(), false);
-*/
 
       // convert posteriors to log-posteriors
       if (apply_log) {

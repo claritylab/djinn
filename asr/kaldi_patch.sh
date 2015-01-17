@@ -7,9 +7,22 @@
 # and copy over new scripts
 
 # ATTENTION. Change this into your kaldi root directory before running the script
-kaldi_root=/home/ypkang/kaldi-bkp
+kaldi_root=/home/ypkang/git/kaldi-trunk-clean/
 
 echo "Specified kaldi root is at ${kaldi_root}"
+
+echo "Source files and scripts will be overwritten n ${kaldi_root}"
+
+read -p "Do you want to proceed? [Y/n]" -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+  echo "Aborted on user input"
+  exit 1
+fi
+
+echo "Start the patching process..."
+echo ""
 
 # Copy over new scripts to egs/voxforge
 voxforge_root=${kaldi_root}/egs/voxforge/s5
@@ -30,7 +43,7 @@ patch ${kaldi_root}/src/nnetbin/nnet-forward.cc < ./patch/nnet-forward.patch
 echo "Done patch kaldi source code"
 
 # Copy over socket library
-cp ./libsocket.a ${kaldi_root}/src/nnetbin/
+cp ../socket-lib/libsocket.a ${kaldi_root}/src/nnetbin/
 cp ../socket-lib/socket.h ${kaldi_root}/src/nnetbin/
 
 echo "Done copy over socket library"

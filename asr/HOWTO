@@ -1,3 +1,7 @@
+# Instructions on how to setup ASR/Kaldi and works with the DNN server
+# Yiping Kang (ypkang@umich.edu)
+# 2014
+
 1. Install Kaldi on your macine. 
    Follow the instruction here http://kaldi.sourceforge.net/tutorial_setup.html
 
