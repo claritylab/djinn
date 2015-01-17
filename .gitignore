@@ -26,8 +26,7 @@
 img-client
 asr-client
 nlp-client
-DnnClient
-DnnServer
+dnn-server*
 
 # Popular scripts with hardpaths
 run-*.sh
@@ -41,5 +40,8 @@ asr/kaldi_patch.sh
 */hash/*
 */input/*
 */data/*
-*log*
 */voxforge_data/*
+
+# misc
+*/log/*
+*.csv
