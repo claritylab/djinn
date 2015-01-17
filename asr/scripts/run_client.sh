@@ -14,7 +14,7 @@ service=$3 # true|false, to use DNN server or not
 
 numquery=1 # The number of identical queries to sent continiously, default to 1
 
-test_set=one_utt_test
+test_set=one_utt_test # one_utt_test or deepblue_test
 njobs=1 # Number of parallel jobs
 data_fmllr=exp/data-fmllr-tri3b # Root directory of fmllr features
 data_dir=$data_fmllr/$test_set # Target directory to be decoded
@@ -32,3 +32,6 @@ steps/nnet/decode.sh --use-service $service --hostname $hostname --portno $portn
                     --nj $njobs --cmd "$decode_cmd" --config conf/decode_dnn.config \
                     --nnet $dnn_dir/final.nnet --acwt 0.1 \
                     $gmm_dir/graph/ $data_dir $target_dir || exit 1
+
+echo
+echo "Decoded transcript and timing statistics can be found in ${target_dir}/log/decode.1.log"

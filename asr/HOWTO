@@ -5,10 +5,10 @@
 1. Install Kaldi on your macine. 
    Follow the instruction here http://kaldi.sourceforge.net/tutorial_setup.html
 
-2. Get voxforge data from Yiping and put them into deep-ipa/asr/voxforge_data
-
+2. Unzip voxforge_data.tar.gz into voxforge_data/
+ 
 3. Apply patch by running kaldi_patch.sh. Change the kaldi root dir in the script first.
-   (You do need to run ./deploy.sh in socket-lib and change the kaldi root there also)
+   (You need to compile the socket library in ../socket-lib/)
 
 4. And the above script will also copy multiple data and graph dir to your kaldi directory
    It copies over the following things
@@ -23,4 +23,4 @@
 
 6. Navigate to kaldi_root/egs/voxforge/s5 and run_client.sh like the following
   ./run_client.sh <server-addr> <portno> <use-service?> <debug>
-  e.g. ./run_client.sh localhost 8080 true 1
+  e.g. ./run_client.sh localhost 8080 true 1 
