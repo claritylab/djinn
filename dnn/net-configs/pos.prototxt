@@ -1,9 +1,9 @@
-name: "IpaPOSNet"
+name: "pos"
 input: "data"
 input_dim: 1
-input_dim: 300
 input_dim: 1
-input_dim: 1   
+input_dim: 1
+input_dim: 300
 layers {
   name: "fc1"
   type: INNER_PRODUCT
@@ -26,8 +26,6 @@ layers {
 layers {
   name: "fc3"
   type: INNER_PRODUCT
-  blobs_lr: 1
-  blobs_lr: 2
   weight_decay: 1
   weight_decay: 0
   inner_product_param {

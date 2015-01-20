@@ -1,4 +1,4 @@
-name: "IpaASRNet"
+name: "asr"
 input: "data"
 input_dim: 548
 input_dim: 440

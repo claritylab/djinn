@@ -1,8 +1,19 @@
-CAFFE=/home/jahausw/projects/caffe/distribute
+CAFFE=/usr/local/include/caffe/
 CUDA=/usr/local/cuda
 CXX = g++
-CXX_FLAGS = -w -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -g
-LINK_FLAGS = -L$(CUDA)/lib64 -lcudart -lpthread -ldl $(CAFFE)/lib/libcaffe.so ../libsocket.a -lrt -lboost_timer -lboost_chrono -lboost_program_options -lboost_filesystem -lboost_system -lglog -lrt
+CXX_FLAGS = -w -fpermissive -I$(CAFFE) -I$(CUDA)/include -O3
+LINK_FLAGS = -L/$(CUDA)/lib64 \
+			 -lcudart \
+			 -lpthread \
+			 -ldl \
+			 -lrt \
+			 -lboost_timer \
+			 -lboost_chrono \
+			 -lboost_program_options \
+			 -lboost_filesystem \
+			 -lboost_system \
+			 -lglog \
+			 ../libsocket.a
 
 SRC=src
 
@@ -11,14 +22,13 @@ EXEC = dnn-server
 SOURCES = $(wildcard $(SRC)/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 
-# Main target
 $(EXEC): $(OBJECTS) Makefile
-	$(CXX) $(OBJECTS) -o $(EXEC) $(LINK_FLAGS)
+	$(CXX) $(OBJECTS) -o dnn-server $(LINK_FLAGS) /usr/local/lib/libcaffe0.so
 
 # To obtain object files
 %.o: %.cpp Makefile
-	$(CXX) -c $(CXX_FLAGS) $(EXTRA_FLAGS) $< -o $@
+	$(CXX) -c $(CXX_FLAGS) $< -o $@
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(SRC)/*.o
+	rm -f dnn-server $(SRC)/*.o

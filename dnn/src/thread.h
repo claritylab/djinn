@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include "caffe/caffe.hpp"
+#include <vector>
+#include <string>
 
 using caffe::Blob;
 using caffe::Caffe;
@@ -37,10 +39,6 @@ static const char* request_name[SIZE_OF_ENUM] = {"imc",
 
 pthread_t request_thread_init(int sock);
 void* request_handler(void* sock);
-void init_mutex(void);
-// Lock for the csv result
-extern pthread_mutex_t csv_lock;
 
-extern std::string csv_file_name;
-
+extern std::string platform;
 #endif // #define _THREAD_H_

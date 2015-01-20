@@ -1,4 +1,4 @@
-name: "IpaPT0Net"
+name: "pt0"
 input: "data"
 input_dim: 1
 input_dim: 1

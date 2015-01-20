@@ -20,9 +20,6 @@ using caffe::vector;
 #include "SENNA_PT0.h"
 #include "SENNA_SRL.h"
 
-#define DEBUG 0
-
 using namespace std;
-
 
 int translate_kaldi_model(char* weight_file_name, Net<float>* net, bool dump);
