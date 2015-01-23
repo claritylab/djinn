@@ -39,7 +39,7 @@ po::variables_map parse_opts( int ac, char** av )
 
         ("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
-        ("threadcnt,t", po::value<int>()->default_value(0), "Number of threads to spawn before exiting the server.")
+        ("threadcnt,t", po::value<int>()->default_value(1), "Number of threads to spawn before exiting the server.")
         ("queries,q", po::value<int>()->default_value(1), "Total num queries (default: 1)")
         ;
 
@@ -49,7 +49,7 @@ po::variables_map parse_opts( int ac, char** av )
 
     if (vm.count("help")) {
         cout << desc << "\n";
-        return vm;
+        exit(1);
     }
     return vm;
 }

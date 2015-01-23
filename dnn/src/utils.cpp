@@ -3,6 +3,8 @@
 // 2014
 //
 
+#define DEBUG 0
+
 #include "utils.h"
 
 int translate_kaldi_model(char * weight_file_name, Net<float>* net, bool dump)

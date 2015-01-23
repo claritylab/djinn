@@ -21,7 +21,7 @@ using namespace std;
 
 namespace po = boost::program_options;
 
-#define TIMING 1
+// #define TIMING
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -47,7 +47,7 @@ po::variables_map parse_opts( int ac, char** av )
 
 	if (vm.count("help")) {
 		cout << desc << "\n";
-		return vm;
+        exit(1);
 	}
 	return vm;
 }
