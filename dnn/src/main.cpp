@@ -66,7 +66,7 @@ int main(int argc , char *argv[])
     // Main thread for the server
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
-    Caffe::set_phase(Caffe::TEST);
+    caffe::Phase phase = 1;
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
         platform = "gpu";
@@ -80,7 +80,7 @@ int main(int argc , char *argv[])
     std::string net_name;
     while(file >> net_name)
     {
-      Net<float>* temp = new Net<float>(net_name);
+      Net<float>* temp = new Net<float>(net_name, phase);
       const std::string name = temp->name();
       nets[name] = temp;
       std::string weights = "weights/" + name + ".caffemodel";
@@ -106,7 +106,7 @@ int main(int argc , char *argv[])
     // Set csv file name
     csv_file_name = vm["csv"].as<string>();
 
-    FILE* csv_file = fopen(csv_file_name.c_str(), "w");
+    FILE* csv_file = fopen(csv_file_name.c_str(), "a");
     fprintf(csv_file, "app,plat,batch,lat,qpms\n");
     fclose(csv_file);
 
