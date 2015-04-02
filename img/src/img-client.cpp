@@ -36,7 +36,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("haar,c", po::value<string>(), "(face) Haar Cascade model")
         ("flandmark,f", po::value<string>(), "(face) Flandmarks trained data")
 
-    ("csv,c", po::value<string>(), "csv to record timing")
+        ("csv,c", po::value<string>(), "csv to record timing")
 		("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
 		("debug,v", po::value<bool>()->default_value(false), "Turn on all debug") 
 		;
@@ -82,7 +82,7 @@ int main( int argc, char** argv )
     // send req_type
     int req_type;
     // read in image
-    int IMG_SIZE = 0;                          // c * w * h
+    int IMG_SIZE = 0;                         // c * w * h
     if(task == "imc") { req_type = 0; IMG_SIZE = 3 * 227 * 227; } //hardcoded for AlexNet;
     else if(task == "face") { req_type = 1; IMG_SIZE = 3 * 152 * 152; } //hardcoded for DeepFace;
     else if(task == "dig") { req_type = 2; NUM_IMGS = 100*vm["num"].as<int>(); IMG_SIZE = 1 * 28 * 28; } //hardcoded for Mnist;
@@ -90,12 +90,18 @@ int main( int argc, char** argv )
 
     float *arr = (float*) malloc(NUM_IMGS * IMG_SIZE * sizeof(float));
     std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary);
+    // std::ifstream img("face-80.jpg", std::ios::binary);
     for(int j = 0; j < NUM_IMGS; ++j) {
       for(int i = 0; i < IMG_SIZE; ++i) {
           img.read((char*)&(arr[j*IMG_SIZE + i]), sizeof(float));
           img.seekg(ios::beg);
       }
     }
+
+    // write out image
+    // std::ofstream wr("face-80.bin", std::ios::binary);
+    // for(int i = 0; i < IMG_SIZE; ++i)
+    //     wr.write((char*)&(arr[i]), sizeof(float));
 
     // TODO: fix
     // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
