@@ -31,6 +31,8 @@ map<string, Net<float>* > nets;
 // float *in;
 // float *out;
 int NUM_QS;
+int openblas_threads;
+float cpufreq;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -46,6 +48,8 @@ po::variables_map parse_opts( int ac, char** av )
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ("threadcnt,t", po::value<int>()->default_value(0), "Number of threads to spawn before exiting the server.")
         ("queries,q", po::value<int>()->default_value(1), "Total num queries (default: 1)")
+        ("cputhread,c", po::value<int>()->default_value(1), "Number of threads openblas uses (default :1)")
+        ("cpufreq,f", po::value<int>()->default_value(2320500), "The cpu frequency (default: 2.3GHz)")
         ;
 
     po::variables_map vm;
@@ -67,6 +71,8 @@ int main(int argc , char *argv[])
     // Spawn a new thread for each request
     po::variables_map vm = parse_opts(argc, argv);
     caffe::Phase phase = 1;
+    openblas_threads = 0; // default to zero
+    cpufreq = (float) vm["cpufreq"].as<int>() / (float) 1000000;
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
         platform = "gpu";
@@ -74,6 +80,7 @@ int main(int argc , char *argv[])
     else{
         Caffe::set_mode(Caffe::CPU);
         platform = "cpu";
+        openblas_threads = vm["cputhread"].as<int>();
     }
 
     std::ifstream file ("nets.txt");
@@ -81,10 +88,12 @@ int main(int argc , char *argv[])
     while(file >> net_name)
     {
       Net<float>* temp = new Net<float>(net_name, phase);
+      std::cout<<"Net init done"<<std::endl;
       const std::string name = temp->name();
       nets[name] = temp;
       std::string weights = "weights/" + name + ".caffemodel";
       nets[name]->CopyTrainedLayersFrom(weights);
+      std::cout<<"Weights copied done"<<std::endl;
     }
 
     reqs.push_back("imc");
@@ -107,7 +116,7 @@ int main(int argc , char *argv[])
     csv_file_name = vm["csv"].as<string>();
 
     FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-    fprintf(csv_file, "app,plat,batch,lat,qpms\n");
+//    fprintf(csv_file, "app,plat,batch,threads,lat,qpms\n");
     fclose(csv_file);
 
     NUM_QS = vm["queries"].as<int>();
