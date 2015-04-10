@@ -24,7 +24,7 @@ using caffe::vector;
 
 using namespace std;
 
-enum request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS, SIZE_OF_ENUM};
+enum request_type {IMC=0, FACE, DIG, ASR, POS, NER, CHK, SRL, PT0, VBS, GOOGLENET, SIZE_OF_ENUM};
 
 static const char* request_name[SIZE_OF_ENUM] = {"imc",
                                                  "face",

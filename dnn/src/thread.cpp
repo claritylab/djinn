@@ -162,6 +162,16 @@ void* request_handler(void* sock)
         }
     }
 
+    // Dump input
+    bool dump_input = true;
+    std::ofstream input_file;
+    if(dump_input){
+      string filename = std::string(request_name[req_type]) + ".in";
+      input_file.open(filename.c_str(), std::ios::out);
+      input_file << in_elts;
+      input_file << "\n";
+    }
+
     // Now we enter the main loop of the thread, following this order
     // 1. Receive input feature (has to be in the size of sock_elts)
     // 2. Do forward pass
@@ -181,6 +191,13 @@ void* request_handler(void* sock)
 
         if(rcvd == 0) break; // Client closed the socket
 
+        if(dump_input){
+          for(int i = 0; i < in_elts; i++){
+            input_file << in[i] << " ";
+          }
+        }
+
+        input_file.close();
         if(DEBUG) printf("Start neural network forward pass...\n");
         if(warmup) {
             float loss;

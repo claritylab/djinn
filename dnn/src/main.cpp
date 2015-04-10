@@ -128,6 +128,7 @@ int main(int argc , char *argv[])
       reqs.push_back("srl");
       reqs.push_back("pt0");
       reqs.push_back("vbs");
+      reqs.push_back("googlenet");
    
       // Initialize csv file lock
       if(pthread_mutex_init(&csv_lock, NULL) != 0){
@@ -141,7 +142,7 @@ int main(int argc , char *argv[])
   //    fprintf(csv_file, "app,plat,batch,threads,lat,qpms\n");
       fclose(csv_file);
   
-      NUM_QS = vm["queries"].as<int>();
+      NUM_QS = vm["trial"].as<int>();
   
       int total_thread_cnt = vm["threadcnt"].as<int>();
   
@@ -277,6 +278,13 @@ int main(int argc , char *argv[])
 
       if(out_elts != out_blobs[0]->count())
         LOG(FATAL) << "output size do not agree";
+
+      // Print output result
+      LOG(INFO)<<"Printing Inference result: ";
+      for (int i = 0; i < out_elts; i++){
+        std::cout << output[i] << " ";
+      }
+      std::cout << std::endl;
 
       // Calculate average runtime
       float avg_runtime = ((double)diff.tv_sec*(double)1000 
