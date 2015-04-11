@@ -49,6 +49,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("cpufreq,f", po::value<int>()->default_value(2320500), "The cpu frequency (default: 2.3GHz)")
         ("cputhread,h", po::value<int>()->default_value(0), "CPU threads used (default: 0)")
         ("verbose,b", po::value<bool>()->default_value(false), "Print more info to csv")
+        ("transfer, e", po::value<bool>()->default_value(false), "Include data transfer time between host and device in timing (default: false)")
         
         // Options for server setup
         ("portno,p", po::value<int>()->default_value(8080), "Open server on port (default: 8080)")
@@ -259,36 +260,69 @@ int main(int argc , char *argv[])
       memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
        
       // Start experiment
-      struct timeval start, end, diff;
-
       LOG(INFO) << "Perform inference for " << trial << " times to average over.";
-      gettimeofday(&start, NULL);
+      struct timeval start, end, diff;
+      float total_runtime = 0;
 
-      for(int it = 0; it < trial; it++){
-        input[0] += 1.0;
-        in_blobs[0]->set_cpu_data(input);
-        out_blobs = net->ForwardPrefilled(&loss);
-        memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
+      if(vm["transfer"].as<bool>()){
+        // Include data transfer time in timing
+        LOG(INFO) << "Data transfer time included";
+        gettimeofday(&start, NULL);
+  
+        for(int it = 0; it < trial; it++){
+          input[0] += 1.0;
+          in_blobs[0]->set_cpu_data(input);
+         
+          // Tell caffe to transfer data to GPU 
+          if(vm["gpu"].as<bool>())
+            in_blobs[0]->gpu_data(); 
+  
+          out_blobs = net->ForwardPrefilled(&loss);
+          memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
+        }
+        gettimeofday(&end, NULL);
+        timersub(&end, &start, &diff);
+        total_runtime = (double)diff.tv_sec*(double)1000 
+                          + (double)diff.tv_usec/(double)1000;
+      }else{
+        // Exclude data transfer time in timing
+        LOG(INFO) << "Data transfer time excluded.";
+        LOG(INFO) << "Forward only pass is being reported.";
+  
+        for(int it = 0; it < trial; it++){
+          input[0] += 1.0;
+          in_blobs[0]->set_cpu_data(input);
+          
+          if(vm["gpu"].as<bool>())
+            in_blobs[0]->gpu_data(); // Tell caffe to ship data to GPU
+  
+          gettimeofday(&start, NULL);
+          out_blobs = net->ForwardPrefilled(&loss);
+          gettimeofday(&end, NULL);
+         
+          timersub(&end, &start,&diff);
+          total_runtime += (double)diff.tv_sec*(double)1000 
+                                + (double)diff.tv_usec/(double)1000;
+        
+          memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
+        }
       }
 
-      gettimeofday(&end, NULL);
-
+    
       LOG(INFO) << "Inference done";
-      timersub(&end, &start, &diff);
 
       if(out_elts != out_blobs[0]->count())
         LOG(FATAL) << "output size do not agree";
 
       // Print output result
-      LOG(INFO)<<"Printing Inference result: ";
-      for (int i = 0; i < out_elts; i++){
-        std::cout << output[i] << " ";
-      }
-      std::cout << std::endl;
+//      LOG(INFO)<<"Printing Inference result: ";
+//      for (int i = 0; i < out_elts; i++){
+//        std::cout << output[i] << " ";
+//      }
+//      std::cout << std::endl;
 
       // Calculate average runtime
-      float avg_runtime = ((double)diff.tv_sec*(double)1000 
-                              + (double)diff.tv_usec/(double)1000) / (double)trial;
+      float avg_runtime = total_runtime / (double)trial;
 
       // Write to CSV
       string csv_file = vm["csv"].as<string>();
