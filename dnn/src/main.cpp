@@ -1,5 +1,5 @@
-/* Johann Hauswald
- * jahausw@umich.edu
+/* Johann Hauswald, Yiping Kang
+ * {jahausw, ypkang}@umich.edu
  * 2014
  */
 
@@ -237,7 +237,7 @@ int main(int argc , char *argv[])
 
         LOG(INFO) << "Reshpeing output to dims: "
           << n_out << " " << c_out << " " << w_out << " " << h_out; 
-        net->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_in);
+        net->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
         out_elts = net->output_blobs()[0]->count();
       }
       
@@ -311,8 +311,10 @@ int main(int argc , char *argv[])
     
       LOG(INFO) << "Inference done";
 
-      if(out_elts != out_blobs[0]->count())
-        LOG(FATAL) << "output size do not agree";
+      if(out_elts != out_blobs[0]->count()){
+        LOG(INFO) << "output size do not agree";
+        LOG(FATAL) << "expected: " << out_elts << ", actual: " << out_blobs[0]->count();
+      }
 
       // Print output result
 //      LOG(INFO)<<"Printing Inference result: ";
