@@ -4,9 +4,12 @@ input_dim: 1
 input_dim: 3
 input_dim: 152
 input_dim: 152
-layers {
+state {
+  phase: TEST
+}
+layer {
   name: "conv1"
-  type: CONVOLUTION
+  type: "Convolution"
   bottom: "data"
   top: "conv1"
   convolution_param {
@@ -15,9 +18,9 @@ layers {
     stride: 1
   }
 }
-layers {
+layer {
   name: "pool2"
-  type: POOLING
+  type: "Pooling"
   bottom: "conv1"
   top: "pool2"
   pooling_param {
@@ -26,9 +29,9 @@ layers {
     stride: 2
   }
 }
-layers {
+layer {
   name: "conv3"
-  type: CONVOLUTION
+  type: "Convolution"
   bottom: "pool2"
   top: "conv3"
   convolution_param {
@@ -37,9 +40,9 @@ layers {
     stride: 1
   }
 }
-layers {
+layer {
   name: "local4"
-  type: LOCAL
+  type: "Local"
   bottom: "conv3"
   top: "local4"
   local_param {
@@ -48,9 +51,9 @@ layers {
     stride: 1
   }
 }
-layers {
+layer {
   name: "local5"
-  type: LOCAL
+  type: "Local"
   bottom: "local4"
   top: "local5"
   local_param {
@@ -59,9 +62,9 @@ layers {
     stride: 2
   }
 }
-layers {
+layer {
   name: "local6"
-  type: LOCAL
+  type: "Local"
   bottom: "local5"
   top: "local6"
   local_param {
@@ -70,33 +73,33 @@ layers {
     stride: 1
   }
 }
-layers {
+layer {
   name: "fc7"
-  type: INNER_PRODUCT
+  type: "InnerProduct"
   bottom: "local6"
   top: "fc7"
   inner_product_param {
     num_output: 4096
   }
 }
-layers {
+layer {
   name: "fc8"
-  type: INNER_PRODUCT
+  type: "InnerProduct"
   bottom: "fc7"
   top: "fc8"
   inner_product_param {
     num_output: 83
   }
 }
-layers {
+layer {
   name: "prob"
-  type: SOFTMAX
+  type: "Softmax"
   bottom: "fc8"
   top: "prob"
 }
-layers {
+layer {
   name: "argmax"
-  type: ARGMAX
+  type: "ArgMax"
   bottom: "prob"
   top: "argmax"
 }

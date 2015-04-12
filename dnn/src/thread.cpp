@@ -20,6 +20,8 @@ extern map<string, Net<float>* > nets;
 // extern float* in;
 // extern float* out;
 extern int NUM_QS;
+extern int openblas_threads;
+extern float cpufreq;
 
 #define DEBUG 0
 
@@ -30,7 +32,13 @@ double SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>*
     vector<Blob<float>* > in_blobs = net->input_blobs();
 
     vector<Blob<float>* > out_blobs;
-
+  
+    // Pre-timing forward pass
+    // Make sure the model is alread on GPU
+    in_blobs[0]->set_cpu_data(in);
+    out_blobs = net->ForwardPrefilled(&loss);
+    memcpy(out, out_blobs[0]->cpu_data(), sizeof(float));
+ 
     gettimeofday(&start, NULL);
 
     for (int i = 0; i < NUM_QS; ++i) {
@@ -154,6 +162,16 @@ void* request_handler(void* sock)
         }
     }
 
+    // Dump input
+    bool dump_input = true;
+    std::ofstream input_file;
+    if(dump_input){
+      string filename = std::string(request_name[req_type]) + ".in";
+      input_file.open(filename.c_str(), std::ios::out);
+      input_file << in_elts;
+      input_file << "\n";
+    }
+
     // Now we enter the main loop of the thread, following this order
     // 1. Receive input feature (has to be in the size of sock_elts)
     // 2. Do forward pass
@@ -173,6 +191,13 @@ void* request_handler(void* sock)
 
         if(rcvd == 0) break; // Client closed the socket
 
+        if(dump_input){
+          for(int i = 0; i < in_elts; i++){
+            input_file << in[i] << " ";
+          }
+        }
+
+        input_file.close();
         if(DEBUG) printf("Start neural network forward pass...\n");
         if(warmup) {
             float loss;
@@ -220,9 +245,11 @@ void* request_handler(void* sock)
     else if(request_name[req_type] == "face")
         numquery = in_elts/(3*152*152);
 
-    fprintf(csv_file, "%s,%s,%d,%.4f,%.4f\n", request_name[req_type],
+    fprintf(csv_file, "%s,%s,%d,%d,%.1f,%.4f,%.4f\n", request_name[req_type],
                                               platform.c_str(),
                                               numquery,
+                                              openblas_threads,
+                                              cpufreq,
                                               fwd_pass_time/(double)counter,
                                               (double)numquery/(double)fwd_pass_time*(double)counter);
 
