@@ -195,6 +195,15 @@ int main(int argc , char *argv[])
       net->CopyTrainedLayersFrom(weights);
       LOG(INFO) << "Network initialization done w/ config: " << model << " and weights: " << weights;
 
+      // Dump the weights
+      bool dump_weights = false;
+      if(dump_weights){
+        caffe::NetParameter output_net_param;
+        net->ToProto(&output_net_param, true);
+        WriteProtoToBinaryFile(output_net_param,
+            weights + output_net_param.name());
+      }
+
       // Read in input
       // The first line in the input file should be the size of the input
       int input_size;
