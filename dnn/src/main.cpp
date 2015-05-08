@@ -58,6 +58,7 @@ po::variables_map parse_opts( int ac, char** av )
         // Options for local setup
         ("network,n", po::value<string>()->default_value("undefined"), "DNN network to use in this experiment")
         ("input,i", po::value<string>()->default_value("undefined"), "Input to the DNN")
+        ("layer_csv,l", po::value<string>()->default_value("./layers.csv"), "CSV file to put layer latencies in.")
         ;
 
     po::variables_map vm;
@@ -255,7 +256,9 @@ int main(int argc , char *argv[])
 
       // Read in the input
       for(int i = 0; i < input_size; i++){
-        file >> input[i];
+        int cur_pixel;
+        file >> cur_pixel;
+        input[i] = (float)cur_pixel;
       }
 
       // Start inference
@@ -274,20 +277,28 @@ int main(int argc , char *argv[])
       struct timeval start, end, diff;
       float total_runtime = 0;
 
+      std::string layer_csv = vm["layer_csv"].as<string>();
+
+      layer_csv = "/home/ypkang/brainiac/dnn/" + layer_csv;
+
+      std::cout<<"LAYER LATENCY FILE IS "<<layer_csv<<std::endl;
       if(vm["transfer"].as<bool>()){
         // Include data transfer time in timing
         LOG(INFO) << "Data transfer time included";
         gettimeofday(&start, NULL);
   
         for(int it = 0; it < trial; it++){
-          input[0] += 1.0;
+  //        input[0] += 1.0;
           in_blobs[0]->set_cpu_data(input);
          
           // Tell caffe to transfer data to GPU 
           if(vm["gpu"].as<bool>())
             in_blobs[0]->gpu_data(); 
-  
-          out_blobs = net->ForwardPrefilled(&loss);
+          if(it==trial-1)
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+          else
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+ 
           memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
         }
         gettimeofday(&end, NULL);
@@ -307,7 +318,10 @@ int main(int argc , char *argv[])
             in_blobs[0]->gpu_data(); // Tell caffe to ship data to GPU
   
           gettimeofday(&start, NULL);
-          out_blobs = net->ForwardPrefilled(&loss);
+          if(it==trial-1)
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+          else
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
           gettimeofday(&end, NULL);
          
           timersub(&end, &start,&diff);
@@ -326,13 +340,13 @@ int main(int argc , char *argv[])
         LOG(FATAL) << "expected: " << out_elts << ", actual: " << out_blobs[0]->count();
       }
 
-      // Print output result
+    // Print output result
 //      LOG(INFO)<<"Printing Inference result: ";
 //      for (int i = 0; i < out_elts; i++){
 //        std::cout << output[i] << " ";
 //      }
 //      std::cout << std::endl;
-
+//
       // Calculate average runtime
       float avg_runtime = total_runtime / (double)trial;
 
