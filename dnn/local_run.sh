@@ -1,13 +1,13 @@
 # Script for local experiments
 
 network=$1
-weights=$2
-input=$3
-trial=$4
-gpu=$5
+gpu=$2
+include_transfer=$3
+csv=$4
+input=input/${network}.in
+trial=$5
+layer_csv=$6
 
-./dnn-server --network $network \
-             --weights $weights \
-             --input $input \
-             --trial $trial \
-             --gpu $gpu
+export OPENBLAS_NUM_THREADS=4
+
+./dnn-server --gpu $gpu --transfer $include_transfer --csv $csv --trial $trial --network $network --input $input --layer_csv $layer_csv
