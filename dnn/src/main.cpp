@@ -42,7 +42,7 @@ po::variables_map parse_opts( int ac, char** av )
     desc.add_options()
         ("help,h", "Produce help message")
         ("server,s", po::value<bool>()->default_value(false), "If specified true, open brainiac as a server")
-        ("gpu,u", po::value<bool>()->default_value(true), "Use GPU?")
+        ("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ("trial,r", po::value<int>()->default_value(1), "Number of runs to average across (default: 1)")
@@ -56,7 +56,8 @@ po::variables_map parse_opts( int ac, char** av )
         ("threadcnt,t", po::value<int>()->default_value(0), "Number of threads to spawn before exiting the server.")
 
         // Options for local setup
-        ("network,n", po::value<string>()->default_value("undefined"), "DNN network to use in this experiment")
+        ("network,n", po::value<string>()->default_value("undefined"), "DNN configuration to use in this experiment")
+        ("weights,w", po::value<string>()->default_value("undefined"), "DNN weights to use in this experiment")
         ("input,i", po::value<string>()->default_value("undefined"), "Input to the DNN")
         ;
 
@@ -111,6 +112,7 @@ int main(int argc , char *argv[])
       while(file >> net_name)
       {
         Net<float>* temp = new Net<float>(net_name, phase);
+        // Net<float>* temp = new Net<float>(net_name);
         std::cout<<"Net init done"<<std::endl;
         const std::string name = temp->name();
         nets[name] = temp;
@@ -180,6 +182,7 @@ int main(int argc , char *argv[])
     }else{
       // Local experiment setup
       string network = vm["network"].as<string>();
+      string weights = vm["weights"].as<string>();
       string input_file = vm["input"].as<string>();
       int trial = vm["trial"].as<int>();
 
@@ -187,13 +190,11 @@ int main(int argc , char *argv[])
         << " with input " << input_file 
         << " for " << trial << " trials.";
 
-      string model = "net-configs/" + network + ".prototxt"; 
-      string weights = "weights/" + network + ".caffemodel";
-      
       // Load in the model
-      Net<float>* net = new Net<float>(model, phase);
+      Net<float>* net = new Net<float>(network, phase);
+      // Net<float>* net = new Net<float>(network);
       net->CopyTrainedLayersFrom(weights);
-      LOG(INFO) << "Network initialization done w/ config: " << model << " and weights: " << weights;
+      LOG(INFO) << "Network initialization done w/ config: " << network << " and weights: " << weights;
 
       // Dump the weights
       bool dump_weights = false;
@@ -366,13 +367,13 @@ int main(int argc , char *argv[])
       // Print info
       char info[100];
       if(verbose){
-        sprintf(info, "%s,%s,%d,%s,%.4f\n",network.c_str(),
+        sprintf(info, "%s,%s,%d,%s,%.4f\n",weights.c_str(),
                                               platform.c_str(),
                                               openblas_threads,
                                               cpufreq.c_str(),
                                               avg_runtime);
       }else{
-        sprintf(info, "%s,%s,%.4f\n",network.c_str(),
+        sprintf(info, "%s,%s,%.4f\n",weights.c_str(),
                                       platform.c_str(),
                                       avg_runtime);
       }

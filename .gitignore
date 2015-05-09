@@ -45,6 +45,7 @@ asr/kaldi_patch.sh
 # misc
 */log/*
 *.csv
+*.txt
 
 # makefiles
 */Makefile

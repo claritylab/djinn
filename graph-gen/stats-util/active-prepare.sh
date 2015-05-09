@@ -8,5 +8,3 @@ do
     ls $d/*.csv >> active.txt
     # ./metrics-parser.py $d.txt $d
 done
-
-mv *.png graphs

@@ -1,10 +1,13 @@
 # Script for local experiments
 
 network=$1
-gpu=$2
-include_transfer=$3
-csv=$4
-input=$5
-trial=$6
+weights=$2
+input=$3
+trial=$4
+gpu=$5
 
-./dnn-server --gpu $gpu --transfer $include_transfer --csv $csv --trial $trial --network $network --input $input
+./dnn-server --network $network \
+             --weights $weights \
+             --input $input \
+             --trial $trial \
+             --gpu $gpu
