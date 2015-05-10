@@ -33,7 +33,7 @@ map<string, Net<float>* > nets;
 // float *out;
 int NUM_QS;
 int openblas_threads;
-string cpufreq;
+float cpufreq;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -46,7 +46,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ("trial,r", po::value<int>()->default_value(1), "Number of runs to average across (default: 1)")
-        ("cpufreq,f", po::value<string>()->default_value("2.3GHz"), "The cpu frequency (default: 2.3GHz)")
+        ("cpufreq,f", po::value<int>()->default_value(2320500), "The cpu frequency (default: 2.3GHz)")
         ("cputhread,h", po::value<int>()->default_value(0), "CPU threads used (default: 0)")
         ("verbose,b", po::value<bool>()->default_value(false), "Print more info to csv")
         ("transfer, e", po::value<bool>()->default_value(false), "Include data transfer time between host and device in timing (default: false)")
@@ -93,7 +93,7 @@ int main(int argc , char *argv[])
     // These two numbers (thread, cpufreq) do not have real effect
     // just for csv output purpose 
     openblas_threads = 0; // default to zero
-    cpufreq = vm["cpufreq"].as<string>();
+    cpufreq = (float) vm["cpufreq"].as<int>() / (float) 1000000;
 
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
@@ -201,7 +201,7 @@ int main(int argc , char *argv[])
         caffe::NetParameter output_net_param;
         net->ToProto(&output_net_param, true);
         WriteProtoToBinaryFile(output_net_param,
-            weights + ".new");
+            weights + output_net_param.name());
       }
 
       // Read in input
@@ -259,13 +259,12 @@ int main(int argc , char *argv[])
       }
 
       // Start inference
-      float loss;
-      vector<Blob<float>* > in_blobs = net->input_blobs();
-      vector<Blob<float>* > out_blobs;
-      
       // First a warm up pass
+      float loss;
       LOG(INFO)<<"Warm up pass to move the model over";
+      vector<Blob<float>* > in_blobs = net->input_blobs();
       in_blobs[0]->set_cpu_data(input);
+      vector<Blob<float>* > out_blobs;
       out_blobs = net->ForwardPrefilled(&loss);
       memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
        
@@ -366,10 +365,10 @@ int main(int argc , char *argv[])
       // Print info
       char info[100];
       if(verbose){
-        sprintf(info, "%s,%s,%d,%s,%.4f\n",network.c_str(),
+        sprintf(info, "%s,%s,%d,%.1f,%.4f\n",network.c_str(),
                                               platform.c_str(),
                                               openblas_threads,
-                                              cpufreq.c_str(),
+                                              cpufreq,
                                               avg_runtime);
       }else{
         sprintf(info, "%s,%s,%.4f\n",network.c_str(),
