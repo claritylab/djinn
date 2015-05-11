@@ -297,7 +297,7 @@ int main(int argc , char *argv[])
           if(it==trial-1)
             out_blobs = net->ForwardPrefilled(&loss, layer_csv);
           else
-            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+            out_blobs = net->ForwardPrefilled(&loss);
  
           memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
         }
@@ -321,7 +321,7 @@ int main(int argc , char *argv[])
           if(it==trial-1)
             out_blobs = net->ForwardPrefilled(&loss, layer_csv);
           else
-            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+            out_blobs = net->ForwardPrefilled(&loss);
           gettimeofday(&end, NULL);
          
           timersub(&end, &start,&diff);
