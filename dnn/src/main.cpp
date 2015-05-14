@@ -33,7 +33,7 @@ map<string, Net<float>* > nets;
 // float *out;
 int NUM_QS;
 int openblas_threads;
-float cpufreq;
+string cpufreq;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -46,7 +46,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug")
         ("csv,c", po::value<string>()->default_value("./timing.csv"), "CSV file to put the timings in.")
         ("trial,r", po::value<int>()->default_value(1), "Number of runs to average across (default: 1)")
-        ("cpufreq,f", po::value<int>()->default_value(2320500), "The cpu frequency (default: 2.3GHz)")
+        ("cpufreq,f", po::value<string>()->default_value("2.3GHz"), "The cpu frequency (default: 2.3GHz)")
         ("cputhread,h", po::value<int>()->default_value(0), "CPU threads used (default: 0)")
         ("verbose,b", po::value<bool>()->default_value(false), "Print more info to csv")
         ("transfer, e", po::value<bool>()->default_value(false), "Include data transfer time between host and device in timing (default: false)")
@@ -58,6 +58,7 @@ po::variables_map parse_opts( int ac, char** av )
         // Options for local setup
         ("network,n", po::value<string>()->default_value("undefined"), "DNN network to use in this experiment")
         ("input,i", po::value<string>()->default_value("undefined"), "Input to the DNN")
+        ("layer_csv,l", po::value<string>()->default_value("./layers.csv"), "CSV file to put layer latencies in.")
         ;
 
     po::variables_map vm;
@@ -93,7 +94,7 @@ int main(int argc , char *argv[])
     // These two numbers (thread, cpufreq) do not have real effect
     // just for csv output purpose 
     openblas_threads = 0; // default to zero
-    cpufreq = (float) vm["cpufreq"].as<int>() / (float) 1000000;
+    cpufreq = vm["cpufreq"].as<string>();
 
     if(vm["gpu"].as<bool>()){
         Caffe::set_mode(Caffe::GPU);
@@ -201,7 +202,7 @@ int main(int argc , char *argv[])
         caffe::NetParameter output_net_param;
         net->ToProto(&output_net_param, true);
         WriteProtoToBinaryFile(output_net_param,
-            weights + output_net_param.name());
+            weights + ".new");
       }
 
       // Read in input
@@ -255,16 +256,19 @@ int main(int argc , char *argv[])
 
       // Read in the input
       for(int i = 0; i < input_size; i++){
-        file >> input[i];
+        int cur_pixel;
+        file >> cur_pixel;
+        input[i] = (float)cur_pixel;
       }
 
       // Start inference
-      // First a warm up pass
       float loss;
-      LOG(INFO)<<"Warm up pass to move the model over";
       vector<Blob<float>* > in_blobs = net->input_blobs();
-      in_blobs[0]->set_cpu_data(input);
       vector<Blob<float>* > out_blobs;
+      
+      // First a warm up pass
+      LOG(INFO)<<"Warm up pass to move the model over";
+      in_blobs[0]->set_cpu_data(input);
       out_blobs = net->ForwardPrefilled(&loss);
       memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
        
@@ -273,20 +277,28 @@ int main(int argc , char *argv[])
       struct timeval start, end, diff;
       float total_runtime = 0;
 
+      std::string layer_csv = vm["layer_csv"].as<string>();
+
+      layer_csv = "/home/ypkang/brainiac/dnn/" + layer_csv;
+
+      std::cout<<"LAYER LATENCY FILE IS "<<layer_csv<<std::endl;
       if(vm["transfer"].as<bool>()){
         // Include data transfer time in timing
         LOG(INFO) << "Data transfer time included";
         gettimeofday(&start, NULL);
   
         for(int it = 0; it < trial; it++){
-          input[0] += 1.0;
+  //        input[0] += 1.0;
           in_blobs[0]->set_cpu_data(input);
          
           // Tell caffe to transfer data to GPU 
           if(vm["gpu"].as<bool>())
             in_blobs[0]->gpu_data(); 
-  
-          out_blobs = net->ForwardPrefilled(&loss);
+          if(it==trial-1)
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+          else
+            out_blobs = net->ForwardPrefilled(&loss);
+ 
           memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
         }
         gettimeofday(&end, NULL);
@@ -306,7 +318,10 @@ int main(int argc , char *argv[])
             in_blobs[0]->gpu_data(); // Tell caffe to ship data to GPU
   
           gettimeofday(&start, NULL);
-          out_blobs = net->ForwardPrefilled(&loss);
+          if(it==trial-1)
+            out_blobs = net->ForwardPrefilled(&loss, layer_csv);
+          else
+            out_blobs = net->ForwardPrefilled(&loss);
           gettimeofday(&end, NULL);
          
           timersub(&end, &start,&diff);
@@ -325,13 +340,13 @@ int main(int argc , char *argv[])
         LOG(FATAL) << "expected: " << out_elts << ", actual: " << out_blobs[0]->count();
       }
 
-      // Print output result
+    // Print output result
 //      LOG(INFO)<<"Printing Inference result: ";
 //      for (int i = 0; i < out_elts; i++){
 //        std::cout << output[i] << " ";
 //      }
 //      std::cout << std::endl;
-
+//
       // Calculate average runtime
       float avg_runtime = total_runtime / (double)trial;
 
@@ -365,10 +380,10 @@ int main(int argc , char *argv[])
       // Print info
       char info[100];
       if(verbose){
-        sprintf(info, "%s,%s,%d,%.1f,%.4f\n",network.c_str(),
+        sprintf(info, "%s,%s,%d,%s,%.4f\n",network.c_str(),
                                               platform.c_str(),
                                               openblas_threads,
-                                              cpufreq,
+                                              cpufreq.c_str(),
                                               avg_runtime);
       }else{
         sprintf(info, "%s,%s,%.4f\n",network.c_str(),
