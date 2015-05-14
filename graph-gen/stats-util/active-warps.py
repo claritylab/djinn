@@ -9,24 +9,11 @@ from pprint import pprint # Pretty Print
 
 import pandas as pd
 import numpy as np
-import matplotlib.cm as cmx
-import matplotlib.colors as cl
-import matplotlib.pyplot as pl
 
 MAXREGS = 65536
 MAXBLOCKS = 16
 WARPSIZE = 32
 NUMWARPS = 64
-
-def color_maker(count, map='gnuplot2', min=0.100, max=0.900):
-    assert(min >= 0.000 and max <= 1.000 and max > min)
-    gran = 100000.0
-    maker = cmx.ScalarMappable(norm=cl.Normalize(vmin=0, vmax=int(gran)),
-                               cmap=pl.get_cmap(map))
-    r = [min * gran]
-    if count > 1:
-        r = [min * gran + gran * x * (max - min) / float(count - 1) for x in range(0, count)]
-        return [maker.to_rgba(t) for t in r]
 
 def get_num(x):
     return float(''.join(ele for ele in x if ele.isdigit() or ele == '.'))
@@ -46,7 +33,7 @@ def get_reg(filename, name):
 
 def active ( profl, rcsvs, apps ):
     outname = 'active.csv'
-    writer = csv.write(open(outname, 'w'))
+    writer = csv.writer(open(outname, 'w'))
     writer.writerow(['app','batch','ratio'])
 
     # get average for metric
@@ -56,7 +43,8 @@ def active ( profl, rcsvs, apps ):
             if not re.search(app, filename): 
                 continue
 
-            batch = get_num(re.findall(r'\d+', filename))
+            # batch = get_num(re.findall(r'\d+', filename))
+            batch = 1
             dur = 0
             occ = []
             with open(filename, 'rb') as f:
@@ -83,9 +71,9 @@ def main( args ):
 
     # collect csvs
     csvs = [ line.strip() for line in open(args[1]) ] # rm /n
-    prof = "prof_"
+    prof = "metrics_"
     dur = "summary_"
-    regs = "all_"
+    regs = "trace_"
     profl = []
     durl = []
     regl = []
