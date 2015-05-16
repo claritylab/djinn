@@ -397,3 +397,9 @@ layer {
   bottom: "fc8"
   top: "prob"
 }
+layer {
+  name: "argmax"
+  type: "ArgMax"
+  bottom: "prob"
+  top: "argmax"
+}

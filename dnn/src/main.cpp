@@ -58,7 +58,7 @@ po::variables_map parse_opts( int ac, char** av )
         // Options for local setup
         ("network,n", po::value<string>()->default_value("undefined"), "DNN network to use in this experiment")
         ("input,i", po::value<string>()->default_value("undefined"), "Input to the DNN")
-        ("layer_csv,l", po::value<string>()->default_value("./layers.csv"), "CSV file to put layer latencies in.")
+        ("layer_csv,l", po::value<string>()->default_value("NO_LAYER"), "CSV file to put layer latencies in.")
         ;
 
     po::variables_map vm;
@@ -196,7 +196,7 @@ int main(int argc , char *argv[])
       net->CopyTrainedLayersFrom(weights);
       LOG(INFO) << "Network initialization done w/ config: " << model << " and weights: " << weights;
 
-      // Dump the weights
+      // Optionally dump the weights
       bool dump_weights = false;
       if(dump_weights){
         caffe::NetParameter output_net_param;
@@ -213,10 +213,7 @@ int main(int argc , char *argv[])
         file >> input_size;
       }
 
-      // Close file
-      file.close();
-
-      // Reshape the model if neccessary
+      // Reshape the network if neccessary
       int n_in = net->input_blobs()[0]->num();
       int c_in = net->input_blobs()[0]->channels();
       int w_in = net->input_blobs()[0]->width();
@@ -237,7 +234,7 @@ int main(int argc , char *argv[])
         // Reshape input blobs
         n_in = input_size/(c_in*w_in*h_in);
 
-        LOG(INFO) << "Reshpeing input to dims: "
+        LOG(INFO) << "Reshaping input to dims: "
           << n_in << " " << c_in << " " << w_in << " " << h_in; 
         net->input_blobs()[0]->Reshape(n_in, c_in, w_in, h_in);
         in_elts = net->input_blobs()[0]->count();
@@ -245,14 +242,14 @@ int main(int argc , char *argv[])
         // Reshape output blobs
         n_out = n_in;
 
-        LOG(INFO) << "Reshpeing output to dims: "
+        LOG(INFO) << "Reshaping output to dims: "
           << n_out << " " << c_out << " " << w_out << " " << h_out; 
         net->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
         out_elts = net->output_blobs()[0]->count();
       }
       
       float* input = (float*) malloc(input_size * sizeof(float));
-      float* output = (float*)malloc(out_elts * sizeof(float));
+      float* output = (float*) malloc(out_elts * sizeof(float));
 
       // Read in the input
       for(int i = 0; i < input_size; i++){
@@ -260,6 +257,9 @@ int main(int argc , char *argv[])
         file >> cur_pixel;
         input[i] = (float)cur_pixel;
       }
+
+      float* input_bkp = (float*) malloc(input_size * sizeof(float));
+      memcpy(input_bkp, input, sizeof(float)*input_size);
 
       // Start inference
       float loss;
@@ -278,29 +278,41 @@ int main(int argc , char *argv[])
       float total_runtime = 0;
 
       std::string layer_csv = vm["layer_csv"].as<string>();
+      
+      bool layer_timing = false;
+      if(layer_csv != "NO_LAYER"){
+        layer_csv = "/home/ypkang/brainiac/dnn/" + layer_csv;
+        layer_timing = true;
+      }
 
-      layer_csv = "/home/ypkang/brainiac/dnn/" + layer_csv;
-
-      std::cout<<"LAYER LATENCY FILE IS "<<layer_csv<<std::endl;
       if(vm["transfer"].as<bool>()){
         // Include data transfer time in timing
         LOG(INFO) << "Data transfer time included";
         gettimeofday(&start, NULL);
   
         for(int it = 0; it < trial; it++){
-  //        input[0] += 1.0;
+          // Touching all the input data again to make sure no caching effect
+          for(int i = 0; i < input_size; i++){
+            float cur_pixel = input_bkp[i];
+            input[i] = (float)cur_pixel;
+          }
+
           in_blobs[0]->set_cpu_data(input);
          
           // Tell caffe to transfer data to GPU 
           if(vm["gpu"].as<bool>())
             in_blobs[0]->gpu_data(); 
-          if(it==trial-1)
+
+          // Forward pass
+          if(layer_timing)
             out_blobs = net->ForwardPrefilled(&loss, layer_csv);
           else
             out_blobs = net->ForwardPrefilled(&loss);
  
+          // Copy output back
           memcpy(output, out_blobs[0]->cpu_data(), sizeof(float));
         }
+
         gettimeofday(&end, NULL);
         timersub(&end, &start, &diff);
         total_runtime = (double)diff.tv_sec*(double)1000 
@@ -308,23 +320,31 @@ int main(int argc , char *argv[])
       }else{
         // Exclude data transfer time in timing
         LOG(INFO) << "Data transfer time excluded.";
-        LOG(INFO) << "Forward only pass is being reported.";
+        LOG(INFO) << "Only forward pass time is being reported.";
   
         for(int it = 0; it < trial; it++){
-          input[0] += 1.0;
+          // Touching all the input data again to make sure no caching effect
+          for(int i = 0; i < input_size; i++){
+            float cur_pixel = input_bkp[i];
+            input[i] = (float)cur_pixel;
+          }
+
           in_blobs[0]->set_cpu_data(input);
           
           if(vm["gpu"].as<bool>())
             in_blobs[0]->gpu_data(); // Tell caffe to ship data to GPU
-  
-          gettimeofday(&start, NULL);
-          if(it==trial-1)
+          
+          if(layer_timing){ 
+            gettimeofday(&start, NULL);
             out_blobs = net->ForwardPrefilled(&loss, layer_csv);
-          else
+            gettimeofday(&end, NULL);
+          }else{
+            gettimeofday(&start, NULL);
             out_blobs = net->ForwardPrefilled(&loss);
-          gettimeofday(&end, NULL);
-         
-          timersub(&end, &start,&diff);
+            gettimeofday(&end, NULL);         
+          }
+           
+          timersub(&end, &start, &diff);
           total_runtime += (double)diff.tv_sec*(double)1000 
                                 + (double)diff.tv_usec/(double)1000;
         
@@ -340,13 +360,6 @@ int main(int argc , char *argv[])
         LOG(FATAL) << "expected: " << out_elts << ", actual: " << out_blobs[0]->count();
       }
 
-    // Print output result
-//      LOG(INFO)<<"Printing Inference result: ";
-//      for (int i = 0; i < out_elts; i++){
-//        std::cout << output[i] << " ";
-//      }
-//      std::cout << std::endl;
-//
       // Calculate average runtime
       float avg_runtime = total_runtime / (double)trial;
 
