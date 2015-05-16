@@ -12,15 +12,12 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <glog/logging.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
 #include "boost/program_options.hpp" 
 #include "align.h"
 #include "socket.h"
 
 using namespace std;
-using namespace cv;
 
 namespace po = boost::program_options;
 
@@ -39,7 +36,7 @@ po::variables_map parse_opts( int ac, char** av )
         ("haar,c", po::value<string>(), "(face) Haar Cascade model")
         ("flandmark,f", po::value<string>(), "(face) Flandmarks trained data")
 
-    ("csv,c", po::value<string>(), "csv to record timing")
+        ("csv,c", po::value<string>(), "csv to record timing")
 		("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
 		("debug,v", po::value<bool>()->default_value(false), "Turn on all debug") 
 		;
@@ -85,54 +82,26 @@ int main( int argc, char** argv )
     // send req_type
     int req_type;
     // read in image
-    int IMG_SIZE = 0;                          // c * w * h
+    int IMG_SIZE = 0;                         // c * w * h
     if(task == "imc") { req_type = 0; IMG_SIZE = 3 * 227 * 227; } //hardcoded for AlexNet;
     else if(task == "face") { req_type = 1; IMG_SIZE = 3 * 152 * 152; } //hardcoded for DeepFace;
     else if(task == "dig") { req_type = 2; NUM_IMGS = 100*vm["num"].as<int>(); IMG_SIZE = 1 * 28 * 28; } //hardcoded for Mnist;
-    else if(task == "googlenet") { req_type = 10; IMG_SIZE = 3*224*224; }
     else { LOG(ERROR) << "unrecognized task."; exit(1); }
 
-    // Read in image using opencv
-    string input_image = vm["input"].as<string>();
-    std::cout<<"input file is "<<input_image<<std::endl;
-    Mat image;
-    if(task == "dig")
-      image = imread(vm["input"].as<string>().c_str(), CV_LOAD_IMAGE_GRAYSCALE);
-    else
-      image = imread(vm["input"].as<string>().c_str(), CV_LOAD_IMAGE_COLOR);
-    if(! image.data )
-      std::cout<<"Could not open the image"<<std::endl;
-//    unsigned char *arr_char = (unsigned char*) malloc(NUM_IMGS * IMG_SIZE * sizeof(unsigned char));
-//    std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary | std::ios::in);
-//    for(int j = 0; j < NUM_IMGS; ++j) {
-//      for(int i = 0; i < IMG_SIZE; ++i) {
-//          img.read(arr_char[j*IMG_SIZE + i], sizeof(unsigned char));
-//          img.seekg(ios::beg);
-//      }
-//    }
-
-    std::cout<<"Dimension"<<image.rows << " "<<image.cols<<std::endl;
-    // Conver into floating point
     float *arr = (float*) malloc(NUM_IMGS * IMG_SIZE * sizeof(float));
-    for(int i = 0; i < IMG_SIZE; i++){
-      arr[i] = (float)(image.data[i]); 
-      std::cout<<arr[i] << " " << (int)(image.data[i]) << std::endl;
-      std::cout<<i<<std::endl;
-    }
-    
-    // Dump input file
-    bool dump_input = true;
-    if(dump_input){
-      std::ofstream input_file;
-      input_file.open("googlenet.in", std::ios::out);
-      input_file << NUM_IMGS * IMG_SIZE << "\n"; 
-      for(int j = 0; j < NUM_IMGS; j++){
-        for(int i = 0; i < IMG_SIZE; i++){
-          input_file << arr[i] << " ";
-        }
+    std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary);
+    // std::ifstream img("face-80.jpg", std::ios::binary);
+    for(int j = 0; j < NUM_IMGS; ++j) {
+      for(int i = 0; i < IMG_SIZE; ++i) {
+          img.read((char*)&(arr[j*IMG_SIZE + i]), sizeof(float));
+          img.seekg(ios::beg);
       }
-      input_file.close();
     }
+
+    // write out image
+    // std::ofstream wr("face-80.bin", std::ios::binary);
+    // for(int i = 0; i < IMG_SIZE; ++i)
+    //     wr.write((char*)&(arr[i]), sizeof(float));
 
     // TODO: fix
     // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
