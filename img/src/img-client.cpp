@@ -13,11 +13,13 @@
 #include <sys/time.h>
 #include <glog/logging.h>
 
+#include "opencv2/opencv.hpp"
 #include "boost/program_options.hpp" 
 #include "align.h"
 #include "socket.h"
 
 using namespace std;
+using namespace cv;
 
 namespace po = boost::program_options;
 
@@ -54,13 +56,13 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main( int argc, char** argv )
 {
+    bool make_bin = false;
     google::InitGoogleLogging(argv[0]);
     po::variables_map vm = parse_opts(argc, argv);
       /* Timing */
-    struct timeval tp1, tp2, tv1, tv2;
-    unsigned int apptime = 0;
-    unsigned int txtime = 0;
-    unsigned int throughput = 0;
+    struct timeval tv1, tv2, diff;
+    double preproc = 0;
+    double dnntime = 0;
 
     assert(vm.count("hostname"));
 
@@ -72,11 +74,6 @@ int main( int argc, char** argv )
     assert(vm.count("input"));
     int NUM_IMGS = vm["num"].as<int>();
     int NUM_QS = vm["queries"].as<int>();
-
-    gettimeofday(&tv1,NULL);
-
-    gettimeofday(&tv2,NULL);
-    apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
     
     string task = vm["task"].as<string>();
     // send req_type
@@ -89,25 +86,27 @@ int main( int argc, char** argv )
     else { LOG(ERROR) << "unrecognized task."; exit(1); }
 
     float *arr = (float*) malloc(NUM_IMGS * IMG_SIZE * sizeof(float));
-    std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary);
-    // std::ifstream img("face-80.jpg", std::ios::binary);
-    for(int j = 0; j < NUM_IMGS; ++j) {
-      for(int i = 0; i < IMG_SIZE; ++i) {
-          img.read((char*)&(arr[j*IMG_SIZE + i]), sizeof(float));
-          img.seekg(ios::beg);
-      }
+    Mat img = imread(vm["input"].as<string>().c_str(), CV_LOAD_IMAGE_COLOR);
+
+    gettimeofday(&tv1,NULL);
+    if(task == "face")
+        preprocess(vm, img, NUM_IMGS);
+    gettimeofday(&tv2,NULL);
+    timersub(&tv2, &tv1, &diff);
+    preproc = ((double)diff.tv_sec*(double)1000 + (double)diff.tv_usec/(double)1000);
+
+    for(int n = 0; n < NUM_IMGS; ++n) {
+        int img_count = 0;
+        for(int c = 0; c < img.channels(); ++c) {
+            for(int i = 0; i < img.rows; ++i) {
+                for(int j = 0; j < img.cols; ++j) {
+                    Vec3b num = img.at<Vec3b>(i,j);
+                    arr[n*IMG_SIZE + img_count] = num[c];
+                    ++img_count;
+                }
+            }
+        }
     }
-
-    // write out image
-    // std::ofstream wr("face-80.bin", std::ios::binary);
-    // for(int i = 0; i < IMG_SIZE; ++i)
-    //     wr.write((char*)&(arr[i]), sizeof(float));
-
-    // TODO: fix
-    // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
-    // $cmt: still tries to do facial recognition if no faces or landmarks found.
-    // if(task == "face")
-    //     preprocess(vm, arr, NUM_IMGS);
 
     SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
 
@@ -115,42 +114,20 @@ int main( int argc, char** argv )
     SOCKET_txsize(socketfd, NUM_IMGS * IMG_SIZE);
     float *preds = (float *) malloc(NUM_IMGS  * sizeof(float));
 
-    gettimeofday(&tp1,NULL);
     for(int i = 0; i < NUM_QS; ++i) {
       // send image
-      gettimeofday(&tv1,NULL);
       SOCKET_send(socketfd, (char*)arr, NUM_IMGS * IMG_SIZE * sizeof(float), vm["debug"].as<bool>());
       // receive data
       SOCKET_receive(socketfd, (char*)preds, NUM_IMGS * sizeof(float), vm["debug"].as<bool>());
-      gettimeofday(&tv2,NULL);
-      txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
       // check correct
       for(int j = 0; j < NUM_IMGS; ++j)
         LOG(INFO) << "Image: " << j << " class: " << preds[j] << endl;;
     }
-    gettimeofday(&tp2,NULL);
-    throughput = (tp2.tv_sec-tp1.tv_sec)*1000000 + (tp2.tv_usec-tp1.tv_usec);
 
     SOCKET_close(socketfd, false);
 
     free(preds);
     free(arr);
 
-    // Set csv file name
-    if(vm.count("csv")) {
-      string csv_file_name = vm["csv"].as<string>();
-      FILE* csv_file = fopen(csv_file_name.c_str(), "a");
-      fprintf(csv_file, "task,qs,data,totaltime,app,transfer\n");
-      // 
-      fprintf(csv_file, "%s,%d,%.2f,%.2f,%.2f,%.2f\n", task.c_str(),
-                                                NUM_QS,
-                                                (float)(NUM_IMGS * IMG_SIZE*sizeof(float))/1024,
-                                                (float)(apptime+txtime)/1000,
-                                                (float)(apptime/1000),
-                                                (float)(txtime/1000)
-                                                );
-      fclose(csv_file);
-    }
-    
 	return 0;
 }

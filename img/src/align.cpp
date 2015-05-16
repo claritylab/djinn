@@ -206,14 +206,14 @@ vector<cv::Point2d> detectLandmarks(FLANDMARK_Model* model, const Mat & image, c
 }
 
 /** preprocesses the image by calling correct functions*/
-void preprocess(po::variables_map& vm, float* data, int NUM_IMGS) {
+void preprocess(po::variables_map& vm, Mat image, int NUM_IMGS) {
     assert(vm.count("flandmark"));
     assert(vm.count("haar"));
 
     // Get arguments
     for(int i = 0; i < NUM_IMGS; ++i) {
-        void *img = &data[i];
-        Mat image = Mat(Size(152,152), CV_8UC3, img);
+        // void *img = &data[i];
+        // Mat image = Mat(Size(152,152), CV_8UC3, img);
 
         // Get cascade for face detection
         CascadeClassifier face_cascade;
@@ -242,6 +242,6 @@ void preprocess(po::variables_map& vm, float* data, int NUM_IMGS) {
 
         //align the face
         align(image, aligned_image, landmarks, aligned_landmarks);
-        cout << "done" << endl;
+        // imwrite("aligned.jpg", aligned_image);
     }
 }
