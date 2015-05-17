@@ -253,9 +253,9 @@ int main(int argc , char *argv[])
 
       // Read in the input
       for(int i = 0; i < input_size; i++){
-        int cur_pixel;
+        float cur_pixel;
         file >> cur_pixel;
-        input[i] = (float)cur_pixel;
+        input[i] = cur_pixel;
       }
 
       float* input_bkp = (float*) malloc(input_size * sizeof(float));
@@ -359,6 +359,9 @@ int main(int argc , char *argv[])
         LOG(INFO) << "output size do not agree";
         LOG(FATAL) << "expected: " << out_elts << ", actual: " << out_blobs[0]->count();
       }
+
+      // Print output
+      LOG(INFO) << "Output starts with "<<out_blobs[0]->cpu_data()[0];
 
       // Calculate average runtime
       float avg_runtime = total_runtime / (double)trial;

@@ -3,8 +3,8 @@ export GLOG_log_dir=`pwd`/log
 ./img-client --hostname localhost \
              --task $1 \
              --portno $2 \
-             --input input/$1-input.bin \
-             --num $3 \
+             --input $3 \
+             --num $4 \
              --flandmark data/flandmark.dat \
              --haar data/haar.xml \
-             --debug 0
+             --debug 1
