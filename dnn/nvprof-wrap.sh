@@ -7,20 +7,17 @@ gpu=1
 for k in imc
 do
     rm -rf $k/*
-    ./nvprof-metrics.sh net-configs/$k.prototxt \
-                        weights/$k.caffemodel \
+    ./nvprof-metrics.sh $k \
                         input/$k.in \
                         $trial \
                         $gpu
 
-    ./nvprof-timing.sh net-configs/$k.prototxt \
-                       weights/$k.caffemodel \
+    ./nvprof-timing.sh $k \
                        input/$k.in \
                        $trial \
                        $gpu
 
-    ./nvprof-trace.sh net-configs/$k.prototxt \
-                      weights/$k.caffemodel \
+    ./nvprof-trace.sh $k \
                       input/$k.in \
                       $trial \
                       $gpu
