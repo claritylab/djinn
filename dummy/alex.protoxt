@@ -1,0 +1,35 @@
+name: 'FcTestNetwork' 
+layer { 
+  name: 'data' 
+  type: 'DummyData' 
+  dummy_data_param { 
+    shape { 
+      dim: 1
+      dim: 9216
+      dim: 1
+      dim: 1
+    } 
+    data_filler { 
+      type: 'gaussian' 
+      std: 0.01 
+    } 
+  } 
+  top: 'data' 
+}
+layer { 
+  name: 'innerproduct' 
+  type: 'InnerProduct' 
+  inner_product_param { 
+    num_output: 4096
+    weight_filler { 
+      type: 'gaussian' 
+      std: 0.01 
+    } 
+    bias_filler { 
+      type: 'constant' 
+      value: 0 
+    } 
+  } 
+  bottom: 'data' 
+  top: 'innerproduct' 
+}
