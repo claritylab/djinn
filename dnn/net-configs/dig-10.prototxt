@@ -61,10 +61,10 @@ layers {
   }
 }
 layers {
-  name: "ip1"
+  name: "fc1"
   type: INNER_PRODUCT
   bottom: "pool2"
-  top: "ip1"
+  top: "fc1"
   inner_product_param {
     num_output: 500
     weight_filler {
@@ -78,14 +78,14 @@ layers {
 layers {
   name: "relu1"
   type: RELU
-  bottom: "ip1"
-  top: "ip1"
+  bottom: "fc1"
+  top: "relu1"
 }
 layers {
-  name: "ip2"
+  name: "fc2"
   type: INNER_PRODUCT
-  bottom: "ip1"
-  top: "ip2"
+  bottom: "relu1"
+  top: "fc2"
   inner_product_param {
     num_output: 10
     weight_filler {
@@ -99,7 +99,7 @@ layers {
 layers {
   name: "prob"
   type: SOFTMAX
-  bottom: "ip2"
+  bottom: "fc2"
   top: "prob"
 }
 layers {
