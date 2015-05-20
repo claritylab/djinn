@@ -22,7 +22,7 @@ layer {
   bottom: 'data' 
   top: 'conv1' 
   convolution_param { 
-    num_output: 1000
+    num_output: 96
     kernel_size: 11
     stride: 4
     weight_filler { 

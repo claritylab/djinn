@@ -76,6 +76,8 @@ int main(int argc , char *argv[])
     vector<Blob<float>*> bottom;
     Net<float>* net = new Net<float>(vm["network"].as<string>().c_str(), phase);
     float loss;
+    net->ForwardPrefilled(&loss);
+    
     net->ForwardPrefilled(&loss, "layers.csv");
   
     return 0;

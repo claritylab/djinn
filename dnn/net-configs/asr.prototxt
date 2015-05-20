@@ -5,10 +5,10 @@ input_dim: 440
 input_dim: 1
 input_dim: 1
 layers {
-  name: "inner1"
+  name: "fc1"
   type: INNER_PRODUCT
   bottom: "data"
-  top: "inner1"
+  top: "fc1"
   inner_product_param {
     num_output: 2048
   }
@@ -16,14 +16,14 @@ layers {
 layers {
   name: "sig1"
   type: SIGMOID
-  bottom: "inner1"
+  bottom: "fc1"
   top: "sig1"
 }
 layers {
-  name: "inner2"
+  name: "fc2"
   type: INNER_PRODUCT
   bottom: "sig1"
-  top: "inner2"
+  top: "fc2"
   inner_product_param {
     num_output: 2048
   }
@@ -31,14 +31,14 @@ layers {
 layers {
   name: "sig2"
   type: SIGMOID
-  bottom: "inner2"
+  bottom: "fc2"
   top: "sig2"
 }
 layers {
-  name: "inner3"
+  name: "fc3"
   type: INNER_PRODUCT
   bottom: "sig2"
-  top: "inner3"
+  top: "fc3"
   inner_product_param {
     num_output: 2048
   }
@@ -46,14 +46,14 @@ layers {
 layers {
   name: "sig3"
   type: SIGMOID
-  bottom: "inner3"
+  bottom: "fc3"
   top: "sig3"
 }
 layers {
-  name: "inner4"
+  name: "fc4"
   type: INNER_PRODUCT
   bottom: "sig3"
-  top: "inner4"
+  top: "fc4"
   inner_product_param {
     num_output: 2048
   }
@@ -61,14 +61,14 @@ layers {
 layers {
   name: "sig4"
   type: SIGMOID
-  bottom: "inner4"
+  bottom: "fc4"
   top: "sig4"
 }
 layers {
-  name: "inner5"
+  name: "fc5"
   type: INNER_PRODUCT
   bottom: "sig4"
-  top: "inner5"
+  top: "fc5"
   inner_product_param {
     num_output: 2048
   }
@@ -76,14 +76,14 @@ layers {
 layers {
   name: "sig5"
   type: SIGMOID
-  bottom: "inner5"
+  bottom: "fc5"
   top: "sig5"
 }
 layers {
-  name: "inner6"
+  name: "fc6"
   type: INNER_PRODUCT
   bottom: "sig5"
-  top: "inner6"
+  top: "fc6"
   inner_product_param {
     num_output: 2048
   }
@@ -91,11 +91,11 @@ layers {
 layers {
   name: "sig6"
   type: SIGMOID
-  bottom: "inner6"
+  bottom: "fc6"
   top: "sig6"
 }
 layers {
-  name: "final_inner"
+  name: "fc7"
   type: INNER_PRODUCT
   bottom: "sig6"
   top: "out"
