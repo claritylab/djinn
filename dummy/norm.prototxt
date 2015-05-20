@@ -1,0 +1,29 @@
+name: 'NormTestNetwork' 
+layer { 
+  name: 'data' 
+  type: 'DummyData' 
+  dummy_data_param { 
+    shape { 
+      dim: 1
+      dim: 384
+      dim: 1 
+      dim: 1 
+    } 
+    data_filler { 
+      type: 'gaussian' 
+      std: 0.01 
+    } 
+  } 
+  top: 'data' 
+}
+layer { 
+  name: 'norm' 
+  type: 'LRN' 
+  bottom: 'data' 
+  top: 'norm1' 
+  lrn_param { 
+    local_size: 7
+    alpha: 0.0001
+    beta: 5
+  } 
+} 

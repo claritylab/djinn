@@ -17,19 +17,13 @@ layer {
   top: 'data' 
 }
 layer { 
-  name: 'conv' 
-  type: 'Convolution' 
+  name: 'pool' 
+  type: 'Pooling' 
   bottom: 'data' 
-  top: 'conv1' 
-  convolution_param { 
-    num_output: 256
+  top: 'pool1' 
+  pooling_param { 
+    pool: MAX
     kernel_size: 11
     stride: 4
-    weight_filler { 
-      type: 'xavier' 
-    } 
-    bias_filler { 
-      type: 'constant' 
-    } 
   } 
 } 
