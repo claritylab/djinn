@@ -50,7 +50,9 @@ def main( args ):
             shcom(cmd)
             cmd = './change-dim.sh %s %s %s' % (NET, 4, height)
             shcom(cmd)
-            fpops = batch*channel*height*height
+            in_dim = height * height * channel
+            out_dim = num_out
+            fpops = in_dim * num_out * batch
         
             w.writerow([NETCONF,batch,channel,height,height,fpops])
             if PLAT is 'cpu':
