@@ -4,13 +4,14 @@ import math
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [3,  227]
-featmaps['small'] = [512, 14]
-featmaps['med']   = [64, 112]
-featmaps['large'] = [256, 56]
-featmaps['alt']   = [128, 1]
-featmaps['alt1']  = [384, 1]
-featmaps['alt2']  = [512, 1]
+featmaps['input'] = [128, 1]
+featmaps['small'] = [512, 1]
+featmaps['med']   = [256,  1]
+featmaps['large'] = [1024, 1]
+featmaps['alt']   = [2048, 1]
+featmaps['alt1']  = [4096, 1]
+featmaps['alt2']  = [64, 1]
+featmaps['alt3']  = [32, 1]
 
 batches    = [1, 16, 64, 256]
 batches    = [1]

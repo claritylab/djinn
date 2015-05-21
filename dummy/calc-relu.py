@@ -5,15 +5,15 @@ import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
 featmaps['input'] = [3,  227]
-featmaps['small'] = [512, 14]
-featmaps['med']   = [64, 112]
-featmaps['large'] = [256, 56]
-featmaps['alt']  = [128, 1]
-featmaps['alt1'] = [384, 1]
-featmaps['alt2'] = [512, 1]
+featmaps['small'] = [96, 55]
+featmaps['med']   = [48, 28]
+featmaps['large'] = [128, 56]
+featmaps['alt']   = [16, 96]
+featmaps['alt1']  = [64, 64]
+featmaps['alt2']  = [512, 14]
 
 batches  = [1, 16, 64, 256]
-batches    = [1]
+batches  = [1]
 
 ## CONF
 
