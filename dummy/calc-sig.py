@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import math
-import pandas as pd
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
@@ -21,7 +20,7 @@ def shcom(cmd):
     out = p.communicate()[0]
     return out
 
-PLAT = 'cpu'
+PLAT = 'gpu'
 THREADS=4
 NETCONF='sig'
 NET=NETCONF + '.prototxt'
@@ -29,7 +28,7 @@ OUTNAME=NETCONF + '-sweep.csv'
 OUTNAME1=NETCONF + '-fpops.csv'
 FINAL=NETCONF+'-'+PLAT+'-gflops.csv'
 
-shcom('rm -rf %s-*' % NETCONF)
+shcom('rm -rf %s-%s*' % (NETCONF, PLAT))
 f = open(OUTNAME1, "wb")
 w = csv.writer(f)
 w.writerow(['layer','batch','channel','height','width','fpops'])

@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
 import math
-import pandas as pd
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [3,  227]
-featmaps['small'] = [512, 14]
-featmaps['med']   = [64, 112]
-featmaps['large'] = [256, 56]
+featmaps['input']  = [3,  227]
+featmaps['small']  = [512, 14]
+featmaps['med']    = [64, 112]
+featmaps['large']  = [256, 56]
+featmaps['large1'] = [192, 22]
+featmaps['med2']   = [64, 28]
 
 batches  = [1]
-kernels  = [3, 7, 11]
-num_outs = [3, 16, 64, 128, 256]
+kernels  = [3, 5, 7, 9, 11]
+num_outs = [3, 16, 32, 64, 128, 256]
 strides  = [1, 2, 4]
 
 ## CONF
@@ -25,7 +26,7 @@ def shcom(cmd):
     out = p.communicate()[0]
     return out
 
-PLAT = 'cpu'
+PLAT = 'gpu'
 THREADS=4
 NETCONF='conv'
 NET=NETCONF + '.prototxt'
@@ -33,7 +34,7 @@ OUTNAME=NETCONF + '-sweep.csv'
 OUTNAME1=NETCONF + '-fpops.csv'
 FINAL=NETCONF+'-'+PLAT+'-gflops.csv'
 
-shcom('rm -rf %s-*' % NETCONF)
+shcom('rm -rf %s-%s*' % (NETCONF, PLAT))
 f = open(OUTNAME1, "wb")
 w = csv.writer(f)
 w.writerow(['layer','batch','channel','height','width','num_output','kernel_size','stride','out_dim','fpops'])
