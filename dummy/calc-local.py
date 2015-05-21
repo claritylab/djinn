@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import math
-import pandas as pd
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
