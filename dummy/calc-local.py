@@ -7,8 +7,8 @@ import subprocess, re, os, sys, csv
 featmaps = {}     #  c   h/w
 featmaps['input'] = [3,  96]
 featmaps['small'] = [512, 14]
-featmaps['med']   = [64, 112]
 featmaps['large'] = [192, 22]
+featmaps['med']   = [64, 28]
 
 batches  = [1]
 kernels  = [3, 5, 7, 9]
