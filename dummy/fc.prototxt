@@ -20,7 +20,7 @@ layer {
   name: 'innerproduct' 
   type: 'InnerProduct' 
   inner_product_param { 
-    num_output: 64
+    num_output: 128
     weight_filler { 
       type: 'gaussian' 
       std: 0.01 

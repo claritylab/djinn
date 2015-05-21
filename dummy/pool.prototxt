@@ -5,9 +5,9 @@ layer {
   dummy_data_param { 
     shape { 
       dim: 1
-      dim: 64
-      dim: 112 
-      dim: 112 
+      dim: 512
+      dim: 14 
+      dim: 14 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -23,7 +23,7 @@ layer {
   top: 'pool1' 
   pooling_param { 
     pool: MAX
-    kernel_size: 11
-    stride: 4
+    kernel_size: 3
+    stride: 1
   } 
 } 

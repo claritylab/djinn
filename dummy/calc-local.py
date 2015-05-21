@@ -10,6 +10,7 @@ featmaps['small'] = [512, 14]
 featmaps['large'] = [192, 22]
 featmaps['med']   = [64, 28]
 
+batches  = [1, 16, 64, 256]
 batches  = [1]
 kernels  = [3, 5, 7, 9]
 num_outs = [3, 16, 24, 32, 48]

@@ -17,8 +17,8 @@ layer {
   top: 'data' 
 }
 layer {
-  name: "sig"
-  type: 'Sigmoid' 
+  name: "prob"
+  type: 'Softmax' 
   bottom: "data"
-  top: "sig"
+  top: "prob"
 }

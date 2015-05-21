@@ -5,9 +5,9 @@ layer {
   dummy_data_param { 
     shape { 
       dim: 1
-      dim: 64
-      dim: 112 
-      dim: 112 
+      dim: 384
+      dim: 1 
+      dim: 1 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -17,8 +17,8 @@ layer {
   top: 'data' 
 }
 layer {
-  name: "sig"
-  type: 'Sigmoid' 
+  name: "prob"
+  type: 'ArgMax' 
   bottom: "data"
-  top: "sig"
+  top: "prob"
 }

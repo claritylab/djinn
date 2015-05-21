@@ -12,6 +12,7 @@ featmaps['alt']  = [128, 1]
 featmaps['alt1'] = [384, 1]
 featmaps['alt2'] = [512, 1]
 
+batches  = [1, 16, 64, 256]
 batches    = [1]
 
 ## CONF

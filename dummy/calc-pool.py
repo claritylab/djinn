@@ -9,6 +9,7 @@ featmaps['small'] = [512, 14]
 featmaps['med']   = [64, 112]
 featmaps['large'] = [256, 56]
 
+batches  = [1, 16, 64, 256]
 batches  = [1]
 kernels  = [3, 7, 11]
 strides  = [1, 2, 4]
