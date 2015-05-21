@@ -78,7 +78,7 @@ int main(int argc , char *argv[])
     float loss;
     net->ForwardPrefilled(&loss);
     
-    net->ForwardPrefilled(&loss, "layers.csv");
+    net->ForwardPrefilled(&loss, vm["layer_csv"].as<string>());
   
     return 0;
 }
