@@ -26,7 +26,7 @@ def shcom(cmd):
 
 def main( args ):
     PLAT = args[1]
-    THREADS=12
+    THREADS=args[2]
     NETCONF='fc'
     NET=NETCONF + '.prototxt'
     OUTNAME=NETCONF + '-sweep.csv'
