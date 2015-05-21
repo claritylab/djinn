@@ -1,4 +1,4 @@
-CAFFE=/home/ypkang/caffe/distribute
+CAFFE=/home/jahausw/tools/caffe/distribute
 CUDA=/usr/local/cuda
 CXX = g++
 CXX_FLAGS = -w -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -O3
