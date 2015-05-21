@@ -42,23 +42,23 @@ def main( args ):
     for batch in batches:
         cmd = './change-dim.sh %s %s %s' % (NET, 1, batch)
         shcom(cmd)
-         for k in featmaps:
-             channel = featmaps[k][0]
-             height  = featmaps[k][1]
-             cmd = './change-dim.sh %s %s %s' % (NET, 2, channel)
-             shcom(cmd)
-             cmd = './change-dim.sh %s %s %s' % (NET, 3, height)
-             shcom(cmd)
-             cmd = './change-dim.sh %s %s %s' % (NET, 4, height)
-             shcom(cmd)
-             fpops = batch*channel*height*height
-         
-             w.writerow([NETCONF,batch,channel,height,height,fpops])
-             if PLAT is 'cpu':
-                 cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
-             else:
-                 cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
-             shcom(cmd)
+        for k in featmaps:
+            channel = featmaps[k][0]
+            height  = featmaps[k][1]
+            cmd = './change-dim.sh %s %s %s' % (NET, 2, channel)
+            shcom(cmd)
+            cmd = './change-dim.sh %s %s %s' % (NET, 3, height)
+            shcom(cmd)
+            cmd = './change-dim.sh %s %s %s' % (NET, 4, height)
+            shcom(cmd)
+            fpops = batch*channel*height*height
+        
+            w.writerow([NETCONF,batch,channel,height,height,fpops])
+            if PLAT is 'cpu':
+                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+            else:
+                cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
+            shcom(cmd)
     
     f.close()
     cmd ='sed "1s/^/layer,lat\\n/" %s > temp.txt' % (OUTNAME)
