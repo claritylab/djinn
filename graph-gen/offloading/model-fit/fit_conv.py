@@ -93,6 +93,10 @@ def main(args):
     
     print csv_line
     
+##########################
+    return
+##########################
+    
     #initialize variables
     fit_x = []
     fit_x0 = []
@@ -138,7 +142,7 @@ def main(args):
     plt.ylabel('GFLOPS')
     plt.xlabel('Number of inputs')
     plt.plot(fit_x1,fit_y)
-    plt.show()
+    # plt.show()
 
 if __name__=='__main__':
     sys.exit(main(sys.argv))
