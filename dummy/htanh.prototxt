@@ -17,8 +17,8 @@ layer {
   top: 'data' 
 }
 layer {
-  name: "sig"
-  type: 'Sigmoid' 
+  name: "htanh"
+  type: 'HTanH' 
   bottom: "data"
-  top: "sig"
+  top: "htanh"
 }

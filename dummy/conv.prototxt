@@ -5,9 +5,9 @@ layer {
   dummy_data_param { 
     shape { 
       dim: 1
-      dim: 64
-      dim: 112 
-      dim: 112 
+      dim: 3
+      dim: 227 
+      dim: 227 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -22,9 +22,9 @@ layer {
   bottom: 'data' 
   top: 'conv1' 
   convolution_param { 
-    num_output: 256
+    num_output: 3
     kernel_size: 11
-    stride: 4
+    stride: 1
     weight_filler { 
       type: 'xavier' 
     } 

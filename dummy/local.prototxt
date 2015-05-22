@@ -5,9 +5,9 @@ layer {
   dummy_data_param { 
     shape { 
       dim: 1
-      dim: 192
-      dim: 22 
-      dim: 22 
+      dim: 3
+      dim: 96 
+      dim: 96 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -22,7 +22,7 @@ layer {
   bottom: "data"
   top: "local1"
   local_param {
-    num_output: 48
+    num_output: 32
     kernel_size: 9
     stride: 4
     weight_filler { 
