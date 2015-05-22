@@ -76,6 +76,12 @@ def main(args):
     
     #perform curve fit
     popt, pcov = curve_fit(func_log, x_data, y_data)
+
+    s_res = np.dot((y_data - func_log(x_data, *popt)),(y_data - func_log(x_data, *popt)))
+    ymean = np.mean(y_data)
+    ss_tot = np.dot((y_data-ymean),(y_data-ymean))
+    print "Mean R :",  1-s_res/ss_tot
+    print "Mean R2 :",  (1-s_res/ss_tot)**2
     
     #find residuals (distance from each fitted point to actual point)
     residuals = []

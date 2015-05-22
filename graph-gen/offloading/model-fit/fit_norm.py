@@ -68,7 +68,7 @@ def main(args):
     #calculate standard error (average distance from fitted point to actual point)
     s_err = np.mean([abs(x) for x in residuals])
     
-    csv_line = 'norm,linear,a*x+b,2,'+str(popt[0])+','+str(popt[1])+','+str(s_err)+','+str(r_value)
+    csv_line = 'norm,linear,a*x+b,2,'+str(popt[0])+','+str(popt[1])+','+str(s_err)+','+str(r_value**2)
 
     print csv_line
 
