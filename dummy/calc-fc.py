@@ -3,7 +3,7 @@
 import math
 import subprocess, re, os, sys, csv
 
-# featmaps = {}     #  c   h/w
+featmaps = {}     #  c   h/w
 featmaps['input'] = [64, 1]
 featmaps['med']   = [256, 1]
 featmaps['med']   = [384, 1]
@@ -51,10 +51,8 @@ def main( args ):
         cmd = './change-dim.sh %s %s %s' % (NET, 1, batch)
         shcom(cmd)
         for k in featmaps:
-            # channel = featmaps[k][0]
-            # height  = featmaps[k][1]
-            channel = k
-            height  = 1
+            channel = featmaps[k][0]
+            height  = featmaps[k][1]
             cmd = './change-dim.sh %s %s %s' % (NET, 2, channel)
             shcom(cmd)
             cmd = './change-dim.sh %s %s %s' % (NET, 3, height)
