@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 import sys
 import numpy as np
+import scipy
 import math
 import csv
 import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
+from scipy import stats
 
 
 #fitting functions
@@ -89,7 +91,9 @@ def main(args):
     csv_line = 'conv,log,a*log(b*x0)+c*log(d*x1)+e,5,'
     for i in np.arange(5):
         csv_line += str(popt[i])+','
-    csv_line += str(s_err)
+    csv_line += str(s_err) + ','
+    r_sq = 'NA'
+    csv_line += str(r_sq)
     
     print csv_line
     
