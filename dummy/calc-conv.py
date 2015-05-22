@@ -21,22 +21,19 @@ featmaps['input60'] = [1, 22, 50,  5, 1]
 
 featmaps['input61'] = [1, 28, 20,  7, 1]
 
-featmaps['input61'] = [1, 28, 20, 11, 1]
-
+featmaps['input20'] = [96,  55, 256, 5, 1]
+featmaps['input21'] = [96,  55, 128, 5, 2]
+featmaps['input22'] = [96,  55,  64, 5, 4]
 #
-# featmaps['input20'] = [96,  55, 256, 5, 1]
-# featmaps['input21'] = [96,  55, 128, 5, 2]
-# featmaps['input22'] = [96,  55,  64, 5, 4]
-#
-# featmaps['input30'] = [256, 27, 384, 3, 1]
+featmaps['input30'] = [256, 27, 384, 3, 1]
 # # featmaps['input31'] = [256, 27, 256, 3, 2]
 # # featmaps['input32'] = [256, 27, 512, 3, 4]
 #
-# featmaps['input40'] = [384, 13, 256, 3, 1]
+featmaps['input40'] = [384, 13, 256, 3, 1]
 # # featmaps['input41'] = [384, 13, 256, 3, 2]
 # # featmaps['input42'] = [384, 13, 256, 3, 4]
 #
-# featmaps['input50'] = [256, 13, 256, 3, 1]
+featmaps['input50'] = [256, 13, 256, 3, 1]
 # featmaps['input51'] = [256, 13, 256, 3, 1]
 # featmaps['input52'] = [256, 13, 256, 3, 1]
 # featmaps['input53'] = [256, 13, 256, 3, 1]
