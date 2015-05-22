@@ -15,7 +15,6 @@ featmaps['alt3']  = [32, 1]
 
 batches    = [1, 16, 64, 256]
 batches    = [1]
-num_outs = [64, 128, 196, 256, 320, 384, 512, 768, 1024, 1536, 2048, 2560, 3072, 3200, 4096]
 
 def shcmd(cmd):
     subprocess.call(cmd, shell=True)
@@ -39,7 +38,7 @@ def main( args ):
     shcom('rm -rf %s-fpops.csv' % (NETCONF))
     f = open(OUTNAME1, "wb")
     w = csv.writer(f)
-    w.writerow(['layer','batch','channel','height','width','num_output','fpops'])
+    w.writerow(['layer','batch','channel','height','width','fpops'])
     
     for batch in batches:
         cmd = './change-dim.sh %s %s %s' % (NET, 1, batch)
@@ -53,20 +52,14 @@ def main( args ):
             shcom(cmd)
             cmd = './change-dim.sh %s %s %s' % (NET, 4, height)
             shcom(cmd)
-            for num_out in num_outs:
-                cmd = './change-entry.sh %s %s %s' % (NET, 'num_output', num_out)
-                shcom(cmd)
-                # calc FP Ops
-                in_dim = height * height * channel
-                out_dim = num_out
-                fpops = in_dim * num_out * batch
-    
-                w.writerow([NETCONF,batch,channel,height,height,num_out,fpops])
-                if PLAT is 'cpu':
-                    cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
-                else:
-                    cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
-                shcom(cmd)
+            fpops = batch*channel*height*height
+        
+            w.writerow([NETCONF,batch,channel,height,height,fpops])
+            if PLAT is 'cpu':
+                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+            else:
+                cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
+            shcom(cmd)
     
     f.close()
     cmd ='sed "1s/^/layer,lat\\n/" %s > temp.txt' % (OUTNAME)
