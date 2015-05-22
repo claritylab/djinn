@@ -1,4 +1,4 @@
-name: 'ConvTestNetwork' 
+name: 'LocalTestNetwork' 
 layer { 
   name: 'data' 
   type: 'DummyData' 
@@ -6,8 +6,8 @@ layer {
     shape { 
       dim: 1
       dim: 3
-      dim: 227 
-      dim: 227 
+      dim: 96 
+      dim: 96 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -16,20 +16,20 @@ layer {
   } 
   top: 'data' 
 }
-layer { 
-  name: 'conv' 
-  type: 'Convolution' 
-  bottom: 'data' 
-  top: 'conv1' 
-  convolution_param { 
-    num_output: 3
-    kernel_size: 11
-    stride: 1
+layer {
+  name: "local"
+  type: "Local"
+  bottom: "data"
+  top: "local1"
+  local_param {
+    num_output: 32
+    kernel_size: 9
+    stride: 4
     weight_filler { 
       type: 'xavier' 
     } 
     bias_filler { 
       type: 'constant' 
     } 
-  } 
-} 
+  }
+}

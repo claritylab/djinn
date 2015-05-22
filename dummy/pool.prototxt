@@ -5,9 +5,9 @@ layer {
   dummy_data_param { 
     shape { 
       dim: 1
-      dim: 3
-      dim: 227 
-      dim: 227 
+      dim: 512
+      dim: 14 
+      dim: 14 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -17,19 +17,13 @@ layer {
   top: 'data' 
 }
 layer { 
-  name: 'conv' 
-  type: 'Convolution' 
+  name: 'pool' 
+  type: 'Pooling' 
   bottom: 'data' 
-  top: 'conv1' 
-  convolution_param { 
-    num_output: 3
-    kernel_size: 11
+  top: 'pool1' 
+  pooling_param { 
+    pool: MAX
+    kernel_size: 3
     stride: 1
-    weight_filler { 
-      type: 'xavier' 
-    } 
-    bias_filler { 
-      type: 'constant' 
-    } 
   } 
 } 

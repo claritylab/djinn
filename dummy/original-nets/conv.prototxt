@@ -17,14 +17,14 @@ layer {
   top: 'data' 
 }
 layer { 
-  name: 'conv' 
+  name: 'conv1' 
   type: 'Convolution' 
   bottom: 'data' 
   top: 'conv1' 
   convolution_param { 
-    num_output: 3
+    num_output: 1000
     kernel_size: 11
-    stride: 1
+    stride: 4
     weight_filler { 
       type: 'xavier' 
     } 

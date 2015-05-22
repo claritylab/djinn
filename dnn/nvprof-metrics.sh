@@ -1,10 +1,11 @@
 network=$1
-weights=$2
-input=$3
-trial=$4
-gpu=$5
+input=$2
+trial=$3
+gpu=$4
 
-metrics='achieved_occupancy,ipc'
+# metrics='achieved_occupancy,ipc'
+# metrics='l1_shared_utilization"
+metrics='l2_utilization,dram_utilization,eligible_warps_per_cycle'
 
 fname=${network##*/}
 export TASK=${fname%%.*}
@@ -18,7 +19,6 @@ nvprof \
     --csv \
     --log-file $stats/metrics_%q{TASK}_%p.csv \
     ./dnn-server --network $network \
-                 --weights $weights \
                  --input $input \
                  --trial $trial \
                  --gpu $gpu

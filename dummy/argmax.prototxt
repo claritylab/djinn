@@ -1,0 +1,24 @@
+name: 'FcTestNetwork' 
+layer { 
+  name: 'data' 
+  type: 'DummyData' 
+  dummy_data_param { 
+    shape { 
+      dim: 1
+      dim: 384
+      dim: 1 
+      dim: 1 
+    } 
+    data_filler { 
+      type: 'gaussian' 
+      std: 0.01 
+    } 
+  } 
+  top: 'data' 
+}
+layer {
+  name: "prob"
+  type: 'ArgMax' 
+  bottom: "data"
+  top: "prob"
+}

@@ -4,10 +4,10 @@ layer {
   type: 'DummyData' 
   dummy_data_param { 
     shape { 
-      dim: 1
+      dim: 548
+      dim: 2048
       dim: 1 
-      dim: 32 
-      dim: 32 
+      dim: 1 
     } 
     data_filler { 
       type: 'gaussian' 
@@ -20,7 +20,7 @@ layer {
   name: 'innerproduct' 
   type: 'InnerProduct' 
   inner_product_param { 
-    num_output: 128
+    num_output: 2048
     weight_filler { 
       type: 'gaussian' 
       std: 0.01 
