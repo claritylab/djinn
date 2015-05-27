@@ -1,25 +1,25 @@
-CAFFE=/home/jahausw/projects/caffe/distribute
+CAFFE=/home/jahausw/projects/sirius-caffe/distribute
 CUDA=/usr/local/cuda
 CXX = g++
-CXX_FLAGS  = -fpermissive -I$(CAFFE)/include -I$(CUDA)/include
+CXX_FLAGS  = -O3 -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -DCPU_ONLY
 LINK_FLAGS = -lopencv_core \
-			 -lopencv_highgui \
-			 -lopencv_imgproc \
-			 -lopencv_objdetect \
-			 -lcaffe \
-			 ../libsocket.a \
-			 libflandmark.a \
-			 -lboost_program_options \
-			 -lboost_filesystem \
-			 -lboost_system \
-			 -lglog \
-			 -lrt \
-			 -lpthread
+						 -lopencv_highgui \
+						 -lopencv_imgproc \
+						 -lopencv_objdetect \
+						 ../libsocket.a \
+						 libflandmark.a \
+						 -lboost_program_options \
+						 -lboost_filesystem \
+						 -lboost_system \
+						 -lglog \
+						 -lrt \
+						 -lpthread \
+						 $(CAFFE)/lib/libcaffe.so
 
 SRC=src
 
 # File names
-EXEC = img-client
+EXEC = tonic-img
 SOURCES = $(wildcard $(SRC)/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 

@@ -12,34 +12,41 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+#include "opencv2/opencv.hpp"
 #include "boost/program_options.hpp" 
 #include "caffe/caffe.hpp"
 #include "align.h"
 #include "socket.h"
+#include "tonic.h"
 
 using namespace std;
+using namespace cv;
 
 namespace po = boost::program_options;
-
-// #define TIMING
+struct timeval tv1, tv2;
 
 po::variables_map parse_opts( int ac, char** av )
 {
-	// Declare the supported options.
-	po::options_description desc("Allowed options");
-	desc.add_options()
-		("help,h", "Produce help message")
-        ("hostname,h", po::value<string>(), "Server IP addr")
-        ("portno,p", po::value<int>()->default_value(8080), "Server port (default: 8080)")
-        ("task,t", po::value<string>(), "Image task: imc (ImageNet), face (DeepFace), dig (LeNet)")
-        ("input,i", po::value<string>(), "input image (.bin)")
-        ("num,n", po::value<int>()->default_value(1), "num images (default=1)")
-        ("haar,c", po::value<string>(), "(face) Haar Cascade model")
-        ("flandmark,f", po::value<string>(), "(face) Flandmarks trained data")
+  // Declare the supported options.
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help,h", "Produce help message")
+    ("task,t", po::value<string>()->default_value("imc"), "Image task: imc (ImageNet), face (DeepFace), dig (LeNet)")
+    ("network,n", po::value<string>()->default_value("model/imc.prototxt"), "Network config file (.prototxt)")
+    ("model,m", po::value<string>()->default_value("model/imc.caffemodel"), "Pretrained weights (.caffemodel)")
+    ("input,i", po::value<string>()->default_value("input/imc-list.txt"), "List of ingput images (1 jpg/line)")
+    ("num,u", po::value<int>()->default_value(1), "num images to read from input list file")
 
-		("gpu,u", po::value<bool>()->default_value(false), "Use GPU?")
-		("debug,v", po::value<bool>()->default_value(false), "Turn on all debug") 
-		;
+    ("djinn,d", po::value<bool>()->default_value(false), "Use DjiNN service?")
+    ("hostname,o", po::value<string>()->default_value("localhost"), "Server IP addr")
+    ("portno,p", po::value<int>()->default_value(8080), "Server port")
+
+    ("haar,a", po::value<string>()->default_value("data/haar.xml"), "(face) Haar Cascade model")
+    ("flandmark,f", po::value<string>()->default_value("data/flandmark.dat"), "(face) Flandmarks trained data")
+
+    ("gpu,g", po::value<bool>()->default_value(false), "Use GPU?")
+    ("debug,v", po::value<bool>()->default_value(false), "Turn on all debug") 
+    ;
 
 	po::variables_map vm;
 	po::store(po::parse_command_line(ac, av, desc), vm);
@@ -54,80 +61,127 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main( int argc, char** argv )
 {
-	po::variables_map vm = parse_opts(argc, argv);
-    /* Timing */
-	struct timeval tv1, tv2;
-    unsigned int apptime = 0;
-    unsigned int txtime = 0;
+  po::variables_map vm = parse_opts(argc, argv);
 
-    assert(vm.count("hostname"));
+  bool debug = vm["debug"].as<bool>();
 
-    /* open socket */
-    int socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
-    if(socketfd < 0)
-        exit(0);
+  TonicSuiteApp app;
+  app.task = vm["task"].as<string>();
+  app.network = vm["network"].as<string>();
+  app.model = vm["model"].as<string>();
+  app.input = vm["input"].as<string>();
+  app.num_imgs = vm["num"].as<int>();
 
-    assert(vm.count("input"));
-    int NUM_IMGS = vm["num"].as<int>();
+  // DjiNN service or local?
+  app.gpu = vm["gpu"].as<bool>();
+  app.djinn = vm["djinn"].as<bool>();
 
-    gettimeofday(&tv1,NULL);
+  if(app.djinn) {
+    app.hostname = vm["hostname"].as<string>();
+    app.portno = vm["portno"].as<string>();
+    app.socketfd = CLIENT_init(app.hostname.c_str(), app.portno.c_str(), debug);
+    if(app.socketfd < 0)
+      exit(0);
+  }
+  else {
+      app.net = new Net<float>(app.network);
+      app.net->CopyTrainedLayersFrom(app.model);
+  }
 
-    gettimeofday(&tv2,NULL);
-    apptime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
-    
-    string task = vm["task"].as<string>();
-    // send req_type
-    int req_type;
-    // read in image
-    int IMG_SIZE = 0;                          // c * w * h
-    if(task == "imc") { req_type = 0; IMG_SIZE = 3 * 227 * 227; } //hardcoded for AlexNet;
-    else if(task == "face") { req_type = 1; IMG_SIZE = 3 * 152 * 152; } //hardcoded for DeepFace;
-    else if(task == "dig") { req_type = 2; NUM_IMGS = 100; IMG_SIZE = 1 * 28 * 28; } //hardcoded for Mnist;
-    else { printf("unrecognized task.\n"); exit(1); }
+  // send req_type
+  // FIXME: req type
+  int req_type;
+  // read in image
+  app.img_size = 0;                          // c * w * h
+  //hardcoded for AlexNet
+  if(app.task == "imc") { req_type = 0; app.img_size = 3 * 227 * 227; } 
+  //hardcoded for DeepFace
+  else if(app.task == "face") { req_type = 1; app.img_size = 3 * 152 * 152; }
+  //hardcoded for Mnist
+  else if(app.task == "dig") { req_type = 2; app.img_size = 1 * 28 * 28; }
+  else { printf("unrecognized task.\n"); exit(1); }
 
-    float *arr = (float*) malloc(NUM_IMGS * IMG_SIZE * sizeof(float));
-    std::ifstream img(vm["input"].as<string>().c_str(), std::ios::binary);
-    for(int i = 0; i < NUM_IMGS * IMG_SIZE; ++i)
-        img.read((char*)&(arr[i]), sizeof(float));
+  map<string, Mat> imgs;
+  std::ifstream file (app.input.c_str());
+  std::string img_file;
+  int skips = 0;
+  for(int i = 0; i < app.num_imgs; ++i) {
+    file >> img_file;
+    LOG(INFO) << "Reading " << img_file;
+    Mat img;
+    if(app.task == "dig")
+      img = imread(img_file, CV_LOAD_IMAGE_GRAYSCALE);
+    else
+      img = imread(img_file);
 
-    // preprocess face outside of NN for facial recognition before forward pass which loads image(s)
-    // $cmt: still tries to do facial recognition if no faces or landmarks found.
-    if(task == "face")
-        if(preprocess(vm, arr) == false)
-            exit(0);
+    if(img.channels()*img.rows*img.cols != app.img_size) {
+      LOG(ERROR) << "Skipping " << img_file << ", resize to correct dimensions.\n";
+      ++skips;
+    }
+    else
+      imgs[img_file] = img;
+  }
+  // remove skipped images
+  app.num_imgs -= skips;
 
-    gettimeofday(&tv1,NULL);
-    SOCKET_send(socketfd, (char*)&req_type, sizeof(int), vm["debug"].as<bool>());
+  map<string, Mat>::iterator it;
+  // align facial recognition image
+  // if(app.task == "face") {
+  //   for(it = imgs.begin(); it != imgs.end(); ++it) {
+  //     LOG(INFO) << "Aligning: " << it->first << endl;
+  //     preprocess(it->second, vm["flandmark"].as<string>(), vm["haar"].as<string>());
+  //     imwrite(it->first, it->second);
+  //   }
+  // }
+
+  // prepare data into array
+  float *arr = (float*) malloc(app.num_imgs * app.img_size * sizeof(float));
+  float *preds = (float*) malloc(app.num_imgs  * sizeof(float));
+
+  int img_count = 0;
+  for(it = imgs.begin(); it != imgs.end(); ++it) {
+    int pix_count = 0;
+    for(int c = 0; c < it->second.channels(); ++c) {
+      for(int i = 0; i < it->second.rows; ++i) {
+        for(int j = 0; j < it->second.cols; ++j) {
+          Vec3b num = it->second.at<Vec3b>(i,j);
+          arr[img_count*app.img_size + pix_count] = num[c];
+          ++pix_count;
+        }
+      }
+    }
+    ++img_count;
+  }
+
+  if(app.djinn) {
+    SOCKET_send(app.socketfd, (char*)&req_type, sizeof(int), debug);
 
     // send len
-    SOCKET_txsize(socketfd, NUM_IMGS * IMG_SIZE);
+    SOCKET_txsize(app.socketfd, app.num_imgs * app.img_size);
 
-    // send image
-    SOCKET_send(socketfd, (char*)arr, NUM_IMGS * IMG_SIZE * sizeof(float), vm["debug"].as<bool>());
+    // send image(s)
+    SOCKET_send(app.socketfd, (char*)arr, app.num_imgs * app.img_size * sizeof(float), debug);
 
-    // receive data
-    float *preds = (float *) malloc(NUM_IMGS  * sizeof(float));
-    SOCKET_receive(socketfd, (char*)preds, NUM_IMGS * sizeof(float), vm["debug"].as<bool>());
+    SOCKET_receive(app.socketfd, (char*)preds, app.num_imgs * sizeof(float), debug);
+    SOCKET_close(app.socketfd, debug);
+  }
+  else {
+    reshape(app.net, app.num_imgs * app.img_size);
+    float loss;
+    vector<Blob<float>* > in_blobs = app.net->input_blobs();
 
-    gettimeofday(&tv2,NULL);
-    txtime += (tv2.tv_sec-tv1.tv_sec)*1000000 + (tv2.tv_usec-tv1.tv_usec);
+    in_blobs[0]->set_cpu_data(arr);
+    vector<Blob<float>* > out_blobs = app.net->ForwardPrefilled(&loss);
+    memcpy(preds, out_blobs[0]->cpu_data(), app.num_imgs*sizeof(float));
+  }
 
-    // check correct
-    for(int j = 0; j < NUM_IMGS; ++j)
-        cout << "Image: " << j << " class: " << preds[j] << endl;;
+  for(it = imgs.begin(); it != imgs.end(); it++) {
+    LOG(INFO) << "Image: " << it->first << " class: " << preds[distance(imgs.begin(), it)] << endl;;
+  }
 
-    SOCKET_close(socketfd, false);
+  free(preds);
+  free(arr);
+  free(app.net);
 
-    free(preds);
-    free(arr);
-#ifdef TIMING
-    cout << "TIMING:" << endl;
-    cout << "task " << task
-         << " size_kb " << (float)(IMG_SIZE*sizeof(float))/1024
-         << " total_t " << (float)(apptime+txtime)/1000
-         << " app_t " << (float)(apptime/1000)
-         << " tx_t " << (float)(txtime/1000) << endl;
-#endif
-    
-	return 0;
+  return 0;
 }

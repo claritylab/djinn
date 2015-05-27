@@ -3,9 +3,8 @@
 
 #include <string>
 #include "boost/program_options.hpp"
+#include "opencv2/opencv.hpp"
 
-namespace po = boost::program_options;
-
-bool preprocess(po::variables_map& vm, float *data);
+void preprocess(cv::Mat &image, std::string flandmark, std::string haar);
 
 #endif

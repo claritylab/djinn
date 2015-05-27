@@ -21,6 +21,7 @@
 #include <sstream>
 #include <fstream>
 #include <stdio.h>
+#include <glog/logging.h>
 
 #include "opencv2/opencv.hpp"
 #include "flandmark_detector.h"
@@ -29,24 +30,6 @@
 
 using namespace cv;
 using namespace std;
-
-//------------------------------------------------------------------------------
-// Record the execution time of some code, in milliseconds. By Shervin Emami, May 4th 2011.
-// eg:
-//	DECLARE_TIMING(myTimer);
-//	START_TIMING(myTimer);
-//	  printf("A slow calc = %f\n", 1.0/sqrt(2.0) );
-//	STOP_TIMING(myTimer);
-//	SHOW_TIMING(myTimer, "My Timer");
-//------------------------------------------------------------------------------
-#define DECLARE_TIMING(s)	int64 timeStart_##s; int64 timeDiff_##s; int64 timeTally_##s = 0; int64 countTally_##s = 0
-#define START_TIMING(s)		timeStart_##s = cvGetTickCount()
-#define STOP_TIMING(s)		timeDiff_##s = (cvGetTickCount() - timeStart_##s); timeTally_##s += timeDiff_##s; countTally_##s++
-#define GET_TIMING(s)		(double)(0.001 * ( (double)timeDiff_##s / (double)cvGetTickFrequency() ))
-#define GET_AVERAGE_TIMING(s)	(double)(countTally_##s ? 0.001 * ( (double)timeTally_##s / ((double)countTally_##s * cvGetTickFrequency()) ) : 0)
-#define GET_TIMING_COUNT(s)	(int)(countTally_##s)
-#define CLEAR_AVERAGE_TIMING(s)	timeTally_##s = 0; countTally_##s = 0
-#define SHOW_TIMING(s, msg)	printf("%s time: \t %dms \t (%dms average across %d runs).\n", msg, cvRound(GET_TIMING(s)), cvRound(GET_AVERAGE_TIMING(s)), GET_TIMING_COUNT(s) )
 
 /** enum with all landmarks (0-7)--> flandmarks and 8,9 added */
 enum landmark_pos {
@@ -206,42 +189,40 @@ vector<cv::Point2d> detectLandmarks(FLANDMARK_Model* model, const Mat & image, c
 }
 
 /** preprocesses the image by calling correct functions*/
-bool preprocess(po::variables_map& vm, float* data) {
-    assert(vm.count("flandmark"));
-    assert(vm.count("haar"));
+void preprocess(Mat &image, string flandmark, string haar) {
 
-    // Get arguments
-    Mat image = Mat(Size(152,152), CV_8UC3, (void*)data);
+  // Get cascade for face detection
+  CascadeClassifier face_cascade;
+  face_cascade.load(haar);
 
-    // Get cascade for face detection
-    CascadeClassifier face_cascade;
-    face_cascade.load(vm["haar"].as<string>());
+  Mat image_g;
+  cvtColor(image, image_g, CV_BGR2GRAY);
 
-    // Initialize flandmarks with the model
-    string flandmarks_model_name = vm["flandmark"].as<string>();
-    FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
 
-    // Find face in image:
-    Rect r = detect_face(image, face_cascade);
+  // Initialize flandmarks with the model
+  string flandmarks_model_name = flandmark;
+  FLANDMARK_Model* model = flandmark_init(flandmarks_model_name.c_str());
 
-    if(r == Rect()) {
-      cout << "no faces found in image" << endl;
-      return true;
-    }
+  // Find face in image:
+  Rect r = detect_face(image_g, face_cascade);
 
-    // Detect landmarks
-    vector<cv::Point2d> landmarks = detectLandmarks(model, image, Rect(r.x,r.y,r.width,r.height));
+  if(r == Rect()) {
+    LOG(INFO) << "no faces found in image" << endl;
+  }
 
-    if(landmarks.size() == 0) {
-      cout << "no landmarks found in image " << endl;
-      return true;
-    }
+  // Detect landmarks
+  vector<cv::Point2d> landmarks = detectLandmarks(model, image_g, Rect(r.x,r.y,r.width,r.height));
 
-    Mat aligned_image;
-    vector<cv::Point2d> aligned_landmarks;
+  if(landmarks.size() == 0) {
+    LOG(INFO) << "no landmarks found in image " << endl;
+    return;
+  }
 
-    //align the face
-    align(image, aligned_image, landmarks, aligned_landmarks);
+  Mat image_a = image.clone();
+  vector<cv::Point2d> aligned_landmarks;
 
-    return true;
+  //align the face
+  align(image, image_a, landmarks, aligned_landmarks);
+  image = image_a.clone();
+  // imwrite("aligned.jpg", image);
 }
