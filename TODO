@@ -1,7 +1,0 @@
-implement face
-find clean default config to make all clients<->services
-retrain asr model in kaldi with full dataset
-do feature transformation on full test set and push the input
-remove all hardpaths in scripts and ignore volatile scripts
-Implement live models
-Check accuracy for NLP
