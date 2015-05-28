@@ -31,10 +31,11 @@ po::variables_map parse_opts( int ac, char** av )
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help,h", "Produce help message")
+    ("common,c", po::value<string>()->default_value("../../common/"), "Directory with configs and weights")
     ("task,t", po::value<string>()->default_value("imc"), "Image task: imc (ImageNet), face (DeepFace), dig (LeNet)")
-    ("network,n", po::value<string>()->default_value("model/imc.prototxt"), "Network config file (.prototxt)")
-    ("model,m", po::value<string>()->default_value("model/imc.caffemodel"), "Pretrained weights (.caffemodel)")
-    ("input,i", po::value<string>()->default_value("input/imc-list.txt"), "List of ingput images (1 jpg/line)")
+    ("network,n", po::value<string>()->default_value("imc.prototxt"), "Network config file (.prototxt)")
+    ("weights,w", po::value<string>()->default_value("imc.caffemodel"), "Pretrained weights (.caffemodel)")
+    ("input,i", po::value<string>()->default_value("imc-list.txt"), "List of input images (1 jpg/line)")
     ("num,u", po::value<int>()->default_value(1), "num images to read from input list file")
 
     ("djinn,d", po::value<bool>()->default_value(false), "Use DjiNN service?")
@@ -69,10 +70,10 @@ int main( int argc, char** argv )
 
   TonicSuiteApp app;
   app.task = vm["task"].as<string>();
-  app.network = vm["network"].as<string>();
-  app.model = vm["model"].as<string>();
+  app.network = vm["common"].as<string>() + "configs/" + vm["network"].as<string>();
+  app.weights = vm["common"].as<string>() + "weights/" + vm["weights"].as<string>();
   app.input = vm["input"].as<string>();
-  app.num_imgs = vm["num"].as<int>();
+  app.pl.num_imgs = vm["num"].as<int>();
 
   // DjiNN service or local?
   app.djinn = vm["djinn"].as<bool>();
@@ -80,34 +81,49 @@ int main( int argc, char** argv )
 
   if(app.djinn) {
     app.hostname = vm["hostname"].as<string>();
-    app.portno = vm["portno"].as<string>();
-    app.socketfd = CLIENT_init(app.hostname.c_str(), app.portno.c_str(), debug);
+    app.portno = vm["portno"].as<int>();
+    app.socketfd = CLIENT_init(app.hostname.c_str(), app.portno, debug);
     if(app.socketfd < 0)
       exit(0);
   }
   else {
       app.net = new Net<float>(app.network);
-      app.net->CopyTrainedLayersFrom(app.model);
+      app.net->CopyTrainedLayersFrom(app.weights);
   }
 
   // send req_type
-  // FIXME: req type
-  int req_type;
-  // read in image
-  app.img_size = 0;                          // c * w * h
+  app.pl.img_size = 0;
   //hardcoded for AlexNet
-  if(app.task == "imc") { req_type = 0; app.img_size = 3 * 227 * 227; } 
+  if(app.task == "imc") {
+    strcpy(app.pl.req_name, "imc");
+    app.pl.img_size = 3 * 227 * 227;
+  } 
   //hardcoded for DeepFace
-  else if(app.task == "face") { req_type = 1; app.img_size = 3 * 152 * 152; }
+  else if(app.task == "face") {
+    strcpy(app.pl.req_name, "face");
+    app.pl.img_size = 3 * 152 * 152;
+  }
   //hardcoded for Mnist
-  else if(app.task == "dig") { req_type = 2; app.img_size = 1 * 28 * 28; }
-  else { printf("unrecognized task.\n"); exit(1); }
+  else if(app.task == "dig") {
+    strcpy(app.pl.req_name, "dig");
+    app.pl.img_size = 1 * 28 * 28;
+  }
+  else {
+    LOG(FATAL) << "Unrecognized task.\n";
+    exit(1);
+  }
 
+  app.pl.req_len = strlen(app.pl.req_name);
+
+  // read in images
+  // cmt: using map, cant use duplicate names for images
+  // change to other structure (vector) if you want to send the same exact
+  // filename multiple times
   map<string, Mat> imgs;
   std::ifstream file (app.input.c_str());
   std::string img_file;
   int skips = 0;
-  for(int i = 0; i < app.num_imgs; ++i) {
+  for(int i = 0; i < app.pl.num_imgs; ++i) {
     file >> img_file;
     LOG(INFO) << "Reading " << img_file;
     Mat img;
@@ -116,7 +132,7 @@ int main( int argc, char** argv )
     else
       img = imread(img_file);
 
-    if(img.channels()*img.rows*img.cols != app.img_size) {
+    if(img.channels()*img.rows*img.cols != app.pl.img_size) {
       LOG(ERROR) << "Skipping " << img_file << ", resize to correct dimensions.\n";
       ++skips;
     }
@@ -124,7 +140,7 @@ int main( int argc, char** argv )
       imgs[img_file] = img;
   }
   // remove skipped images
-  app.num_imgs -= skips;
+  app.pl.num_imgs -= skips;
 
   map<string, Mat>::iterator it;
   // align facial recognition image
@@ -137,8 +153,8 @@ int main( int argc, char** argv )
   }
 
   // prepare data into array
-  float *arr = (float*) malloc(app.num_imgs * app.img_size * sizeof(float));
-  float *preds = (float*) malloc(app.num_imgs  * sizeof(float));
+  app.pl.data = (float*) malloc(app.pl.num_imgs * app.pl.img_size * sizeof(float));
+  float *preds = (float*) malloc(app.pl.num_imgs  * sizeof(float));
 
   int img_count = 0;
   for(it = imgs.begin(); it != imgs.end(); ++it) {
@@ -147,7 +163,7 @@ int main( int argc, char** argv )
       for(int i = 0; i < it->second.rows; ++i) {
         for(int j = 0; j < it->second.cols; ++j) {
           Vec3b pix = it->second.at<Vec3b>(i,j);
-          arr[img_count*app.img_size + pix_count] = pix[c];
+          app.pl.data[img_count*app.pl.img_size + pix_count] = pix[c];
           ++pix_count;
         }
       }
@@ -156,34 +172,35 @@ int main( int argc, char** argv )
   }
 
   if(app.djinn) {
-    SOCKET_send(app.socketfd, (char*)&req_type, sizeof(int), debug);
+    SOCKET_send(app.socketfd, (char*)&app.pl.req_name, MAX_REQ_SIZE, debug);
 
     // send len
-    SOCKET_txsize(app.socketfd, app.num_imgs * app.img_size);
+    SOCKET_txsize(app.socketfd, app.pl.num_imgs * app.pl.img_size);
 
     // send image(s)
-    SOCKET_send(app.socketfd, (char*)arr, app.num_imgs * app.img_size * sizeof(float), debug);
+    SOCKET_send(app.socketfd, (char*)app.pl.data, app.pl.num_imgs * app.pl.img_size * sizeof(float), debug);
 
-    SOCKET_receive(app.socketfd, (char*)preds, app.num_imgs * sizeof(float), debug);
+    SOCKET_receive(app.socketfd, (char*)preds, app.pl.num_imgs * sizeof(float), debug);
     SOCKET_close(app.socketfd, debug);
   }
   else {
-    reshape(app.net, app.num_imgs * app.img_size);
     float loss;
-    vector<Blob<float>* > in_blobs = app.net->input_blobs();
+    reshape(app.net, app.pl.num_imgs * app.pl.img_size);
 
-    in_blobs[0]->set_cpu_data(arr);
+    vector<Blob<float>* > in_blobs = app.net->input_blobs();
+    in_blobs[0]->set_cpu_data(app.pl.data);
     vector<Blob<float>* > out_blobs = app.net->ForwardPrefilled(&loss);
-    memcpy(preds, out_blobs[0]->cpu_data(), app.num_imgs*sizeof(float));
+    memcpy(preds, out_blobs[0]->cpu_data(), app.pl.num_imgs*sizeof(float));
   }
 
   for(it = imgs.begin(); it != imgs.end(); it++) {
     LOG(INFO) << "Image: " << it->first << " class: " << preds[distance(imgs.begin(), it)] << endl;;
   }
 
+  if(!app.djinn)
+    free(app.net);
+  free(app.pl.data);
   free(preds);
-  free(arr);
-  free(app.net);
 
   return 0;
 }

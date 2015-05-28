@@ -1,12 +1,19 @@
 CAFFE=/home/jahausw/projects/sirius-caffe/distribute
 CUDA=/usr/local/cuda
+COMMON=../../common
 CXX = g++
-CXX_FLAGS  = -O3 -fpermissive -I$(CAFFE)/include -I$(CUDA)/include -DCPU_ONLY
+CXX_FLAGS  = -g \
+						 -fpermissive \
+						 -I$(COMMON)/include \
+						 -I$(CAFFE)/include \
+						 -I$(CUDA)/include \
+						 -DCPU_ONLY
+
 LINK_FLAGS = -lopencv_core \
 						 -lopencv_highgui \
 						 -lopencv_imgproc \
 						 -lopencv_objdetect \
-						 ../libsocket.a \
+						 ../../common/libsocket.a \
 						 libflandmark.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
@@ -20,7 +27,7 @@ SRC=src
 
 # File names
 EXEC = tonic-img
-SOURCES = $(wildcard $(SRC)/*.cpp)
+SOURCES = $(wildcard $(SRC)/*.cpp) $(COMMON)/src/tonic.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Main target
@@ -33,4 +40,4 @@ $(EXEC): $(OBJECTS) Makefile
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(SRC)/*.o
+	rm -f $(EXEC) $(SRC)/*.o $(COMMON)/src/*.o

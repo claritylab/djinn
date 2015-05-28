@@ -1,29 +1,36 @@
-CAFFE=/usr/local/include/caffe/
+CAFFE=/home/jahausw/projects/sirius-caffe/distribute
 CUDA=/usr/local/cuda
+COMMON=../common
+
 CXX = g++
-CXX_FLAGS = -w -fpermissive -I$(CAFFE) -I$(CUDA)/include -O3
-LINK_FLAGS = -L/$(CUDA)/lib64 \
-			 -lcudart \
-			 -lpthread \
-			 -ldl \
-			 -lrt \
-			 -lboost_timer \
-			 -lboost_chrono \
-			 -lboost_program_options \
-			 -lboost_filesystem \
-			 -lboost_system \
-			 -lglog \
-			 ../libsocket.a
+CXX_FLAGS = -O3 \
+						-fpermissive \
+						-I$(COMMON)/include \
+						-I$(CAFFE)/include \
+						-I$(CUDA)/include \
+						-DCPU_ONLY
+
+LINK_FLAGS = -lpthread \
+						 -ldl \
+						 -lrt \
+						 -lboost_timer \
+						 -lboost_chrono \
+						 -lboost_program_options \
+						 -lboost_filesystem \
+						 -lboost_system \
+						 -lglog \
+						 $(COMMON)/libsocket.a \
+						 $(CAFFE)/lib/libcaffe.so
 
 SRC=src
 
 # File names
 EXEC = dnn-server
-SOURCES = $(wildcard $(SRC)/*.cpp)
+SOURCES = $(wildcard $(SRC)/*.cpp) $(COMMON)/src/tonic.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 $(EXEC): $(OBJECTS) Makefile
-	$(CXX) $(OBJECTS) -o dnn-server $(LINK_FLAGS) /usr/local/lib/libcaffe0.so
+	$(CXX) $(OBJECTS) -o $(EXEC) $(LINK_FLAGS)
 
 # To obtain object files
 %.o: %.cpp Makefile
@@ -31,4 +38,4 @@ $(EXEC): $(OBJECTS) Makefile
 
 # To remove generated files
 clean:
-	rm -f dnn-server $(SRC)/*.o
+	rm -f $(EXEC) $(SRC)/*.o $(COMMON)/src/*.o
