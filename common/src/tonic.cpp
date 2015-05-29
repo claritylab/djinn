@@ -1,6 +1,7 @@
 #include "tonic.h"
 
-void reshape(Net<float> *net, int input_size) {
+void reshape(Net<float> *net, int input_size)
+{
   int n_in = net->input_blobs()[0]->num();
   int c_in = net->input_blobs()[0]->channels();
   int w_in = net->input_blobs()[0]->width();
@@ -16,14 +17,13 @@ void reshape(Net<float> *net, int input_size) {
     n_in = input_size/(c_in*w_in*h_in);
     LOG(INFO) << "Reshaping input to dims: "
       << n_in << " " << c_in << " " << w_in << " " << h_in;
-    //TODO: may need to add a lock here
+    //TODO: may need to add a lock
     net->input_blobs()[0]->Reshape(n_in, c_in, w_in, h_in);
 
     n_out = n_in;
     LOG(INFO) << "Reshaping outnput to dims: "
       << n_out << " " << c_out << " " << w_out << " " << h_out;
-    //TODO: may need to add a lock here
+    //TODO: may need to add a lock
     net->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
-    int out_elts = net->output_blobs()[0]->count();
   }
 }

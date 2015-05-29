@@ -6,12 +6,6 @@
 #include <vector>
 
 #include "caffe/caffe.hpp"
-#include "SENNA_POS.h"
-#include "SENNA_CHK.h"
-#include "SENNA_NER.h"
-#include "SENNA_VBS.h"
-#include "SENNA_PT0.h"
-#include "SENNA_SRL.h"
 #include "socket.h"
 #include "utils.h"
 #include "tonic.h"

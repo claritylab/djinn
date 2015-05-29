@@ -57,7 +57,7 @@ po::variables_map parse_opts( int ac, char** av )
 
 	if (vm.count("help")) {
 		cout << desc << "\n";
-        exit(1);
+    exit(1);
 	}
 	return vm;
 }
@@ -73,7 +73,7 @@ int main( int argc, char** argv )
   app.network = vm["common"].as<string>() + "configs/" + vm["network"].as<string>();
   app.weights = vm["common"].as<string>() + "weights/" + vm["weights"].as<string>();
   app.input = vm["input"].as<string>();
-  app.pl.num_imgs = vm["num"].as<int>();
+  app.pl.num = vm["num"].as<int>();
 
   // DjiNN service or local?
   app.djinn = vm["djinn"].as<bool>();
@@ -87,33 +87,24 @@ int main( int argc, char** argv )
       exit(0);
   }
   else {
-      app.net = new Net<float>(app.network);
-      app.net->CopyTrainedLayersFrom(app.weights);
+    app.net = new Net<float>(app.network);
+    app.net->CopyTrainedLayersFrom(app.weights);
   }
 
   // send req_type
-  app.pl.img_size = 0;
+  app.pl.size = 0;
   //hardcoded for AlexNet
-  if(app.task == "imc") {
-    strcpy(app.pl.req_name, "imc");
-    app.pl.img_size = 3 * 227 * 227;
-  } 
+  strcpy(app.pl.req_name, app.task.c_str());
+  if(app.task == "imc")
+    app.pl.size = 3 * 227 * 227;
   //hardcoded for DeepFace
-  else if(app.task == "face") {
-    strcpy(app.pl.req_name, "face");
-    app.pl.img_size = 3 * 152 * 152;
-  }
+  else if(app.task == "face")
+    app.pl.size = 3 * 152 * 152;
   //hardcoded for Mnist
-  else if(app.task == "dig") {
-    strcpy(app.pl.req_name, "dig");
-    app.pl.img_size = 1 * 28 * 28;
-  }
-  else {
+  else if(app.task == "dig")
+    app.pl.size = 1 * 28 * 28;
+  else
     LOG(FATAL) << "Unrecognized task.\n";
-    exit(1);
-  }
-
-  app.pl.req_len = strlen(app.pl.req_name);
 
   // read in images
   // cmt: using map, cant use duplicate names for images
@@ -123,7 +114,7 @@ int main( int argc, char** argv )
   std::ifstream file (app.input.c_str());
   std::string img_file;
   int skips = 0;
-  for(int i = 0; i < app.pl.num_imgs; ++i) {
+  for(int i = 0; i < app.pl.num; ++i) {
     file >> img_file;
     LOG(INFO) << "Reading " << img_file;
     Mat img;
@@ -132,7 +123,7 @@ int main( int argc, char** argv )
     else
       img = imread(img_file);
 
-    if(img.channels()*img.rows*img.cols != app.pl.img_size) {
+    if(img.channels()*img.rows*img.cols != app.pl.size) {
       LOG(ERROR) << "Skipping " << img_file << ", resize to correct dimensions.\n";
       ++skips;
     }
@@ -140,7 +131,7 @@ int main( int argc, char** argv )
       imgs[img_file] = img;
   }
   // remove skipped images
-  app.pl.num_imgs -= skips;
+  app.pl.num -= skips;
 
   map<string, Mat>::iterator it;
   // align facial recognition image
@@ -153,8 +144,8 @@ int main( int argc, char** argv )
   }
 
   // prepare data into array
-  app.pl.data = (float*) malloc(app.pl.num_imgs * app.pl.img_size * sizeof(float));
-  float *preds = (float*) malloc(app.pl.num_imgs  * sizeof(float));
+  app.pl.data = (float*) malloc(app.pl.num * app.pl.size * sizeof(float));
+  float *preds = (float*) malloc(app.pl.num  * sizeof(float));
 
   int img_count = 0;
   for(it = imgs.begin(); it != imgs.end(); ++it) {
@@ -163,7 +154,8 @@ int main( int argc, char** argv )
       for(int i = 0; i < it->second.rows; ++i) {
         for(int j = 0; j < it->second.cols; ++j) {
           Vec3b pix = it->second.at<Vec3b>(i,j);
-          app.pl.data[img_count*app.pl.img_size + pix_count] = pix[c];
+          float* p = (float*)(app.pl.data);
+          p[img_count*app.pl.size + pix_count] = pix[c];
           ++pix_count;
         }
       }
@@ -175,22 +167,22 @@ int main( int argc, char** argv )
     SOCKET_send(app.socketfd, (char*)&app.pl.req_name, MAX_REQ_SIZE, debug);
 
     // send len
-    SOCKET_txsize(app.socketfd, app.pl.num_imgs * app.pl.img_size);
+    SOCKET_txsize(app.socketfd, app.pl.num * app.pl.size);
 
     // send image(s)
-    SOCKET_send(app.socketfd, (char*)app.pl.data, app.pl.num_imgs * app.pl.img_size * sizeof(float), debug);
+    SOCKET_send(app.socketfd, (char*)app.pl.data, app.pl.num * app.pl.size * sizeof(float), debug);
 
-    SOCKET_receive(app.socketfd, (char*)preds, app.pl.num_imgs * sizeof(float), debug);
+    SOCKET_receive(app.socketfd, (char*)preds, app.pl.num * sizeof(float), debug);
     SOCKET_close(app.socketfd, debug);
   }
   else {
     float loss;
-    reshape(app.net, app.pl.num_imgs * app.pl.img_size);
+    reshape(app.net, app.pl.num * app.pl.size);
 
     vector<Blob<float>* > in_blobs = app.net->input_blobs();
-    in_blobs[0]->set_cpu_data(app.pl.data);
+    in_blobs[0]->set_cpu_data((float*)app.pl.data);
     vector<Blob<float>* > out_blobs = app.net->ForwardPrefilled(&loss);
-    memcpy(preds, out_blobs[0]->cpu_data(), app.pl.num_imgs*sizeof(float));
+    memcpy(preds, out_blobs[0]->cpu_data(), app.pl.num*sizeof(float));
   }
 
   for(it = imgs.begin(); it != imgs.end(); it++) {

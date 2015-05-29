@@ -2,7 +2,7 @@ CAFFE=/home/jahausw/projects/sirius-caffe/distribute
 CUDA=/usr/local/cuda
 COMMON=../../common
 CXX = g++
-CXX_FLAGS  = -g \
+CXX_FLAGS  = -O3 \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \

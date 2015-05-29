@@ -1,26 +1,28 @@
 #ifndef TONIC_H
 #define TONIC_H
 
+#include <vector>
 #include "caffe/caffe.hpp"
 
 using caffe::Blob;
 using caffe::Caffe;
 using caffe::Net;
 
+using namespace std;
+
 // largest len: FACE + \0
 #define MAX_REQ_SIZE 5
 
 struct TonicPayload {
+  // Payload to DNN
   // req name
   char req_name[MAX_REQ_SIZE];
-  // size of req array
-  int req_len;
-  // size of image
-  int img_size;
-  // number of images to send (1 or batched)
-  int num_imgs;
+  // total size of contents
+  int size;
+  // number to send (1 or batched)
+  int num;
   // data
-  float *data;
+  void *data;
 };
 
 struct TonicSuiteApp {
