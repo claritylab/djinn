@@ -24,7 +24,6 @@ using namespace std;
 namespace po = boost::program_options;
 
 map<string, Net<float>* > nets;
-int NUM_QS;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -35,7 +34,7 @@ po::variables_map parse_opts( int ac, char** av )
     ("common,c", po::value<string>()->default_value("../common/"), "Directory with configs and weights")
     ("portno,p", po::value<int>()->default_value(8080), "Port to open DjiNN on")
 
-    ("nets,n", po::value<string>()->default_value("nets.txt"), "File with list of network configs (1 .prototxt/line)")
+    ("nets,n", po::value<string>()->default_value("nets.txt"), "File with list of network configs (.prototxt/line)")
     ("weights,w", po::value<string>()->default_value("weights/"), "Directory containing weights (in common)")
 
     ("gpu,g", po::value<bool>()->default_value(false), "Use GPU?")
