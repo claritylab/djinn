@@ -36,6 +36,8 @@ def main( args ):
     FINAL=NETCONF+'-'+PLAT+'-gflops.csv'
     
     shcom('rm -rf %s-%s*' % (NETCONF, PLAT))
+    shcom('rm -rf %s-sweep.csv' % (NETCONF))
+    shcom('rm -rf %s-fpops.csv' % (NETCONF))
     f = open(OUTNAME1, "wb")
     w = csv.writer(f)
     w.writerow(['layer','batch','channel','height','width','fpops'])

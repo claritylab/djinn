@@ -23,10 +23,10 @@ def func_lin (x, a, b):
      return a*x + b
 
 def main(args):
-    #PARAMETERS
+    #PARAMETER
     #----------------------
     #input file name
-    input_file = args[1]
+    input_file = args[1] 
     
     #number of steps in fitted line
     steps=1000.0
@@ -47,13 +47,10 @@ def main(args):
     x_data = in_dim
     y_data = gflops
     
-    print x_data
-    print y_data
-    
     #perform curve fit
     popt, pcov = curve_fit(func_lin,x_data, y_data)
     slope, intercept, r_value, p_value, std_err = stats.linregress(x_data,y_data)
-    
+
     #find residuals (distance from each fitted point to actual point)
     residuals = []
     for x in range (0, len(x_data)):
@@ -63,11 +60,11 @@ def main(args):
          if residuals[-1] < 0:
               residuals[-1] = 0
     
+    
     #calculate standard error (average distance from fitted point to actual point)
     s_err = np.mean([abs(x) for x in residuals])
     
-    csv_line = 'relu,linear,a*x+b,2,' + str(popt[0]) + ',' + str(popt[1]) + ',' + str(s_err)+','+str(r_value**2)
-    
+    csv_line = 'htanh,linear,a*x+b,2,' + str(popt[0]) + ',' + str(popt[1]) + ',' + str(s_err)+','+str(r_value**2)
     print csv_line
 
 if __name__=='__main__':

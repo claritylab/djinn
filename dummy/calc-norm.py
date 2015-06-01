@@ -36,6 +36,8 @@ def main( args ):
     FINAL=NETCONF+'-'+PLAT+'-gflops.csv'
     
     shcom('rm -rf %s-%s*' % (NETCONF, PLAT))
+    shcom('rm -rf %s-sweep.csv' % (NETCONF))
+    shcom('rm -rf %s-fpops.csv' % (NETCONF))
     f = open(OUTNAME1, "wb")
     w = csv.writer(f)
     w.writerow(['layer','batch','channel','height','width','local_size','fpops'])
@@ -62,7 +64,7 @@ def main( args ):
     
                 w.writerow([NETCONF,batch,channel,height,height,local,fpops])
                 if PLAT is 'cpu':
-                    cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+                    cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
                 else:
                     cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
                 shcom(cmd)

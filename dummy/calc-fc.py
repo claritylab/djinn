@@ -4,15 +4,22 @@ import math
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [48, 55]
-featmaps['alt']   = [50, 8]
-featmaps['small'] = [1, 32]
-featmaps['med']   = [2, 64]
-featmaps['large'] = [128, 16]
+featmaps['input'] = [64, 1]
+featmaps['med']   = [256, 1]
+featmaps['med']   = [384, 1]
+featmaps['large'] = [446, 1]
+featmaps['large2'] = [512, 1]
+featmaps['input1'] = [576, 1]
+featmaps['input2'] = [640, 1]
+featmaps['input3'] = [768, 1]
+featmaps['small2'] = [1000, 1]
+featmaps['small3'] = [2000, 1]
+featmaps['small4'] = [3000, 1]
+featmaps['small5'] = [4000, 1]
 
-batches  = [1, 16, 64, 256]
-batches  = [1]
-num_outs = [64, 128, 256, 1024]
+# featmaps = [64, 128, 196, 256, 320, 384, 512, 768, 1024, 1536, 2048, 2560, 3072, 3200, 4096]
+batches  = [1, 64, 256, 320, 384, 446, 512, 576]
+num_outs = [64, 128, 196, 256, 320, 384, 512, 768, 1024, 1536, 2048, 2560, 3072, 3200, 4096]
 
 ## CONF
 
@@ -34,6 +41,8 @@ def main( args ):
     FINAL=NETCONF+'-'+PLAT+'-gflops.csv'
     
     shcom('rm -rf %s-%s*' % (NETCONF, PLAT))
+    shcom('rm -rf %s-sweep.csv' % (NETCONF))
+    shcom('rm -rf %s-fpops.csv' % (NETCONF))
     f = open(OUTNAME1, "wb")
     w = csv.writer(f)
     w.writerow(['layer','batch','channel','height','width','num_output','fpops'])
@@ -60,7 +69,7 @@ def main( args ):
     
                 w.writerow([NETCONF,batch,channel,height,height,num_out,fpops])
                 if PLAT is 'cpu':
-                    cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+                    cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
                 else:
                     cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
                 shcom(cmd)

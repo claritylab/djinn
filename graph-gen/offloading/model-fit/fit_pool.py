@@ -6,6 +6,7 @@ import csv
 import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
+from scipy import stats
 
 
 #fitting functions
@@ -94,7 +95,9 @@ def main(args):
     for i in np.arange(5):
         csv_line += str(popt[i]) + ','
     
-    csv_line += str(s_err)
+    csv_line += str(s_err) + ','
+    r_sq = 'NA'
+    csv_line += str(r_sq)
     
     print csv_line
 

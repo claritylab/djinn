@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 import sys
 import numpy as np
+import scipy
 import math
 import csv
 import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
+from scipy import stats
 
 
 #fitting functions
@@ -74,6 +76,12 @@ def main(args):
     
     #perform curve fit
     popt, pcov = curve_fit(func_log, x_data, y_data)
+
+    s_res = np.dot((y_data - func_log(x_data, *popt)),(y_data - func_log(x_data, *popt)))
+    ymean = np.mean(y_data)
+    ss_tot = np.dot((y_data-ymean),(y_data-ymean))
+    print "Mean R :",  1-s_res/ss_tot
+    print "Mean R2 :",  (1-s_res/ss_tot)**2
     
     #find residuals (distance from each fitted point to actual point)
     residuals = []
@@ -89,9 +97,15 @@ def main(args):
     csv_line = 'conv,log,a*log(b*x0)+c*log(d*x1)+e,5,'
     for i in np.arange(5):
         csv_line += str(popt[i])+','
-    csv_line += str(s_err)
+    csv_line += str(s_err) + ','
+    r_sq = 'NA'
+    csv_line += str(r_sq)
     
     print csv_line
+    
+##########################
+    return
+##########################
     
     #initialize variables
     fit_x = []
@@ -138,7 +152,7 @@ def main(args):
     plt.ylabel('GFLOPS')
     plt.xlabel('Number of inputs')
     plt.plot(fit_x1,fit_y)
-    plt.show()
+    # plt.show()
 
 if __name__=='__main__':
     sys.exit(main(sys.argv))
