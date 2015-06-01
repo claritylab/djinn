@@ -6,7 +6,7 @@ for plat in cpu gpu;do
         echo "layer,function,equation,parameters,p0,p1,p2,p3,p4,stderr,r_sq" > $model_csv
 
         # for model in conv fc sig htanh relu pool norm local softmax argmax;do
-        for model in conv sig htanh relu pool norm local softmax argmax;do
+        for model in conv fc sig htanh relu pool norm local softmax argmax;do
             echo ./fit_${model}.py ./${c}/${model}-${plat}-gflops.csv
             ./fit_${model}.py ./${c}/${model}-${plat}-gflops.csv >> $model_csv
         done

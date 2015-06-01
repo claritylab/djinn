@@ -26,7 +26,6 @@ def main(args):
     #PARAMETER
     #----------------------
     #input file name
-    input_file = args[1] 
     
     #number of steps in fitted line
     steps=1000.0
@@ -38,12 +37,12 @@ def main(args):
     gflops = []
     
     #open and read input file
-    with open(input_file, 'rb') as f:
-         data = csv.DictReader(f)
-         for row in data:
-               gflops.append(float(row['gflops']))
-               in_dim.append(float(row['channel']) * float(row['width']) * float(row['height']))
-    
+ #   with open(input_file, 'rb') as f:
+ #        data = csv.DictReader(f)
+ #        for row in data:
+ #              gflops.append(float(row['gflops']))
+ #              in_dim.append(float(row['channel']) * float(row['width']) * float(row['height']))
+ #   
     x_data = in_dim
     y_data = gflops
     
@@ -51,6 +50,7 @@ def main(args):
     popt, pcov = curve_fit(func_lin,x_data, y_data)
     slope, intercept, r_value, p_value, std_err = stats.linregress(x_data,y_data)
 
+    
     #find residuals (distance from each fitted point to actual point)
     residuals = []
     for x in range (0, len(x_data)):
@@ -64,7 +64,7 @@ def main(args):
     #calculate standard error (average distance from fitted point to actual point)
     s_err = np.mean([abs(x) for x in residuals])
     
-    csv_line = 'htanh,linear,a*x+b,2,' + str(slope) + ',' + str(intercept) + ',' + str(std_err)+','+str(r_value**2)
+    csv_line = 'sig,linear,a*x+b,2,' + str(slope) + ',' + str(intercept) + ',' + str(std_err)+','+str(r_value**2)
     print csv_line
 
 if __name__=='__main__':

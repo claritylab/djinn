@@ -50,6 +50,7 @@ def main(args):
     #perform curve fit
     popt, pcov = curve_fit(func_lin,x_data, y_data)
     slope, intercept, r_value, p_value, std_err = stats.linregress(x_data,y_data)
+
     
     #find residuals (distance from each fitted point to actual point)
     residuals = []
@@ -64,7 +65,7 @@ def main(args):
     #calculate standard error (average distance from fitted point to actual point)
     s_err = np.mean([abs(x) for x in residuals])
     
-    csv_line = 'sig,linear,a*x+b,2,' + str(popt[0]) + ',' + str(popt[1]) + ',' + str(s_err)+','+str(r_value**2)
+    csv_line = 'sig,linear,a*x+b,2,' + str(slope) + ',' + str(intercept) + ',' + str(std_err)+','+str(r_value**2)
     print csv_line
 
 if __name__=='__main__':
