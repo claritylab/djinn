@@ -21,7 +21,7 @@ void reshape(Net<float> *net, int input_size)
     net->input_blobs()[0]->Reshape(n_in, c_in, w_in, h_in);
 
     n_out = n_in;
-    LOG(INFO) << "Reshaping outnput to dims: "
+    LOG(INFO) << "Reshaping output to dims: "
       << n_out << " " << c_out << " " << w_out << " " << h_out;
     //TODO: may need to add a lock
     net->output_blobs()[0]->Reshape(n_out, c_out, w_out, h_out);
