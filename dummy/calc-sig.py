@@ -4,17 +4,27 @@ import math
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [128, 1]
-featmaps['small'] = [512, 1]
-featmaps['med']   = [256,  1]
-featmaps['large'] = [1024, 1]
-featmaps['alt']   = [2048, 1]
-featmaps['alt1']  = [4096, 1]
-featmaps['alt2']  = [64, 1]
-featmaps['alt3']  = [32, 1]
+#featmaps['input'] = [128, 1]
+#featmaps['small'] = [512, 1]
+#featmaps['med']   = [256,  1]
+#featmaps['large'] = [1024, 1]
+#featmaps['alt']   = [2048, 1]
+#featmaps['alt1']  = [4096, 1]
+#featmaps['alt2']  = [384, 1]
+#featmaps['alt4']  = [640, 1]
+#featmaps['alt5']  = [768, 1]
+#featmaps['alt6']  = [896, 1]
+#featmaps['alt7']  = [1280, 1]
+#featmaps['alt8']  = [1536, 1]
+#featmaps['alt9']  = [1792, 1]
+featmaps['alt10']  = [2048, 1]
+#featmaps['alt11']  = [2560, 1]
+#featmaps['alt12']  = [3072, 1]
+#featmaps['alt13']  = [3584, 1]
+#featmaps['alt12']  = [4096, 1]
 
-batches    = [1, 16, 64, 256]
-batches    = [1]
+#batches    = [1, 16, 64, 256]
+batches    = [512]
 
 def shcmd(cmd):
     subprocess.call(cmd, shell=True)
@@ -54,7 +64,7 @@ def main( args ):
         
             w.writerow([NETCONF,batch,channel,height,height,fpops])
             if PLAT is 'cpu':
-                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
             else:
                 cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
             shcom(cmd)

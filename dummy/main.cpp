@@ -44,6 +44,7 @@ po::variables_map parse_opts( int ac, char** av )
         // Options for local setup
         ("network,n", po::value<string>()->default_value("dummy.prototxt"), "DNN network to use in this experiment")
         ("input,i", po::value<string>()->default_value("undefined"), "Input to the DNN")
+        ("trial,r", po::value<int>()->default_value("1"), "number of trials")
         ("threads,t", po::value<int>()->default_value(1), "CPU threads used (default: 0)")
         ("layer_csv,l", po::value<string>()->default_value("NO_LAYER"), "CSV file to put layer latencies in.")
         ;
@@ -78,7 +79,8 @@ int main(int argc , char *argv[])
     float loss;
     net->ForwardPrefilled(&loss);
     
-    net->ForwardPrefilled(&loss, vm["layer_csv"].as<string>());
+    for(int i = 0; i < vm["trial"].as<int>(); i++)
+      net->ForwardPrefilled(&loss, vm["layer_csv"].as<string>());
   
     return 0;
 }

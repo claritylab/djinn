@@ -4,15 +4,16 @@ import math
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [3,  227]
-featmaps['small'] = [96, 55]
-featmaps['med']   = [48, 28]
-featmaps['large'] = [128, 56]
-featmaps['alt']   = [16, 96]
-featmaps['alt1']  = [64, 64]
-featmaps['alt2']  = [512, 14]
+#featmaps['input'] = [3,  227]
+#featmaps['small'] = [96, 55]
+#featmaps['med']   = [48, 28]
+#featmaps['large'] = [128, 56]
+#featmaps['alt']   = [16, 96]
+#featmaps['alt1']  = [64, 64]
+#featmaps['alt2']  = [512, 14]
+featmaps['very_large'] = [512, 56]
 
-batches  = [1, 16, 64, 256]
+#batches  = [1, 16, 64, 256]
 batches  = [1]
 
 ## CONF
@@ -55,7 +56,7 @@ def main( args ):
         
             w.writerow([NETCONF,batch,channel,height,height,fpops])
             if PLAT is 'cpu':
-                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 1 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
+                cmd = 'OPENBLAS_NUM_THREADS=%s ./dummy --gpu 0 --network %s --layer_csv %s' % (THREADS, NET, OUTNAME)
             else:
                 cmd = './dummy --gpu 1 --network %s --layer_csv %s' % (NET, OUTNAME)
             shcom(cmd)
