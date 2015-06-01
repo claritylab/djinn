@@ -43,3 +43,7 @@ asr/kaldi_patch.sh
 */data/*
 */log/*
 */voxforge_data/*
+
+# csvs and txts
+*.csv
+*.txt
