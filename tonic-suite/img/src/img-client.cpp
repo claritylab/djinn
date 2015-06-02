@@ -132,6 +132,8 @@ int main( int argc, char** argv )
   }
   // remove skipped images
   app.pl.num -= skips;
+  if(app.pl.num < 1)
+    LOG(FATAL) << "No images read!";
 
   map<string, Mat>::iterator it;
   // align facial recognition image
@@ -139,7 +141,8 @@ int main( int argc, char** argv )
     for(it = imgs.begin(); it != imgs.end(); ++it) {
       LOG(INFO) << "Aligning: " << it->first << endl;
       preprocess(it->second, vm["flandmark"].as<string>(), vm["haar"].as<string>());
-      imwrite(it->first, it->second);
+      // comment in save + view aligned image
+      // imwrite(it->first+"_a", it->second);
     }
   }
 

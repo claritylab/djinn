@@ -1,0 +1,2 @@
+input/face/cameron-diaz-11.jpg
+input/face/angelina-jolie-03.jpg
