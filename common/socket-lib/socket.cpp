@@ -32,11 +32,8 @@ int SOCKET_send(int socket, char* data, int size, bool debug)
         if(sent <= 0)
             break;
         total += sent;
-        if(debug) printf("Sent %d bytes of %d toal via socket %d\n", total, size, socket);
-    }
-    if(total != size){
-        printf("Sent size not equal to expected.\n");
-        printf("Sent: %d, Expected: %d\n", total, size);
+        if(debug)
+          printf("Sent %d bytes of %d toal via socket %d\n", total, size, socket);
     }
     return total;
 }
@@ -57,11 +54,8 @@ int SOCKET_receive(int socket, char* data, int size, bool debug)
         if(got <= 0)
             break;
         rcvd += got;
-        if(debug && rcvd != 0) printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);
-    }
-    if(debug && rcvd != size){
-        printf("Received size not equal to expected.\n");
-        printf("Received: %d, Expected: %d\n", rcvd, size);
+        if(debug)
+          printf("Received %d bytes of %d total via socket %d\n", rcvd, size, socket);
     }
     return rcvd;
 }
@@ -124,6 +118,7 @@ int SERVER_init(int portno)
 
 int SOCKET_close(int socket, bool debug)
 {
-    if(debug) printf("Closing socket %d\n", socket);
+    if(debug)
+      printf("Closing socket %d\n", socket);
     close(socket);
 }

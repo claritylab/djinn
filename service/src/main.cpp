@@ -24,6 +24,8 @@ using namespace std;
 namespace po = boost::program_options;
 
 map<string, Net<float>* > nets;
+bool debug;
+bool gpu;
 
 po::variables_map parse_opts( int ac, char** av )
 {
@@ -55,17 +57,18 @@ po::variables_map parse_opts( int ac, char** av )
 
 int main(int argc , char *argv[])
 {
-  // google::InitGoogleLogging(argv[0]);
-
   // Main thread for the server
   // Spawn a new thread for each request
   po::variables_map vm = parse_opts(argc, argv);
+  debug = vm["debug"].as<bool>();
+  gpu = vm["gpu"].as<bool>();
   Caffe::set_phase(Caffe::TEST);
   if(vm["gpu"].as<bool>())
     Caffe::set_mode(Caffe::GPU);
   else
     Caffe::set_mode(Caffe::CPU);
 
+  // load all models at init
   ifstream file (vm["nets"].as<string>().c_str());
   string net_name;
   while(file >> net_name)
@@ -82,7 +85,8 @@ int main(int argc , char *argv[])
     nets[name]->CopyTrainedLayersFrom(weights);
   }
 
-  // how many threads needed for a given application
+  // how many threads to spawn before exiting
+  // -1 to stay indefinitely open
   int total_thread_cnt = vm["threadcnt"].as<int>();
   int socketfd = SERVER_init(vm["portno"].as<int>());
 

@@ -10,8 +10,8 @@
 #include "thread.h"
 
 extern map<string, Net<float>* > nets;
-
-#define DEBUG 0
+extern bool debug;
+extern bool gpu;
 
 void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
@@ -52,7 +52,7 @@ void* request_handler(void* sock)
   // 3. Client sends data
 
   char req_name[MAX_REQ_SIZE];
-  SOCKET_receive(socknum, (char*)&req_name, MAX_REQ_SIZE, DEBUG);  
+  SOCKET_receive(socknum, (char*)&req_name, MAX_REQ_SIZE, debug);  
   map<string, Net<float>* >::iterator it = nets.find(req_name);
   if(it == nets.end()) {
     LOG(ERROR) << "Task " << req_name << " not found.";
@@ -91,11 +91,11 @@ void* request_handler(void* sock)
 
   while(1) {
     LOG(INFO) << "Reading from socket.";
-    int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), DEBUG);
+    int rcvd = SOCKET_receive(socknum, (char*) in, in_elts*sizeof(float), debug);
 
     if(rcvd == 0) break; // Client closed the socket
 
-    if(warmup) {
+    if(warmup && gpu) {
       float loss;
       vector<Blob<float>* > in_blobs = nets[req_name]->input_blobs();
       in_blobs[0]->set_cpu_data(in);
@@ -108,7 +108,7 @@ void* request_handler(void* sock)
     SERVICE_fwd(in, in_elts, out, out_elts, nets[req_name]);
 
     LOG(INFO) << "Writing to socket.";
-    SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), DEBUG);
+    SOCKET_send(socknum, (char*) out, out_elts*sizeof(float), debug);
   }
 
   // Exit the thread
