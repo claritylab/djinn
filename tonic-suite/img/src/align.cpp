@@ -224,5 +224,4 @@ void preprocess(Mat &image, string flandmark, string haar) {
   //align the face
   align(image, image_a, landmarks, aligned_landmarks);
   image = image_a.clone();
-  // imwrite("aligned.jpg", image);
 }

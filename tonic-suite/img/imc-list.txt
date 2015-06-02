@@ -1,0 +1,3 @@
+input/imc/dog-227.jpg
+input/imc/cat-227.jpg
+input/imc/tp-227.jpg
