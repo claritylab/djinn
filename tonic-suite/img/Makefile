@@ -1,4 +1,5 @@
-CAFFE=/home/jahausw/projects/sirius-caffe/distribute
+#CAFFE=/home/jahausw/projects/sirius-caffe/distribute
+CAFFE=/home/jahausw/projects/caffe/distribute
 CUDA=/usr/local/cuda
 COMMON=../../common
 CXX = g++
@@ -9,7 +10,7 @@ CXX_FLAGS  = -O3 \
 						 -I$(CUDA)/include \
 						 -DCPU_ONLY
 
-LINK_FLAGS = -lopencv_core \
+LINK_FLAGS = -L/usr/local/lib -lopencv_core \
 						 -lopencv_highgui \
 						 -lopencv_imgproc \
 						 -lopencv_objdetect \

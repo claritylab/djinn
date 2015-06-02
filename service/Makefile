@@ -1,4 +1,5 @@
-CAFFE=/home/jahausw/projects/sirius-caffe/distribute
+#CAFFE=/home/jahausw/projects/sirius-caffe/distribute
+CAFFE=/home/jahausw/projects/caffe/distribute
 CUDA=/usr/local/cuda
 COMMON=../common
 
@@ -10,7 +11,7 @@ CXX_FLAGS = -O3 \
 						-I$(CUDA)/include \
 						-DCPU_ONLY
 
-LINK_FLAGS = -lpthread \
+LINK_FLAGS = -L/usr/local/lib -lpthread \
 						 -ldl \
 						 -lrt \
 						 -lboost_timer \
