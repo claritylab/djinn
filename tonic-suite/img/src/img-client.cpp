@@ -89,6 +89,11 @@ int main( int argc, char** argv )
   else {
     app.net = new Net<float>(app.network);
     app.net->CopyTrainedLayersFrom(app.weights);
+    Caffe::set_phase(Caffe::TEST);
+    if(app.gpu)
+      Caffe::set_mode(Caffe::GPU);
+    else
+      Caffe::set_mode(Caffe::CPU);
   }
 
   // send req_type
