@@ -1,6 +1,6 @@
 # Contributing
 
-We would love to have your help in making Sirius better.
+We would love to have your help in making DjiNN better.
 
 ## Pull Requests
 
@@ -22,5 +22,5 @@ clear and has sufficient instructions to be able to reproduce the issue.
 
 ## License
 
-By contributing to Sirius, you agree that your contribution will be licensed
+By contributing to DjiNN, you agree that your contribution will be licensed
 under its BSD license.
