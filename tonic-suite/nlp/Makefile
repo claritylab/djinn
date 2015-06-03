@@ -7,7 +7,8 @@ CXX_FLAGS  = -O3 \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \
-						 -I$(CUDA)/include \
+						 -I$(CUDA)/include 
+#\
 						 -DCPU_ONLY
 
 LINK_FLAGS = -L/usr/local/lib ../../common/libsocket.a \
