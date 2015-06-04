@@ -25,6 +25,7 @@
 #include <limits>
 #include <ctime>
 #include <fstream>
+#include <vector>
 
 #include "nnet/nnet-nnet.h"
 #include "nnet/nnet-loss.h"
@@ -34,6 +35,7 @@
 #include "util/common-utils.h"
 #include "base/timer.h"
 #include "socket.h"
+#include "tonic.h"
 
 #define DEBUG 0
 
@@ -58,11 +60,11 @@ int main(int argc, char *argv[]) {
   
     // Local inference information
     string common = "../../common/";
-    po.Regsiter("common", &common, "Directory with configs and weights");
+    po.Register("common", &common, "Directory with configs and weights");
     string network = "asr.prototxt";
-    po.Regsiter("network", &network, "Network config file (.prototxt)");
+    po.Register("network", &network, "Network config file (.prototxt)");
     string weights = "asr.caffemodel";
-    po.Regsiter("weights", &weights, "Pretrained weights (.caffemodel)");
+    po.Register("weights", &weights, "Pretrained weights (.caffemodel)");
 
     // DjiNN service information
     bool djinn = false;
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]) {
         feature_wspecifier = po.GetArg(3);
 
     // Initialize tonic app
-    TonicsuiteApp app;
+    TonicSuiteApp app;
     app.task = "asr";
     app.network = network;
     app.weights = weights;
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]) {
     if(app.djinn) {
       app.hostname = hostname;
       app.portno = portno;
-      app.socketfd = CLIENT_init(app.hostname.c_str(), app.portno, debug);
+      app.socketfd = CLIENT_init((char*)app.hostname.c_str(), app.portno, debug);
 
       if (app.socketfd < 0){
         exit(1);
@@ -180,8 +182,6 @@ int main(int argc, char *argv[]) {
 //      exit(0);
 //    } 
 //
-    kaldi::int64 tot_t = 0;
-
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     BaseFloatMatrixWriter feature_writer(feature_wspecifier);
 
@@ -198,10 +198,10 @@ int main(int argc, char *argv[]) {
     
     // iterate over all feature files
     // cumulate them for batch processing
-    float* batched_feats;
+    vector<float> batched_feats;
     int offset = 0;
     int total_rows = 0;
-    std::vector<int> feat_rows_cnt;
+    std::vector<int> feats_row_cnt;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
 
@@ -222,18 +222,24 @@ int main(int argc, char *argv[]) {
       nnet_transf.Feedforward(feats, &feats_transf);
 
       int cur_num_feats = feats_transf.NumCols() * feats_transf.NumRows();
-      *(batched_feats + offset) = std::malloc(cur_num_feats * sizeof(float));
+      batched_feats.resize(batched_feats.size() + cur_num_feats);
 
-      feats_row_cnt.append(feats_transf.NumRows());
+      feats_row_cnt.push_back(feats_transf.NumRows());
       
       // Concatenate this to the total input
       for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-        memcpy((char*)(batched_feats + offset), (char*)feats_transf.Row(i).Data(), feats_trasnf.NumCols()*sizeof(float));
+        std::copy(feats_transf.Row(i).Data(), feats_transf.Row(i).Data()+feats_transf.NumCols(), batched_feats.begin()+offset);
         offset += feats_transf.NumCols();
         total_rows++;
       }
     }
+    
+    app.pl.num = total_rows;
+    app.pl.size = offset / total_rows;
+    app.pl.data = (float*) malloc(offset * sizeof(float));
+    memcpy((char*)app.pl.data, (char*)&batched_feats[0], offset*sizeof(float));
 
+    std::vector<Matrix<BaseFloat> > output_list;
     // Inference
     if(app.djinn){
       KALDI_LOG << "Use DjiNN service to inference.";
@@ -246,28 +252,27 @@ int main(int argc, char *argv[]) {
       nnet_out.Resize(feats_transf.NumRows(), 1706); 
 
       // Send data length
-      SOCKET_txsize(socket, offset);
+      SOCKET_txsize(app.socketfd, offset);
 
       // Send features
-      SOCKET_send(app.socketfd, (char*)batched_feats, offset*sizeof(float), debug);
+      SOCKET_send(app.socketfd, (char*)app.pl.data, offset*sizeof(float), debug);
 
       // Receive results 
       // Receive into multiple kaldi's matrix format 
       int total_rcvd = 0;
-      vector<Matrix<BaseFloat> > output_list;
-      for(int feat_idx=0; feat_idx < feats_row_cnt.size(); feats_idx++){
+      for(int feat_idx=0; feat_idx < feats_row_cnt.size(); feat_idx++){
         Matrix<BaseFloat> nnet_out;
-        nnet_out.resize(feats_row_cnt[feat_idx], 1706);
+        nnet_out.Resize(feats_row_cnt[feat_idx], 1706);
         for(MatrixIndexT i = 0; i < nnet_out.NumRows(); i++){
-          int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(), 1706 * sizeof(float), DEBUG);
+          int rcvd = SOCKET_receive(app.socketfd, (char*)nnet_out.Row(i).Data(), 1706 * sizeof(float), DEBUG);
           total_rcvd += rcvd; 
         }
-        output_list.append(nnet_out);
+        output_list.push_back(nnet_out);
       }
       assert(total_rcvd == total_rows * 1706 * sizeof(float) && "Not recving enough features");
       
       // Close the socket
-      SOCKET_close(socket,DEBUG);
+      SOCKET_close(app.socketfd,DEBUG);
       KALDI_LOG << "DjiNN service returns. Socket closed.";
     }else{
       // Use local inference
@@ -276,19 +281,23 @@ int main(int argc, char *argv[]) {
       float loss;
       reshape(app.net, offset);
 
+      float* preds = (float*)malloc(offset*sizeof(float));
       vector<Blob<float>* > in_blobs = app.net->input_blobs();
-      in_blobs[0]->set_cpu_data((foat*)app.pl.data);
+      in_blobs[0]->set_cpu_data((float*)app.pl.data);
+
+      vector<Blob<float>* > out_blobs = app.net->ForwardPrefilled(&loss);
+
       memcpy(preds, out_blobs[0]->cpu_data(), offset*sizeof(float));
 
       // Copy into multiple kaldi's matrix format
       int cpy_offset = 0;
-      for(MatrixIndexT i = 0; i < feats_row_cnt.size(); i++){
+      for(int feat_idx = 0; feat_idx < feats_row_cnt.size(); feat_idx++){
         Matrix<BaseFloat> nnet_out;
-        nnet_out.resize(feast_row_cnt[feat_idx], 1706);
+        nnet_out.Resize(feats_row_cnt[feat_idx], 1706);
         Vector<BaseFloat> data_vec;
-        data_vec.CopyFromPtr(preds+cpy_offset, feats_row_cnt[feat_idx]*1706);
-        nnet_out.CopyFromVec(data_vec);
-        output_list.append(nnet_out);
+        memcpy((char*)(data_vec.Data()+cpy_offset), (char*)(preds+cpy_offset), feats_row_cnt[feat_idx]*1706*sizeof(float) );
+        nnet_out.CopyRowsFromVec(data_vec);
+        output_list.push_back(nnet_out);
       }
     }
    // 
