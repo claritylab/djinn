@@ -141,7 +141,7 @@ def breakdown(model, platform, network, model_csv, mobile_csv, server_csv, mobil
     offload_energy_list.append(cur_offload_energy)
     
     # Sweep through the network
-    for layer_idx in np.arange(num_layers-1):
+    for layer_idx in np.arange(num_layers):
        
         # offloading AFTER this layer
         # Calculate network latency
@@ -170,18 +170,6 @@ def breakdown(model, platform, network, model_csv, mobile_csv, server_csv, mobil
         server_energy_list.append(cur_server_energy)
         offload_energy_list.append(cur_offload_energy)
    
-    # Last layer. dont offload at all
-    cur_mobile_lat = 0.0
-    for i in np.arange(num_layers):
-        cur_mobile_lat += mobile_lat[i]
-    cur_offload_lat = 0
-    cur_server_lat = 0
-
-    cur_mobile_energy = cur_mobile_lat * mobile_power[model]
-    cur_server_energy = 0
-    cur_offload_energy = 0
-
-
     mobile_lat_list.append(cur_mobile_lat)
     server_lat_list.append(cur_server_lat)
     offload_lat_list.append(cur_offload_lat)
@@ -190,8 +178,6 @@ def breakdown(model, platform, network, model_csv, mobile_csv, server_csv, mobil
     server_energy_list.append(cur_server_energy)
     offload_energy_list.append(cur_offload_energy)
     
-
-
     # PLOT
 #    ax1 = host_subplot(111, axes_class=AA.Axes)
 #    plt.subplots_adjust(right = 0.75)
@@ -278,8 +264,8 @@ def main(argv):
     print "model: "+model+" platform: "+platform+" network: "+network
     
     model_csv = "layer_profile/layers_"+model+".csv"
-    server_csv = "server_lats/k40_"+model+"_layer.csv"
-    mobile_csv = "max_clock/"+platform+"_"+model+"_layer_avg.csv"
+    server_csv = "server_timing/"+model+"_layer_avg.csv"
+    mobile_csv = "mobile_timing/"+platform+"_"+model+"_layer_avg.csv"
 
     # define the output csv
     output_csv = "max_clock_results/sweet_spot.csv"

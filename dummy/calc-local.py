@@ -4,16 +4,19 @@ import math
 import subprocess, re, os, sys, csv
 
 featmaps = {}     #  c   h/w
-featmaps['input'] = [3,  96]
-featmaps['small'] = [512, 14]
-featmaps['large'] = [192, 22]
-featmaps['med']   = [64, 28]
+featmaps['input'] = [3,  152]
+#featmaps['small'] = [512, 14]
+#featmaps['large'] = [192, 22]
+#featmaps['med']   = [64, 28]
 
-batches  = [1, 16, 64, 256]
+#batches  = [1, 16, 64, 256]
 batches  = [1]
-kernels  = [3, 5, 7, 9]
-num_outs = [3, 16, 24, 32, 48]
-strides  = [1, 2, 4]
+#kernels  = [3, 5, 7, 9]
+kernels = [11]
+#num_outs = [3, 16, 24, 32, 48]
+num_outs = [32]
+#strides  = [1, 2, 4]
+strides = [1]
 
 ## CONF
 
@@ -66,6 +69,7 @@ def main( args ):
                         out_dim = float(height - kernel)/float(stride) + 1
                         kernel_comp = pow(kernel,2) + pow(kernel,2) - 1
                         fpops = ((kernel_comp * pow(out_dim, 2)) * channel + channel*pow(out_dim,2)) * num_out * batch
+                        print fpops
     
                         w.writerow([NETCONF,batch,channel,height,height,num_out,kernel,stride,out_dim,fpops])
                         if PLAT is 'cpu':
