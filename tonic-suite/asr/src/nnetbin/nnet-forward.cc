@@ -17,6 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
+/* Yiping Kang
+ * ypkang@umich.edu
+ * 2014
+ */
+
 #include <limits>
 #include <ctime>
 #include <fstream>
@@ -35,11 +40,9 @@
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   using namespace kaldi::nnet1;
+  typedef kaldi::int32 int32;
   try {
 
-    // YK
-    // Socket stuff to talk to the server
-   // 
     const char *usage =
         "Perform forward pass through Neural Network.\n"
         "\n"
@@ -52,51 +55,89 @@ int main(int argc, char *argv[]) {
 
     PdfPriorOptions prior_opts;
     prior_opts.Register(&po);
+  
+    // Local inference information
+    string common = "../../common/";
+    po.Regsiter("common", &common, "Directory with configs and weights");
+    string network = "asr.prototxt";
+    po.Regsiter("network", &network, "Network config file (.prototxt)");
+    string weights = "asr.caffemodel";
+    po.Regsiter("weights", &weights, "Pretrained weights (.caffemodel)");
 
-    bool use_service = false;
-    po.Register("use-service", &use_service, "Will use the remote dnn service");
+    // DjiNN service information
+    bool djinn = false;
+    po.Register("djinn", &djinn, "Use DjiNN service?");
+    string hostname = "localhost";
+    po.Register("hostname", &hostname, "Server IP addr");
+    int portno = 8080;
+    po.Register("portno", &portno, "Server port");
 
-    std::string write_model_file("");
-    po.Register("write-model", &write_model_file, "nnet-forward is wrtting weights and bias to file");
+    // Common configuraition
+    bool gpu = "false";
+    po.Register("gpu", &gpu, "Use GPU?");
+    bool debug = "false";
+    po.Register("debug", &debug, "Turn on all debug");
 
+    // ASR specific inputs and flags
+    // inherited from Kaldi
     std::string feature_transform;
     po.Register("feature-transform", &feature_transform, "Feature transform in front of main network (in nnet format)");
-
     bool no_softmax = false;
-    po.Register("no-softmax", &no_softmax, "No softmax on MLP output (or remove it if found), the pre-softmax activations will be used as log-likelihoods, log-priors will be subtracted");
+//    po.Register("no-softmax", &no_softmax, "No softmax on MLP output (or remove it if found), the pre-softmax activations will be used as log-likelihoods, log-priors will be subtracted");
     bool apply_log = false;
-    po.Register("apply-log", &apply_log, "Transform MLP output to logscale");
+//    po.Register("apply-log", &apply_log, "Transform MLP output to logscale");
 
-    std::string use_gpu="no";
-    po.Register("use-gpu", &use_gpu, "yes|no|optional, only has effect if compiled with CUDA"); 
-
-
-    std::string hostname("");
-    po.Register("hostname", &hostname, "Server address of the NN service");
-     
-    int portno = -1;
-    po.Register("portno", &portno, "Port number of the NN service");
-
+    // Read in the argument
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
-
+    
+    // Input to ASR
+    // inherited from Kaldi
     std::string model_filename = po.GetArg(1),
         feature_rspecifier = po.GetArg(2),
         feature_wspecifier = po.GetArg(3);
 
-    using namespace kaldi;
-    using namespace kaldi::nnet1;
-    typedef kaldi::int32 int32;
-    
-    //Select the GPU
-#if HAVE_CUDA==1
-    CuDevice::Instantiate().SelectGpuId(use_gpu);
-    CuDevice::Instantiate().DisableCaching();
-#endif
+    // Initialize tonic app
+    TonicsuiteApp app;
+    app.task = "asr";
+    app.network = network;
+    app.weights = weights;
+
+    app.djinn = djinn;
+    app.gpu = gpu;
+
+    if(app.djinn) {
+      app.hostname = hostname;
+      app.portno = portno;
+      app.socketfd = CLIENT_init(app.hostname.c_str(), app.portno, debug);
+
+      if (app.socketfd < 0){
+        exit(1);
+      }
+    }else{
+      app.net = new Net<float>(app.network);
+      app.net->CopyTrainedLayersFrom(app.weights);
+      Caffe::set_phase(Caffe::TEST);
+      if(app.gpu)
+        Caffe::set_mode(Caffe::GPU);
+      else
+        Caffe::set_mode(Caffe::CPU);
+    }
+
+    // Set request type
+    app.pl.size = 0;
+    strcpy(app.pl.req_name, app.task.c_str());
+
+
+//    //Select the GPU
+//#if HAVE_CUDA==1
+//    CuDevice::Instantiate().SelectGpuId(use_gpu);
+//    CuDevice::Instantiate().DisableCaching();
+//#endif
 
     Nnet nnet_transf;
     if (feature_transform != "") {
@@ -105,20 +146,21 @@ int main(int argc, char *argv[]) {
 
     Nnet nnet;
     nnet.Read(model_filename);
+
     //optionally remove softmax
-    if (no_softmax && nnet.GetComponent(nnet.NumComponents()-1).GetType() == Component::kSoftmax) {
-      KALDI_LOG << "Removing softmax from the nnet " << model_filename;
-      nnet.RemoveComponent(nnet.NumComponents()-1);
-    }
-    //check for some non-sense option combinations
-    if (apply_log && no_softmax) {
-      KALDI_ERR << "Nonsense option combination : --apply-log=true and --no-softmax=true";
-    }
-    if (apply_log && nnet.GetComponent(nnet.NumComponents()-1).GetType() != Component::kSoftmax) {
-      KALDI_ERR << "Used --apply-log=true, but nnet " << model_filename 
-                << " does not have <softmax> as last component!";
-    }
-    
+//    if (no_softmax && nnet.GetComponent(nnet.NumComponents()-1).GetType() == Component::kSoftmax) {
+//      KALDI_LOG << "Removing softmax from the nnet " << model_filename;
+//      nnet.RemoveComponent(nnet.NumComponents()-1);
+//    }
+//    //check for some non-sense option combinations
+//    if (apply_log && no_softmax) {
+//      KALDI_ERR << "Nonsense option combination : --apply-log=true and --no-softmax=true";
+//    }
+//    if (apply_log && nnet.GetComponent(nnet.NumComponents()-1).GetType() != Component::kSoftmax) {
+//      KALDI_ERR << "Used --apply-log=true, but nnet " << model_filename 
+//                << " does not have <softmax> as last component!";
+//    }
+//    
     PdfPrior pdf_prior(prior_opts);
     if (prior_opts.class_frame_counts != "" && (!no_softmax && !apply_log)) {
       KALDI_ERR << "Option --class-frame-counts has to be used together with "
@@ -126,18 +168,18 @@ int main(int argc, char *argv[]) {
     }
 
     // disable dropout
-    nnet_transf.SetDropoutRetention(1.0);
-    nnet.SetDropoutRetention(1.0);
+//    nnet_transf.SetDropoutRetention(1.0);
+//    nnet.SetDropoutRetention(1.0);
 
   
-    if(write_model_file != ""){
-      // So we write the model to file
-      // and exit the program
-      Output ko(write_model_file, false); 
-      nnet.Write(ko.Stream(), false);
-      exit(0);
-    } 
-
+//    if(write_model_file != ""){
+//      // So we write the model to file
+//      // and exit the program
+//      Output ko(write_model_file, false); 
+//      nnet.Write(ko.Stream(), false);
+//      exit(0);
+//    } 
+//
     kaldi::int64 tot_t = 0;
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
@@ -148,19 +190,20 @@ int main(int argc, char *argv[]) {
     Matrix<BaseFloat> recv_mat;
 
     Timer time;
-    double time_now = 0;
-    double time_comm = 0;
-    double time_nn = 0;
-    double time_read_feat = 0;
+//    double time_now = 0;
+//    double time_comm = 0;
+//    double time_nn = 0;
+//    double time_read_feat = 0;
     int32 num_done = 0;
     
     // iterate over all feature files
+    // cumulate them for batch processing
+    float* batched_feats;
+    int offset = 0;
+    int total_rows = 0;
+    std::vector<int> feat_rows_cnt;
     for (; !feature_reader.Done(); feature_reader.Next()) {
-      // read
-      Timer read_feature_time;
       const Matrix<BaseFloat> &mat = feature_reader.Value();
-     
-      time_read_feat += read_feature_time.Elapsed();
 
       KALDI_LOG << "Processing utterance " << num_done+1 
                     << ", " << feature_reader.Key() 
@@ -172,122 +215,111 @@ int main(int argc, char *argv[]) {
         KALDI_ERR << "NaN or inf found in features of " << feature_reader.Key();
       }
       
-      // push it to gpu
+      // Feature transformation will use GPU if possible
       feats = mat;
-      // fwd-pass
+      
       // Preprocessing feature transformation      
       nnet_transf.Feedforward(feats, &feats_transf);
-      KALDI_LOG << "Input feature with dimension: "<<feats_transf.NumCols(); 
 
-      if(use_service){
-        KALDI_LOG << "Use remote dnn service to inference.";
-        // Connect to the server
-        int socket;
-        char* hostname_cstr = new char [hostname.length() + 1];
-        std::strcpy(hostname_cstr, hostname.c_str());
-        socket = CLIENT_init(hostname_cstr, portno, DEBUG);
-        if(socket < 0){
-          KALDI_ERR << "Socket return as zero.";
-          exit(1);
-        }  
-        KALDI_LOG << "Establish socket with server at "
-                << hostname << ":" << portno;
-        // 1. Send the request type (1)
-        int req_type = 3;
-        SOCKET_send(socket, (char*)&req_type, sizeof(int), DEBUG);
-        KALDI_LOG << "Send request type: "<<req_type; 
+      int cur_num_feats = feats_transf.NumCols() * feats_transf.NumRows();
+      *(batched_feats + offset) = std::malloc(cur_num_feats * sizeof(float));
 
-        // 5. Send the length of the input feature 
-        recv_mat.Resize(feats_transf.NumRows(), 1706);
+      feats_row_cnt.append(feats_transf.NumRows());
+      
+      // Concatenate this to the total input
+      for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
+        memcpy((char*)(batched_feats + offset), (char*)feats_transf.Row(i).Data(), feats_trasnf.NumCols()*sizeof(float));
+        offset += feats_transf.NumCols();
+        total_rows++;
+      }
+    }
 
-        int total_input_features = feats_transf.NumCols() * feats_transf.NumRows();
-        SOCKET_txsize(socket, total_input_features);
+    // Inference
+    if(app.djinn){
+      KALDI_LOG << "Use DjiNN service to inference.";
 
-        // Now we send the entire sentence over for batch processing
-        int total_sent = 0;
-        nnet_out.Resize(feats_transf.NumRows(), 1706); 
-        
-        Timer time_comm_temp;
+      // Send request type
+      SOCKET_send(app.socketfd, (char*)&app.pl.req_name, MAX_REQ_SIZE, debug);
+      
+      // Resize the receiving matrix
+      recv_mat.Resize(total_rows, 1706);
+      nnet_out.Resize(feats_transf.NumRows(), 1706); 
 
-        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-          
-          int sent = SOCKET_send(socket, (char*)feats_transf.Row(i).Data(),
-                        feats_transf.NumCols() * sizeof(float), DEBUG);
-          total_sent += sent;
-        }
-        assert(total_sent == total_input_features*sizeof(float) && "Not sending enough features.");
+      // Send data length
+      SOCKET_txsize(socket, offset);
 
-        // Now we receive the result, again with the matrix as a whole
-        int total_rcvd = 0;
-        for(MatrixIndexT i = 0; i < feats_transf.NumRows(); i++){
-         int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(),
-                        1706 * sizeof(float), DEBUG);
+      // Send features
+      SOCKET_send(app.socketfd, (char*)batched_feats, offset*sizeof(float), debug);
+
+      // Receive results 
+      // Receive into multiple kaldi's matrix format 
+      int total_rcvd = 0;
+      vector<Matrix<BaseFloat> > output_list;
+      for(int feat_idx=0; feat_idx < feats_row_cnt.size(); feats_idx++){
+        Matrix<BaseFloat> nnet_out;
+        nnet_out.resize(feats_row_cnt[feat_idx], 1706);
+        for(MatrixIndexT i = 0; i < nnet_out.NumRows(); i++){
+          int rcvd = SOCKET_receive(socket, (char*)nnet_out.Row(i).Data(), 1706 * sizeof(float), DEBUG);
           total_rcvd += rcvd; 
         }
-        assert(total_rcvd == feats_transf.NumRows() * 1706 * sizeof(float) && "Not recving enough features");
-        
-        time_comm += time_comm_temp.Elapsed();
-
-        // Close the socket, don't need it anymore
-        SOCKET_close(socket,DEBUG);
-        KALDI_LOG << "DNN service finishes. Socket closed.";
-      }else{
-        // Use local(kaldi's) dnn to inference
-        KALDI_LOG << "Use local dnn service to inference.";
-        Timer nn_timer;
-        nnet.Feedforward(feats_transf, &nnet_out);
-        time_nn += nn_timer.Elapsed();
+        output_list.append(nnet_out);
       }
+      assert(total_rcvd == total_rows * 1706 * sizeof(float) && "Not recving enough features");
       
+      // Close the socket
+      SOCKET_close(socket,DEBUG);
+      KALDI_LOG << "DjiNN service returns. Socket closed.";
+    }else{
+      // Use local inference
+      KALDI_LOG << "Use local dnn service to inference.";
+//      nnet.Feedforward(feats_transf, &nnet_out);
+      float loss;
+      reshape(app.net, offset);
 
-      // convert posteriors to log-posteriors
-      if (apply_log) {
-        nnet_out.ApplyLog();
-      }
-     
-      // subtract log-priors from log-posteriors to get quasi-likelihoods
-      if (prior_opts.class_frame_counts != "" && (no_softmax || apply_log)) {
-        pdf_prior.SubtractOnLogpost(&nnet_out);
-      }
-     
-      //download from GPU
-      nnet_out_host.Resize(nnet_out.NumRows(), nnet_out.NumCols());
-      nnet_out.CopyToMat(&nnet_out_host);
+      vector<Blob<float>* > in_blobs = app.net->input_blobs();
+      in_blobs[0]->set_cpu_data((foat*)app.pl.data);
+      memcpy(preds, out_blobs[0]->cpu_data(), offset*sizeof(float));
 
-      //check for NaN/inf
-      for (int32 r = 0; r < nnet_out_host.NumRows(); r++) {
-        for (int32 c = 0; c < nnet_out_host.NumCols(); c++) {
-          BaseFloat val = nnet_out_host(r,c);
-          if (val != val) KALDI_ERR << "NaN in NNet output of : " << feature_reader.Key();
-          if (val == std::numeric_limits<BaseFloat>::infinity())
-            KALDI_ERR << "inf in NNet coutput of : " << feature_reader.Key();
-        }
+      // Copy into multiple kaldi's matrix format
+      int cpy_offset = 0;
+      for(MatrixIndexT i = 0; i < feats_row_cnt.size(); i++){
+        Matrix<BaseFloat> nnet_out;
+        nnet_out.resize(feast_row_cnt[feat_idx], 1706);
+        Vector<BaseFloat> data_vec;
+        data_vec.CopyFromPtr(preds+cpy_offset, feats_row_cnt[feat_idx]*1706);
+        nnet_out.CopyFromVec(data_vec);
+        output_list.append(nnet_out);
       }
-      
-     // write
-      feature_writer.Write(feature_reader.Key(), nnet_out_host);
-      
-      // progress log
-      if (num_done % 100 == 0) {
-        time_now = time.Elapsed();
-        KALDI_VLOG(1) << "After " << num_done << " utterances: time elapsed = "
-                      << time_now/60 << " min; processed " << tot_t/time_now
-                      << " frames per second.";
-      }
-      num_done++;
-      tot_t += mat.NumRows();
+    }
+   // 
+   // // convert posteriors to log-posteriors
+   // if (apply_log) {
+   //   nnet_out.ApplyLog();
+   // }
+    
+    // subtract log-priors from log-posteriors to get quasi-likelihoods
+    if (prior_opts.class_frame_counts != "" && (no_softmax || apply_log)) {
+      pdf_prior.SubtractOnLogpost(&nnet_out);
     }
     
-    // final message
-    KALDI_LOG << "Done " << num_done << " files" 
-              << " in " << time.Elapsed()/60 << "min," 
-              << " (fps " << tot_t/time.Elapsed() << ")"; 
+    //check for NaN/inf
+//    for (int32 r = 0; r < nnet_out_host.NumRows(); r++) {
+//      for (int32 c = 0; c < nnet_out_host.NumCols(); c++) {
+//        BaseFloat val = nnet_out_host(r,c);
+//        if (val != val) KALDI_ERR << "NaN in NNet output of : " << feature_reader.Key();
+//        if (val == std::numeric_limits<BaseFloat>::infinity())
+//          KALDI_ERR << "inf in NNet coutput of : " << feature_reader.Key();
+//      }
+//    }
+      
+    // Iterate over feature reader again and write the output  
 
-#if HAVE_CUDA==1
-    if (kaldi::g_kaldi_verbose_level >= 1) {
-      CuDevice::Instantiate().PrintProfile();
+    SequentialBaseFloatMatrixReader output_feature_reader(feature_rspecifier);
+    int cnt = 0;
+    for (; !output_feature_reader.Done(); output_feature_reader.Next()) {
+      feature_writer.Write(output_feature_reader.Key(), output_list[cnt]);
+      cnt++;
     }
-#endif
 
     if (num_done == 0) return -1;
     return 0;
