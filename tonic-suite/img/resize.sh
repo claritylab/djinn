@@ -3,7 +3,7 @@
 # ./resize.sh test.jpg 227
 #
 # 1 liner for a directory:
-# for i in test-images/*; do ./resize.sh $i 227; done
+# for i in test-images/*.jpg; do ./resize.sh $i 227; done
 #
 # APP:  C x W x H
 # IMC:  3x227x227
