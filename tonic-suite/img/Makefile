@@ -8,7 +8,7 @@ CXX_FLAGS  = -O3 \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \
 						 -I$(CUDA)/include \
-#						 -DCPU_ONLY
+						 -DCPU_ONLY
 
 LINK_FLAGS = -L/usr/local/lib -lopencv_core \
 						 -lopencv_highgui \
