@@ -82,7 +82,7 @@ if [ -z "$feature_transform" ]; then feature_transform=$srcdir/final.feature_tra
 if [ -z "$class_frame_counts" ]; then class_frame_counts=$srcdir/ali_train_pdf.counts; fi
 
 # Check that files exist
-for f in $sdata/1/feats.scp $nnet $model $feature_transform $class_frame_counts $graphdir/HCLG.fst; do
+for f in $sdata/1/feats.scp $model $feature_transform $class_frame_counts $graphdir/HCLG.fst; do
   [ ! -f $f ] && echo "$0: missing file $f" && exit 1;
 done
 

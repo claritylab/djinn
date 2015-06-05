@@ -3,6 +3,7 @@
 
 # cd into voxforge dir
 PWD=`pwd`
+
 cd ./egs/voxforge/s5/
 
 source ./cmd.sh
@@ -31,11 +32,13 @@ input=asr-list.txt
 # Prepare data
 # move the input into the folder
 # NOTE: remove the input file already in there
-rm ${root_dataset}/selected/${spk}/wav/*
+#rm ${root_dataset}/selected/${spk}/wav/*
+
+input=../../../${input}
 
 while read line;do
-  cp $line ${root_dataset}/selected/${spk}/wav/
-done < $input
+  cp ../../../${line} ${root_dataset}/selected/${spk}/wav/
+done < ${input}
 
 local/voxforge_data_prep.sh ${root_dataset}/selected
 
@@ -103,6 +106,6 @@ while read wav;do
   
   echo "Input: ${wav} Transcript: ${result}"
 
-done < $input
+done < ${input}
 
 cd $PWD
