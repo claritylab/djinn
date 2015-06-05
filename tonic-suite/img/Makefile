@@ -1,5 +1,5 @@
 COMMON=../../common
-include $(COMMON)/Makefile.common
+include $(COMMON)/Makefile.config
 
 CXX = g++
 CXX_FLAGS  = -O3 \
