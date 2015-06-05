@@ -14,7 +14,7 @@ LINK_FLAGS = -lopencv_core \
 						 -lopencv_imgproc \
 						 -lopencv_objdetect \
 						 ../../common/libsocket.a \
-						 libflandmark.a \
+						 libflandmark_static.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
 						 -lboost_system \
