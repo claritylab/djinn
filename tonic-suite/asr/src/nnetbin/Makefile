@@ -8,13 +8,14 @@ EXTRA_CXXFLAGS = -Wno-sign-compare \
 								 -fpermissive \
 								 -I$(COMMON)/include \
 								 -I$(CAFFE)/include \
-								 -I$(CUDA)/include \
+								 -I$(CUDA)/include 
 
 include ../kaldi.mk
 
 LDFLAGS += $(CUDA_LDFLAGS)
-LDLIBS += $(CUDA_LDLIBS) ../libsocket.a \
-					$(CAFFE)/lib/libcaffe.so
+LDLIBS += $(CUDA_LDLIBS) $(COMMON)/libtonic.a \
+					$(CAFFE)/lib/libcaffe.so \
+					-lglog
 
 
 BINFILES = nnet-train-frmshuff \
@@ -30,6 +31,6 @@ TESTFILES =
 
 ADDLIBS = ../nnet/kaldi-nnet.a ../cudamatrix/kaldi-cudamatrix.a ../lat/kaldi-lat.a \
           ../hmm/kaldi-hmm.a ../tree/kaldi-tree.a ../matrix/kaldi-matrix.a \
-          ../util/kaldi-util.a ../base/kaldi-base.a $(COMMON)/src/tonic.a
+          ../util/kaldi-util.a ../base/kaldi-base.a
 
 include ../makefiles/default_rules.mk
