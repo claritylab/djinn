@@ -23,7 +23,8 @@
 *.x86_64
 *.hex
 *~
-tonic-*
+tonic-img
+tonic-nlp
 
 # Popular scripts with hardpaths
 asr/kaldi_patch.sh
