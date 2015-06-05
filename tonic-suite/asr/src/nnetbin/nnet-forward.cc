@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "nnet/nnet-nnet.h"
-#include "nnet/nnet-loss.h"
+//#include "nnet/nnet-loss.h"
 #include "nnet/nnet-pdf-prior.h"
 #include "nnet/nnet-rbm.h"
 #include "base/kaldi-common.h"
@@ -59,12 +59,14 @@ int main(int argc, char *argv[]) {
     prior_opts.Register(&po);
   
     // Local inference information
-    string common = "../../common/";
+    string common = "../../../../common/";
     po.Register("common", &common, "Directory with configs and weights");
     string network = "asr.prototxt";
     po.Register("network", &network, "Network config file (.prototxt)");
     string weights = "asr.caffemodel";
     po.Register("weights", &weights, "Pretrained weights (.caffemodel)");
+    int batch = 1;
+    po.Register("batch", &batch, "Batch size");
 
     // DjiNN service information
     bool djinn = false;
@@ -75,9 +77,9 @@ int main(int argc, char *argv[]) {
     po.Register("portno", &portno, "Server port");
 
     // Common configuraition
-    bool gpu = "false";
+    bool gpu = false;
     po.Register("gpu", &gpu, "Use GPU?");
-    bool debug = "false";
+    bool debug = false;
     po.Register("debug", &debug, "Turn on all debug");
 
     // ASR specific inputs and flags
@@ -85,9 +87,7 @@ int main(int argc, char *argv[]) {
     std::string feature_transform;
     po.Register("feature-transform", &feature_transform, "Feature transform in front of main network (in nnet format)");
     bool no_softmax = false;
-//    po.Register("no-softmax", &no_softmax, "No softmax on MLP output (or remove it if found), the pre-softmax activations will be used as log-likelihoods, log-priors will be subtracted");
     bool apply_log = false;
-//    po.Register("apply-log", &apply_log, "Transform MLP output to logscale");
 
     // Read in the argument
     po.Read(argc, argv);
@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
     std::string model_filename = po.GetArg(1),
         feature_rspecifier = po.GetArg(2),
         feature_wspecifier = po.GetArg(3);
+
+    network = common + "configs/" + network;
+    weights = common + "weights/" + weights;
 
     // Initialize tonic app
     TonicSuiteApp app;
@@ -145,63 +148,28 @@ int main(int argc, char *argv[]) {
     if (feature_transform != "") {
       nnet_transf.Read(feature_transform);
     }
-
-    Nnet nnet;
-    nnet.Read(model_filename);
-
-    //optionally remove softmax
-//    if (no_softmax && nnet.GetComponent(nnet.NumComponents()-1).GetType() == Component::kSoftmax) {
-//      KALDI_LOG << "Removing softmax from the nnet " << model_filename;
-//      nnet.RemoveComponent(nnet.NumComponents()-1);
-//    }
-//    //check for some non-sense option combinations
-//    if (apply_log && no_softmax) {
-//      KALDI_ERR << "Nonsense option combination : --apply-log=true and --no-softmax=true";
-//    }
-//    if (apply_log && nnet.GetComponent(nnet.NumComponents()-1).GetType() != Component::kSoftmax) {
-//      KALDI_ERR << "Used --apply-log=true, but nnet " << model_filename 
-//                << " does not have <softmax> as last component!";
-//    }
-//    
+    
     PdfPrior pdf_prior(prior_opts);
-    if (prior_opts.class_frame_counts != "" && (!no_softmax && !apply_log)) {
-      KALDI_ERR << "Option --class-frame-counts has to be used together with "
-                << "--no-softmax or --apply-log";
-    }
 
     // disable dropout
-//    nnet_transf.SetDropoutRetention(1.0);
-//    nnet.SetDropoutRetention(1.0);
+    nnet_transf.SetDropoutRetention(1.0);
 
-  
-//    if(write_model_file != ""){
-//      // So we write the model to file
-//      // and exit the program
-//      Output ko(write_model_file, false); 
-//      nnet.Write(ko.Stream(), false);
-//      exit(0);
-//    } 
-//
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     BaseFloatMatrixWriter feature_writer(feature_wspecifier);
 
     CuMatrix<BaseFloat> feats, feats_transf, nnet_out;
     Matrix<BaseFloat> nnet_out_host;
-    Matrix<BaseFloat> recv_mat;
 
     Timer time;
-//    double time_now = 0;
-//    double time_comm = 0;
-//    double time_nn = 0;
-//    double time_read_feat = 0;
     int32 num_done = 0;
     
     // iterate over all feature files
     // cumulate them for batch processing
-    vector<float> batched_feats;
+    std::vector<float> batched_feats;
+    std::vector<int> feats_row_cnt;
+    std::vector<string> feature_keys;
     int offset = 0;
     int total_rows = 0;
-    std::vector<int> feats_row_cnt;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
 
@@ -209,6 +177,7 @@ int main(int argc, char *argv[]) {
                     << ", " << feature_reader.Key() 
                     << ", " << mat.NumRows() << "frm";
 
+      feature_keys.push_back(feature_reader.Key());
       //check for NaN/inf
       BaseFloat sum = mat.Sum();
       if (!KALDI_ISFINITE(sum)) {
@@ -221,7 +190,7 @@ int main(int argc, char *argv[]) {
       // Preprocessing feature transformation      
       nnet_transf.Feedforward(feats, &feats_transf);
 
-      int cur_num_feats = feats_transf.NumCols() * feats_transf.NumRows();
+      int cur_num_feats = feats_transf.NumRows() * feats_transf.NumCols();
       batched_feats.resize(batched_feats.size() + cur_num_feats);
 
       feats_row_cnt.push_back(feats_transf.NumRows());
@@ -239,17 +208,14 @@ int main(int argc, char *argv[]) {
     app.pl.data = (float*) malloc(offset * sizeof(float));
     memcpy((char*)app.pl.data, (char*)&batched_feats[0], offset*sizeof(float));
 
-    std::vector<Matrix<BaseFloat> > output_list;
+    std::vector<CuMatrix<BaseFloat> > output_list;
     // Inference
     if(app.djinn){
       KALDI_LOG << "Use DjiNN service to inference.";
 
       // Send request type
       SOCKET_send(app.socketfd, (char*)&app.pl.req_name, MAX_REQ_SIZE, debug);
-      
-      // Resize the receiving matrix
-      recv_mat.Resize(total_rows, 1706);
-      nnet_out.Resize(feats_transf.NumRows(), 1706); 
+      KALDI_LOG << "DEBUG IS "<<debug;
 
       // Send data length
       SOCKET_txsize(app.socketfd, offset);
@@ -261,56 +227,54 @@ int main(int argc, char *argv[]) {
       // Receive into multiple kaldi's matrix format 
       int total_rcvd = 0;
       for(int feat_idx=0; feat_idx < feats_row_cnt.size(); feat_idx++){
-        Matrix<BaseFloat> nnet_out;
+
+        // Resize the receiving matrix
         nnet_out.Resize(feats_row_cnt[feat_idx], 1706);
         for(MatrixIndexT i = 0; i < nnet_out.NumRows(); i++){
-          int rcvd = SOCKET_receive(app.socketfd, (char*)nnet_out.Row(i).Data(), 1706 * sizeof(float), DEBUG);
+          int rcvd = SOCKET_receive(app.socketfd, (char*)nnet_out.Row(i).Data(), 1706 * sizeof(float), debug);
           total_rcvd += rcvd; 
         }
         output_list.push_back(nnet_out);
       }
-      assert(total_rcvd == total_rows * 1706 * sizeof(float) && "Not recving enough features");
+      if(total_rcvd != total_rows * 1706 * sizeof(float)){
+        KALDI_ERR<< "Not receiving enought output";
+        exit(1);
+      }
       
       // Close the socket
-      SOCKET_close(app.socketfd,DEBUG);
-      KALDI_LOG << "DjiNN service returns. Socket closed.";
+//      SOCKET_close(app.socketfd, debug);
+//      KALDI_LOG << "DjiNN service returns. Socket closed.";
     }else{
       // Use local inference
       KALDI_LOG << "Use local dnn service to inference.";
-//      nnet.Feedforward(feats_transf, &nnet_out);
+      
       float loss;
       reshape(app.net, offset);
 
-      float* preds = (float*)malloc(offset*sizeof(float));
+      float* preds = (float*)malloc(total_rows*1706*sizeof(float));
       vector<Blob<float>* > in_blobs = app.net->input_blobs();
       in_blobs[0]->set_cpu_data((float*)app.pl.data);
 
       vector<Blob<float>* > out_blobs = app.net->ForwardPrefilled(&loss);
 
-      memcpy(preds, out_blobs[0]->cpu_data(), offset*sizeof(float));
+      memcpy(preds, out_blobs[0]->cpu_data(), total_rows*1706*sizeof(float));
 
       // Copy into multiple kaldi's matrix format
       int cpy_offset = 0;
       for(int feat_idx = 0; feat_idx < feats_row_cnt.size(); feat_idx++){
-        Matrix<BaseFloat> nnet_out;
-        nnet_out.Resize(feats_row_cnt[feat_idx], 1706);
-        Vector<BaseFloat> data_vec;
-        memcpy((char*)(data_vec.Data()+cpy_offset), (char*)(preds+cpy_offset), feats_row_cnt[feat_idx]*1706*sizeof(float) );
-        nnet_out.CopyRowsFromVec(data_vec);
+        int num_of_rows = feats_row_cnt[feat_idx];
+        nnet_out.Resize(num_of_rows, 1706);
+
+        for(MatrixIndexT i=0; i < num_of_rows; i++){
+          memcpy(nnet_out.Row(i).Data(), (preds+cpy_offset), 1706*sizeof(float));
+          cpy_offset += 1706;
+        }
+
         output_list.push_back(nnet_out);
+
       }
     }
-   // 
-   // // convert posteriors to log-posteriors
-   // if (apply_log) {
-   //   nnet_out.ApplyLog();
-   // }
-    
-    // subtract log-priors from log-posteriors to get quasi-likelihoods
-    if (prior_opts.class_frame_counts != "" && (no_softmax || apply_log)) {
-      pdf_prior.SubtractOnLogpost(&nnet_out);
-    }
-    
+   
     //check for NaN/inf
 //    for (int32 r = 0; r < nnet_out_host.NumRows(); r++) {
 //      for (int32 c = 0; c < nnet_out_host.NumCols(); c++) {
@@ -322,12 +286,23 @@ int main(int argc, char *argv[]) {
 //    }
       
     // Iterate over feature reader again and write the output  
+    for (int i = 0; i < feature_keys.size(); i++) {
+      
+      KALDI_LOG << "Writing features to file";
+      // subtract log-priors from log-posteriors to get quasi-likelihoods
+      if (prior_opts.class_frame_counts != "") {
+        pdf_prior.SubtractOnLogpost(&output_list[i]);
+      }
 
-    SequentialBaseFloatMatrixReader output_feature_reader(feature_rspecifier);
-    int cnt = 0;
-    for (; !output_feature_reader.Done(); output_feature_reader.Next()) {
-      feature_writer.Write(output_feature_reader.Key(), output_list[cnt]);
-      cnt++;
+      nnet_out_host.Resize(output_list[i].NumRows(), output_list[i].NumCols());
+      output_list[i].CopyToMat(&nnet_out_host);
+        for(MatrixIndexT k = 0; k < nnet_out_host.NumRows(); k++){
+          for(MatrixIndexT j = 0; j < nnet_out_host.NumCols(); j++){
+            //KALDI_LOG << nnet_out_host.Row(k).Data()[j];
+          }
+        }
+
+      feature_writer.Write(feature_keys[i], nnet_out_host);
     }
 
     if (num_done == 0) return -1;

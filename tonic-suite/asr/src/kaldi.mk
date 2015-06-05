@@ -15,9 +15,9 @@ valgrind: .valgrind
 
 
 CONFIGURE_VERSION := 2
-OPENFSTLIBS = -L/home/ypkang/kaldi-trunk/tools/openfst/lib -lfst
-OPENFSTLDFLAGS = -Wl,-rpath=/home/ypkang/kaldi-trunk/tools/openfst/lib
-FSTROOT = /home/ypkang/kaldi-trunk/tools/openfst
+OPENFSTLIBS = -L/home/ypkang/git/brainiac/tonic-suite/asr/tools/openfst/lib -lfst
+OPENFSTLDFLAGS = -Wl,-rpath=/home/ypkang/git/brainiac/tonic-suite/asr/tools/openfst/lib
+FSTROOT = /home/ypkang/git/brainiac/tonic-suite/asr/tools/openfst
 ATLASINC = /home/ypkang/kaldi-trunk/tools/ATLAS/include
 ATLASLIBS = /usr/lib/atlas-base/libatlas.so.3.0 /usr/lib/atlas-base/libf77blas.so.3.0 /usr/lib/atlas-base/libcblas.so.3 /usr/lib/atlas-base/liblapack_atlas.so.3 -Wl,-rpath=/usr/lib/atlas-base
 # You have to make sure ATLASLIBS is set...
@@ -50,7 +50,7 @@ CXXFLAGS += -fPIC
 endif
 
 LDFLAGS = -rdynamic $(OPENFSTLDFLAGS)
-LDLIBS = $(EXTRA_LDLIBS) $(OPENFSTLIBS) $(ATLASLIBS) -lm -lpthread -ldl
+LDLIBS = $(EXTRA_LDLIBS) $(OPENFSTLIBS) $(ATLASLIBS) -lm -lpthread -ldl -lglog
 CC = g++
 CXX = g++
 AR = ar

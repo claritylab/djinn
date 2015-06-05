@@ -1,10 +1,19 @@
-
+COMMON=../../../../common/
+CAFFE=/home/ypkang/git/caffe-jahausw/distribute/
+CUDA=/usr/local/cuda/
 all:
-EXTRA_CXXFLAGS = -Wno-sign-compare
+EXTRA_CXXFLAGS = -Wno-sign-compare \
+								 -O3 \
+								 -fpermissive \
+								 -I$(COMMON)/include \
+								 -I$(CAFFE)/include \
+								 -I$(CUDA)/include \
+
 include ../kaldi.mk
 
 LDFLAGS += $(CUDA_LDFLAGS)
-LDLIBS += $(CUDA_LDLIBS) ../libsocket.a
+LDLIBS += $(CUDA_LDLIBS) ../libsocket.a \
+					$(CAFFE)/lib/libcaffe.so
 
 
 BINFILES = nnet-train-frmshuff \
@@ -16,12 +25,10 @@ BINFILES = nnet-train-frmshuff \
         transf-to-nnet cmvn-to-nnet nnet-initialize \
         nnet-kl-hmm-acc nnet-kl-hmm-mat-to-component 
 
-EXTRAFILES =
-
 TESTFILES = 
 
 ADDLIBS = ../nnet/kaldi-nnet.a ../cudamatrix/kaldi-cudamatrix.a ../lat/kaldi-lat.a \
           ../hmm/kaldi-hmm.a ../tree/kaldi-tree.a ../matrix/kaldi-matrix.a \
-          ../util/kaldi-util.a ../base/kaldi-base.a 
+          ../util/kaldi-util.a ../base/kaldi-base.a $(COMMON)/src/tonic.a
 
 include ../makefiles/default_rules.mk
