@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Perform forward pass through Neural Network.\n"
         "\n"
-        "Usage:  nnet-forward [options] <model-in> <feature-rspecifier> <feature-wspecifier>\n"
+        "Usage:  nnet-forward [options] <feature-rspecifier> <feature-wspecifier>\n"
         " [options] --hostname --portno"
         "e.g.: \n"
-        " nnet-forward nnet ark:features.ark ark:mlpoutput.ark\n";
+        " nnet-forward ark:features.ark ark:mlpoutput.ark\n";
 
     ParseOptions po(usage);
 
@@ -86,22 +86,19 @@ int main(int argc, char *argv[]) {
     // inherited from Kaldi
     std::string feature_transform;
     po.Register("feature-transform", &feature_transform, "Feature transform in front of main network (in nnet format)");
-    bool no_softmax = false;
-    bool apply_log = false;
 
     // Read in the argument
     po.Read(argc, argv);
 
-    if (po.NumArgs() != 3) {
+    if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
     
     // Input to ASR
     // inherited from Kaldi
-    std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        feature_wspecifier = po.GetArg(3);
+    std::string feature_rspecifier = po.GetArg(1),
+        feature_wspecifier = po.GetArg(2);
 
     network = common + "configs/" + network;
     weights = common + "weights/" + weights;
