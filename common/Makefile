@@ -9,12 +9,26 @@ CXX_FLAGS = -O3 \
 						-I$(CAFFE)/include/ \
 						-I$(CUDA)/include/
 
+LINKFLAGS = $(LIBRARY_DIRS) \
+						-lboost_program_options \
+						-lboost_filesystem \
+						-lboost_system \
+						-lglog \
+						-lrt \
+						-lpthread \
+						$(CAFFE)/lib/libcaffe.so
 SRC=src
+TARGET = libtonic.a
 
-TARGET = tonic
+SOURCES = $(wildcard $(SRC)/*.cpp)
+OBJECTS = $(SOURCES:.cpp=.o)
 
-$(SRC)/tonic.o: $(SRC)/tonic.cpp $(SRC)/socket.cpp
+$(TARGET): $(OBJECTS) Makefile
+	ar rcs $(TARGET) $(OBJECTS)
+
+# To obtain object files
+%.o: %.cpp Makefile
 	$(CXX) -c $(CXX_FLAGS) $< -o $@
 
-all:
-	ar rcs libtonic.a $(SRC)/tonic.o
+clean:
+	rm libtonic.a $(SRC)/tonic.o
