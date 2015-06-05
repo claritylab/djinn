@@ -3,6 +3,7 @@ include $(COMMON)/Makefile.common
 
 CXX = g++
 CXX_FLAGS  = -O3 \
+						 $(INCLUDE_DIRS) \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \
@@ -12,7 +13,8 @@ ifeq ($(CPU_ONLY), 1)
 	CXX_FLAGS  += -DCPU_ONLY
 endif
 
-LINK_FLAGS = $(COMMON)/libsocket.a \
+LINK_FLAGS = $(LIBRARY_DIRS) \
+						 $(COMMON)/libsocket.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
 						 -lboost_system \

@@ -3,6 +3,7 @@ include $(COMMON)/Makefile.common
 
 CXX = g++
 CXX_FLAGS  = -O3 \
+						 $(INCLUDE_DIRS) \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \
@@ -12,7 +13,8 @@ ifeq ($(CPU_ONLY), 1)
 	CXX_FLAGS  += -DCPU_ONLY
 endif
 
-LINK_FLAGS = -lopencv_core \
+LINK_FLAGS = $(LIBRARY_DIRS) \
+						 -lopencv_core \
 						 -lopencv_highgui \
 						 -lopencv_imgproc \
 						 -lopencv_objdetect \
