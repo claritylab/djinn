@@ -1,12 +1,12 @@
 # DjiNN and Tonic
 
-Sirius is a speech and vision based intelligent personal assistant. Visit the
+DjiNN and Tonic is a Deep Neural Network (DNN) based web-service to execute DNN inference. Visit the
 [DjiNN and Tonic website](http://djinn.clarity-lab.org) for additional
 documentation.  Also visit or post to
 [djinn-users](http://groups.google.com/forum/#!forum/djinn-users) for more
 information and answers to questions. The project is released under [BSD
 license](LICENSE), except certain submodules contain their own specific
-licensing information. We would love to have your help on improving Sirius, and
+licensing information. We would love to have your help on improving DjiNN, and
 see [CONTRIBUTING](CONTRIBUTING.md) for more details.
 
 ## Djinn Service
