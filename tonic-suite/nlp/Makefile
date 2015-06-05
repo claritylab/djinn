@@ -14,7 +14,7 @@ ifeq ($(CPU_ONLY), 1)
 endif
 
 LINK_FLAGS = $(LIBRARY_DIRS) \
-						 $(COMMON)/libsocket.a \
+						 $(COMMON)/libtonic.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
 						 -lboost_system \

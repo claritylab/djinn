@@ -18,7 +18,7 @@ LINK_FLAGS = $(LIBRARY_DIRS) \
 						 -lopencv_highgui \
 						 -lopencv_imgproc \
 						 -lopencv_objdetect \
-						 $(COMMON)/libsocket.a \
+						 $(COMMON)/libtonic.a \
 						 libflandmark_static.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
