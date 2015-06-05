@@ -10,6 +10,10 @@ EXTRA_CXXFLAGS = -Wno-sign-compare \
 								 -I$(CAFFE)/include \
 								 -I$(CUDA)/include 
 
+ifeq ($(CPU_ONLY), 1)
+	EXTRA_CXXFLAGS   += -DCPU_ONLY
+endif
+
 include ../kaldi.mk
 
 LDFLAGS += $(CUDA_LDFLAGS)

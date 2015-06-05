@@ -9,6 +9,10 @@ CXX_FLAGS = -O3 \
 						-I$(CAFFE)/include/ \
 						-I$(CUDA)/include/
 
+ifeq ($(CPU_ONLY), 1)
+	CXX_FLAGS  += -DCPU_ONLY
+endif
+
 LINKFLAGS = $(LIBRARY_DIRS) \
 						-lboost_program_options \
 						-lboost_filesystem \
