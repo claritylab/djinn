@@ -23,17 +23,13 @@
 *.x86_64
 *.hex
 *~
-img-client
-asr-client
-nlp-client
-dnn-server
+tonic-img
+tonic-nlp
+djinn
 
 # Popular scripts with hardpaths
-run-*.sh
-socket-lib/lib.sh
-socket-lib/deploy.sh
 asr/kaldi_patch.sh
-
+common/Makefile.config
 
 # datasets
 */weights/*
@@ -47,3 +43,5 @@ asr/kaldi_patch.sh
 # csvs and txts
 *.csv
 *.txt
+stats-util/
+nvprof-*

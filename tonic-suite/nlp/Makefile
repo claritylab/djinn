@@ -1,17 +1,20 @@
-#CAFFE=/home/jahausw/projects/sirius-caffe/distribute
-CAFFE=/home/jahausw/projects/caffe/distribute
-CUDA=/usr/local/cuda
 COMMON=../../common
+include $(COMMON)/Makefile.config
+
 CXX = g++
 CXX_FLAGS  = -O3 \
+						 $(INCLUDE_DIRS) \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \
-						 -I$(CUDA)/include 
-#\
-						 -DCPU_ONLY
+						 -I$(CUDA)/include
 
-LINK_FLAGS = -L/usr/local/lib ../../common/libsocket.a \
+ifeq ($(CPU_ONLY), 1)
+	CXX_FLAGS  += -DCPU_ONLY
+endif
+
+LINK_FLAGS = $(LIBRARY_DIRS) \
+						 $(COMMON)/libsocket.a \
 						 -lboost_program_options \
 						 -lboost_filesystem \
 						 -lboost_system \

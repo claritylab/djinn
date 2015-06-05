@@ -1,3 +1,17 @@
+/*
+ *  Copyright (c) 2015, University of Michigan.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ *
+ */
+
+/**
+ * @author: Johann Hauswald, Yiping Kang
+ * @contact: jahausw@umich.edu, ypkang@umich.edu
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,9 +31,6 @@
 #include "SENNA_POS.h"
 #include "SENNA_CHK.h"
 #include "SENNA_NER.h"
-#include "SENNA_VBS.h"
-#include "SENNA_PT0.h"
-#include "SENNA_SRL.h"
 
 #include "socket.h"
 #include "tonic.h"
@@ -79,13 +90,6 @@ int main(int argc , char *argv[])
   int *pt0_labels = NULL;
   int *pos_labels = NULL;
   int *ner_labels = NULL;
-  int *vbs_labels = NULL;
-  int **srl_labels = NULL;
-  int *psg_labels = NULL;
-  int n_psg_level = 0;
-  int is_psg_one_segment = 0;
-  int vbs_hash_novb_idx = 22;
-  int n_verbs = 0;
 
   /* inputs */
   SENNA_Hash *word_hash = SENNA_Hash_new(opt_path, "hash/words.lst");
@@ -102,19 +106,11 @@ int main(int argc , char *argv[])
   SENNA_Hash *pos_hash = SENNA_Hash_new(opt_path, "hash/pos.lst");
   SENNA_Hash *chk_hash = SENNA_Hash_new(opt_path, "hash/chk.lst");
   SENNA_Hash *ner_hash = SENNA_Hash_new(opt_path, "hash/ner.lst");
-  SENNA_Hash *vbs_hash = SENNA_Hash_new(opt_path, "hash/vbs.lst");
-  SENNA_Hash *srl_hash = SENNA_Hash_new(opt_path, "hash/srl.lst");
-  // SENNA_Hash *psg_left_hash = SENNA_Hash_new(opt_path, "hash/psg-left.lst");
-  // SENNA_Hash *psg_right_hash = SENNA_Hash_new(opt_path, "hash/psg-right.lst");
 
   // weights not used
   SENNA_POS *pos = SENNA_POS_new(opt_path, "data/pos.dat");
   SENNA_CHK *chk = SENNA_CHK_new(opt_path, "data/chk.dat");
   SENNA_NER *ner = SENNA_NER_new(opt_path, "data/ner.dat");
-  SENNA_PT0 *pt0 = SENNA_PT0_new(opt_path, "data/pt0.dat");
-  SENNA_VBS *vbs = SENNA_VBS_new(opt_path, "data/vbs.dat");
-  SENNA_SRL *srl = SENNA_SRL_new(opt_path, "data/srl.dat");
-  // SENNA_PSG *psg = SENNA_PSG_new(opt_path, "data/psg.dat");
 
   /* tokenizer */
   SENNA_Tokenizer *tokenizer = SENNA_Tokenizer_new(word_hash,
@@ -169,31 +165,6 @@ int main(int argc , char *argv[])
       +ner->ll_gazl_size+ner->ll_gazm_size+ner->ll_gazo_size+ner->ll_gazp_size;
     app.pl.size = ner->window_size*input_size;
   }
-  // else if(task == "srl") {
-  //   req_type = 7;
-  //   pos->service = pt0->service = vbs->service = srl->service = service;
-  //   pos->debug = pt0->debug = vbs->debug = srl->debug = vm["debug"].as<bool>();
-  //   if(pos->service)
-  //     pos->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
-  //   if(pt0->service)
-  //     pt0->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
-  //   if(vbs->service)
-  //     vbs->socketfd = CLIENT_init(vm["hostname"].as<string>().c_str(), vm["portno"].as<int>(), vm["debug"].as<bool>());
-  //   if(pos->socketfd > 0 && pos->service) {
-  //     int internal_req = 4;
-  //     SOCKET_send(pos->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-  //   }
-  //
-  //   if(vbs->socketfd > 0 && vbs->service) {
-  //     int internal_req = 9;
-  //     SOCKET_send(vbs->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-  //   }
-  //   if(pt0->socketfd > 0 && pt0->service) {
-  //     int internal_req = 8;
-  //     SOCKET_send(pt0->socketfd, (char*)&internal_req, sizeof(int), vm["debug"].as<bool>());
-  //   }
-  //   len = srl->hidden_state1_size;
-  // }
 
   // read input file
   ifstream file (app.input.c_str());
@@ -208,8 +179,6 @@ int main(int argc , char *argv[])
 
   if(app.pl.num == 0)
     LOG(FATAL) << app.input << " empty or no tokens found.";
-
-  // if(task == "srl") SOCKET_txsize(socketfd, len);
 
   if(app.task == "pos") {
     if(app.djinn) {
@@ -295,30 +264,6 @@ int main(int argc , char *argv[])
         tokens->gazp_idx,
         app);
   }
-  // else if(task == "srl") {
-  //
-  //   SOCKET_txsize(pos->socketfd,
-  //       tokens->n * (pos->window_size*(pos->ll_word_size+pos->ll_caps_size+pos->ll_suff_size)));
-  //
-  //   SOCKET_txsize(vbs->socketfd,
-  //       tokens->n * (vbs->window_size*(vbs->ll_word_size+vbs->ll_caps_size+vbs->ll_posl_size)));
-  //
-  //   SOCKET_txsize(pt0->socketfd,
-  //       tokens->n * (pt0->window_size*(pt0->ll_word_size+pt0->ll_caps_size+pt0->ll_posl_size)));
-  //
-  //   pos_labels = SENNA_POS_forward(pos, tokens->word_idx, tokens->caps_idx, tokens->suff_idx, tokens->n, pos->socketfd);
-  //   pt0_labels = SENNA_PT0_forward(pt0, tokens->word_idx, tokens->caps_idx, pos_labels, tokens->n, pt0->socketfd);
-  //   vbs_labels = SENNA_VBS_forward(vbs, tokens->word_idx, tokens->caps_idx, pos_labels, tokens->n, vbs->socketfd);
-  //   n_verbs = 0;
-  //   for(int i = 0; i < tokens->n; i++) {
-  //     vbs_labels[i] = (vbs_labels[i] != vbs_hash_novb_idx);
-  //     n_verbs += vbs_labels[i];
-  //   }
-  //
-  //   std::cout<<"word index is " << tokens->word_idx << std::endl;
-  //   std::cout<<"pt0 labels is " << pt0_labels << std::endl;
-  //   srl_labels = SENNA_SRL_forward(srl, tokens->word_idx, tokens->caps_idx, pt0_labels, vbs_labels, tokens->n, socketfd);
-  // }
 
   for(int i = 0; i < tokens->n; i++)
   {
@@ -329,11 +274,6 @@ int main(int argc , char *argv[])
       printf("\t%10s", SENNA_Hash_key(chk_hash, chk_labels[i]));
     else if(app.task == "ner")
       printf("\t%10s", SENNA_Hash_key(ner_hash, ner_labels[i]));
-    else if(app.task == "srl") {
-      printf("\t%15s", (vbs_labels[i] ? tokens->words[i] : "-"));
-      for(int j = 0; j < n_verbs; j++)
-        printf("\t%10s", SENNA_Hash_key(srl_hash, srl_labels[j][i]));
-    }
     printf("\n");
   }
   // end of sentence
@@ -345,9 +285,6 @@ int main(int argc , char *argv[])
   SENNA_POS_free(pos);
   SENNA_CHK_free(chk);
   SENNA_NER_free(ner);
-  // SENNA_PT0_free(pt0);
-  // SENNA_VBS_free(vbs);
-  // SENNA_SRL_free(srl);
 
   SENNA_Hash_free(word_hash);
   SENNA_Hash_free(caps_hash);
