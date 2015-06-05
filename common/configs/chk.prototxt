@@ -1,9 +1,9 @@
 name: "chk"
 input: "data"
 input_dim: 1
-input_dim: 1
-input_dim: 1
 input_dim: 300
+input_dim: 1
+input_dim: 1
 layers {
   name: "fc1"
   type: INNER_PRODUCT
