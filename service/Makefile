@@ -25,7 +25,7 @@ LINK_FLAGS = -lpthread \
 SRC=src
 
 # File names
-EXEC = dnn-server
+EXEC = djinn
 SOURCES = $(wildcard $(SRC)/*.cpp) $(COMMON)/src/tonic.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 

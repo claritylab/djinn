@@ -25,6 +25,7 @@
 *~
 tonic-img
 tonic-nlp
+djinn
 
 # Popular scripts with hardpaths
 asr/kaldi_patch.sh
