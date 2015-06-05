@@ -1,6 +1,7 @@
 COMMON=../../../../common/
-CAFFE=/home/ypkang/git/caffe-jahausw/distribute/
-CUDA=/usr/local/cuda/
+
+include $(COMMON)/Makefile.config
+
 all:
 EXTRA_CXXFLAGS = -Wno-sign-compare \
 								 -O3 \
