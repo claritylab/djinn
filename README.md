@@ -13,10 +13,10 @@ see [CONTRIBUTING](CONTRIBUTING.md) for more details.
 
 [service](service) contains the DjiNN DNN webservice to execute the DNN
 inference component in DNN based applications.
-See [DjiNN](http://djinn.clarity-lab.org/djinn) for more information.
+Visit the [DjiNN webpage](http://djinn.clarity-lab.org/djinn) for more information.
 
 ## Tonic suite
 
 [Tonic suite](tonic-suite) contains 7 applications that use the DjiNN DNN
-service. See [Tonic suite](http://djinn.clarity-lab.org/djinn-suite) for more
-information.
+service. Visit the [Tonic suite
+webpage](http://djinn.clarity-lab.org/djinn-suite) for more information.
