@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <stdio.h>
 #include <sys/time.h>
 
@@ -36,7 +36,6 @@ po::variables_map parse_opts( int ac, char** av )
     ("network,n", po::value<string>()->default_value("imc.prototxt"), "Network config file (.prototxt)")
     ("weights,w", po::value<string>()->default_value("imc.caffemodel"), "Pretrained weights (.caffemodel)")
     ("input,i", po::value<string>()->default_value("imc-list.txt"), "List of input images (1 jpg/line)")
-    ("num,u", po::value<int>()->default_value(1), "num images to read from input list file")
 
     ("djinn,d", po::value<bool>()->default_value(false), "Use DjiNN service?")
     ("hostname,o", po::value<string>()->default_value("localhost"), "Server IP addr")
@@ -73,7 +72,6 @@ int main( int argc, char** argv )
   app.network = vm["common"].as<string>() + "configs/" + vm["network"].as<string>();
   app.weights = vm["common"].as<string>() + "weights/" + vm["weights"].as<string>();
   app.input = vm["input"].as<string>();
-  app.pl.num = vm["num"].as<int>();
 
   // DjiNN service or local?
   app.djinn = vm["djinn"].as<bool>();
@@ -115,12 +113,11 @@ int main( int argc, char** argv )
   // cmt: using map, cant use duplicate names for images
   // change to other structure (vector) if you want to send the same exact
   // filename multiple times
-  map<string, Mat> imgs;
+  vector<pair<string, Mat> > imgs;
   std::ifstream file (app.input.c_str());
   std::string img_file;
-  int skips = 0;
-  for(int i = 0; i < app.pl.num; ++i) {
-    file >> img_file;
+  app.pl.num = 0;
+  while(getline(file, img_file)) {
     LOG(INFO) << "Reading " << img_file;
     Mat img;
     if(app.task == "dig")
@@ -128,19 +125,18 @@ int main( int argc, char** argv )
     else
       img = imread(img_file);
 
-    if(img.channels()*img.rows*img.cols != app.pl.size) {
+    if(img.channels()*img.rows*img.cols != app.pl.size)
       LOG(ERROR) << "Skipping " << img_file << ", resize to correct dimensions.\n";
-      ++skips;
+    else {
+      imgs.push_back(make_pair(img_file, img));
+      ++app.pl.num;
     }
-    else
-      imgs[img_file] = img;
   }
-  // remove skipped images
-  app.pl.num -= skips;
+
   if(app.pl.num < 1)
     LOG(FATAL) << "No images read!";
 
-  map<string, Mat>::iterator it;
+  vector<pair<string, Mat> >::iterator it;
   // align facial recognition image
   if(app.task == "face" && vm["align"].as<bool>()) {
     for(it = imgs.begin(); it != imgs.end(); ++it) {
