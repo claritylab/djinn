@@ -17,9 +17,6 @@
 #include "SENNA_POS.h"
 #include "SENNA_CHK.h"
 #include "SENNA_NER.h"
-#include "SENNA_VBS.h"
-#include "SENNA_PT0.h"
-#include "SENNA_SRL.h"
 
 #include "socket.h"
 #include "tonic.h"
@@ -79,13 +76,6 @@ int main(int argc , char *argv[])
   int *pt0_labels = NULL;
   int *pos_labels = NULL;
   int *ner_labels = NULL;
-  int *vbs_labels = NULL;
-  int **srl_labels = NULL;
-  int *psg_labels = NULL;
-  int n_psg_level = 0;
-  int is_psg_one_segment = 0;
-  int vbs_hash_novb_idx = 22;
-  int n_verbs = 0;
 
   /* inputs */
   SENNA_Hash *word_hash = SENNA_Hash_new(opt_path, "hash/words.lst");
@@ -102,19 +92,11 @@ int main(int argc , char *argv[])
   SENNA_Hash *pos_hash = SENNA_Hash_new(opt_path, "hash/pos.lst");
   SENNA_Hash *chk_hash = SENNA_Hash_new(opt_path, "hash/chk.lst");
   SENNA_Hash *ner_hash = SENNA_Hash_new(opt_path, "hash/ner.lst");
-  SENNA_Hash *vbs_hash = SENNA_Hash_new(opt_path, "hash/vbs.lst");
-  SENNA_Hash *srl_hash = SENNA_Hash_new(opt_path, "hash/srl.lst");
-  // SENNA_Hash *psg_left_hash = SENNA_Hash_new(opt_path, "hash/psg-left.lst");
-  // SENNA_Hash *psg_right_hash = SENNA_Hash_new(opt_path, "hash/psg-right.lst");
 
   // weights not used
   SENNA_POS *pos = SENNA_POS_new(opt_path, "data/pos.dat");
   SENNA_CHK *chk = SENNA_CHK_new(opt_path, "data/chk.dat");
   SENNA_NER *ner = SENNA_NER_new(opt_path, "data/ner.dat");
-  SENNA_PT0 *pt0 = SENNA_PT0_new(opt_path, "data/pt0.dat");
-  SENNA_VBS *vbs = SENNA_VBS_new(opt_path, "data/vbs.dat");
-  SENNA_SRL *srl = SENNA_SRL_new(opt_path, "data/srl.dat");
-  // SENNA_PSG *psg = SENNA_PSG_new(opt_path, "data/psg.dat");
 
   /* tokenizer */
   SENNA_Tokenizer *tokenizer = SENNA_Tokenizer_new(word_hash,
