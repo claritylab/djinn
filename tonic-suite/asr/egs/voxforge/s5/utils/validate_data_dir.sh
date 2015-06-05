@@ -47,11 +47,11 @@ done
   echo "$0: $data/utt2spk has wrong format." && exit;
 
 ns=$(wc -l < $data/spk2utt)
-if [ "$ns" == 1 ]; then
-  echo "$0: WARNING: you have only one speaker.  This probably a bad idea."
-  echo "   Search for the word 'bold' in http://kaldi.sourceforge.net/data_prep.html"
-  echo "   for more information."
-fi
+#if [ "$ns" == 1 ]; then
+  #echo "$0: WARNING: you have only one speaker.  This probably a bad idea."
+  #echo "   Search for the word 'bold' in http://kaldi.sourceforge.net/data_prep.html"
+  #echo "   for more information."
+#fi
 
 
 tmpdir=$(mktemp -d kaldi.XXXX);
@@ -276,4 +276,4 @@ for f in vad.scp utt2lang; do
   fi
 done
 
-echo "$0: Successfully validated data-directory $data"
+#echo "$0: Successfully validated data-directory $data"

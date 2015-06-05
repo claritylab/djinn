@@ -12,7 +12,7 @@ mfcc_config=conf/mfcc.conf
 compress=true
 # End configuration section.
 
-echo "$0 $@"  # Print the command line for logging
+#echo "$0 $@"  # Print the command line for logging
 
 if [ -f path.sh ]; then . ./path.sh; fi
 . parse_options.sh || exit 1;
@@ -43,7 +43,7 @@ mkdir -p $logdir || exit 1;
 
 if [ -f $data/feats.scp ]; then
   mkdir -p $data/.backup
-  echo "$0: moving $data/feats.scp to $data/.backup"
+  #echo "$0: moving $data/feats.scp to $data/.backup"
   mv $data/feats.scp $data/.backup
 fi
 
@@ -93,7 +93,7 @@ if [ -f $data/segments ]; then
      || exit 1;
 
 else
-  echo "$0: [info]: no segments file exists: assuming wav.scp indexed by utterance."
+  #echo "$0: [info]: no segments file exists: assuming wav.scp indexed by utterance."
   split_scps=""
   for n in $(seq $nj); do
     split_scps="$split_scps $logdir/wav_${name}.$n.scp"
@@ -139,4 +139,4 @@ if [ $nf -lt $[$nu - ($nu/20)] ]; then
   exit 1;
 fi
 
-echo "Succeeded creating MFCC features for $name"
+echo "Succeeded creating MFCC features"

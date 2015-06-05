@@ -25,11 +25,12 @@ skip_scoring=false
 scoring_opts="--min-lmwt 4 --max-lmwt 15"
 
 num_threads=1 # if >1, will use latgen-faster-parallel
-parallel_opts="-pe smp $((num_threads+1))" # use 2 CPUs (1 DNN-forward, 1 decoder)
+#parallel_opts="-pe smp $((num_threads+1))" # use 2 CPUs (1 DNN-forward, 1 decoder)
+parallel_opts=
 gpu="false"  
 
 # Additional arguments to talk to dnn service
-djinn="false"
+djinn=false
 hostname= 
 portno=
 common=
@@ -38,7 +39,7 @@ weights=
 
 # End configuration section.
 
-echo "$0 $@"  # Print the command line for logging
+#echo "$0 $@"  # Print the command line for logging
 
 [ -f ./path.sh ] && . ./path.sh; # source the path.
 . parse_options.sh || exit 1;

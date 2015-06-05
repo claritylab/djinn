@@ -7,9 +7,9 @@
 
 source path.sh
 
-echo "=== Starting initial VoxForge data preparation ..."
+#echo "=== Starting initial VoxForge data preparation ..."
 
-echo "--- Making test/train data split ..."
+#echo "--- Making test/train data split ..."
 
 # The number of speakers in the test set
 nspk_test=1
@@ -40,10 +40,10 @@ find $DATA/ -mindepth 1 -maxdepth 1 |\
  sort -u > $loctmp/speakers_all.txt
 
 nspk_all=$(wc -l <$loctmp/speakers_all.txt)
-if [ "$nspk_test" -ge "$nspk_all" ]; then
-  echo "${nspk_test} test speakers requested, but there are only ${nspk_all} speakers in total!"
+#if [ "$nspk_test" -ge "$nspk_all" ]; then
+  #echo "${nspk_test} test speakers requested, but there are only ${nspk_all} speakers in total!"
 #  exit 1;
-fi
+#fi
 
 utils/shuffle_list.pl <$loctmp/speakers_all.txt | head -n $nspk_test | sort -u >$loctmp/speakers_test.txt
 
@@ -51,8 +51,8 @@ gawk 'NR==FNR{spk[$0]; next} !($0 in spk)' \
     $loctmp/speakers_test.txt $loctmp/speakers_all.txt |\
   sort -u > $loctmp/speakers_train.txt
 
-wc -l $loctmp/speakers_all.txt
-wc -l $loctmp/speakers_{train,test}.txt
+#wc -l $loctmp/speakers_all.txt
+#wc -l $loctmp/speakers_{train,test}.txt
 
 # expand speaker names to their respective directories
 ls -d ${DATA}/*/ |\
@@ -70,7 +70,7 @@ mkdir -p $logdir
 > $logdir/make_trans.log
 rm ${locdata}/spk2gender 2>/dev/null
 for s in test; do
- echo "--- Preparing wav.scp, trans.txt and utt2spk ..." 
+ #echo "--- Preparing wav.scp, trans.txt and utt2spk ..." 
  while read d; do
   spkname=`echo $d | cut -f1 -d'-'`;
   spksfx=`echo $d | cut -f2- -d'-'`; # | sed -e 's:_:\-:g'`;
@@ -139,7 +139,7 @@ for s in test; do
  
  sort -k1 < ${loctmp}/${s}_trans.txt.unsorted > ${locdata}/trans.txt
 
- echo "--- Preparing ${s}.spk2utt ..."
+ #echo "--- Preparing ${s}.spk2utt ..."
  cat $locdata/trans.txt |\
   cut -f1 -d' ' |\
   gawk 'BEGIN {FS="-"}
@@ -156,4 +156,5 @@ fi
 gawk '{spk[$1]=$2;} END{for (s in spk) print s " " spk[s]}' \
   $locdata/spk2gender.tmp | sort -k1 > $locdata/spk2gender
 
-echo "*** Initial VoxForge data preparation finished!"
+#echo "*** Initial VoxForge data preparation finished!"
+echo "Succeeded preparing input data"

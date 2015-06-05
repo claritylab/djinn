@@ -18,7 +18,7 @@
 # speaker information does not have to correspond to actual
 # speakers, it's just the level you want to adapt at.
 
-echo "$0 $@"  # Print the command line for logging
+#echo "$0 $@"  # Print the command line for logging
 
 fake=false
 fake_dims=       # If specified, can generate 'fake' stats (that won't normalize)
@@ -105,4 +105,4 @@ if [ $nc -ne $nu ]; then
   [ $nc -eq 0 ] && exit 1;
 fi
 
-echo "Succeeded creating CMVN stats for $name"
+echo "Succeeded creating CMVN stats"
