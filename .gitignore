@@ -29,6 +29,7 @@ djinn
 
 # Popular scripts with hardpaths
 asr/kaldi_patch.sh
+common/Makefile.config
 
 # datasets
 */weights/*
