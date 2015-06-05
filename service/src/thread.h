@@ -7,7 +7,6 @@
 
 #include "caffe/caffe.hpp"
 #include "socket.h"
-#include "utils.h"
 #include "tonic.h"
 
 using caffe::Blob;

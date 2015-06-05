@@ -1,8 +1,3 @@
-/* Johann Hauswald
- * jahausw@umich.edu
- * 2014
- */
-
 #include <assert.h>
 #include <iostream>
 #include <string>

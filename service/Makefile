@@ -1,20 +1,22 @@
-CAFFE=/home/jahausw/projects/sirius-caffe/distribute
-CUDA=/usr/local/cuda
 COMMON=../common
+include $(COMMON)/Makefile.config
 
 CXX = g++
-CXX_FLAGS = -O3 \
-						-fpermissive \
-						-I$(COMMON)/include \
-						-I$(CAFFE)/include \
-						-I$(CUDA)/include \
-						-DCPU_ONLY
+CXX_FLAGS  = -O3 \
+						 $(INCLUDE_DIRS) \
+						 -fpermissive \
+						 -I$(COMMON)/include \
+						 -I$(CAFFE)/include \
+						 -I$(CUDA)/include
 
-LINK_FLAGS = -lpthread \
+ifeq ($(CPU_ONLY), 1)
+	CXX_FLAGS  += -DCPU_ONLY
+endif
+
+LINK_FLAGS = $(LIBRARY_DIRS) \
+						 -lpthread \
 						 -ldl \
 						 -lrt \
-						 -lboost_timer \
-						 -lboost_chrono \
 						 -lboost_program_options \
 						 -lboost_filesystem \
 						 -lboost_system \

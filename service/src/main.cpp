@@ -1,8 +1,3 @@
-/* Johann Hauswald
- * jahausw@umich.edu
- * 2014
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
