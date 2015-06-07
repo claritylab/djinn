@@ -21,6 +21,7 @@
 #include <glog/logging.h>
 #include <boost/chrono/thread_clock.hpp>
 
+#include "timer.h"
 #include "thread.h"
 
 extern map<string, Net<float>* > nets;
@@ -29,12 +30,27 @@ extern bool gpu;
 
 void SERVICE_fwd(float *in, int in_size, float *out, int out_size, Net<float>* net)
 {
+  string net_name = net->name();
+  STATS_INIT("service", "DjiNN service inference");
+  PRINT_STAT_STRING("network", net_name.c_str());
+
+  if(Caffe::mode() == Caffe::CPU)
+    PRINT_STAT_STRING("platform", "cpu");
+  else
+    PRINT_STAT_STRING("platform", "gpu");
+
+
   float loss;
   vector<Blob<float>* > in_blobs = net->input_blobs();
 
+  tic();
   in_blobs[0]->set_cpu_data(in);
   vector<Blob<float>* > out_blobs = net->ForwardPrefilled(&loss);
   memcpy(out, out_blobs[0]->cpu_data(), sizeof(float));
+  
+  PRINT_STAT_DOUBLE("inference latency", toc());
+
+  STATS_END();
 
   if(out_size != out_blobs[0]->count())
     LOG(FATAL) << "out_size =! out_blobs[0]->count())";

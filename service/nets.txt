@@ -5,6 +5,3 @@ face.prototxt
 imc.prototxt
 ner.prototxt
 pos.prototxt
-pt0.prototxt
-srl.prototxt
-vbs.prototxt
