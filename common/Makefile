@@ -1,4 +1,3 @@
-
 include ./Makefile.config
 
 CXX = g++

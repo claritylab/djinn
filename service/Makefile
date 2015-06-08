@@ -2,7 +2,7 @@ COMMON=../common
 include $(COMMON)/Makefile.config
 
 CXX = g++
-CXX_FLAGS  = -O3 \
+CXX_FLAGS  = -g \
 						 $(INCLUDE_DIRS) \
 						 -fpermissive \
 						 -I$(COMMON)/include \
@@ -21,14 +21,14 @@ LINK_FLAGS = $(LIBRARY_DIRS) \
 						 -lboost_filesystem \
 						 -lboost_system \
 						 -lglog \
-						 $(COMMON)/libsocket.a \
-						 $(CAFFE)/lib/libcaffe.so
+						 $(CAFFE)/lib/libcaffe.so \
+						 $(COMMON)/libtonic.a
 
 SRC=src
 
 # File names
 EXEC = djinn
-SOURCES = $(wildcard $(SRC)/*.cpp) $(COMMON)/src/tonic.cpp
+SOURCES = $(wildcard $(SRC)/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 
 $(EXEC): $(OBJECTS) Makefile
