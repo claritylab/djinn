@@ -109,8 +109,10 @@ int main(int argc , char *argv[])
     pthread_t new_thread_id;
     int client_sock = accept(socketfd, (sockaddr*) 0, (unsigned int *) 0);
 
-    if(client_sock == -1)
+    if(client_sock == -1){
       LOG(ERROR) << "Failed to accept.\n";
+      continue;
+    }
     else
       new_thread_id = request_thread_init(client_sock);
 

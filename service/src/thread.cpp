@@ -16,6 +16,7 @@
 #include <sstream>
 #include <iostream>
 #include <assert.h>
+#include <stdint.h>
 #include <ctime>
 #include <cmath>
 #include <glog/logging.h>
@@ -67,7 +68,7 @@ pthread_t request_thread_init(int sock)
 
   // Create a new thread starting with the function request_handler
   pthread_t tid;
-  if(pthread_create(&tid, &attr, request_handler, (void *)sock) != 0)
+  if(pthread_create(&tid, &attr, request_handler, (void *)(intptr_t)sock) != 0)
     LOG(ERROR) << "Failed to create a request handler thread.\n";
 
   return tid;
@@ -75,7 +76,7 @@ pthread_t request_thread_init(int sock)
 
 void* request_handler(void* sock)
 {
-  int socknum = (int)sock;
+  int socknum = (intptr_t)sock;
 
   // 1. Client sends the application type
   // 2. Client sends the size of incoming data
@@ -86,7 +87,7 @@ void* request_handler(void* sock)
   map<string, Net<float>* >::iterator it = nets.find(req_name);
   if(it == nets.end()) {
     LOG(ERROR) << "Task " << req_name << " not found.";
-    return;
+    return (void*)1;
   }
   else
     LOG(INFO) << "Task " << req_name << " forward pass.";
@@ -95,7 +96,7 @@ void* request_handler(void* sock)
   int sock_elts = SOCKET_rxsize(socknum);
   if(sock_elts < 0){
     LOG(ERROR) << "Error num incoming elts.";
-    exit(1);
+    return (void*)1;
   }
 
   // reshape input dims if incoming data != current net config
@@ -147,5 +148,5 @@ void* request_handler(void* sock)
   free(in);
   free(out);
 
-  return;
+  return (void*)0;
 }
