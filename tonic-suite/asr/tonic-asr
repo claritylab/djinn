@@ -25,7 +25,7 @@ hostname=localhost # server hostname
 portno=8080 # server port
 common=../../../../../common/
 network=asr.prototxt
-weights=asr.caffemodel
+weight=asr.caffemodel
 input=asr-list.txt
 
 . parse_options.sh || exit 1;
@@ -79,7 +79,7 @@ fi
 steps/nnet/decode.sh --djinn $djinn --hostname $hostname --portno $portno \
                     --nj 1 --cmd "$decode_cmd" --config conf/decode_dnn.config \
                     --acwt 0.1 \
-                    --common $common --network $network --weights $weights \
+                    --common $common --network $network --weights $weight \
                     $graph_dir/graph/ $data_dir $target_dir;
 
 if [ $? != 0 ];

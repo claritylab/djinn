@@ -18,6 +18,7 @@ egs/voxforge/s5/exp/make_mfcc/*
 egs/voxforge/s5/data/*
 egs/voxforge/s5/exp/tri3b/*
 egs/voxforge/s5/exp/djinn_decode/decode_local/*
+egs/voxforge/s5/data_set/selected/DeepBlue-20121003-jmk/wav/*
 
 # kaldi binary files exhaustively listed here
 src/bin/acc-lda
