@@ -20,7 +20,7 @@ target_dir=$dnn_dir/decode_local
 spk=DeepBlue-20121003-jmk
 
 # arguments to pass in
-djinn=false # Use DjiNN service ?
+djinn=0 # Use DjiNN service ?
 hostname=localhost # server hostname
 portno=8080 # server port
 common=../../../../../common/

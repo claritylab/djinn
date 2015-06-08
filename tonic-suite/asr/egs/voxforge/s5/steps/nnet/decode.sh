@@ -30,7 +30,7 @@ parallel_opts=
 gpu="false"  
 
 # Additional arguments to talk to dnn service
-djinn=false
+djinn=0
 hostname= 
 portno=
 common=
@@ -103,6 +103,12 @@ fi
 if [ -f $srcdir/delta_order ]; then
   delta_order=$(cat $srcdir/delta_order)
   feats="$feats add-deltas --delta-order=$delta_order ark:- ark:- |"
+fi
+
+if [ $djinn -eq 0 ]; then
+  djinn=false
+else
+  djinn=true
 fi
 
 # Run the decoding in the queue
