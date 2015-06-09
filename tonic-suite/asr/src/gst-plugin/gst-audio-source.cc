@@ -23,16 +23,14 @@
 
 namespace kaldi {
 
-
-GstBufferSource::GstBufferSource() :
-  ended_(false) {
+GstBufferSource::GstBufferSource() : ended_(false) {
   buf_queue_ = g_async_queue_new();
   current_buffer_ = NULL;
   pos_in_current_buf_ = 0;
 
   // Monophone, 16-bit input hardcoded
   KALDI_ASSERT(sizeof(SampleType) == 2 &&
-      "The current GstBufferSource code assumes 16-bit input");
+               "The current GstBufferSource code assumes 16-bit input");
   g_cond_init(&data_cond_);
   g_mutex_init(&lock_);
 }
@@ -62,17 +60,17 @@ void GstBufferSource::SetEnded(bool ended) {
   g_mutex_unlock(&lock_);
 }
 
-
 bool GstBufferSource::Read(Vector<BaseFloat> *data) {
   uint32 nsamples_req = data->Dim();  // (16bit) samples requested
   int16 buf[data->Dim()];
   uint32 nbytes_transferred = 0;
 
-  while ((nbytes_transferred  < nsamples_req * sizeof(SampleType))) {
+  while ((nbytes_transferred < nsamples_req * sizeof(SampleType))) {
     g_mutex_lock(&lock_);
     while ((current_buffer_ == NULL) &&
-        !((g_async_queue_length(buf_queue_) == 0) && ended_)) {
-      current_buffer_ = reinterpret_cast<GstBuffer*>(g_async_queue_try_pop(buf_queue_));
+           !((g_async_queue_length(buf_queue_) == 0) && ended_)) {
+      current_buffer_ =
+          reinterpret_cast<GstBuffer *>(g_async_queue_try_pop(buf_queue_));
       if (current_buffer_ == NULL) {
         g_cond_wait(&data_cond_, &lock_);
       }
@@ -88,8 +86,8 @@ bool GstBufferSource::Read(Vector<BaseFloat> *data) {
         gst_buffer_extract(current_buffer_, pos_in_current_buf_,
                            (reinterpret_cast<char *>(buf)) + nbytes_transferred,
                            nbytes_from_current);
-    KALDI_ASSERT(nbytes_extracted == nbytes_from_current
-                 && "Unexpected number of bytes extracted from Gst buffer");
+    KALDI_ASSERT(nbytes_extracted == nbytes_from_current &&
+                 "Unexpected number of bytes extracted from Gst buffer");
 
     nbytes_transferred += nbytes_from_current;
     pos_in_current_buf_ += nbytes_from_current;
@@ -101,11 +99,10 @@ bool GstBufferSource::Read(Vector<BaseFloat> *data) {
     }
   }
 
-  for (int i = 0; i < nbytes_transferred / sizeof(SampleType) ; ++i) {
+  for (int i = 0; i < nbytes_transferred / sizeof(SampleType); ++i) {
     (*data)(i) = static_cast<BaseFloat>(buf[i]);
   }
-  return !((g_async_queue_length(buf_queue_) < sizeof(SampleType))
-      && ended_
-      && (current_buffer_ == NULL));
+  return !((g_async_queue_length(buf_queue_) < sizeof(SampleType)) && ended_ &&
+           (current_buffer_ == NULL));
 }
 }

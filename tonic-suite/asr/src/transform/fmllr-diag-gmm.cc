@@ -27,11 +27,9 @@ using std::vector;
 
 namespace kaldi {
 
-void FmllrDiagGmmAccs:: AccumulateFromPosteriors(
-    const DiagGmm &pdf,
-    const VectorBase<BaseFloat> &data,
+void FmllrDiagGmmAccs::AccumulateFromPosteriors(
+    const DiagGmm &pdf, const VectorBase<BaseFloat> &data,
     const VectorBase<BaseFloat> &posterior) {
-  
   if (this->DataHasChanged(data)) {
     CommitSingleFrameStats();
     InitSingleFrameStats(data);
@@ -42,21 +40,18 @@ void FmllrDiagGmmAccs:: AccumulateFromPosteriors(
   stats.b.AddMatVec(1.0, pdf.inv_vars(), kTrans, posterior, 1.0);
 }
 
-void FmllrDiagGmmAccs:: AccumulateFromPosteriorsPreselect(
-    const DiagGmm &pdf,
-    const std::vector<int32> &gselect,
-    const VectorBase<BaseFloat> &data,
-    const VectorBase<BaseFloat> &posterior) {
-  
+void FmllrDiagGmmAccs::AccumulateFromPosteriorsPreselect(
+    const DiagGmm &pdf, const std::vector<int32> &gselect,
+    const VectorBase<BaseFloat> &data, const VectorBase<BaseFloat> &posterior) {
   if (this->DataHasChanged(data)) {
     CommitSingleFrameStats();
     InitSingleFrameStats(data);
   }
   SingleFrameStats &stats = this->single_frame_stats_;
   stats.count += posterior.Sum();
-  
+
   const Matrix<BaseFloat> &means_invvars = pdf.means_invvars(),
-      &inv_vars = pdf.inv_vars();
+                          &inv_vars = pdf.inv_vars();
   KALDI_ASSERT(static_cast<int32>(gselect.size()) == posterior.Dim());
   for (size_t i = 0; i < gselect.size(); i++) {
     stats.a.AddVec(posterior(i), means_invvars.Row(gselect[i]));
@@ -65,10 +60,10 @@ void FmllrDiagGmmAccs:: AccumulateFromPosteriorsPreselect(
 }
 
 FmllrDiagGmmAccs::FmllrDiagGmmAccs(const DiagGmm &gmm,
-                                   const AccumFullGmm &fgmm_accs):
-    single_frame_stats_(gmm.Dim()), opts_(FmllrOptions()) {
-  KALDI_ASSERT(gmm.NumGauss() == fgmm_accs.NumGauss()
-               && gmm.Dim() == fgmm_accs.Dim());
+                                   const AccumFullGmm &fgmm_accs)
+    : single_frame_stats_(gmm.Dim()), opts_(FmllrOptions()) {
+  KALDI_ASSERT(gmm.NumGauss() == fgmm_accs.NumGauss() &&
+               gmm.Dim() == fgmm_accs.Dim());
   Init(gmm.Dim());
   int32 dim = gmm.Dim(), num_gauss = gmm.NumGauss();
   for (int32 g = 0; g < num_gauss; g++) {
@@ -78,16 +73,18 @@ FmllrDiagGmmAccs::FmllrDiagGmmAccs(const DiagGmm &gmm,
     SubVector<BaseFloat> this_invvar(gmm.inv_vars(), g);
     SubVector<double> this_mean_acc(fgmm_accs.mean_accumulator(), g);
     Vector<double> this_mean_invvar_dbl(this_mean_invvar);
-    Vector<double> this_extended_mean_acc(dim+1);
+    Vector<double> this_extended_mean_acc(dim + 1);
     this_extended_mean_acc.Range(0, dim).CopyFromVec(this_mean_acc);
-    this_extended_mean_acc(dim) = this_occ; // acc of x^+
-    Matrix<double> this_cov_acc(fgmm_accs.covariance_accumulator()[g]); // copy to
+    this_extended_mean_acc(dim) = this_occ;  // acc of x^+
+    Matrix<double> this_cov_acc(
+        fgmm_accs.covariance_accumulator()[g]);  // copy to
     // regular Matrix.
-    Matrix<double> this_extended_cov_acc(dim+1, dim+1); // make as if accumulated
+    Matrix<double> this_extended_cov_acc(dim + 1,
+                                         dim + 1);  // make as if accumulated
     // using x^+, not x.
     this_extended_cov_acc.Range(0, dim, 0, dim).CopyFromMat(this_cov_acc);
     this_extended_cov_acc.Row(dim).CopyFromVec(this_extended_mean_acc);
-    this_extended_cov_acc.CopyColFromVec(this_extended_mean_acc, dim); // since
+    this_extended_cov_acc.CopyColFromVec(this_extended_mean_acc, dim);  // since
     // there is no Col() function, use a member-function of the matrix class.
     SpMatrix<double> this_extended_cov_acc_sp(this_extended_cov_acc);
     beta_ += this_occ;
@@ -97,14 +94,13 @@ FmllrDiagGmmAccs::FmllrDiagGmmAccs(const DiagGmm &gmm,
   }
 }
 
-
 BaseFloat FmllrDiagGmmAccs::AccumulateForGmm(const DiagGmm &pdf,
                                              const VectorBase<BaseFloat> &data,
                                              BaseFloat weight) {
   int32 num_comp = pdf.NumGauss();
   Vector<BaseFloat> posterior(num_comp);
   BaseFloat loglike;
-  
+
   loglike = pdf.ComponentPosteriors(data, &posterior);
   posterior.Scale(weight);
   AccumulateFromPosteriors(pdf, data, posterior);
@@ -112,31 +108,27 @@ BaseFloat FmllrDiagGmmAccs::AccumulateForGmm(const DiagGmm &pdf,
 }
 
 BaseFloat FmllrDiagGmmAccs::AccumulateForGmmPreselect(
-    const DiagGmm &pdf,
-    const std::vector<int32> &gselect,
-    const VectorBase<BaseFloat> &data,
-    BaseFloat weight) {
+    const DiagGmm &pdf, const std::vector<int32> &gselect,
+    const VectorBase<BaseFloat> &data, BaseFloat weight) {
   KALDI_ASSERT(!gselect.empty() && "Empty gselect information");
   Vector<BaseFloat> loglikes;
   pdf.LogLikelihoodsPreselect(data, gselect, &loglikes);
 
-  BaseFloat loglike = loglikes.ApplySoftMax(); // they are now posteriors.
+  BaseFloat loglike = loglikes.ApplySoftMax();  // they are now posteriors.
   loglikes.Scale(weight);
   AccumulateFromPosteriorsPreselect(pdf, gselect, data, loglikes);
   return loglike;
 }
 
-
-
 void FmllrDiagGmmAccs::Update(const FmllrOptions &opts,
                               MatrixBase<BaseFloat> *fmllr_mat,
-                              BaseFloat *objf_impr,
-                              BaseFloat *count) {
+                              BaseFloat *objf_impr, BaseFloat *count) {
   KALDI_ASSERT(fmllr_mat != NULL);
   CommitSingleFrameStats();
   if (fmllr_mat->IsZero())
-    KALDI_ERR << "You must initialize the fMLLR matrix to a non-singular value "
-        "(so we can report objective function changes); e.g. call SetUnit()";
+    KALDI_ERR
+        << "You must initialize the fMLLR matrix to a non-singular value "
+           "(so we can report objective function changes); e.g. call SetUnit()";
   if (opts.update_type == "full" && this->opts_.update_type != "full") {
     KALDI_ERR << "You are requesting a full-fMLLR update but you accumulated "
               << "stats for more limited update type.";
@@ -145,7 +137,8 @@ void FmllrDiagGmmAccs::Update(const FmllrOptions &opts,
     Matrix<BaseFloat> tmp_old(*fmllr_mat), tmp_new(*fmllr_mat);
     BaseFloat objf_change;
     if (opts.update_type == "full")
-      objf_change = ComputeFmllrMatrixDiagGmmFull(tmp_old, *this, opts.num_iters, &tmp_new);
+      objf_change = ComputeFmllrMatrixDiagGmmFull(tmp_old, *this,
+                                                  opts.num_iters, &tmp_new);
     else if (opts.update_type == "diag")
       objf_change = ComputeFmllrMatrixDiagGmmDiagonal(tmp_old, *this, &tmp_new);
     else if (opts.update_type == "offset")
@@ -154,23 +147,23 @@ void FmllrDiagGmmAccs::Update(const FmllrOptions &opts,
       objf_change = 0.0;
     else
       KALDI_ERR << "Unknown fMLLR update type " << opts.update_type
-                << ", fmllr-update-type must be one of \"full\"|\"diag\"|\"offset\"|\"none\"";
+                << ", fmllr-update-type must be one of "
+                   "\"full\"|\"diag\"|\"offset\"|\"none\"";
     fmllr_mat->CopyFromMat(tmp_new);
     if (objf_impr) *objf_impr = objf_change;
     if (count) *count = beta_;
   } else {  // Not changing matrix.
-    KALDI_WARN << "Not updating fMLLR since below min-count: count is " << beta_;
+    KALDI_WARN << "Not updating fMLLR since below min-count: count is "
+               << beta_;
     if (objf_impr) *objf_impr = 0.0;
     if (count) *count = beta_;
   }
 }
 
-
-BaseFloat ComputeFmllrMatrixDiagGmm(const MatrixBase<BaseFloat> &in_xform,
-                                    const AffineXformStats &stats,
-                                    std::string fmllr_type,  // "none", "offset", "diag", "full"
-                                    int32 num_iters,
-                                    MatrixBase<BaseFloat> *out_xform) {
+BaseFloat ComputeFmllrMatrixDiagGmm(
+    const MatrixBase<BaseFloat> &in_xform, const AffineXformStats &stats,
+    std::string fmllr_type,  // "none", "offset", "diag", "full"
+    int32 num_iters, MatrixBase<BaseFloat> *out_xform) {
   if (fmllr_type == "full") {
     return ComputeFmllrMatrixDiagGmmFull(in_xform, stats, num_iters, out_xform);
   } else if (fmllr_type == "diag") {
@@ -179,8 +172,9 @@ BaseFloat ComputeFmllrMatrixDiagGmm(const MatrixBase<BaseFloat> &in_xform,
     return ComputeFmllrMatrixDiagGmmOffset(in_xform, stats, out_xform);
   } else if (fmllr_type == "none") {
     if (!in_xform.IsUnit())
-      KALDI_WARN << "You set fMLLR type to \"none\" but your starting transform "
-          "is not unit [this is strange, and diagnostics will be wrong].";
+      KALDI_WARN
+          << "You set fMLLR type to \"none\" but your starting transform "
+             "is not unit [this is strange, and diagnostics will be wrong].";
     out_xform->SetUnit();
     return 0.0;
   } else
@@ -189,12 +183,8 @@ BaseFloat ComputeFmllrMatrixDiagGmm(const MatrixBase<BaseFloat> &in_xform,
   return 0.0;
 }
 
-
-void FmllrInnerUpdate(SpMatrix<double> &inv_G,
-                      VectorBase<double> &k,
-                      double beta,
-                      int32 row,
-                      MatrixBase<double> *transform) {
+void FmllrInnerUpdate(SpMatrix<double> &inv_G, VectorBase<double> &k,
+                      double beta, int32 row, MatrixBase<double> *transform) {
   int32 dim = transform->NumRows();
   KALDI_ASSERT(transform->NumCols() == dim + 1);
   KALDI_ASSERT(row >= 0 && row < dim);
@@ -207,7 +197,7 @@ void FmllrInnerUpdate(SpMatrix<double> &inv_G,
   // Removed this step because it's not necessary and could lead to
   // under/overflow [Dan]
   // cofact_mat.Scale(exp(logdet));
-  
+
   // The extended cofactor vector for the current row
   Vector<double> cofact_row(dim + 1);
   cofact_row.Range(0, dim).CopyRowFromMat(cofact_mat, row);
@@ -221,10 +211,10 @@ void FmllrInnerUpdate(SpMatrix<double> &inv_G,
   double discr = std::sqrt(e2 * e2 + 4 * e1 * beta);
   double alpha1 = (-e2 + discr) / (2 * e1);
   double alpha2 = (-e2 - discr) / (2 * e1);
-  double auxf1 = beta * std::log(std::abs(alpha1 * e1 + e2)) -
-      0.5 * alpha1 * alpha1 * e1;
-  double auxf2 = beta * std::log(std::abs(alpha2 * e1 + e2)) -
-      0.5 * alpha2 * alpha2 * e1;
+  double auxf1 =
+      beta * std::log(std::abs(alpha1 * e1 + e2)) - 0.5 * alpha1 * alpha1 * e1;
+  double auxf2 =
+      beta * std::log(std::abs(alpha2 * e1 + e2)) - 0.5 * alpha2 * alpha2 * e1;
   double alpha = (auxf1 > auxf2) ? alpha1 : alpha2;
 
   // Update transform row: w_d = (\alpha cofact_d + k_d) G_d^{-1}
@@ -240,7 +230,7 @@ BaseFloat ComputeFmllrMatrixDiagGmmFull(const MatrixBase<BaseFloat> &in_xform,
   int32 dim = static_cast<int32>(stats.G_.size());
 
   // Compute the inverse matrices of second-order statistics
-  vector< SpMatrix<double> > inv_g(dim);
+  vector<SpMatrix<double> > inv_g(dim);
   for (int32 d = 0; d < dim; d++) {
     inv_g[d].Resize(dim + 1);
     inv_g[d].CopyFromSp(stats.G_[d]);
@@ -249,16 +239,16 @@ BaseFloat ComputeFmllrMatrixDiagGmmFull(const MatrixBase<BaseFloat> &in_xform,
 
   Matrix<double> old_xform(in_xform), new_xform(in_xform);
   BaseFloat old_objf = FmllrAuxFuncDiagGmm(old_xform, stats);
-  
+
   for (int32 iter = 0; iter < num_iters; ++iter) {
     for (int32 d = 0; d < dim; d++) {
       SubVector<double> k_d(stats.K_, d);
       FmllrInnerUpdate(inv_g[d], k_d, stats.beta_, d, &new_xform);
     }  // end of looping over rows
-  }  // end of iterations
+  }    // end of iterations
 
   BaseFloat new_objf = FmllrAuxFuncDiagGmm(new_xform, stats),
-      objf_improvement = new_objf - old_objf;
+            objf_improvement = new_objf - old_objf;
   KALDI_LOG << "fMLLR objf improvement is "
             << (objf_improvement / (stats.beta_ + 1.0e-10))
             << " per frame over " << stats.beta_ << " frames.";
@@ -272,19 +262,23 @@ BaseFloat ComputeFmllrMatrixDiagGmmFull(const MatrixBase<BaseFloat> &in_xform,
   }
 }
 
-BaseFloat ComputeFmllrMatrixDiagGmmDiagonal(const MatrixBase<BaseFloat> &in_xform,
-                                            const AffineXformStats &stats,
-                                            MatrixBase<BaseFloat> *out_xform) {
-  // The "Diagonal" here means a diagonal fMLLR matrix, i.e. like W = [ A;  b] where
+BaseFloat ComputeFmllrMatrixDiagGmmDiagonal(
+    const MatrixBase<BaseFloat> &in_xform, const AffineXformStats &stats,
+    MatrixBase<BaseFloat> *out_xform) {
+  // The "Diagonal" here means a diagonal fMLLR matrix, i.e. like W = [ A;  b]
+  // where
   // A is diagonal.
   // We re-derived the math (see exponential transform paper) to get a simpler
   // update rule.
 
   /*
-  Write out_xform as D, which is a d x d+1 matrix (where d is the feature dimension).
-  We are solving for s == d_{i,i}, and o == d_{i,d}  [assuming zero-based indexing];
+  Write out_xform as D, which is a d x d+1 matrix (where d is the feature
+ dimension).
+  We are solving for s == d_{i,i}, and o == d_{i,d}  [assuming zero-based
+ indexing];
       s is a scale, o is an offset.
-  The stats are K (dimension d x d+1) and G_i for i=0..d-1 (dimension: d+1 x d+1),
+  The stats are K (dimension d x d+1) and G_i for i=0..d-1 (dimension: d+1 x
+ d+1),
     and the count beta.
 
  The auxf for the i'th row of the transform is (assuming zero-based indexing):
@@ -322,22 +316,23 @@ BaseFloat ComputeFmllrMatrixDiagGmmDiagonal(const MatrixBase<BaseFloat> &in_xfor
   double beta = stats.beta_;
   out_xform->CopyFromMat(in_xform);
   if (beta == 0.0) {
-    KALDI_WARN << "Computing diagonal fMLLR matrix: no stats [using original transform]";
+    KALDI_WARN << "Computing diagonal fMLLR matrix: no stats [using original "
+                  "transform]";
     return 0.0;
   }
   BaseFloat old_obj = FmllrAuxFuncDiagGmm(*out_xform, stats);
-  KALDI_ASSERT(out_xform->Range(0, dim, 0, dim).IsDiagonal()); // orig transform
+  KALDI_ASSERT(
+      out_xform->Range(0, dim, 0, dim).IsDiagonal());  // orig transform
   // must be diagonal.
-  for(int32 i = 0; i < dim; i++) {
+  for (int32 i = 0; i < dim; i++) {
     double k_ii = stats.K_(i, i), k_id = stats.K_(i, dim),
-        g_iii = stats.G_[i](i, i), g_idd = stats.G_[i](dim, dim),
-        g_idi = stats.G_[i](dim, i);
-    double a = g_idi*g_idi/g_idd - g_iii,
-        b = k_ii - g_idi*k_id/g_idd,
-        c = beta;
-    double s = (-b - std::sqrt(b*b - 4*a*c)) / (2*a);
+           g_iii = stats.G_[i](i, i), g_idd = stats.G_[i](dim, dim),
+           g_idi = stats.G_[i](dim, i);
+    double a = g_idi * g_idi / g_idd - g_iii, b = k_ii - g_idi * k_id / g_idd,
+           c = beta;
+    double s = (-b - std::sqrt(b * b - 4 * a * c)) / (2 * a);
     KALDI_ASSERT(s > 0.0);
-    double o = (k_id - s*g_idi) / g_idd;
+    double o = (k_id - s * g_idi) / g_idd;
     (*out_xform)(i, i) = s;
     (*out_xform)(i, dim) = o;
   }
@@ -351,7 +346,7 @@ BaseFloat ComputeFmllrMatrixDiagGmmOffset(const MatrixBase<BaseFloat> &in_xform,
                                           const AffineXformStats &stats,
                                           MatrixBase<BaseFloat> *out_xform) {
   int32 dim = stats.G_.size();
-  KALDI_ASSERT(in_xform.NumRows() == dim && in_xform.NumCols() == dim+1);
+  KALDI_ASSERT(in_xform.NumRows() == dim && in_xform.NumCols() == dim + 1);
   SubMatrix<BaseFloat> square_part(in_xform, 0, dim, 0, dim);
   KALDI_ASSERT(square_part.IsUnit());
   BaseFloat objf_impr = 0.0;
@@ -363,20 +358,19 @@ BaseFloat ComputeFmllrMatrixDiagGmmOffset(const MatrixBase<BaseFloat> &in_xform,
     // b_i = [K(i, dim) - G_i(i, dim)] / G_i(dim, dim)
     // objf change is given by (1)
     BaseFloat b_i = (*out_xform)(i, dim);
-    BaseFloat objf_before = -0.5 * b_i * b_i * stats.G_[i](dim, dim)
-        - b_i * stats.G_[i](i, dim) + b_i * stats.K_(i, dim);
+    BaseFloat objf_before = -0.5 * b_i * b_i * stats.G_[i](dim, dim) -
+                            b_i * stats.G_[i](i, dim) + b_i * stats.K_(i, dim);
     b_i = (stats.K_(i, dim) - stats.G_[i](i, dim)) / stats.G_[i](dim, dim);
     (*out_xform)(i, dim) = b_i;
-    BaseFloat objf_after = -0.5 * b_i * b_i * stats.G_[i](dim, dim)
-        - b_i * stats.G_[i](i, dim) + b_i * stats.K_(i, dim);
+    BaseFloat objf_after = -0.5 * b_i * b_i * stats.G_[i](dim, dim) -
+                           b_i * stats.G_[i](i, dim) + b_i * stats.K_(i, dim);
     if (objf_after < objf_before)
-      KALDI_WARN << "Objf decrease in offset estimation:"
-                 << objf_after << " < " << objf_before;
+      KALDI_WARN << "Objf decrease in offset estimation:" << objf_after << " < "
+                 << objf_before;
     objf_impr += objf_after - objf_before;
   }
   return objf_impr;
 }
-
 
 void ApplyFeatureTransformToStats(const MatrixBase<BaseFloat> &xform,
                                   AffineXformStats *stats) {
@@ -384,35 +378,35 @@ void ApplyFeatureTransformToStats(const MatrixBase<BaseFloat> &xform,
   int32 dim = stats->Dim();
   // make sure the stats are of the standard diagonal kind.
   KALDI_ASSERT(stats->G_.size() == static_cast<size_t>(dim));
-  KALDI_ASSERT( (xform.NumRows() == dim && xform.NumCols() == dim) // linear
-                || (xform.NumRows() == dim && xform.NumCols() == dim+1) // affine
-                || (xform.NumRows() == dim+1 && xform.NumCols() == dim+1));  // affine w/ extra row.
-  if (xform.NumRows() == dim+1) {  // check last row of input
+  KALDI_ASSERT((xform.NumRows() == dim && xform.NumCols() == dim)  // linear
+               ||
+               (xform.NumRows() == dim && xform.NumCols() == dim + 1)  // affine
+               || (xform.NumRows() == dim + 1 &&
+                   xform.NumCols() == dim + 1));  // affine w/ extra row.
+  if (xform.NumRows() == dim + 1) {               // check last row of input
     // has correct value. 0 0 0 ..  0 1.
-    for (int32 i = 0; i < dim; i++)
-      KALDI_ASSERT(xform(dim, i) == 0.0);
+    for (int32 i = 0; i < dim; i++) KALDI_ASSERT(xform(dim, i) == 0.0);
     KALDI_ASSERT(xform(dim, dim) == 1.0);
   }
 
   // Get the transform into the (dim+1 x dim+1) format, with
   // 0 0 0 .. 0 1 as the last row.
   SubMatrix<BaseFloat> xform_square(xform, 0, dim, 0, dim);
-  Matrix<double> xform_full(dim+1, dim+1);
+  Matrix<double> xform_full(dim + 1, dim + 1);
   SubMatrix<double> xform_full_square(xform_full, 0, dim, 0, dim);
   xform_full_square.CopyFromMat(xform_square);
-  if (xform.NumCols() == dim+1)  // copy offset.
-    for (int32 i = 0; i < dim; i++)
-      xform_full(i, dim) = xform(i, dim);
+  if (xform.NumCols() == dim + 1)  // copy offset.
+    for (int32 i = 0; i < dim; i++) xform_full(i, dim) = xform(i, dim);
 
   xform_full(dim, dim) = 1.0;
 
-  SpMatrix<double> Gtmp(dim+1);
+  SpMatrix<double> Gtmp(dim + 1);
   for (int32 i = 0; i < dim; i++) {
     // Gtmp <-- xform_full * stats->G_[i] * xform_full^T
     Gtmp.AddMat2Sp(1.0, xform_full, kNoTrans, stats->G_[i], 0.0);
     stats->G_[i].CopyFromSp(Gtmp);
   }
-  Matrix<double> Ktmp(dim, dim+1);
+  Matrix<double> Ktmp(dim, dim + 1);
   // Ktmp <-- stats->K_ * xform_full^T
   Ktmp.AddMatMat(1.0, stats->K_, kNoTrans, xform_full, kTrans, 0.0);
   stats->K_.CopyFromMat(Ktmp);
@@ -422,7 +416,7 @@ void ApplyModelTransformToStats(const MatrixBase<BaseFloat> &xform,
                                 AffineXformStats *stats) {
   KALDI_ASSERT(stats != NULL && stats->Dim() != 0.0);
   int32 dim = stats->Dim();
-  KALDI_ASSERT(xform.NumRows() == dim && xform.NumCols() == dim+1);
+  KALDI_ASSERT(xform.NumRows() == dim && xform.NumCols() == dim + 1);
   {
     SubMatrix<BaseFloat> xform_square(xform, 0, dim, 0, dim);
     // Only works with diagonal transforms.
@@ -456,10 +450,13 @@ void ApplyModelTransformToStats(const MatrixBase<BaseFloat> &xform,
   //
   // If we are transforming to K', we want:
   //
-  // k'_{ij} = \sum_{m, t} \gamma_m (d_i^2/\sigma^2_{m, i}) ((\mu_{m, i} - b_i)/d_i)  x^+_j .
-  //         = d_i k_{i, j} - \sum_{m, t} \gamma_m (1/\sigma^2_{m, i}) d_i b_i x^+_j .
+  // k'_{ij} = \sum_{m, t} \gamma_m (d_i^2/\sigma^2_{m, i}) ((\mu_{m, i} -
+  // b_i)/d_i)  x^+_j .
+  //         = d_i k_{i, j} - \sum_{m, t} \gamma_m (1/\sigma^2_{m, i}) d_i b_i
+  //         x^+_j .
   //         = d_i k_{i, j} - d_i b_i g_{i, d, j},
-  // where g_{i, d, j} is the {d, j}'th element of G_i. (in zero-based indexing).
+  // where g_{i, d, j} is the {d, j}'th element of G_i. (in zero-based
+  // indexing).
   //
   //
   // G_i only depends on the variances and features, so the only change
@@ -469,7 +466,8 @@ void ApplyModelTransformToStats(const MatrixBase<BaseFloat> &xform,
   for (int32 i = 0; i < dim; i++) {
     BaseFloat d_i = xform(i, i), b_i = xform(i, dim);
     for (int32 j = 0; j <= dim; j++) {
-      stats->K_(i, j) = d_i * stats->K_(i, j) - d_i * b_i * stats->G_[i](dim, j);
+      stats->K_(i, j) =
+          d_i * stats->K_(i, j) - d_i * b_i * stats->G_[i](dim, j);
     }
   }
   for (int32 i = 0; i < dim; i++) {
@@ -479,13 +477,13 @@ void ApplyModelTransformToStats(const MatrixBase<BaseFloat> &xform,
 }
 
 float FmllrAuxFuncDiagGmm(const MatrixBase<float> &xform,
-                              const AffineXformStats &stats) {
+                          const AffineXformStats &stats) {
   int32 dim = static_cast<int32>(stats.G_.size());
   Matrix<double> xform_d(xform);
   Vector<double> xform_row_g(dim + 1);
   SubMatrix<double> A(xform_d, 0, dim, 0, dim);
-  double obj = stats.beta_ * A.LogDet() +
-      TraceMatMat(xform_d, stats.K_, kTrans);
+  double obj =
+      stats.beta_ * A.LogDet() + TraceMatMat(xform_d, stats.K_, kTrans);
   for (int32 d = 0; d < dim; d++) {
     xform_row_g.AddSpVec(1.0, stats.G_[d], xform_d.Row(d), 0.0);
     obj -= 0.5 * VecVec(xform_row_g, xform_d.Row(d));
@@ -498,8 +496,7 @@ double FmllrAuxFuncDiagGmm(const MatrixBase<double> &xform,
   int32 dim = static_cast<int32>(stats.G_.size());
   Vector<double> xform_row_g(dim + 1);
   SubMatrix<double> A(xform, 0, dim, 0, dim);
-  double obj = stats.beta_ * A.LogDet() +
-      TraceMatMat(xform, stats.K_, kTrans);
+  double obj = stats.beta_ * A.LogDet() + TraceMatMat(xform, stats.K_, kTrans);
   for (int32 d = 0; d < dim; d++) {
     xform_row_g.AddSpVec(1.0, stats.G_[d], xform.Row(d), 0.0);
     obj -= 0.5 * VecVec(xform_row_g, xform.Row(d));
@@ -509,15 +506,15 @@ double FmllrAuxFuncDiagGmm(const MatrixBase<double> &xform,
 
 BaseFloat FmllrAuxfGradient(const MatrixBase<BaseFloat> &xform,
                             // if this is changed back to Matrix<double>
-                           // un-comment the Resize() below.
+                            // un-comment the Resize() below.
                             const AffineXformStats &stats,
                             MatrixBase<BaseFloat> *grad_out) {
   int32 dim = static_cast<int32>(stats.G_.size());
   Matrix<double> xform_d(xform);
   Vector<double> xform_row_g(dim + 1);
   SubMatrix<double> A(xform_d, 0, dim, 0, dim);
-  double obj = stats.beta_ * A.LogDet() +
-      TraceMatMat(xform_d, stats.K_, kTrans);
+  double obj =
+      stats.beta_ * A.LogDet() + TraceMatMat(xform_d, stats.K_, kTrans);
   Matrix<double> S(dim, dim + 1);
   for (int32 d = 0; d < dim; d++) {
     xform_row_g.AddSpVec(1.0, stats.G_[d], xform_d.Row(d), 0.0);
@@ -549,7 +546,7 @@ void FmllrDiagGmmAccs::SingleFrameStats::Init(int32 dim) {
   a.Resize(dim);
   b.Resize(dim);
   count = 0.0;
-}  
+}
 
 void FmllrDiagGmmAccs::InitSingleFrameStats(const VectorBase<BaseFloat> &data) {
   SingleFrameStats &stats = single_frame_stats_;
@@ -565,21 +562,19 @@ void FmllrDiagGmmAccs::CommitSingleFrameStats() {
   SingleFrameStats &stats = single_frame_stats_;
   if (stats.count == 0.0) return;
 
-  Vector<double> xplus(dim+1);
+  Vector<double> xplus(dim + 1);
   xplus.Range(0, dim).CopyFromVec(stats.x);
   xplus(dim) = 1.0;
-  
+
   this->beta_ += stats.count;
   this->K_.AddVecVec(1.0, Vector<double>(stats.a), xplus);
 
-
   if (opts_.update_type == "full") {
-    SpMatrix<double> scatter(dim+1);
+    SpMatrix<double> scatter(dim + 1);
     scatter.AddVec2(1.0, xplus);
-    
+
     KALDI_ASSERT(static_cast<size_t>(dim) == this->G_.size());
-    for (int32 i = 0; i < dim; i++)
-      this->G_[i].AddSp(stats.b(i), scatter);
+    for (int32 i = 0; i < dim; i++) this->G_[i].AddSp(stats.b(i), scatter);
   } else {
     // We only need some elements of these stats, so just update those elements.
     for (int32 i = 0; i < dim; i++) {
@@ -594,8 +589,5 @@ void FmllrDiagGmmAccs::CommitSingleFrameStats() {
   stats.a.SetZero();
   stats.b.SetZero();
 }
-    
 
-
-
-} // namespace kaldi
+}  // namespace kaldi

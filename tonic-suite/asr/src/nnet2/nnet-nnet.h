@@ -30,51 +30,50 @@
 #include <sstream>
 #include <vector>
 
-
 namespace kaldi {
 namespace nnet2 {
-
 
 /*
   This neural net is basically a series of Components, and is a fairly
   passive object that mainly acts as a store for the Components.  Training
   is handled by a separate class NnetTrainer(), and extracting likelihoods
-  for decoding is handled by DecodableNnetCpu(). 
-  
+  for decoding is handled by DecodableNnetCpu().
+
   There are a couple of things that make this class more than just a vector of
   Components.
 
    (1) It handles frame splicing (temporal context.)
    We'd like to encompass the approach described in
    http://www.fit.vutbr.cz/research/groups/speech/publi/2011/vesely_asru2011_00042.pdf
-   where at a certain point they splice together frames -10, -5, 0, +5 and +10.  It
+   where at a certain point they splice together frames -10, -5, 0, +5 and +10.
+  It
    seems that it's not necessarily best to splice together a contiguous sequence
    of frames.
 
    (2) It handles situations where the input features have two parts--
-   a "frame-specific" part (the normal features), and a "speaker-specific", or at
+   a "frame-specific" part (the normal features), and a "speaker-specific", or
+  at
    least utterance-specific part that does not vary with the frame index.
    These features are provided separately from the frame-specific ones, to avoid
    redundancy.
 */
 
-
 class Nnet {
  public:
-  
-  /// Returns number of components-- think of this as similar to # of layers, but
+  /// Returns number of components-- think of this as similar to # of layers,
+  /// but
   /// e.g. the nonlinearity and the linear part count as separate components,
   /// so the number of components will be more than the number of layers.
   int32 NumComponents() const { return components_.size(); }
 
   const Component &GetComponent(int32 c) const;
-  
+
   Component &GetComponent(int32 c);
 
   /// Sets the c'th component to "component", taking ownership of the pointer
   /// and deleting the corresponding one that we own.
   void SetComponent(int32 c, Component *component);
-  
+
   /// Returns the LeftContext() summed over all the Components... this is the
   /// entire left-context in frames that the network requires.
   int32 LeftContext() const;
@@ -82,7 +81,7 @@ class Nnet {
   /// Returns the LeftContext() summed over all the Components... this is the
   /// entire left-context in frames that the network requires.
   int32 RightContext() const;
-  
+
   /// The output dimension of the network -- typically
   /// the number of pdfs.
   int32 OutputDim() const;
@@ -90,14 +89,13 @@ class Nnet {
   /// Dimension of the input features, e.g. 13 or 40.  Does not
   /// take account of frame splicing-- that is done with the "chunk"
   /// mechanism, where you provide chunks of features over time.
-  int32 InputDim() const; 
-  
-  void ZeroStats(); // zeroes the stats on the nonlinear layers.
+  int32 InputDim() const;
+
+  void ZeroStats();  // zeroes the stats on the nonlinear layers.
 
   /// Copies only the statistics in layers of type NonlinearComponewnt, from
   /// this neural net, leaving everything else fixed.
   void CopyStatsFrom(const Nnet &nnet);
-
 
   /// Returns the index of the last component which is updatable,
   /// or NumComponents() if none are updatable.
@@ -105,7 +103,7 @@ class Nnet {
 
   /// Returns the number of updatable components.
   int32 NumUpdatableComponents() const;
-  
+
   /// Scales the parameters of each of the updatable components.
   /// Here, scale_params is a vector of size equal to
   /// NumUpdatableComponents()
@@ -116,7 +114,7 @@ class Nnet {
 
   /// Calls SetDropoutScale for all the dropout nodes.
   void SetDropoutScale(BaseFloat scale);
-  
+
   /// Replace any components of type AffineComponentPreconditioned with
   /// components of type AffineComponent.
   void RemovePreconditioning();
@@ -128,26 +126,23 @@ class Nnet {
                                      int32 update_period,
                                      BaseFloat num_samples_history,
                                      BaseFloat alpha);
-  
+
   /// For each updatatable component, adds to it
   /// the corresponding element of "other" times the
   /// appropriate element of "scales" (which has the
   /// same format as for ScaleComponents(), i.e.
   /// one entry for each updatable component).
-  void AddNnet(const VectorBase<BaseFloat> &scales,
-               const Nnet &other);
+  void AddNnet(const VectorBase<BaseFloat> &scales, const Nnet &other);
 
   /// Scales all the Components with the same scale.  This applies to
   /// UpdatableComponents, and (unlike the ScaleComponents function) to
   /// SoftmaxComponents.
   void Scale(BaseFloat scale);
 
-
   /// Adds to *this, the other neural net times the scale "alpha".  This applies
   /// to UpdatableComponents, and (unlike the other AddNnet function) to
   /// SoftmaxComponents.
-  void AddNnet(BaseFloat alpha,
-               const Nnet &other);
+  void AddNnet(BaseFloat alpha, const Nnet &other);
 
   /// Turns the last affine layer into two layers of the same type, with a
   /// smaller dimension in between-- we're keeping the top singular values of
@@ -156,16 +151,14 @@ class Nnet {
 
   /// This version of AddNnet adds to *this, alpha times *other, and then scales
   /// *other by beta.  The reason why we make this a separate function is for
-  /// multithreading reasons (otherwise you could do AddNnet(alpha, *iter) and then
+  /// multithreading reasons (otherwise you could do AddNnet(alpha, *iter) and
+  /// then
   /// other->Scale(beta).
-  void AddNnet(BaseFloat alpha,
-               Nnet *other,
-               BaseFloat beta);
+  void AddNnet(BaseFloat alpha, Nnet *other, BaseFloat beta);
 
   /// Removes final components from the neural network (used for
   /// debugging).
   void Resize(int32 num_components);
-
 
   /// Where possible, collapse multiple affine or linear components in a
   /// sequence into a single one by composing the transforms.  If
@@ -175,56 +168,57 @@ class Nnet {
   /// work for all pairs of such layers.  It currently only works where
   /// one of each pair is an AffineComponent.
   void Collapse(bool match_updatableness);
-  
 
   /// Sets the index_ values of the components.
-  void SetIndexes(); 
-  
-  Nnet(const Nnet &other); // Copy constructor.
+  void SetIndexes();
 
-  Nnet(const Nnet &nnet1, const Nnet &nnet2); // Constructor that takes two
+  Nnet(const Nnet &other);  // Copy constructor.
+
+  Nnet(const Nnet &nnet1, const Nnet &nnet2);  // Constructor that takes two
   // nnets: it concatenates the layers.
-  
+
   Nnet() {}
 
-  Nnet &operator = (const Nnet &other); // assignment operator.
+  Nnet &operator=(const Nnet &other);  // assignment operator.
 
   /// Initialize from config file.
   /// Each line of the config is either a comment line starting
   /// with whitespace then #, or it is a line that specifies one
   /// layer of the network, as accepted by Component::InitFromString().
   /// An example non-comment line is:
-  /// AffineComponent learning-rate=0.01 l2-penalty=0.001 input-dim=10 output-dim=15 param-stddev=0.1
+  /// AffineComponent learning-rate=0.01 l2-penalty=0.001 input-dim=10
+  /// output-dim=15 param-stddev=0.1
   void Init(std::istream &is);
 
   /// This Init method works from a vector of components.  It will take
   /// ownership of the pointers and will resize the vector to zero to avoid a
   /// chance of the caller deallocating them (but the vector itself is not
   /// deleted).
-  void Init(std::vector<Component*> *components);
+  void Init(std::vector<Component *> *components);
 
   /// Appends this component to the components already in the neural net.
   /// Takes ownership of the pointer.
   void Append(Component *new_component);
-  
+
   virtual ~Nnet() { Destroy(); }
 
-  std::string Info() const; // some human-readable summary info.
+  std::string Info() const;  // some human-readable summary info.
 
   void Destroy();
-  
+
   void Write(std::ostream &os, bool binary) const;
 
   void Read(std::istream &is, bool binary);
 
-  void SetZero(bool treat_as_gradient); // Sets all parameters to zero and if
+  void SetZero(bool treat_as_gradient);  // Sets all parameters to zero and if
   // treat_as_gradient == true, also tells components to "think of themselves as
   // gradients" (affects some of the update code).  Also zeroes stats stored
   // with things of type NonlinearComponent.
 
-
-  /// [This function is only used in the binary nnet-train.cc which is currently not
-  /// being used]. This is used to separately adjust learning rates of each layer,
+  /// [This function is only used in the binary nnet-train.cc which is currently
+  /// not
+  /// being used]. This is used to separately adjust learning rates of each
+  /// layer,
   /// after each "phase" of training.  We basically ask (using the validation
   /// gradient), do we wish we had gone further in this direction?  Yes->
   /// increase learning rate, no -> decrease it.   The inputs have dimension
@@ -234,10 +228,9 @@ class Nnet {
       const VectorBase<BaseFloat> &new_model_old_gradient,
       const VectorBase<BaseFloat> &old_model_new_gradient,
       const VectorBase<BaseFloat> &new_model_new_gradient,
-      BaseFloat measure_at, // where to measure gradient, on line between old
-                            // and new model; 0.5 < measure_at <= 1.0.
-      BaseFloat learning_rate_ratio,
-      BaseFloat max_learning_rate);
+      BaseFloat measure_at,  // where to measure gradient, on line between old
+                             // and new model; 0.5 < measure_at <= 1.0.
+      BaseFloat learning_rate_ratio, BaseFloat max_learning_rate);
 
   /// Scale all the learning rates in the neural net by this factor.
   void ScaleLearningRates(BaseFloat factor);
@@ -252,22 +245,18 @@ class Nnet {
   /// Get all the learning rates in the neural net (the output
   /// must have dim equal to NumUpdatableComponents()).
   void GetLearningRates(VectorBase<BaseFloat> *learning_rates) const;
-  
 
-  
   // This sets *dot_prod to the dot prod of *this . validation_gradient,
   // separately for each updatable component.  The vector must have size equal
   // to this->NumUpdatableComponents().  Warning: previously it had to have size
   // equal to this->NumComponents()).  This is used in updating learning rates
   // and shrinkage rates.
-  void ComponentDotProducts(
-      const Nnet &other,
-      VectorBase<BaseFloat> *dot_prod) const;
+  void ComponentDotProducts(const Nnet &other,
+                            VectorBase<BaseFloat> *dot_prod) const;
 
-  void Check() const; // Consistency check.
+  void Check() const;  // Consistency check.
 
-
-  void ResetGenerators(); // resets random-number generators for all
+  void ResetGenerators();  // resets random-number generators for all
   // random components.  You must also set sRand() for this to be
   // effective.
 
@@ -276,24 +265,21 @@ class Nnet {
   virtual int32 GetParameterDim() const;
   virtual void Vectorize(VectorBase<BaseFloat> *params) const;
   virtual void UnVectorize(const VectorBase<BaseFloat> &params);
-  
+
   friend class NnetUpdater;
   friend class DecodableNnet;
- private:
-  std::vector<Component*> components_;
-};
 
+ private:
+  std::vector<Component *> components_;
+};
 
 /// This function generates a random neural net, for testing purposes.
 /// It will contain a random number of SigmoidComponent, AffineComponent
 /// and SpliceComponent, followed by a final AffineComponent and
 /// SoftmaxComponent.  The parameters will all be randomly initialized.
-Nnet *GenRandomNnet(int32 input_dim,
-                    int32 output_dim);
+Nnet *GenRandomNnet(int32 input_dim, int32 output_dim);
 
-
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

@@ -42,14 +42,11 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   for (size_t i = 0; i < post.size(); i++) {
     for (size_t j = 0; j < pdf_post[i].size(); j++) {
       int32 pdf_id = pdf_post[i][j].first;
-      spk_stats->AccumulateForGmm(am_gmm.GetPdf(pdf_id),
-                                  feats.Row(i),
+      spk_stats->AccumulateForGmm(am_gmm.GetPdf(pdf_id), feats.Row(i),
                                   pdf_post[i][j].second);
     }
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -57,8 +54,10 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
     using namespace kaldi;
     const char *usage =
-        "Estimate global fMLLR transforms, either per utterance or for the supplied\n"
-        "set of speakers (spk2utt option).  Reads posteriors (on transition-ids).  Writes\n"
+        "Estimate global fMLLR transforms, either per utterance or for the "
+        "supplied\n"
+        "set of speakers (spk2utt option).  Reads posteriors (on "
+        "transition-ids).  Writes\n"
         "to a table of matrices.\n"
         "Usage: gmm-est-fmllr [options] <model-in> "
         "<feature-rspecifier> <post-rspecifier> <transform-wspecifier>\n";
@@ -66,7 +65,8 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     FmllrOptions fmllr_opts;
     string spk2utt_rspecifier;
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
     fmllr_opts.Register(&po);
 
@@ -77,11 +77,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        trans_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), trans_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -135,23 +132,22 @@ int main(int argc, char *argv[]) {
 
         BaseFloat impr, spk_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim()+1);
+          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim() + 1);
           transform.SetUnit();
           spk_stats.Update(fmllr_opts, &transform, &impr, &spk_tot_t);
           transform_writer.Write(spk, transform);
         }
         KALDI_LOG << "For speaker " << spk << ", auxf-impr from fMLLR is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+                  << (impr / spk_tot_t) << ", over " << spk_tot_t << " frames.";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!post_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_no_post++;
           continue;
         }
@@ -159,8 +155,8 @@ int main(int argc, char *argv[]) {
         const Posterior &post = post_reader.Value(utt);
 
         if (static_cast<int32>(post.size()) != feats.NumRows()) {
-          KALDI_WARN << "Posterior has wrong size " << (post.size())
-              << " vs. " << (feats.NumRows());
+          KALDI_WARN << "Posterior has wrong size " << (post.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -168,18 +164,17 @@ int main(int argc, char *argv[]) {
 
         FmllrDiagGmmAccs spk_stats(am_gmm.Dim(), fmllr_opts);
 
-        AccumulateForUtterance(feats, post, trans_model, am_gmm,
-                               &spk_stats);
+        AccumulateForUtterance(feats, post, trans_model, am_gmm, &spk_stats);
 
         BaseFloat impr, utt_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim()+1);
+          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim() + 1);
           transform.SetUnit();
           spk_stats.Update(fmllr_opts, &transform, &impr, &utt_tot_t);
           transform_writer.Write(utt, transform);
         }
         KALDI_LOG << "For utterance " << utt << ", auxf-impr from fMLLR is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_impr += impr;
         tot_t += utt_tot_t;
       }
@@ -187,12 +182,11 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_post
               << " with no posts, " << num_other_error << " with other errors.";
-    KALDI_LOG << "Overall fMLLR auxf impr per frame is "
-              << (tot_impr / tot_t) << " over " << tot_t << " frames.";
+    KALDI_LOG << "Overall fMLLR auxf impr per frame is " << (tot_impr / tot_t)
+              << " over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

@@ -26,31 +26,33 @@ void TestContextDep() {
   BaseFloat varFloor = 0.1;
   size_t dim = 1 + Rand() % 20;
   size_t nGauss = 1 + Rand() % 10;
-  std::vector< GaussClusterable * > v(nGauss);
-  for (size_t i = 0;i < nGauss;i++) {
+  std::vector<GaussClusterable *> v(nGauss);
+  for (size_t i = 0; i < nGauss; i++) {
     v[i] = new GaussClusterable(dim, varFloor);
   }
-  for (size_t i = 0;i < nGauss;i++) {
+  for (size_t i = 0; i < nGauss; i++) {
     size_t nPoints = 1 + Rand() % 30;
-    for (size_t j = 0;j < nPoints;j++) {
-      BaseFloat post = 0.5 *(Rand()%3);
+    for (size_t j = 0; j < nPoints; j++) {
+      BaseFloat post = 0.5 * (Rand() % 3);
       Vector<BaseFloat> vec(dim);
-      for (size_t k = 0;k < dim;k++) vec(k) = RandGauss();
+      for (size_t k = 0; k < dim; k++) vec(k) = RandGauss();
       v[i]->AddStats(vec, post);
     }
   }
-  for (size_t i = 0;i+1 < nGauss;i++) {
-    BaseFloat like_before = (v[i]->Objf() + v[i+1]->Objf()) / (v[i]->Normalizer() + v[i+1]->Normalizer());
+  for (size_t i = 0; i + 1 < nGauss; i++) {
+    BaseFloat like_before = (v[i]->Objf() + v[i + 1]->Objf()) /
+                            (v[i]->Normalizer() + v[i + 1]->Normalizer());
     Clusterable *tmp = v[i]->Copy();
-    tmp->Add(*(v[i+1]));
+    tmp->Add(*(v[i + 1]));
     BaseFloat like_after = tmp->Objf() / tmp->Normalizer();
-    std::cout << "Like_before = " << like_before <<", after = "<<like_after <<" over "<<tmp->Normalizer()<<" frames.\n";
+    std::cout << "Like_before = " << like_before << ", after = " << like_after
+              << " over " << tmp->Normalizer() << " frames.\n";
     if (tmp->Normalizer() > 0.1)
-      KALDI_ASSERT(like_after <= like_before);  // should get worse after combining stats.
+      KALDI_ASSERT(like_after <=
+                   like_before);  // should get worse after combining stats.
     delete tmp;
   }
-  for (size_t i = 0;i < nGauss;i++)
-    delete v[i];
+  for (size_t i = 0; i < nGauss; i++) delete v[i];
 }
 
 void TestMonophoneContextDependency() {
@@ -58,31 +60,32 @@ void TestMonophoneContextDependency() {
   for (size_t i = 1; i <= 20; i++) phones_set.insert(1 + Rand() % 30);
   std::vector<int32> phones;
   CopySetToVector(phones_set, &phones);
-  std::vector<int32> phone2num_classes(1 + *std::max_element(phones.begin(), phones.end()));
-  for (size_t i = 0; i < phones.size(); i++)
-    phone2num_classes[phones[i]] = 3;
-  ContextDependency *cd = MonophoneContextDependency(phones,
-                                                     phone2num_classes);
+  std::vector<int32> phone2num_classes(
+      1 + *std::max_element(phones.begin(), phones.end()));
+  for (size_t i = 0; i < phones.size(); i++) phone2num_classes[phones[i]] = 3;
+  ContextDependency *cd = MonophoneContextDependency(phones, phone2num_classes);
 
-  std::vector<std::vector<std::pair<int32, int32> > >  pdf_info;
+  std::vector<std::vector<std::pair<int32, int32> > > pdf_info;
   cd->GetPdfInfo(phones, phone2num_classes, &pdf_info);
   KALDI_ASSERT(pdf_info.size() == phones.size() * 3 &&
-       pdf_info[Rand() % pdf_info.size()].size() == 1);
+               pdf_info[Rand() % pdf_info.size()].size() == 1);
   delete cd;
 }
 // Also tests I/O of ContextDependency
 void TestGenRandContextDependency() {
-  bool binary = (Rand()%2 == 0);
+  bool binary = (Rand() % 2 == 0);
   size_t num_phones = 1 + Rand() % 10;
   std::set<int32> phones_set;
-  while (phones_set.size() < num_phones) phones_set.insert(Rand() % (num_phones + 5));
+  while (phones_set.size() < num_phones)
+    phones_set.insert(Rand() % (num_phones + 5));
   std::vector<int32> phones;
   CopySetToVector(phones_set, &phones);
   bool ensure_all_covered = (Rand() % 2 == 0);
   std::vector<int32> phone2num_pdf_classes;
-  ContextDependency *dep = GenRandContextDependency(phones,
-                                                    ensure_all_covered,  // false == don't ensure all phones covered.
-                                                    &phone2num_pdf_classes);
+  ContextDependency *dep = GenRandContextDependency(
+      phones,
+      ensure_all_covered,  // false == don't ensure all phones covered.
+      &phone2num_pdf_classes);
   // stuff here.
   const char *filename = "tmpf";
   {
@@ -91,7 +94,8 @@ void TestGenRandContextDependency() {
     {  // Test GetPdfInfo
       std::vector<std::vector<std::pair<int32, int32> > > pdf_info;
       dep->GetPdfInfo(phones, phone2num_pdf_classes, &pdf_info);
-      std::vector<bool> all_phones(phones.back()+1, false);  // making sure all covered.
+      std::vector<bool> all_phones(phones.back() + 1,
+                                   false);  // making sure all covered.
       for (size_t i = 0; i < pdf_info.size(); i++) {
         KALDI_ASSERT(!pdf_info[i].empty());  // make sure pdf seen.
         for (size_t j = 0; j < pdf_info[i].size(); j++) {
@@ -101,7 +105,8 @@ void TestGenRandContextDependency() {
         }
       }
       if (ensure_all_covered)
-        for (size_t k = 0; k < phones.size(); k++) KALDI_ASSERT(all_phones[phones[k]]);
+        for (size_t k = 0; k < phones.size(); k++)
+          KALDI_ASSERT(all_phones[phones[k]]);
     }
 
     dep->Write(outfile, binary);
@@ -123,16 +128,18 @@ void TestGenRandContextDependency() {
   delete dep;
 
   unlink("tmpf");
-  
-  std::cout << "Note: any \"serious error\" warnings preceding this line are OK.\n";
+
+  std::cout
+      << "Note: any \"serious error\" warnings preceding this line are OK.\n";
 }
 
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main() {
-  for (size_t i = 0;i < 10;i++) {
+  for (size_t i = 0; i < 10; i++) {
     kaldi::TestContextDep();
-    kaldi::TestGenRandContextDependency();  // Also tests I/O of ContextDependency
+    kaldi::TestGenRandContextDependency();  // Also tests I/O of
+                                            // ContextDependency
     kaldi::TestMonophoneContextDependency();
   }
 }

@@ -29,7 +29,6 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 /**
   The function PreconditionDirections views the input R as
   a set of directions or gradients, each row r_i being one of the
@@ -56,33 +55,26 @@ namespace nnet2 {
   in such a way that it's suitable to be used as an update direction.
 
  */
-void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
-                            double lambda,
+void PreconditionDirections(const CuMatrixBase<BaseFloat> &R, double lambda,
                             CuMatrixBase<BaseFloat> *P);
 
 /**
    This wrapper for PreconditionDirections computes lambda
    using \lambda = \alpha/(N D) trace(R^T, R), and calls
    PreconditionDirections. */
-void PreconditionDirectionsAlpha(
-    const CuMatrixBase<BaseFloat> &R,
-    double alpha,
-    CuMatrixBase<BaseFloat> *P);
+void PreconditionDirectionsAlpha(const CuMatrixBase<BaseFloat> &R, double alpha,
+                                 CuMatrixBase<BaseFloat> *P);
 
 /**
    This wrapper for PreconditionDirections computes lambda
    using \lambda = \alpha/(N D) trace(R^T, R), and calls
    PreconditionDirections.  It then rescales *P so that
    its 2-norm is the same as that of R. */
-void PreconditionDirectionsAlphaRescaled(
-    const CuMatrixBase<BaseFloat> &R,
-    double alpha,
-    CuMatrixBase<BaseFloat> *P);
-  
-                           
+void PreconditionDirectionsAlphaRescaled(const CuMatrixBase<BaseFloat> &R,
+                                         double alpha,
+                                         CuMatrixBase<BaseFloat> *P);
 
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

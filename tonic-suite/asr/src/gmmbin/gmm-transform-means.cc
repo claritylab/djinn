@@ -32,7 +32,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Transform GMM means with linear or affine transform\n"
-        "Usage:  gmm-transform-means <transform-matrix> <model-in> <model-out>\n"
+        "Usage:  gmm-transform-means <transform-matrix> <model-in> "
+        "<model-out>\n"
         "e.g.: gmm-transform-means 2.mat 2.mdl 3.mdl\n";
 
     bool binary = true;  // write in binary if true.
@@ -48,8 +49,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string mat_rxfilename = po.GetArg(1),
-        model_in_rxfilename = po.GetArg(2),
-        model_out_wxfilename = po.GetArg(3);
+                model_in_rxfilename = po.GetArg(2),
+                model_out_wxfilename = po.GetArg(3);
 
     Matrix<BaseFloat> mat;
     ReadKaldiObject(mat_rxfilename, &mat);
@@ -65,13 +66,15 @@ int main(int argc, char *argv[]) {
 
     int32 dim = am_gmm.Dim();
     if (mat.NumRows() != dim)
-      KALDI_ERR << "Transform matrix has " << mat.NumRows() << " rows but "
-          "model has dimension " << am_gmm.Dim();
-    if (mat.NumCols() != dim
-       && mat.NumCols()  != dim+1)
-      KALDI_ERR << "Transform matrix has " << mat.NumCols() << " columns but "
-          "model has dimension " << am_gmm.Dim() << " (neither a linear nor an "
-          "affine transform";
+      KALDI_ERR << "Transform matrix has " << mat.NumRows()
+                << " rows but "
+                   "model has dimension " << am_gmm.Dim();
+    if (mat.NumCols() != dim && mat.NumCols() != dim + 1)
+      KALDI_ERR << "Transform matrix has " << mat.NumCols()
+                << " columns but "
+                   "model has dimension " << am_gmm.Dim()
+                << " (neither a linear nor an "
+                   "affine transform";
 
     for (int32 i = 0; i < am_gmm.NumPdfs(); i++) {
       DiagGmm &gmm = am_gmm.GetPdf(i);
@@ -83,11 +86,11 @@ int main(int argc, char *argv[]) {
         // Right-multiply means by mat^T (equivalent to left-multiplying each
         // row by mat).
         new_means.AddMatMat(1.0, means, kNoTrans, mat, kTrans, 0.0);
-      } else { // affine case
-        Matrix<BaseFloat> means_ext(means.NumRows(), means.NumCols()+1);
+      } else {  // affine case
+        Matrix<BaseFloat> means_ext(means.NumRows(), means.NumCols() + 1);
         means_ext.Set(1.0);  // set all elems to 1.0
-        SubMatrix<BaseFloat> means_part(means_ext, 0, means.NumRows(),
-                                        0, means.NumCols());
+        SubMatrix<BaseFloat> means_part(means_ext, 0, means.NumRows(), 0,
+                                        means.NumCols());
         means_part.CopyFromMat(means);  // copy old part...
         new_means.AddMatMat(1.0, means_ext, kNoTrans, mat, kTrans, 0.0);
       }
@@ -102,10 +105,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Written model to " << model_out_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

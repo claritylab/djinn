@@ -66,7 +66,6 @@ struct TonicSuiteApp {
 
   // data to send to DjiNN service
   TonicPayload pl;
-
 };
 
 void reshape(Net<float> *net, int input_size);

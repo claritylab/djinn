@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/hmm-topology.h"
@@ -35,7 +34,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Train decision tree\n"
-        "Usage:  build-tree [options] <tree-stats-in> <roots-file> <questions-file> <topo-file> <tree-out>\n"
+        "Usage:  build-tree [options] <tree-stats-in> <roots-file> "
+        "<questions-file> <topo-file> <tree-out>\n"
         "e.g.: \n"
         " build-tree treeacc roots.txt 1.qst topo tree\n";
 
@@ -43,21 +43,27 @@ int main(int argc, char *argv[]) {
     int32 P = 1, N = 3;
 
     BaseFloat thresh = 300.0;
-    BaseFloat cluster_thresh = -1.0;  // negative means use smallest split in splitting phase as thresh.
+    BaseFloat cluster_thresh = -1.0;  // negative means use smallest split in
+                                      // splitting phase as thresh.
     int32 max_leaves = 0;
     std::string occs_out_filename;
 
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("context-width", &N, "Context window size [must match "
+    po.Register("context-width", &N,
+                "Context window size [must match "
                 "acc-tree-stats]");
-    po.Register("central-position", &P, "Central position in context window "
+    po.Register("central-position", &P,
+                "Central position in context window "
                 "[must match acc-tree-stats]");
-    po.Register("max-leaves", &max_leaves, "Maximum number of leaves to be "
+    po.Register("max-leaves", &max_leaves,
+                "Maximum number of leaves to be "
                 "used in tree-buliding (if positive)");
-    po.Register("thresh", &thresh, "Log-likelihood change threshold for "
+    po.Register("thresh", &thresh,
+                "Log-likelihood change threshold for "
                 "tree-building");
-    po.Register("cluster-thresh", &cluster_thresh, "Log-likelihood change "
+    po.Register("cluster-thresh", &cluster_thresh,
+                "Log-likelihood change "
                 "threshold for clustering after tree-building.  0 means "
                 "no clustering; -1 means use as a clustering threshold the "
                 "likelihood change of the final split.");
@@ -69,12 +75,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string stats_filename = po.GetArg(1),
-        roots_filename = po.GetArg(2),
-        questions_filename = po.GetArg(3),
-        topo_filename = po.GetArg(4),
-        tree_out_filename = po.GetArg(5);
-
+    std::string stats_filename = po.GetArg(1), roots_filename = po.GetArg(2),
+                questions_filename = po.GetArg(3), topo_filename = po.GetArg(4),
+                tree_out_filename = po.GetArg(5);
 
     // Following 2 variables derived from roots file.
     // phone_sets is sets of phones that share their roots.
@@ -98,7 +101,7 @@ int main(int argc, char *argv[]) {
       ReadBuildTreeStats(ki.Stream(), binary_in, gc, &stats);
     }
     KALDI_LOG << "Number of separate statistics is " << stats.size();
-    
+
     Questions qo;
     {
       bool binary_in;
@@ -106,10 +109,10 @@ int main(int argc, char *argv[]) {
         Input ki(questions_filename, &binary_in);
         qo.Read(ki.Stream(), binary_in);
       } catch (const std::exception &e) {
-        KALDI_ERR << "Error reading questions file "<<questions_filename<<", error is: " << e.what();
+        KALDI_ERR << "Error reading questions file " << questions_filename
+                  << ", error is: " << e.what();
       }
     }
-
 
     std::vector<int32> phone2num_pdf_classes;
     topo.GetPhoneToNumPdfClasses(&phone2num_pdf_classes);
@@ -118,27 +121,19 @@ int main(int argc, char *argv[]) {
 
     //////// Build the tree. ////////////
 
-    to_pdf = BuildTree(qo,
-                       phone_sets,
-                       phone2num_pdf_classes,
-                       is_shared_root,
-                       is_split_root,
-                       stats,
-                       thresh,
-                       max_leaves,
-                       cluster_thresh,
-                       P);
+    to_pdf =
+        BuildTree(qo, phone_sets, phone2num_pdf_classes, is_shared_root,
+                  is_split_root, stats, thresh, max_leaves, cluster_thresh, P);
 
-    { // This block is to warn about low counts.
+    {  // This block is to warn about low counts.
       std::vector<BuildTreeStatsType> split_stats;
-      SplitStatsByMap(stats, *to_pdf,
-                      &split_stats);
+      SplitStatsByMap(stats, *to_pdf, &split_stats);
       for (size_t i = 0; i < split_stats.size(); i++)
         if (SumNormalizer(split_stats[i]) < 100.0)
           KALDI_VLOG(1) << "For pdf-id " << i << ", low count "
                         << SumNormalizer(split_stats[i]);
     }
-    
+
     ContextDependency ctx_dep(N, P, to_pdf);  // takes ownership
     // of pointer "to_pdf", so set it NULL.
     to_pdf = NULL;
@@ -149,25 +144,28 @@ int main(int argc, char *argv[]) {
 
       std::vector<int32> all_phones;
       for (size_t i = 0; i < phone_sets.size(); i++)
-        all_phones.insert(all_phones.end(),
-                          phone_sets[i].begin(), phone_sets[i].end());
+        all_phones.insert(all_phones.end(), phone_sets[i].begin(),
+                          phone_sets[i].end());
       SortAndUniq(&all_phones);
       if (all_phones != topo.GetPhones()) {
         std::ostringstream ss;
         WriteIntegerVector(ss, false, all_phones);
         ss << " vs. ";
         WriteIntegerVector(ss, false, topo.GetPhones());
-        KALDI_WARN << "Mismatch between phone sets provided in roots file, and those in topology: " << ss.str();
+        KALDI_WARN << "Mismatch between phone sets provided in roots file, and "
+                      "those in topology: " << ss.str();
       }
-      std::vector<int32> phones_vec;  // phones we saw.
-      PossibleValues(P, stats, &phones_vec); // function in build-tree-utils.h
+      std::vector<int32> phones_vec;          // phones we saw.
+      PossibleValues(P, stats, &phones_vec);  // function in build-tree-utils.h
 
       std::vector<int32> unseen_phones;  // diagnostic.
       for (size_t i = 0; i < all_phones.size(); i++)
-        if (!std::binary_search(phones_vec.begin(), phones_vec.end(), all_phones[i]))
+        if (!std::binary_search(phones_vec.begin(), phones_vec.end(),
+                                all_phones[i]))
           unseen_phones.push_back(all_phones[i]);
       for (size_t i = 0; i < phones_vec.size(); i++)
-        if (!std::binary_search(all_phones.begin(), all_phones.end(), phones_vec[i]))
+        if (!std::binary_search(all_phones.begin(), all_phones.end(),
+                                phones_vec[i]))
           KALDI_ERR << "Phone " << (phones_vec[i])
                     << " appears in stats but is not listed in roots file.";
       if (!unseen_phones.empty()) {
@@ -184,7 +182,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Wrote tree";
 
     DeleteBuildTreeStats(&stats);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

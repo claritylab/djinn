@@ -26,27 +26,24 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 void UnitTestNnetDecodable() {
   std::vector<int32> phones;
   phones.push_back(1);
   for (int32 i = 2; i < 20; i++)
-    if (rand() % 2 == 0)
-      phones.push_back(i);
-  int32 N = 2 + rand() % 2, // context-size N is 2 or 3.
-      P = rand() % N;  // Central-phone is random on [0, N)
+    if (rand() % 2 == 0) phones.push_back(i);
+  int32 N = 2 + rand() % 2,  // context-size N is 2 or 3.
+      P = rand() % N;        // Central-phone is random on [0, N)
 
   std::vector<int32> num_pdf_classes;
 
   ContextDependency *ctx_dep =
-      GenRandContextDependencyLarge(phones, N, P,
-                                    true, &num_pdf_classes);
-  
+      GenRandContextDependencyLarge(phones, N, P, true, &num_pdf_classes);
+
   HmmTopology topo = GetDefaultTopology(phones);
-  
+
   TransitionModel trans_model(*ctx_dep, topo);
-  
-  delete ctx_dep; // We won't need this further.
+
+  delete ctx_dep;  // We won't need this further.
   ctx_dep = NULL;
 
   int32 input_dim = 40, output_dim = trans_model.NumPdfs();
@@ -71,43 +68,37 @@ void UnitTestNnetDecodable() {
   int32 num_input_frames = 400;
   Matrix<BaseFloat> input_feats(num_input_frames, input_dim);
   input_feats.SetRandn();
-  
+
   OnlineMatrixFeature matrix_feature(input_feats);
-  
-  DecodableNnet2Online online_decodable(am_nnet, trans_model,
-                                        opts, &matrix_feature);
+
+  DecodableNnet2Online online_decodable(am_nnet, trans_model, opts,
+                                        &matrix_feature);
 
   DecodableAmNnet offline_decodable(trans_model, am_nnet,
                                     CuMatrix<BaseFloat>(input_feats),
-                                    opts.pad_input,
-                                    opts.acoustic_scale);
+                                    opts.pad_input, opts.acoustic_scale);
 
   KALDI_ASSERT(online_decodable.NumFramesReady() ==
                offline_decodable.NumFramesReady());
   int32 num_frames = online_decodable.NumFramesReady(),
-      num_tids = trans_model.NumTransitionIds();
-  
-  for (int32 i = 0; i < 50; i++) {
+        num_tids = trans_model.NumTransitionIds();
 
+  for (int32 i = 0; i < 50; i++) {
     int32 t = rand() % num_frames, tid = 1 + rand() % num_tids;
     BaseFloat l1 = online_decodable.LogLikelihood(t, tid),
-        l2 = offline_decodable.LogLikelihood(t, tid);
+              l2 = offline_decodable.LogLikelihood(t, tid);
     KALDI_ASSERT(ApproxEqual(l1, l2));
   }
 }
 
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
   using namespace kaldi::nnet2;
   using kaldi::int32;
 
-  for (int32 i = 0; i < 3; i++)
-    UnitTestNnetDecodable();
+  for (int32 i = 0; i < 3; i++) UnitTestNnetDecodable();
   return 0;
 }
-  
-

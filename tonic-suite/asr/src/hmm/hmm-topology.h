@@ -24,9 +24,7 @@
 #include "tree/context-dep.h"
 #include "util/const-integer-set.h"
 
-
 namespace kaldi {
-
 
 /// \addtogroup hmm_group
 /// @{
@@ -38,9 +36,12 @@ namespace kaldi {
  // an exit probability of one (no other state can have nonzero exit
  // probability; you can treat the transition probability to the final
  // state as an exit probability).
- // Note also that it's valid to omit the "<PdfClass>" entry of the <State>, which
- // will mean we won't have a pdf on that state [non-emitting state].  This is equivalent
- // to setting the <PdfClass> to -1.  We do this normally just for the final state.
+ // Note also that it's valid to omit the "<PdfClass>" entry of the <State>,
+ which
+ // will mean we won't have a pdf on that state [non-emitting state].  This is
+ equivalent
+ // to setting the <PdfClass> to -1.  We do this normally just for the final
+ state.
  // The Topology object can have multiple <TopologyEntry> blocks.
  // This is useful if there are multiple types of topology in the system.
 
@@ -61,7 +62,7 @@ namespace kaldi {
  <Final> 0.5
  </State>
  <State> 3
- </State> 
+ </State>
  </TopologyEntry>
  </Topology>
 */
@@ -86,7 +87,8 @@ namespace kaldi {
 
 static const int32 kNoPdf = -1;
 
-/// A class for storing topology information for phones.  See  \ref hmm for context.
+/// A class for storing topology information for phones.  See  \ref hmm for
+/// context.
 /// This object is sometimes accessed in a file by itself, but more often
 /// as a class member of the Transition class (this is for convenience to reduce
 /// the number of files programs have to access).
@@ -95,9 +97,12 @@ class HmmTopology {
  public:
   /// A structure defined inside HmmTopology to represent a HMM state.
   struct HmmState {
-    /// The \ref pdf_class pdf-class, typically 0, 1 or 2 (the same as the HMM-state index),
-    /// but may be different to enable us to hardwire sharing of state, and may be
-    /// equal to \ref kNoPdf == -1 in order to specify nonemitting states (unusual).
+    /// The \ref pdf_class pdf-class, typically 0, 1 or 2 (the same as the
+    /// HMM-state index),
+    /// but may be different to enable us to hardwire sharing of state, and may
+    /// be
+    /// equal to \ref kNoPdf == -1 in order to specify nonemitting states
+    /// (unusual).
     int32 pdf_class;
 
     /// A list of transitions.  The first member of each pair is the index of
@@ -105,13 +110,13 @@ class HmmTopology {
     /// (before training).
     std::vector<std::pair<int32, BaseFloat> > transitions;
 
-    explicit HmmState(int32 p): pdf_class(p) { }
+    explicit HmmState(int32 p) : pdf_class(p) {}
 
-    bool operator == (const HmmState &other) const {
+    bool operator==(const HmmState &other) const {
       return (pdf_class == other.pdf_class && transitions == other.transitions);
     }
-    
-    HmmState(): pdf_class(-1) { }
+
+    HmmState() : pdf_class(-1) {}
   };
 
   /// TopologyEntry is a typedef that represents the topology of
@@ -123,7 +128,6 @@ class HmmTopology {
 
   // Checks that the object is valid, and throw exception otherwise.
   void Check();
-
 
   /// Returns the topology entry (i.e. vector of HmmState) for this phone;
   /// will throw exception if phone not covered by the topology.
@@ -146,17 +150,18 @@ class HmmTopology {
 
   HmmTopology() {}
 
-  bool operator == (const HmmTopology &other) const {
-    return phones_ == other.phones_ && phone2idx_ == other.phone2idx_
-        && entries_ == other.entries_;
+  bool operator==(const HmmTopology &other) const {
+    return phones_ == other.phones_ && phone2idx_ == other.phone2idx_ &&
+           entries_ == other.entries_;
   }
   // Allow default assignment operator and copy constructor.
  private:
-  std::vector<int32> phones_;  // list of all phones we have topology for.  Sorted, uniq.  no epsilon (zero) phone.
-  std::vector<int32> phone2idx_;  // map from phones to indexes into the entries vector (or -1 for not present).
+  std::vector<int32> phones_;     // list of all phones we have topology for.
+                                  // Sorted, uniq.  no epsilon (zero) phone.
+  std::vector<int32> phone2idx_;  // map from phones to indexes into the entries
+                                  // vector (or -1 for not present).
   std::vector<TopologyEntry> entries_;
 };
-
 
 /// This function returns a HmmTopology object giving a normal 3-state topology,
 /// covering all phones in the list "phones".  This is mainly of use in testing
@@ -165,8 +170,6 @@ HmmTopology GetDefaultTopology(const std::vector<int32> &phones);
 
 /// @} end "addtogroup hmm_group"
 
-
-} // end namespace kaldi
-
+}  // end namespace kaldi
 
 #endif

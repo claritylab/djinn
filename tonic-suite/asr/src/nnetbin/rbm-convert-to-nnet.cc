@@ -22,21 +22,20 @@
 #include "nnet/nnet-nnet.h"
 #include "nnet/nnet-rbm.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   try {
     using namespace kaldi;
     using namespace kaldi::nnet1;
     typedef kaldi::int32 int32;
 
-    const char *usage =
+    const char* usage =
         "Convert RBM to <affinetransform> and <sigmoid>\n"
         "Usage:  rbm-convert-to-nnet [options] <rbm-in> <nnet-out>\n"
         "e.g.:\n"
         " rbm-convert-to-nnet --binary=false rbm.mdl nnet.mdl\n";
 
-
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
 
@@ -48,15 +47,15 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        model_out_filename = po.GetArg(2);
+                model_out_filename = po.GetArg(2);
 
-    Nnet nnet; 
+    Nnet nnet;
     {
       bool binary_read;
       Input ki(model_in_filename, &binary_read);
       nnet.Read(ki.Stream(), binary_read);
     }
-    
+
     KALDI_ASSERT(nnet.NumComponents() == 1);
     KALDI_ASSERT(nnet.GetComponent(0).GetType() == Component::kRbm);
     RbmBase& rbm = dynamic_cast<RbmBase&>(nnet.GetComponent(0));
@@ -68,10 +67,8 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Written model to " << model_out_filename;
     return 0;
-  } catch(const std::exception& e) {
+  } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

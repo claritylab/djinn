@@ -19,7 +19,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ONLINE2_ONLINE_FEATURE_H_
 #define KALDI_ONLINE2_ONLINE_FEATURE_H_
 
@@ -40,10 +39,8 @@ namespace kaldi {
 /// @addtogroup  onlinefeat OnlineFeatureExtraction
 /// @{
 
-
-
-template<class C>
-class OnlineGenericBaseFeature: public OnlineBaseFeature {
+template <class C>
+class OnlineGenericBaseFeature : public OnlineBaseFeature {
  public:
   //
   // First, functions that are present in the interface:
@@ -70,17 +67,16 @@ class OnlineGenericBaseFeature: public OnlineBaseFeature {
   virtual void AcceptWaveform(BaseFloat sampling_rate,
                               const VectorBase<BaseFloat> &waveform);
 
-
   // InputFinished() tells the class you won't be providing any
   // more waveform.  This will help flush out the last few frames
   // of delta or LDA features.
-  virtual void InputFinished() { input_finished_= true; }
-
+  virtual void InputFinished() { input_finished_ = true; }
 
  private:
   C mfcc_or_plp_;  // class that does the MFCC or PLP computation
 
-  // features_ is the Mfcc or Plp or Fbank features that we have already computed.
+  // features_ is the Mfcc or Plp or Fbank features that we have already
+  // computed.
   Matrix<BaseFloat> features_;
 
   // True if the user has called "InputFinished()"
@@ -106,21 +102,20 @@ typedef OnlineGenericBaseFeature<Mfcc> OnlineMfcc;
 typedef OnlineGenericBaseFeature<Plp> OnlinePlp;
 typedef OnlineGenericBaseFeature<Fbank> OnlineFbank;
 
-
 /// This class takes a Matrix<BaseFloat> and wraps it as an
 /// OnlineFeatureInterface: this can be useful where some earlier stage of
 /// feature processing has been done offline but you want to use part of the
 /// online pipeline.
-class OnlineMatrixFeature: public OnlineFeatureInterface {
+class OnlineMatrixFeature : public OnlineFeatureInterface {
  public:
   /// Caution: this class maintains the const reference from the constructor, so
   /// don't let it go out of scope while this object exists.
-  explicit OnlineMatrixFeature(const MatrixBase<BaseFloat> &mat): mat_(mat) { }
+  explicit OnlineMatrixFeature(const MatrixBase<BaseFloat> &mat) : mat_(mat) {}
 
   virtual int32 Dim() const { return mat_.NumCols(); }
 
   virtual int32 NumFramesReady() const { return mat_.NumRows(); }
-  
+
   virtual void GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
     feat->CopyFromVec(mat_.Row(frame));
   }
@@ -133,7 +128,6 @@ class OnlineMatrixFeature: public OnlineFeatureInterface {
   const MatrixBase<BaseFloat> &mat_;
 };
 
-
 // Note the similarity with SlidingWindowCmnOptions, but there
 // are also differences.  One which doesn't appear in the config
 // itself, because it's a difference between the setups, is that
@@ -145,8 +139,8 @@ class OnlineMatrixFeature: public OnlineFeatureInterface {
 struct OnlineCmvnOptions {
   int32 cmn_window;
   int32 speaker_frames;  // must be <= cmn_window
-  int32 global_frames;  // must be <= speaker_frames.
-  bool normalize_mean;  // Must be true if normalize_variance==true.
+  int32 global_frames;   // must be <= speaker_frames.
+  bool normalize_mean;   // Must be true if normalize_variance==true.
   bool normalize_variance;
 
   int32 modulus;  // not configurable from command line, relates to how the
@@ -154,45 +148,51 @@ struct OnlineCmvnOptions {
                   // time-efficient but less memory-efficient.  Must be >= 1.
   int32 ring_buffer_size;  // not configurable from command line; size of ring
                            // buffer used for caching CMVN stats.
-  std::string skip_dims; // Colon-separated list of dimensions to skip normalization
-                         // of, e.g. 13:14:15.
-  
-  OnlineCmvnOptions():
-      cmn_window(600),
-      speaker_frames(600),
-      global_frames(200),
-      normalize_mean(true),
-      normalize_variance(false),
-      modulus(20),
-      ring_buffer_size(20),
-      skip_dims("") { }
-  
+  std::string
+      skip_dims;  // Colon-separated list of dimensions to skip normalization
+                  // of, e.g. 13:14:15.
+
+  OnlineCmvnOptions()
+      : cmn_window(600),
+        speaker_frames(600),
+        global_frames(200),
+        normalize_mean(true),
+        normalize_variance(false),
+        modulus(20),
+        ring_buffer_size(20),
+        skip_dims("") {}
+
   void Check() {
-    KALDI_ASSERT(speaker_frames <= cmn_window && global_frames <= speaker_frames
-                 && modulus > 0);
+    KALDI_ASSERT(speaker_frames <= cmn_window &&
+                 global_frames <= speaker_frames && modulus > 0);
   }
 
   void Register(ParseOptions *po) {
-    po->Register("cmn-window", &cmn_window, "Number of frames of sliding "
+    po->Register("cmn-window", &cmn_window,
+                 "Number of frames of sliding "
                  "context for cepstral mean normalization.");
-    po->Register("global-frames", &global_frames, "Number of frames of "
+    po->Register("global-frames", &global_frames,
+                 "Number of frames of "
                  "global-average cepstral mean normalization stats to use for "
                  "first utterance of a speaker");
-    po->Register("speaker-frames", &speaker_frames, "Number of frames of "
+    po->Register("speaker-frames", &speaker_frames,
+                 "Number of frames of "
                  "previous utterance(s) from this speaker to use in cepstral "
                  "mean normalization");
     // we name the config string "norm-vars" for compatibility with
     // ../featbin/apply-cmvn.cc
-    po->Register("norm-vars", &normalize_variance, "If true, do "
+    po->Register("norm-vars", &normalize_variance,
+                 "If true, do "
                  "cepstral variance normalization in addition to cepstral mean "
                  "normalization ");
-    po->Register("norm-mean", &normalize_mean, "If true, do mean normalization "
+    po->Register("norm-mean", &normalize_mean,
+                 "If true, do mean normalization "
                  "(note: you cannot normalize the variance but not the mean)");
-    po->Register("skip-dims", &skip_dims, "Dimensions to skip normalization of "
-                 "(colon-separated list of integers)");}
+    po->Register("skip-dims", &skip_dims,
+                 "Dimensions to skip normalization of "
+                 "(colon-separated list of integers)");
+  }
 };
-
-
 
 /** Struct OnlineCmvnState stores the state of CMVN adaptation between
     utterances (but not the state of the computation within an utterance).  It
@@ -219,21 +219,19 @@ struct OnlineCmvnState {
   // user called the Freeze() function in class OnlineCmvn.
   Matrix<double> frozen_state;
 
-  OnlineCmvnState() { }
+  OnlineCmvnState() {}
 
-  explicit OnlineCmvnState(const Matrix<double> &global_stats):
-      global_cmvn_stats(global_stats) { }
+  explicit OnlineCmvnState(const Matrix<double> &global_stats)
+      : global_cmvn_stats(global_stats) {}
 
   // Copy constructor
-  OnlineCmvnState(const OnlineCmvnState &other); 
-  
+  OnlineCmvnState(const OnlineCmvnState &other);
+
   // Use the default assignment operator.
 };
 
-
-class OnlineCmvn: public OnlineFeatureInterface {
+class OnlineCmvn : public OnlineFeatureInterface {
  public:
-
   //
   // First, functions that are present in the interface:
   //
@@ -248,20 +246,17 @@ class OnlineCmvn: public OnlineFeatureInterface {
 
   virtual void GetFrame(int32 frame, VectorBase<BaseFloat> *feat);
 
-
   //
   // Next, functions that are not in the interface.
   //
 
   /// Initializer that sets the cmvn state.
-  OnlineCmvn(const OnlineCmvnOptions &opts,
-             const OnlineCmvnState &cmvn_state,
+  OnlineCmvn(const OnlineCmvnOptions &opts, const OnlineCmvnState &cmvn_state,
              OnlineFeatureInterface *src);
 
   /// Initializer that does not set the cmvn state:
   /// after calling this, you should call SetState().
-  OnlineCmvn(const OnlineCmvnOptions &opts,
-             OnlineFeatureInterface *src);
+  OnlineCmvn(const OnlineCmvnOptions &opts, OnlineFeatureInterface *src);
 
   // Outputs any state information from this utterance to "cmvn_state".
   // The value of "cmvn_state" before the call does not matter: the output
@@ -270,8 +265,7 @@ class OnlineCmvn: public OnlineFeatureInterface {
   // of the user possibly having called Freeze().
   // If cur_frame is -1, it will just output the unmodified original
   // state that was supplied to this object.
-  void GetState(int32 cur_frame,
-                OnlineCmvnState *cmvn_state);
+  void GetState(int32 cur_frame, OnlineCmvnState *cmvn_state);
 
   // This function can be used to modify the state of the CMVN computation
   // from outside, but must only be called before you have processed any data
@@ -290,8 +284,8 @@ class OnlineCmvn: public OnlineFeatureInterface {
   void Freeze(int32 cur_frame);
 
   virtual ~OnlineCmvn();
- private:
 
+ private:
   /// Smooth the CMVN stats "stats" (which are stored in the normal format as a
   /// 2 x (dim+1) matrix), by possibly adding some stats from "global_stats"
   /// and/or "speaker_stats", controlled by the config.  The best way to
@@ -303,8 +297,7 @@ class OnlineCmvn: public OnlineFeatureInterface {
 
   /// Get the most recent cached frame of CMVN stats.  [If no frames
   /// were cached, sets up empty stats for frame zero and returns that].
-  void GetMostRecentCachedFrame(int32 frame,
-                                int32 *cached_frame,
+  void GetMostRecentCachedFrame(int32 frame, int32 *cached_frame,
                                 Matrix<double> *stats);
 
   /// Cache this frame of stats.
@@ -316,12 +309,11 @@ class OnlineCmvn: public OnlineFeatureInterface {
   /// Computes the raw CMVN stats for this frame, making use of (and updating if
   /// necessary) the cached statistics in raw_stats_.  This means the (x,
   /// x^2, count) stats for the last up to opts_.cmn_window frames.
-  void ComputeStatsForFrame(int32 frame,
-                            MatrixBase<double> *stats);
-
+  void ComputeStatsForFrame(int32 frame, MatrixBase<double> *stats);
 
   OnlineCmvnOptions opts_;
-  std::vector<int32> skip_dims_; // Skip CMVN for these dimensions.  Derived from opts_.
+  std::vector<int32>
+      skip_dims_;  // Skip CMVN for these dimensions.  Derived from opts_.
   OnlineCmvnState orig_state_;   // reflects the state before we saw this
                                  // utterance.
   Matrix<double> frozen_state_;  // If the user called Freeze(), this variable
@@ -332,7 +324,7 @@ class OnlineCmvn: public OnlineFeatureInterface {
   // input, computed every opts_.modulus frames.  raw_stats_[n / opts_.modulus]
   // contains the (count, x, x^2) statistics for the frames from
   // std::max(0, n - opts_.cmn_window) through n.
-  std::vector<Matrix<double>*> cached_stats_modulo_;
+  std::vector<Matrix<double> *> cached_stats_modulo_;
   // the variable below is a ring-buffer of cached stats.  the int32 is the
   // frame index.
   std::vector<std::pair<int32, Matrix<double> > > cached_stats_ring_;
@@ -340,20 +332,21 @@ class OnlineCmvn: public OnlineFeatureInterface {
   OnlineFeatureInterface *src_;  // Not owned here
 };
 
-
 struct OnlineSpliceOptions {
   int32 left_context;
   int32 right_context;
-  OnlineSpliceOptions(): left_context(4), right_context(4) { }
+  OnlineSpliceOptions() : left_context(4), right_context(4) {}
   void Register(ParseOptions *po) {
-    po->Register("left-context", &left_context, "Left-context for frame "
+    po->Register("left-context", &left_context,
+                 "Left-context for frame "
                  "splicing prior to LDA");
-    po->Register("right-context", &right_context, "Right-context for frame "
+    po->Register("right-context", &right_context,
+                 "Right-context for frame "
                  "splicing prior to LDA");
   }
 };
 
-class OnlineSpliceFrames: public OnlineFeatureInterface {
+class OnlineSpliceFrames : public OnlineFeatureInterface {
  public:
   //
   // First, functions that are present in the interface:
@@ -374,9 +367,10 @@ class OnlineSpliceFrames: public OnlineFeatureInterface {
   // Next, functions that are not in the interface.
   //
   OnlineSpliceFrames(const OnlineSpliceOptions &opts,
-                     OnlineFeatureInterface *src):
-      left_context_(opts.left_context), right_context_(opts.right_context),
-      src_(src) { }
+                     OnlineFeatureInterface *src)
+      : left_context_(opts.left_context),
+        right_context_(opts.right_context),
+        src_(src) {}
 
  private:
   int32 left_context_;
@@ -385,7 +379,7 @@ class OnlineSpliceFrames: public OnlineFeatureInterface {
 };
 
 /// This online-feature class implements any affine or linear transform.
-class OnlineTransform: public OnlineFeatureInterface {
+class OnlineTransform : public OnlineFeatureInterface {
  public:
   //
   // First, functions that are present in the interface:
@@ -409,14 +403,13 @@ class OnlineTransform: public OnlineFeatureInterface {
   OnlineTransform(const MatrixBase<BaseFloat> &transform,
                   OnlineFeatureInterface *src);
 
-
  private:
   OnlineFeatureInterface *src_;  // Not owned here
   Matrix<BaseFloat> linear_term_;
   Vector<BaseFloat> offset_;
 };
 
-class OnlineDeltaFeature: public OnlineFeatureInterface {
+class OnlineDeltaFeature : public OnlineFeatureInterface {
  public:
   //
   // First, functions that are present in the interface:
@@ -444,10 +437,9 @@ class OnlineDeltaFeature: public OnlineFeatureInterface {
                                   // coefficients.
 };
 
-
 /// This feature type can be used to cache its input, to avoid
 /// repetition of computation in a multi-pass decoding context.
-class OnlineCacheFeature: public OnlineFeatureInterface {
+class OnlineCacheFeature : public OnlineFeatureInterface {
  public:
   virtual int32 Dim() const { return src_->Dim(); }
 
@@ -466,19 +458,16 @@ class OnlineCacheFeature: public OnlineFeatureInterface {
   void ClearCache();  // this should be called if you change the underlying
                       // features in some way.
 
-  explicit OnlineCacheFeature(OnlineFeatureInterface *src): src_(src) { }
+  explicit OnlineCacheFeature(OnlineFeatureInterface *src) : src_(src) {}
+
  private:
-
   OnlineFeatureInterface *src_;  // Not owned here
-  std::vector<Vector<BaseFloat>* > cache_;
+  std::vector<Vector<BaseFloat> *> cache_;
 };
-
-
-
 
 /// This online-feature class implements combination of two feature
 /// streams (such as pitch, plp) into one stream.
-class OnlineAppendFeature: public OnlineFeatureInterface {
+class OnlineAppendFeature : public OnlineFeatureInterface {
  public:
   virtual int32 Dim() const { return src1_->Dim() + src2_->Dim(); }
 
@@ -492,12 +481,13 @@ class OnlineAppendFeature: public OnlineFeatureInterface {
 
   virtual void GetFrame(int32 frame, VectorBase<BaseFloat> *feat);
 
-  virtual ~OnlineAppendFeature() {  }
+  virtual ~OnlineAppendFeature() {}
 
   OnlineAppendFeature(OnlineFeatureInterface *src1,
-      OnlineFeatureInterface *src2): src1_(src1), src2_(src2) { }
- private:
+                      OnlineFeatureInterface *src2)
+      : src1_(src1), src2_(src2) {}
 
+ private:
   OnlineFeatureInterface *src1_;
   OnlineFeatureInterface *src2_;
 };

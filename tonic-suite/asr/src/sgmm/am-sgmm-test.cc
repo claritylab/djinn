@@ -40,8 +40,7 @@ void TestSgmmInit(const AmSgmm &sgmm) {
     feat(d) = kaldi::RandGauss();
   }
   kaldi::SgmmPerFrameDerivedVars frame_vars;
-  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(),
-                    sgmm.PhoneSpaceDim());
+  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(), sgmm.PhoneSpaceDim());
 
   std::vector<int32> gselect;
   sgmm.GaussianSelection(config, feat, &gselect);
@@ -104,8 +103,7 @@ void TestSgmmIO(const AmSgmm &sgmm) {
     feat(d) = kaldi::RandGauss();
   }
   kaldi::SgmmPerFrameDerivedVars frame_vars;
-  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(),
-                    sgmm.PhoneSpaceDim());
+  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(), sgmm.PhoneSpaceDim());
 
   std::vector<int32> gselect;
   sgmm.GaussianSelection(config, feat, &gselect);
@@ -116,7 +114,7 @@ void TestSgmmIO(const AmSgmm &sgmm) {
 
   // First, non-binary write
   sgmm.Write(kaldi::Output("tmpf", false).Stream(), false,
-      kaldi::kSgmmWriteAll);
+             kaldi::kSgmmWriteAll);
 
   bool binary_in;
   AmSgmm *sgmm1 = new AmSgmm();
@@ -132,7 +130,7 @@ void TestSgmmIO(const AmSgmm &sgmm) {
 
   // Next, binary write
   sgmm1->Write(kaldi::Output("tmpfb", true).Stream(), true,
-      kaldi::kSgmmWriteAll);
+               kaldi::kSgmmWriteAll);
   delete sgmm1;
 
   AmSgmm *sgmm2 = new AmSgmm();
@@ -155,7 +153,7 @@ void TestSgmmSubstates(const AmSgmm &sgmm) {
   int32 target_substates = 2 * sgmm.NumPdfs();
   kaldi::Vector<BaseFloat> occs(sgmm.NumPdfs());
   for (int32 i = 0; i < occs.Dim(); i++)
-    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform()+1);
+    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform() + 1);
   AmSgmm *sgmm1 = new AmSgmm();
   sgmm1->CopyFromSgmm(sgmm, false);
   sgmm1->SplitSubstates(occs, target_substates, 0.01, 0.2, 1000);
@@ -215,7 +213,6 @@ void TestSgmmIncreaseDim(const AmSgmm &sgmm) {
   sgmm1->ComputeNormalizers();
   sgmm1->Check(true);
 
-
   sgmm1->GaussianSelection(config, feat, &gselect);
   sgmm1->ComputePerFrameVars(feat, gselect, empty, 0.0, &per_frame);
   BaseFloat loglike1 = sgmm1->LogLikelihood(per_frame, 0);
@@ -252,7 +249,7 @@ void TestSgmmPreXform(const AmSgmm &sgmm) {
 }
 
 void UnitTestSgmm() {
-  size_t dim = 1 + kaldi::RandInt(0, 9);  // random dimension of the gmm
+  size_t dim = 1 + kaldi::RandInt(0, 9);       // random dimension of the gmm
   size_t num_comp = 3 + kaldi::RandInt(0, 9);  // random number of mixtures;
   // make sure it's more than one or we get errors initializing the SGMM.
   kaldi::FullGmm full_gmm;
@@ -261,7 +258,7 @@ void UnitTestSgmm() {
   size_t num_states = 1;
   AmSgmm sgmm;
   kaldi::SgmmGselectConfig config;
-  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim+1, 0);
+  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim + 1, 0);
   sgmm.ComputeNormalizers();
   TestSgmmInit(sgmm);
   TestSgmmIO(sgmm);
@@ -271,8 +268,7 @@ void UnitTestSgmm() {
 }
 
 int main() {
-  for (int i = 0; i < 10; i++)
-    UnitTestSgmm();
+  for (int i = 0; i < 10; i++) UnitTestSgmm();
   std::cout << "Test OK.\n";
   return 0;
 }

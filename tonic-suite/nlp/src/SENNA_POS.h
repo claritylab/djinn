@@ -3,8 +3,7 @@
 
 #include "tonic.h"
 
-typedef struct SENNA_POS_
-{
+typedef struct SENNA_POS_ {
   /* sizes */
   int window_size;
   int ll_word_size;
@@ -41,8 +40,10 @@ typedef struct SENNA_POS_
 
 } SENNA_POS;
 
-SENNA_POS* SENNA_POS_new(const char *path, const char *subpath);
-int* SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words, const int *sentence_caps, const int *sentence_suff, TonicSuiteApp app);
+SENNA_POS *SENNA_POS_new(const char *path, const char *subpath);
+int *SENNA_POS_forward(SENNA_POS *pos, const int *sentence_words,
+                       const int *sentence_caps, const int *sentence_suff,
+                       TonicSuiteApp app);
 void SENNA_POS_free(SENNA_POS *pos);
 
 #endif

@@ -25,7 +25,6 @@
 #include "fstext/fstext-lib.h"
 #include "decoder/training-graph-compiler.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -35,16 +34,20 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Creates training graphs (without transition-probabilities, by default)\n"
+        "Creates training graphs (without transition-probabilities, by "
+        "default)\n"
         "\n"
-        "Usage:   compile-train-graphs [options] <tree-in> <model-in> <lexicon-fst-in> <transcriptions-rspecifier> <graphs-wspecifier>\n"
+        "Usage:   compile-train-graphs [options] <tree-in> <model-in> "
+        "<lexicon-fst-in> <transcriptions-rspecifier> <graphs-wspecifier>\n"
         "e.g.: \n"
-        " compile-train-graphs tree 1.mdl lex.fst ark:train.tra ark:graphs.fsts\n";
+        " compile-train-graphs tree 1.mdl lex.fst ark:train.tra "
+        "ark:graphs.fsts\n";
     ParseOptions po(usage);
 
     TrainingGraphCompilerOptions gopts;
     int32 batch_size = 250;
-    gopts.transition_scale = 0.0;  // Change the default to 0.0 since we will generally add the
+    gopts.transition_scale =
+        0.0;  // Change the default to 0.0 since we will generally add the
     // transition probs in the alignment phase (since they change eacm time)
     gopts.self_loop_scale = 0.0;  // Ditto for self-loop probs.
     std::string disambig_rxfilename;
@@ -53,9 +56,10 @@ int main(int argc, char *argv[]) {
     po.Register("batch-size", &batch_size,
                 "Number of FSTs to compile at a time (more -> faster but uses "
                 "more memory.  E.g. 500");
-    po.Register("read-disambig-syms", &disambig_rxfilename, "File containing "
+    po.Register("read-disambig-syms", &disambig_rxfilename,
+                "File containing "
                 "list of disambiguation symbols in phone symbol table");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 5) {
@@ -87,10 +91,12 @@ int main(int argc, char *argv[]) {
     std::vector<int32> disambig_syms;
     if (disambig_rxfilename != "")
       if (!ReadIntegerVectorSimple(disambig_rxfilename, &disambig_syms))
-        KALDI_ERR << "fstcomposecontext: Could not read disambiguation symbols from "
-                  << disambig_rxfilename;
-    
-    TrainingGraphCompiler gc(trans_model, ctx_dep, lex_fst, disambig_syms, gopts);
+        KALDI_ERR
+            << "fstcomposecontext: Could not read disambiguation symbols from "
+            << disambig_rxfilename;
+
+    TrainingGraphCompiler gc(trans_model, ctx_dep, lex_fst, disambig_syms,
+                             gopts);
 
     lex_fst = NULL;  // we gave ownership to gc.
 
@@ -99,7 +105,8 @@ int main(int argc, char *argv[]) {
 
     int num_succeed = 0, num_fail = 0;
 
-    if (batch_size == 1) {  // We treat batch_size of 1 as a special case in order
+    if (batch_size ==
+        1) {  // We treat batch_size of 1 as a special case in order
       // to test more parts of the code.
       for (; !transcript_reader.Done(); transcript_reader.Next()) {
         std::string key = transcript_reader.Key();
@@ -113,8 +120,7 @@ int main(int argc, char *argv[]) {
           num_succeed++;
           fst_writer.Write(key, decode_fst);
         } else {
-          KALDI_WARN << "Empty decoding graph for utterance "
-                     << key;
+          KALDI_WARN << "Empty decoding graph for utterance " << key;
           num_fail++;
         }
       }
@@ -125,12 +131,12 @@ int main(int argc, char *argv[]) {
         keys.clear();
         transcripts.clear();
         for (; !transcript_reader.Done() &&
-                static_cast<int32>(transcripts.size()) < batch_size;
-            transcript_reader.Next()) {
+                   static_cast<int32>(transcripts.size()) < batch_size;
+             transcript_reader.Next()) {
           keys.push_back(transcript_reader.Key());
           transcripts.push_back(transcript_reader.Value());
         }
-        std::vector<fst::VectorFst<fst::StdArc>* > fsts;
+        std::vector<fst::VectorFst<fst::StdArc> *> fsts;
         if (!gc.CompileGraphsFromText(transcripts, &fsts)) {
           KALDI_ERR << "Not expecting CompileGraphs to fail.";
         }
@@ -140,8 +146,7 @@ int main(int argc, char *argv[]) {
             num_succeed++;
             fst_writer.Write(keys[i], *(fsts[i]));
           } else {
-            KALDI_WARN << "Empty decoding graph for utterance "
-                       << keys[i];
+            KALDI_WARN << "Empty decoding graph for utterance " << keys[i];
             num_fail++;
           }
         }
@@ -151,7 +156,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "compile-train-graphs: succeeded for " << num_succeed
               << " graphs, failed for " << num_fail;
     return (num_succeed != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

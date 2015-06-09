@@ -33,16 +33,15 @@ namespace fst {
 
 // GetStateProperties has not been tested directly (only implicitly via
 // testing Factor).
-template<class Arc>
-void GetStateProperties(const Fst<Arc> &fst,
-                        typename Arc::StateId max_state,
+template <class Arc>
+void GetStateProperties(const Fst<Arc> &fst, typename Arc::StateId max_state,
                         vector<StatePropertiesType> *props) {
   typedef typename Arc::StateId StateId;
   typedef typename Arc::Weight Weight;
   assert(props != NULL);
   props->clear();
   if (fst.Start() < 0) return;  // Empty fst.
-  props->resize(max_state+1, 0);
+  props->resize(max_state + 1, 0);
   assert(fst.Start() <= max_state);
   (*props)[fst.Start()] |= kStateInitial;
   for (StateId s = 0; s <= max_state; s++) {
@@ -54,20 +53,18 @@ void GetStateProperties(const Fst<Arc> &fst,
       StateId nexts = arc.nextstate;
       assert(nexts <= max_state);  // or input was invalid.
       StatePropertiesType &nexts_info = (*props)[nexts];
-      if (s_info&kStateArcsOut) s_info |= kStateMultipleArcsOut;
+      if (s_info & kStateArcsOut) s_info |= kStateMultipleArcsOut;
       s_info |= kStateArcsOut;
-      if (nexts_info&kStateArcsIn) nexts_info |= kStateMultipleArcsIn;
+      if (nexts_info & kStateArcsIn) nexts_info |= kStateMultipleArcsIn;
       nexts_info |= kStateArcsIn;
     }
-    if (fst.Final(s) != Weight::Zero())  s_info |= kStateFinal;
+    if (fst.Final(s) != Weight::Zero()) s_info |= kStateFinal;
   }
 }
 
-
-
-template<class Arc, class I>
+template <class Arc, class I>
 void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
-               vector<vector<I> > *symbols_out) {
+            vector<vector<I> > *symbols_out) {
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
   typedef typename Arc::StateId StateId;
   typedef typename Arc::Label Label;
@@ -83,22 +80,25 @@ void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
   vector<StatePropertiesType> state_properties;
   GetStateProperties(fst, max_state, &state_properties);
 
-  vector<bool> remove(max_state+1);  // if true, will remove this state.
+  vector<bool> remove(max_state + 1);  // if true, will remove this state.
 
   // Now identify states that will be removed (made the middle of a chain).
   // The basic rule is that if the FstStateProperties equals
-  // (kStateArcsIn|kStateArcsOut) or (kStateArcsIn|kStateArcsOut|kStateIlabelsOut),
+  // (kStateArcsIn|kStateArcsOut) or
+  // (kStateArcsIn|kStateArcsOut|kStateIlabelsOut),
   // then it is in the middle of a chain.  This eliminates state with
   // multiple input or output arcs, final states, and states with arcs out
   // that have olabels [we assume these are pushed to the left, so occur on the
   // 1st arc of a chain.
 
   for (StateId i = 0; i <= max_state; i++)
-    remove[i] = (state_properties[i] == (kStateArcsIn|kStateArcsOut)
-                 || state_properties[i] == (kStateArcsIn|kStateArcsOut|kStateIlabelsOut));
-  vector<StateId> state_mapping(max_state+1, kNoStateId);
+    remove[i] = (state_properties[i] == (kStateArcsIn | kStateArcsOut) ||
+                 state_properties[i] ==
+                     (kStateArcsIn | kStateArcsOut | kStateIlabelsOut));
+  vector<StateId> state_mapping(max_state + 1, kNoStateId);
 
-  typedef std::tr1::unordered_map<vector<I>, Label, kaldi::VectorHasher<I> > SymbolMapType;
+  typedef std::tr1::unordered_map<vector<I>, Label, kaldi::VectorHasher<I> >
+      SymbolMapType;
   SymbolMapType symbol_mapping;
   Label symbol_counter = 0;
   {
@@ -111,9 +111,11 @@ void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
     if (!remove[state]) {  // Process this state...
       StateId &new_state = state_mapping[state];
       if (new_state == kNoStateId) new_state = ofst->AddState();
-      for (ArcIterator<Fst<Arc> > aiter(fst, state); !aiter.Done(); aiter.Next()) {
+      for (ArcIterator<Fst<Arc> > aiter(fst, state); !aiter.Done();
+           aiter.Next()) {
         Arc arc = aiter.Value();
-        if (arc.ilabel == 0) this_sym.clear();
+        if (arc.ilabel == 0)
+          this_sym.clear();
         else {
           this_sym.resize(1);
           this_sym[0] = arc.ilabel;
@@ -125,15 +127,17 @@ void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
           arc.weight = Times(arc.weight, nextarc.weight);
           assert(nextarc.olabel == 0);
           if (nextarc.ilabel != 0) this_sym.push_back(nextarc.ilabel);
-          assert(static_cast<Label>(static_cast<I>(nextarc.ilabel))
-                 == nextarc.ilabel); // check within integer range.
+          assert(static_cast<Label>(static_cast<I>(nextarc.ilabel)) ==
+                 nextarc.ilabel);  // check within integer range.
           arc.nextstate = nextarc.nextstate;
         }
         StateId &new_nextstate = state_mapping[arc.nextstate];
         if (new_nextstate == kNoStateId) new_nextstate = ofst->AddState();
         arc.nextstate = new_nextstate;
-        if (symbol_mapping.count(this_sym) != 0) arc.ilabel = symbol_mapping[this_sym];
-        else arc.ilabel = symbol_mapping[this_sym] = symbol_counter++;
+        if (symbol_mapping.count(this_sym) != 0)
+          arc.ilabel = symbol_mapping[this_sym];
+        else
+          arc.ilabel = symbol_mapping[this_sym] = symbol_counter++;
         ofst->AddArc(new_state, arc);
       }
       if (fst.Final(state) != Weight::Zero())
@@ -145,12 +149,12 @@ void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
   // Now output the symbol sequences.
   symbols_out->resize(symbol_counter);
   for (typename SymbolMapType::const_iterator iter = symbol_mapping.begin();
-      iter != symbol_mapping.end(); ++iter) {
+       iter != symbol_mapping.end(); ++iter) {
     (*symbols_out)[iter->second] = iter->first;
   }
 }
 
-template<class Arc>
+template <class Arc>
 void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst1,
             MutableFst<Arc> *ofst2) {
   typedef typename Arc::Label Label;
@@ -159,7 +163,7 @@ void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst1,
   CreateFactorFst(symbols, ofst1);
 }
 
-template<class Arc, class I>
+template <class Arc, class I>
 void ExpandInputSequences(const vector<vector<I> > &sequences,
                           MutableFst<Arc> *fst) {
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
@@ -183,19 +187,22 @@ void ExpandInputSequences(const vector<vector<I> > &sequences,
         assert(ilabel < static_cast<Label>(size));
         size_t len = sequences[ilabel].size();
         if (len <= 1) {
-          if (len == 0) arc.ilabel = 0;
-          else arc.ilabel = sequences[ilabel][0];
+          if (len == 0)
+            arc.ilabel = 0;
+          else
+            arc.ilabel = sequences[ilabel][0];
           MutableArcIterator<MutableFst<Arc> > mut_aiter(fst, s);
           mut_aiter.Seek(aidx);
           mut_aiter.SetValue(arc);
-        } else {  // len>=2.  Must create new states...
+        } else {                  // len>=2.  Must create new states...
           StateId curstate = -1;  // keep compiler happy: this value never used.
           for (size_t n = 0; n < len; n++) {  // adding/modifying "len" arcs.
             StateId nextstate;
-            if (n < len-1) {
+            if (n < len - 1) {
               nextstate = fst->AddState();
               assert(nextstate >= num_states_at_start);
-            } else nextstate = dest_state;  // going back to original arc's
+            } else
+              nextstate = dest_state;  // going back to original arc's
             // destination.
             if (n == 0) {
               arc.ilabel = sequences[ilabel][0];
@@ -218,13 +225,13 @@ void ExpandInputSequences(const vector<vector<I> > &sequences,
   }
 }
 
-
-template<class Arc, class I>
+template <class Arc, class I>
 class RemoveSomeInputSymbolsMapper {
-public:
-  Arc operator ()(const Arc &arc_in) {
+ public:
+  Arc operator()(const Arc &arc_in) {
     Arc ans = arc_in;
-    if (to_remove_set_.count(ans.ilabel) != 0) ans.ilabel = 0;  // remove this symbol
+    if (to_remove_set_.count(ans.ilabel) != 0)
+      ans.ilabel = 0;  // remove this symbol
     return ans;
   }
   MapFinalAction FinalAction() { return MAP_NO_SUPERFINAL; }
@@ -232,21 +239,22 @@ public:
   MapSymbolsAction OutputSymbolsAction() { return MAP_COPY_SYMBOLS; }
   uint64 Properties(uint64 props) const {
     // remove the following as we don't know now if any of them are true.
-    uint64 to_remove = kAcceptor|kNotAcceptor|kIDeterministic|kNonIDeterministic|
-        kNoEpsilons|kNoIEpsilons|kILabelSorted|kNotILabelSorted;
+    uint64 to_remove = kAcceptor | kNotAcceptor | kIDeterministic |
+                       kNonIDeterministic | kNoEpsilons | kNoIEpsilons |
+                       kILabelSorted | kNotILabelSorted;
     return props & ~to_remove;
   }
-  RemoveSomeInputSymbolsMapper(const vector<I> &to_remove):
-      to_remove_set_(to_remove) {
+  RemoveSomeInputSymbolsMapper(const vector<I> &to_remove)
+      : to_remove_set_(to_remove) {
     KALDI_ASSERT_IS_INTEGER_TYPE(I);
-         assert(to_remove_set_.count(0) == 0);  // makes no sense to remove epsilon.
-       }
-private:
+    assert(to_remove_set_.count(0) == 0);  // makes no sense to remove epsilon.
+  }
+
+ private:
   kaldi::ConstIntegerSet<I> to_remove_set_;
 };
 
-
-template<class Arc, class I>
+template <class Arc, class I>
 void CreateFactorFst(const vector<vector<I> > &sequences,
                      MutableFst<Arc> *fst) {
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
@@ -260,9 +268,11 @@ void CreateFactorFst(const vector<vector<I> > &sequences,
   assert(loopstate == 0);
   fst->SetStart(0);
   fst->SetFinal(0, Weight::One());
-  if (sequences.size() != 0) assert(sequences[0].size() == 0);  // can't replace epsilon...
+  if (sequences.size() != 0)
+    assert(sequences[0].size() == 0);  // can't replace epsilon...
 
-  for (Label olabel = 1; olabel < static_cast<Label>(sequences.size()); olabel++) {
+  for (Label olabel = 1; olabel < static_cast<Label>(sequences.size());
+       olabel++) {
     size_t len = sequences[olabel].size();
     if (len == 0) {
       Arc arc(0, olabel, Weight::One(), loopstate);
@@ -270,8 +280,9 @@ void CreateFactorFst(const vector<vector<I> > &sequences,
     } else {
       StateId curstate = loopstate;
       for (size_t i = 0; i < len; i++) {
-        StateId nextstate = (i == len-1 ? loopstate : fst->AddState());
-        Arc arc(sequences[olabel][i], (i == 0 ? olabel : 0), Weight::One(), nextstate);
+        StateId nextstate = (i == len - 1 ? loopstate : fst->AddState());
+        Arc arc(sequences[olabel][i], (i == 0 ? olabel : 0), Weight::One(),
+                nextstate);
         fst->AddArc(curstate, arc);
         curstate = nextstate;
       }
@@ -280,10 +291,8 @@ void CreateFactorFst(const vector<vector<I> > &sequences,
   fst->SetProperties(kOLabelSorted, kOLabelSorted);
 }
 
-
-template<class Arc, class I>
-void CreateMapFst(const vector<I> &symbol_map,
-                  MutableFst<Arc> *fst) {
+template <class Arc, class I>
+void CreateMapFst(const vector<I> &symbol_map, MutableFst<Arc> *fst) {
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
   typedef typename Arc::StateId StateId;
   typedef typename Arc::Label Label;
@@ -295,16 +304,15 @@ void CreateMapFst(const vector<I> &symbol_map,
   assert(loopstate == 0);
   fst->SetStart(0);
   fst->SetFinal(0, Weight::One());
-  assert(symbol_map.empty() || symbol_map[0] == 0);  // FST cannot map epsilon to something else.
-  for (Label olabel = 1; olabel < static_cast<Label>(symbol_map.size()); olabel++) {
+  assert(symbol_map.empty() ||
+         symbol_map[0] == 0);  // FST cannot map epsilon to something else.
+  for (Label olabel = 1; olabel < static_cast<Label>(symbol_map.size());
+       olabel++) {
     Arc arc(symbol_map[olabel], olabel, Weight::One(), loopstate);
     fst->AddArc(loopstate, arc);
   }
 }
 
-
-
-
-} // end namespace fst.
+}  // end namespace fst.
 
 #endif

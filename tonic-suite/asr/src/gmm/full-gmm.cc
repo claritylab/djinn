@@ -42,16 +42,14 @@ void FullGmm::Resize(int32 nmix, int32 dim) {
   KALDI_ASSERT(nmix > 0 && dim > 0);
   if (gconsts_.Dim() != nmix) gconsts_.Resize(nmix);
   if (weights_.Dim() != nmix) weights_.Resize(nmix);
-  if (means_invcovars_.NumRows() != nmix
-      || means_invcovars_.NumCols() != dim)
+  if (means_invcovars_.NumRows() != nmix || means_invcovars_.NumCols() != dim)
     means_invcovars_.Resize(nmix, dim);
   ResizeInvCovars(nmix, dim);
 }
 
 void FullGmm::ResizeInvCovars(int32 nmix, int32 dim) {
   KALDI_ASSERT(nmix > 0 && dim > 0);
-  if (inv_covars_.size() != static_cast<size_t>(nmix))
-    inv_covars_.resize(nmix);
+  if (inv_covars_.size() != static_cast<size_t>(nmix)) inv_covars_.resize(nmix);
   for (int32 i = 0; i < nmix; i++) {
     if (inv_covars_[i].NumRows() != dim) {
       inv_covars_[i].Resize(dim);
@@ -90,8 +88,7 @@ void FullGmm::CopyFromDiagGmm(const DiagGmm &diaggmm) {
 }
 
 int32 FullGmm::ComputeGconsts() {
-  int32 num_mix = NumGauss(),
-         dim = Dim();
+  int32 num_mix = NumGauss(), dim = Dim();
   KALDI_ASSERT(num_mix > 0 && dim > 0);
   BaseFloat offset = -0.5 * M_LOG_2PI * dim;  // constant term in gconst.
   int32 num_bad = 0;
@@ -105,8 +102,8 @@ int32 FullGmm::ComputeGconsts() {
     SpMatrix<BaseFloat> covar(inv_covars_[mix]);
     covar.InvertDouble();
     BaseFloat logdet = covar.LogPosDefDet();
-    gc -= 0.5 * (logdet + VecSpVec(means_invcovars_.Row(mix),
-                                   covar, means_invcovars_.Row(mix)));
+    gc -= 0.5 * (logdet + VecSpVec(means_invcovars_.Row(mix), covar,
+                                   means_invcovars_.Row(mix)));
     // Note that mean_invcovars(mix)' * covar(mix) * mean_invcovars(mix, d) is
     // really mean' * inv(covar) * mean, since mean_invcovars(mix, d) contains
     // the inverse covariance times mean.
@@ -132,7 +129,7 @@ int32 FullGmm::ComputeGconsts() {
 void FullGmm::Split(int32 target_components, float perturb_factor,
                     vector<int32> *history) {
   if (target_components <= NumGauss() || NumGauss() == 0) {
-    KALDI_WARN << "Cannot split from " << NumGauss() <<  " to "
+    KALDI_WARN << "Cannot split from " << NumGauss() << " to "
                << target_components << " components";
     return;
   }
@@ -143,8 +140,8 @@ void FullGmm::Split(int32 target_components, float perturb_factor,
   weights_.Resize(target_components);
   weights_.Range(0, current_components).CopyFromVec(tmp->weights_);
   means_invcovars_.Resize(target_components, dim);
-  means_invcovars_.Range(0, current_components, 0,
-      dim).CopyFromMat(tmp->means_invcovars_);
+  means_invcovars_.Range(0, current_components, 0, dim)
+      .CopyFromMat(tmp->means_invcovars_);
   ResizeInvCovars(target_components, dim);
   for (int32 mix = 0; mix < current_components; mix++) {
     inv_covars_[mix].CopyFromSp(tmp->inv_covars_[mix]);
@@ -168,8 +165,7 @@ void FullGmm::Split(int32 target_components, float perturb_factor,
     }
 
     // remember history
-    if (history != NULL)
-      history->push_back(max_idx);
+    if (history != NULL) history->push_back(max_idx);
 
     weights_(max_idx) /= 2;
     weights_(current_components) = weights_(max_idx);
@@ -179,8 +175,8 @@ void FullGmm::Split(int32 target_components, float perturb_factor,
     invcovar_l.Cholesky(inv_covars_[max_idx]);
     rand_vec.MulTp(invcovar_l, kTrans);
     inv_covars_[current_components].CopyFromSp(inv_covars_[max_idx]);
-    means_invcovars_.Row(current_components).CopyFromVec(means_invcovars_.Row(
-        max_idx));
+    means_invcovars_.Row(current_components)
+        .CopyFromVec(means_invcovars_.Row(max_idx));
     means_invcovars_.Row(current_components).AddVec(perturb_factor, rand_vec);
     means_invcovars_.Row(max_idx).AddVec(-perturb_factor, rand_vec);
     current_components++;
@@ -189,8 +185,7 @@ void FullGmm::Split(int32 target_components, float perturb_factor,
 }
 
 void FullGmm::Perturb(float perturb_factor) {
-  int32 num_comps = NumGauss(),
-      dim = Dim();
+  int32 num_comps = NumGauss(), dim = Dim();
   Vector<BaseFloat> rand_vec(dim);
   for (int32 i = 0; i < num_comps; i++) {
     rand_vec.SetRandn();
@@ -202,11 +197,10 @@ void FullGmm::Perturb(float perturb_factor) {
   ComputeGconsts();
 }
 
-
 void FullGmm::Merge(int32 target_components, vector<int32> *history) {
   if (target_components <= 0 || NumGauss() < target_components) {
     KALDI_ERR << "Invalid argument for target number of Gaussians (="
-        << target_components << ")";
+              << target_components << ")";
   }
   if (NumGauss() == target_components) {
     KALDI_WARN << "No components merged, as target = total.";
@@ -258,7 +252,7 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
   // clustering, always picking the pair of components that lead to the smallest
   // decrease in likelihood.
   vector<bool> discarded_component(num_comp);
-  Vector<BaseFloat> logdet(num_comp);   // logdet for each component
+  Vector<BaseFloat> logdet(num_comp);  // logdet for each component
   logdet.SetZero();
   for (int32 i = 0; i < num_comp; i++) {
     discarded_component[i] = false;
@@ -286,10 +280,10 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
   for (int32 i = 0; i < num_comp; i++) {
     for (int32 j = 0; j < i; j++) {
       BaseFloat w1 = weights_(i), w2 = weights_(j), w_sum = w1 + w2;
-      BaseFloat merged_logdet = MergedComponentsLogdet(w1, w2,
-        means.Row(i), means.Row(j), vars[i], vars[j]);
-      delta_like(i, j) = w_sum * merged_logdet
-        - w1 * logdet(i) - w2 * logdet(j);
+      BaseFloat merged_logdet = MergedComponentsLogdet(
+          w1, w2, means.Row(i), means.Row(j), vars[i], vars[j]);
+      delta_like(i, j) =
+          w_sum * merged_logdet - w1 * logdet(i) - w2 * logdet(j);
     }
   }
 
@@ -324,11 +318,11 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
     BaseFloat w1 = weights_(max_i), w2 = weights_(max_j);
     BaseFloat w_sum = w1 + w2;
     // merge means
-    means.Row(max_i).AddVec(w2/w1, means.Row(max_j));
-    means.Row(max_i).Scale(w1/w_sum);
+    means.Row(max_i).AddVec(w2 / w1, means.Row(max_j));
+    means.Row(max_i).Scale(w1 / w_sum);
     // merge vars
-    vars[max_i].AddSp(w2/w1, vars[max_j]);
-    vars[max_i].Scale(w1/w_sum);
+    vars[max_i].AddSp(w2 / w1, vars[max_j]);
+    vars[max_i].Scale(w1 / w_sum);
     // merge weights
     weights_(max_i) = w_sum;
 
@@ -341,8 +335,8 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
     inv_covars_[max_i].InvertDouble();
     // copy first-order stats (normalized by zero-order stats)
     // and multiply by inv_vars
-    means_invcovars_.Row(max_i).AddSpVec(1.0, inv_covars_[max_i],
-      means.Row(max_i), 0.0);
+    means_invcovars_.Row(max_i)
+        .AddSpVec(1.0, inv_covars_[max_i], means.Row(max_i), 0.0);
 
     // Update logdet for merged component
     logdet(max_i) += 0.5 * inv_covars_[max_i].LogPosDefDet();
@@ -355,10 +349,10 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
     for (int32 j = 0; j < num_comp; j++) {
       if ((j == max_i) || (discarded_component[j])) continue;
       BaseFloat w1 = weights_(max_i), w2 = weights_(j), w_sum = w1 + w2;
-      BaseFloat merged_logdet = MergedComponentsLogdet(w1, w2,
-        means.Row(max_i), means.Row(j), vars[max_i], vars[j]);
-      delta_like(max_i, j) = w_sum * merged_logdet
-        - w1 * logdet(max_i) - w2 * logdet(j);
+      BaseFloat merged_logdet = MergedComponentsLogdet(
+          w1, w2, means.Row(max_i), means.Row(j), vars[max_i], vars[j]);
+      delta_like(max_i, j) =
+          w_sum * merged_logdet - w1 * logdet(max_i) - w2 * logdet(j);
       // doesn't respect lower triangular indeces,
       // relies on implicitly performed swap of coordinates if necessary
     }
@@ -379,14 +373,14 @@ void FullGmm::Merge(int32 target_components, vector<int32> *history) {
   ComputeGconsts();
 }
 
-BaseFloat FullGmm::MergePreselect(int32 target_components,
-                                  const vector<pair<int32, int32> > &preselect) {
+BaseFloat FullGmm::MergePreselect(
+    int32 target_components, const vector<pair<int32, int32> > &preselect) {
   KALDI_ASSERT(!preselect.empty());
   double ans = 0.0;
   if (target_components <= 0 || NumGauss() < target_components) {
     KALDI_WARN << "Invalid argument for target number of Gaussians (="
-               << target_components << "), currently "
-               << NumGauss() << ", not mixing down";
+               << target_components << "), currently " << NumGauss()
+               << ", not mixing down";
     return 0.0;
   }
   if (NumGauss() == target_components) {
@@ -402,7 +396,7 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
   // Do greedy bottom-up clustering, always picking the pair of components that
   // lead to the smallest decrease in likelihood.
   vector<bool> discarded_component(num_comp);
-  Vector<BaseFloat> logdet(num_comp);   // logdet for each component
+  Vector<BaseFloat> logdet(num_comp);  // logdet for each component
   logdet.SetZero();
   for (int32 i = 0; i < num_comp; i++) {
     discarded_component[i] = false;
@@ -432,10 +426,11 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
     KALDI_ASSERT(static_cast<size_t>(idx1) < static_cast<size_t>(num_comp));
     KALDI_ASSERT(static_cast<size_t>(idx2) < static_cast<size_t>(num_comp));
     BaseFloat w1 = weights_(idx1), w2 = weights_(idx2), w_sum = w1 + w2;
-    BaseFloat merged_logdet = MergedComponentsLogdet(w1, w2,
-                                                     means.Row(idx1), means.Row(idx2),
+    BaseFloat merged_logdet = MergedComponentsLogdet(w1, w2, means.Row(idx1),
+                                                     means.Row(idx2),
                                                      vars[idx1], vars[idx2]),
-        delta_like = w_sum * merged_logdet - w1 * logdet(idx1) - w2 * logdet(idx2);
+              delta_like =
+                  w_sum * merged_logdet - w1 * logdet(idx1) - w2 * logdet(idx2);
     queue.push(std::make_pair(delta_like, preselect[i]));
   }
 
@@ -445,12 +440,11 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
 
   // Merge components with smallest impact on the loglike
   int32 removed;
-  for (removed = 0;
-       removed < num_comp - target_components && !queue.empty(); ) {
+  for (removed = 0; removed < num_comp - target_components && !queue.empty();) {
     QueueElem qelem = queue.top();
     queue.pop();
-    BaseFloat delta_log_like_old = qelem.first,
-        idx1 = qelem.second.first, idx2 = qelem.second.second;
+    BaseFloat delta_log_like_old = qelem.first, idx1 = qelem.second.first,
+              idx2 = qelem.second.second;
     // the next 3 lines are to handle when components got merged
     // and moved to different indices, but we still want to consider
     // merging their descendants. [descendant = current index where
@@ -460,12 +454,12 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
     if (idx1 == idx2) continue;  // can't merge something with itself.
 
     BaseFloat delta_log_like;
-    { // work out delta_log_like.
+    {  // work out delta_log_like.
       BaseFloat w1 = weights_(idx1), w2 = weights_(idx2), w_sum = w1 + w2;
-      BaseFloat merged_logdet = MergedComponentsLogdet(w1, w2,
-                                                       means.Row(idx1), means.Row(idx2),
-                                                       vars[idx1], vars[idx2]);
-      delta_log_like = w_sum * merged_logdet - w1 * logdet(idx1) - w2 * logdet(idx2);
+      BaseFloat merged_logdet = MergedComponentsLogdet(
+          w1, w2, means.Row(idx1), means.Row(idx2), vars[idx1], vars[idx2]);
+      delta_log_like =
+          w_sum * merged_logdet - w1 * logdet(idx1) - w2 * logdet(idx2);
     }
     if (ApproxEqual(delta_log_like, delta_log_like_old) ||
         delta_log_like > delta_log_like_old) {
@@ -476,11 +470,11 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
       BaseFloat w1 = weights_(idx1), w2 = weights_(idx2);
       BaseFloat w_sum = w1 + w2;
       // merge means
-      means.Row(idx1).AddVec(w2/w1, means.Row(idx2));
-      means.Row(idx1).Scale(w1/w_sum);
+      means.Row(idx1).AddVec(w2 / w1, means.Row(idx2));
+      means.Row(idx1).Scale(w1 / w_sum);
       // merge vars
-      vars[idx1].AddSp(w2/w1, vars[idx2]);
-      vars[idx1].Scale(w1/w_sum);
+      vars[idx1].AddSp(w2 / w1, vars[idx2]);
+      vars[idx1].Scale(w1 / w_sum);
       // merge weights
       weights_(idx1) = w_sum;
 
@@ -493,8 +487,8 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
       inv_covars_[idx1].InvertDouble();
       // copy first-order stats (normalized by zero-order stats)
       // and multiply by inv_vars
-      means_invcovars_.Row(idx1).AddSpVec(1.0, inv_covars_[idx1],
-                                           means.Row(idx1), 0.0);
+      means_invcovars_.Row(idx1)
+          .AddSpVec(1.0, inv_covars_[idx1], means.Row(idx1), 0.0);
 
       // Update logdet for merged component
       logdet(idx1) = 0.5 * inv_covars_[idx1].LogPosDefDet();
@@ -502,7 +496,7 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
 
       // Label the removed component as discarded
       discarded_component[idx2] = true;
-      KALDI_VLOG(2) << "Delta-log-like is " << delta_log_like <<  " (merging "
+      KALDI_VLOG(2) << "Delta-log-like is " << delta_log_like << " (merging "
                     << idx1 << " and " << idx2 << ")";
       ans += delta_log_like;
       mapping[idx2] = idx1;
@@ -533,13 +527,11 @@ BaseFloat FullGmm::MergePreselect(int32 target_components,
   return ans;
 }
 
-
 BaseFloat FullGmm::MergedComponentsLogdet(BaseFloat w1, BaseFloat w2,
                                           const VectorBase<BaseFloat> &f1,
                                           const VectorBase<BaseFloat> &f2,
                                           const SpMatrix<BaseFloat> &s1,
-                                          const SpMatrix<BaseFloat> &s2)
-    const {
+                                          const SpMatrix<BaseFloat> &s2) const {
   int32 dim = f1.Dim();
   Vector<BaseFloat> tmp_mean(dim);
   SpMatrix<BaseFloat> tmp_var(dim);
@@ -547,11 +539,11 @@ BaseFloat FullGmm::MergedComponentsLogdet(BaseFloat w1, BaseFloat w2,
 
   BaseFloat w_sum = w1 + w2;
   tmp_mean.CopyFromVec(f1);
-  tmp_mean.AddVec(w2/w1, f2);
-  tmp_mean.Scale(w1/w_sum);
+  tmp_mean.AddVec(w2 / w1, f2);
+  tmp_mean.Scale(w1 / w_sum);
   tmp_var.CopyFromSp(s1);
-  tmp_var.AddSp(w2/w1, s2);
-  tmp_var.Scale(w1/w_sum);
+  tmp_var.AddSp(w2 / w1, s2);
+  tmp_var.Scale(w1 / w_sum);
   tmp_var.AddVec2(-1.0, tmp_mean);
   merged_logdet -= 0.5 * tmp_var.LogPosDefDet();
   // -0.5 because var is not inverted
@@ -565,7 +557,7 @@ BaseFloat FullGmm::ComponentLogLikelihood(const VectorBase<BaseFloat> &data,
     KALDI_ERR << "Must call ComputeGconsts() before computing likelihood";
   if (data.Dim() != Dim()) {
     KALDI_ERR << "DiagGmm::ComponentLogLikelihood, dimension "
-        << "mismatch " << (data.Dim()) << "vs. "<< (Dim());
+              << "mismatch " << (data.Dim()) << "vs. " << (Dim());
   }
   BaseFloat loglike;
 
@@ -575,8 +567,6 @@ BaseFloat FullGmm::ComponentLogLikelihood(const VectorBase<BaseFloat> &data,
   loglike -= 0.5 * VecSpVec(data, inv_covars_[comp_id], data);
   return loglike + gconsts_(comp_id);
 }
-
-
 
 // Gets likelihood of data given this.
 BaseFloat FullGmm::LogLikelihood(const VectorBase<BaseFloat> &data) const {
@@ -626,12 +616,10 @@ void FullGmm::LogLikelihoodsPreselect(const VectorBase<BaseFloat> &data,
 
   for (int32 i = 0; i < num_indices; i++) {
     int32 idx = indices[i];
-    (*loglikes)(i) = gconsts_(idx)
-        + VecVec(means_invcovars_.Row(idx), data)
-        - TraceSpSpLower(data_sq, inv_covars_[idx]);
+    (*loglikes)(i) = gconsts_(idx) + VecVec(means_invcovars_.Row(idx), data) -
+                     TraceSpSpLower(data_sq, inv_covars_[idx]);
   }
 }
-
 
 /// Get gaussian selection information for one frame.
 BaseFloat FullGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
@@ -646,8 +634,8 @@ BaseFloat FullGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   if (num_gselect < num_gauss) {
     Vector<BaseFloat> loglikes_copy(loglikes);
     BaseFloat *ptr = loglikes_copy.Data();
-    std::nth_element(ptr, ptr+num_gauss-num_gselect, ptr+num_gauss);
-    thresh = ptr[num_gauss-num_gselect];
+    std::nth_element(ptr, ptr + num_gauss - num_gselect, ptr + num_gauss);
+    thresh = ptr[num_gauss - num_gselect];
   } else {
     thresh = -std::numeric_limits<BaseFloat>::infinity();
   }
@@ -660,8 +648,7 @@ BaseFloat FullGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   }
   std::sort(pairs.begin(), pairs.end(),
             std::greater<std::pair<BaseFloat, int32> >());
-  for (int32 j = 0;
-       j < num_gselect && j < static_cast<int32>(pairs.size());
+  for (int32 j = 0; j < num_gselect && j < static_cast<int32>(pairs.size());
        j++) {
     output->push_back(pairs[j].second);
     tot_loglike = LogAdd(tot_loglike, pairs[j].first);
@@ -670,29 +657,26 @@ BaseFloat FullGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   return tot_loglike;
 }
 
-
 BaseFloat FullGmm::GaussianSelectionPreselect(
-    const VectorBase<BaseFloat> &data,
-    const std::vector<int32> &preselect,
-    int32 num_gselect,
-    std::vector<int32> *output) const {
+    const VectorBase<BaseFloat> &data, const std::vector<int32> &preselect,
+    int32 num_gselect, std::vector<int32> *output) const {
   static bool warned_size = false;
   int32 preselect_sz = preselect.size();
   int32 this_num_gselect = std::min(num_gselect, preselect_sz);
   if (preselect_sz <= num_gselect && !warned_size) {
     warned_size = true;
     KALDI_WARN << "Preselect size is less or equal to than final size, "
-               << "doing nothing: " << preselect_sz << " < " <<  num_gselect
+               << "doing nothing: " << preselect_sz << " < " << num_gselect
                << " [won't warn again]";
   }
   Vector<BaseFloat> loglikes(preselect_sz);
   LogLikelihoodsPreselect(data, preselect, &loglikes);
-  
+
   Vector<BaseFloat> loglikes_copy(loglikes);
   BaseFloat *ptr = loglikes_copy.Data();
-  std::nth_element(ptr, ptr+preselect_sz-this_num_gselect,
-                   ptr+preselect_sz);
-  BaseFloat thresh = ptr[preselect_sz-this_num_gselect];
+  std::nth_element(ptr, ptr + preselect_sz - this_num_gselect,
+                   ptr + preselect_sz);
+  BaseFloat thresh = ptr[preselect_sz - this_num_gselect];
 
   BaseFloat tot_loglike = -std::numeric_limits<BaseFloat>::infinity();
   // we want the output sorted from best likelihood to worse
@@ -705,15 +689,13 @@ BaseFloat FullGmm::GaussianSelectionPreselect(
             std::greater<std::pair<BaseFloat, int32> >());
   output->clear();
   for (int32 j = 0;
-       j < this_num_gselect && j < static_cast<int32>(pairs.size());
-       j++) {
+       j < this_num_gselect && j < static_cast<int32>(pairs.size()); j++) {
     output->push_back(pairs[j].second);
     tot_loglike = LogAdd(tot_loglike, pairs[j].first);
   }
   KALDI_ASSERT(!output->empty());
   return tot_loglike;
 }
-
 
 // Gets likelihood of data given this. Also provides per-Gaussian posteriors.
 BaseFloat FullGmm::ComponentPosteriors(const VectorBase<BaseFloat> &data,
@@ -737,12 +719,13 @@ void FullGmm::RemoveComponent(int32 gauss, bool renorm_weights) {
   inv_covars_.erase(inv_covars_.begin() + gauss);
   if (renorm_weights) {
     BaseFloat sum_weights = weights_.Sum();
-    weights_.Scale(1.0/sum_weights);
+    weights_.Scale(1.0 / sum_weights);
     valid_gconsts_ = false;
   }
 }
 
-void FullGmm::RemoveComponents(const vector<int32> &gauss_in, bool renorm_weights) {
+void FullGmm::RemoveComponents(const vector<int32> &gauss_in,
+                               bool renorm_weights) {
   vector<int32> gauss(gauss_in);
   std::sort(gauss.begin(), gauss.end());
   KALDI_ASSERT(IsSortedAndUniq(gauss));
@@ -750,8 +733,7 @@ void FullGmm::RemoveComponents(const vector<int32> &gauss_in, bool renorm_weight
   // except for quite large GMMs).
   for (size_t i = 0; i < gauss.size(); i++) {
     RemoveComponent(gauss[i], renorm_weights);
-    for (size_t j = i + 1; j < gauss.size(); j++)
-      gauss[j]--;
+    for (size_t j = i + 1; j < gauss.size(); j++) gauss[j]--;
   }
 }
 
@@ -774,8 +756,7 @@ void FullGmm::Write(std::ostream &out_stream, bool binary) const {
   if (!binary) out_stream << "\n";
 }
 
-std::ostream & operator <<(std::ostream & out_stream,
-                           const kaldi::FullGmm &gmm) {
+std::ostream &operator<<(std::ostream &out_stream, const kaldi::FullGmm &gmm) {
   gmm.Write(out_stream, false);
   return out_stream;
 }
@@ -811,13 +792,13 @@ void FullGmm::Interpolate(BaseFloat rho, const FullGmm &source,
 }
 
 void FullGmm::Read(std::istream &in_stream, bool binary) {
-//  ExpectToken(in_stream, binary, "<FullGMMBegin>");
+  //  ExpectToken(in_stream, binary, "<FullGMMBegin>");
   std::string token;
   ReadToken(in_stream, binary, &token);
   // <FullGMMBegin> is for compatibility. Will be deleted later
   if (token != "<FullGMMBegin>" && token != "<FullGMM>")
     KALDI_ERR << "Expected <FullGMM>, got " << token;
-//  ExpectToken(in_stream, binary, "<GCONSTS>");
+  //  ExpectToken(in_stream, binary, "<GCONSTS>");
   ReadToken(in_stream, binary, &token);
   if (token == "<GCONSTS>") {  // The gconsts are optional.
     gconsts_.Read(in_stream, binary);
@@ -836,7 +817,7 @@ void FullGmm::Read(std::istream &in_stream, bool binary) {
   for (int32 i = 0; i < ncomp; i++) {
     inv_covars_[i].Read(in_stream, binary);
   }
-//  ExpectToken(in_stream, binary, "<FullGMMEnd>");
+  //  ExpectToken(in_stream, binary, "<FullGMMEnd>");
   ReadToken(in_stream, binary, &token);
   // <FullGMMEnd> is for compatibility. Will be deleted later
   if (token != "<FullGMMEnd>" && token != "</FullGMM>")
@@ -845,7 +826,7 @@ void FullGmm::Read(std::istream &in_stream, bool binary) {
   ComputeGconsts();  // safer option than trusting the read gconsts
 }
 
-std::istream & operator >>(std::istream & in_stream, kaldi::FullGmm &gmm) {
+std::istream &operator>>(std::istream &in_stream, kaldi::FullGmm &gmm) {
   gmm.Read(in_stream, false);  // false == non-binary.
   return in_stream;
 }

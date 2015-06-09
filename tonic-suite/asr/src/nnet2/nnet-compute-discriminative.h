@@ -33,47 +33,54 @@ namespace nnet2 {
 */
 
 struct NnetDiscriminativeUpdateOptions {
-  std::string criterion; // "mmi" or "mpfe" or "smbr"
-  BaseFloat acoustic_scale; // e.g. 0.1
-  bool drop_frames; // for MMI, true if we ignore frames where alignment
-                    // pdf-id is not in the lattice.
-  BaseFloat boost; // for MMI, boosting factor (would be Boosted MMI)... e.g. 0.1.
+  std::string criterion;     // "mmi" or "mpfe" or "smbr"
+  BaseFloat acoustic_scale;  // e.g. 0.1
+  bool drop_frames;  // for MMI, true if we ignore frames where alignment
+                     // pdf-id is not in the lattice.
+  BaseFloat
+      boost;  // for MMI, boosting factor (would be Boosted MMI)... e.g. 0.1.
 
-  std::string silence_phones_str; // colon-separated list of integer ids of silence phones,
-                                  // for MPE/SMBR only.
+  std::string silence_phones_str;  // colon-separated list of integer ids of
+                                   // silence phones,
+                                   // for MPE/SMBR only.
 
-  NnetDiscriminativeUpdateOptions(): criterion("smbr"), acoustic_scale(0.1),
-                                     drop_frames(false), boost(0.0) { }
-  
+  NnetDiscriminativeUpdateOptions()
+      : criterion("smbr"),
+        acoustic_scale(0.1),
+        drop_frames(false),
+        boost(0.0) {}
+
   void Register(OptionsItf *po) {
-    po->Register("criterion", &criterion, "Criterion, 'mmi'|'mpfe'|'smbr', "
+    po->Register("criterion", &criterion,
+                 "Criterion, 'mmi'|'mpfe'|'smbr', "
                  "determines the objective function to use.  Should match "
                  "option used when we created the examples.");
-    po->Register("acoustic-scale", &acoustic_scale, "Weighting factor to "
+    po->Register("acoustic-scale", &acoustic_scale,
+                 "Weighting factor to "
                  "apply to acoustic likelihoods.");
-    po->Register("drop-frames", &drop_frames, "For MMI, if true we drop frames "
+    po->Register("drop-frames", &drop_frames,
+                 "For MMI, if true we drop frames "
                  "with no overlap of num and den frames");
     po->Register("boost", &boost, "Boosting factor for boosted MMI (e.g. 0.1)");
     po->Register("silence-phones", &silence_phones_str,
                  "For MPFE or SMBR, colon-separated list of integer ids of "
                  "silence phones, e.g. 1:2:3");
-    
   }
 };
 
-
 struct NnetDiscriminativeStats {
-  double tot_t; // total number of frames
-  double tot_t_weighted; // total number of frames times weight.
-  double tot_num_count; // total count of numerator posterior (should be
-                        // identical to denominator-posterior count, so we don't
-                        // separately compute that).
+  double tot_t;           // total number of frames
+  double tot_t_weighted;  // total number of frames times weight.
+  double tot_num_count;   // total count of numerator posterior (should be
+  // identical to denominator-posterior count, so we don't
+  // separately compute that).
   double tot_num_objf;  // for MMI, the (weighted) numerator likelihood; for
                         // SMBR/MPFE, 0.
   double tot_den_objf;  // for MMI, the (weighted) denominator likelihood; for
                         // SMBR/MPFE, the objective function.
   NnetDiscriminativeStats() { std::memset(this, 0, sizeof(*this)); }
-  void Print(std::string criterion); // const NnetDiscriminativeUpdateOptions &opts);
+  void Print(
+      std::string criterion);  // const NnetDiscriminativeUpdateOptions &opts);
   void Add(const NnetDiscriminativeStats &other);
 };
 
@@ -83,7 +90,7 @@ struct NnetDiscriminativeStats {
     gradient descent, otherwise (assuming you have called SetZero(true)
     on *nnet_to_update) it will compute the gradient on this data.
     If nnet_to_update_ == NULL, no backpropagation is done.
-    
+
     Note: we ignore any existing acoustic score in the lattice of "eg".
 
     For display purposes you should normalize the sum of this return value by
@@ -103,8 +110,7 @@ void NnetDiscriminativeUpdate(const AmNnet &am_nnet,
                               Nnet *nnet_to_update,
                               NnetDiscriminativeStats *stats);
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_NNET_COMPUTE_DISCRIMINATIVE_H_
+#endif  // KALDI_NNET2_NNET_COMPUTE_DISCRIMINATIVE_H_

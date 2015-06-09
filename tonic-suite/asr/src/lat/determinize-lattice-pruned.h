@@ -37,7 +37,6 @@ namespace fst {
 /// \addtogroup fst_extensions
 ///  @{
 
-
 // For example of usage, see test-determinize-lattice-pruned.cc
 
 /*
@@ -51,13 +50,16 @@ namespace fst {
    paths, we can easily terminate the algorithm after a certain specified number
    of states or arcs.
 
-   The input is an FST with weight-type BaseWeightType (usually a pair of floats,
+   The input is an FST with weight-type BaseWeightType (usually a pair of
+   floats,
    with a lexicographical type of order, such as LatticeWeightTpl<float>).
    Typically this would be a state-level lattice, with input symbols equal to
-   words, and output-symbols equal to p.d.f's (so like the inverse of HCLG).  Imagine representing this as an
+   words, and output-symbols equal to p.d.f's (so like the inverse of HCLG).
+   Imagine representing this as an
    acceptor of type CompactLatticeWeightTpl<float>, in which the input/output
    symbols are words, and the weights contain the original weights together with
-   strings (with zero or one symbol in them) containing the original output labels
+   strings (with zero or one symbol in them) containing the original output
+   labels
    (the p.d.f.'s).  We determinize this using acceptor determinization with
    epsilon removal.  Remember (from lattice-weight.h) that
    CompactLatticeWeightTpl has a special kind of semiring where we always take
@@ -82,7 +84,8 @@ namespace fst {
    words (in states), because propagating each arc involves copying a whole
    vector (of integers representing p.d.f.'s).  Instead we use a hash structure
    where each string is a pointer (Entry*), and uses a hash from (Entry*,
-   IntType), to the successor string (and a way to get the latest IntType and the
+   IntType), to the successor string (and a way to get the latest IntType and
+   the
    ancestor Entry*).  [this is the class LatticeStringRepository].
 
    Another issue is that rather than representing a determinized-state as a
@@ -91,10 +94,11 @@ namespace fst {
    this the "canonical representation".  Note: these collections are always
    normalized to remove any common weight and string part.  Define end-states as
    the subset of states that have an arc out of them with a label on, or are
-   final.  If we represent a determinized-state a the set of just its (end-state,
+   final.  If we represent a determinized-state a the set of just its
+   (end-state,
    weight) pairs, this will be a valid and more compact representation, and will
    lead to a smaller set of determinized states (like early minimization).  Call
-   this collection of (end-state, weight) pairs the "minimal representation".  As
+   this collection of (end-state, weight) pairs the "minimal representation". As
    a mechanism to reduce compute, we can also consider another representation.
    In the determinization algorithm, we start off with a set of (begin-state,
    weight) pairs (where the "begin-states" are initial or have a label on the
@@ -104,41 +108,50 @@ namespace fst {
    representation".  If two initial representations are the same, the "canonical
    representation" and hence the "minimal representation" will be the same.  We
    can use this to reduce compute.  Note that if two initial representations are
-   different, this does not preclude the other representations from being the same.
-   
-*/   
+   different, this does not preclude the other representations from being the
+   same.
 
+*/
 
 struct DeterminizeLatticePrunedOptions {
-  float delta; // A small offset used to measure equality of weights.
-  int max_mem; // If >0, determinization will fail and return false
-  // when the algorithm's (approximate) memory consumption crosses this threshold.
-  int max_loop; // If >0, can be used to detect non-determinizable input
+  float delta;  // A small offset used to measure equality of weights.
+  int max_mem;  // If >0, determinization will fail and return false
+  // when the algorithm's (approximate) memory consumption crosses this
+  // threshold.
+  int max_loop;  // If >0, can be used to detect non-determinizable input
   // (a case that wouldn't be caught by max_mem).
   int max_states;
   int max_arcs;
   float retry_cutoff;
-  DeterminizeLatticePrunedOptions(): delta(kDelta),
-                                     max_mem(-1),
-                                     max_loop(-1),
-                                     max_states(-1),
-                                     max_arcs(-1),
-                                     retry_cutoff(0.5) { }
-  void Register (kaldi::OptionsItf *po) {
+  DeterminizeLatticePrunedOptions()
+      : delta(kDelta),
+        max_mem(-1),
+        max_loop(-1),
+        max_states(-1),
+        max_arcs(-1),
+        retry_cutoff(0.5) {}
+  void Register(kaldi::OptionsItf *po) {
     po->Register("delta", &delta, "Tolerance used in determinization");
-    po->Register("max-mem", &max_mem, "Maximum approximate memory usage in "
-                "determinization (real usage might be many times this)");
-    po->Register("max-arcs", &max_arcs, "Maximum number of arcs in "
-                "output FST (total, not per state");
-    po->Register("max-states", &max_states, "Maximum number of arcs in output "
-                "FST (total, not per state");
-    po->Register("max-loop", &max_loop, "Option used to detect a particular "
-                "type of determinization failure, typically due to invalid input "
-                "(e.g., negative-cost loops)");
-    po->Register("retry-cutoff", &retry_cutoff, "Controls pruning un-determinized "
-                 "lattice and retrying determinization: if effective-beam < "
-                 "retry-cutoff * beam, we prune the raw lattice and retry.  Avoids "
-                 "ever getting empty output for long segments.");
+    po->Register("max-mem", &max_mem,
+                 "Maximum approximate memory usage in "
+                 "determinization (real usage might be many times this)");
+    po->Register("max-arcs", &max_arcs,
+                 "Maximum number of arcs in "
+                 "output FST (total, not per state");
+    po->Register("max-states", &max_states,
+                 "Maximum number of arcs in output "
+                 "FST (total, not per state");
+    po->Register(
+        "max-loop", &max_loop,
+        "Option used to detect a particular "
+        "type of determinization failure, typically due to invalid input "
+        "(e.g., negative-cost loops)");
+    po->Register(
+        "retry-cutoff", &retry_cutoff,
+        "Controls pruning un-determinized "
+        "lattice and retrying determinization: if effective-beam < "
+        "retry-cutoff * beam, we prune the raw lattice and retry.  Avoids "
+        "ever getting empty output for long segments.");
   }
 };
 
@@ -155,60 +168,74 @@ struct DeterminizeLatticePhonePrunedOptions {
   bool word_determinize;
   // minimize: if true, push and minimize after determinization.
   bool minimize;
-  DeterminizeLatticePhonePrunedOptions(): delta(kDelta),
-                                          max_mem(50000000),
-                                          phone_determinize(true),
-                                          word_determinize(true),
-                                          minimize(false) {}
-  void Register (kaldi::OptionsItf *po) {
+  DeterminizeLatticePhonePrunedOptions()
+      : delta(kDelta),
+        max_mem(50000000),
+        phone_determinize(true),
+        word_determinize(true),
+        minimize(false) {}
+  void Register(kaldi::OptionsItf *po) {
     po->Register("delta", &delta, "Tolerance used in determinization");
-    po->Register("max-mem", &max_mem, "Maximum approximate memory usage in "
-                "determinization (real usage might be many times this).");
-    po->Register("phone-determinize", &phone_determinize, "If true, do an "
+    po->Register("max-mem", &max_mem,
+                 "Maximum approximate memory usage in "
+                 "determinization (real usage might be many times this).");
+    po->Register("phone-determinize", &phone_determinize,
+                 "If true, do an "
                  "initial pass of determinization on both phones and words (see"
                  " also --word-determinize)");
-    po->Register("word-determinize", &word_determinize, "If true, do a second "
+    po->Register("word-determinize", &word_determinize,
+                 "If true, do a second "
                  "pass of determinization on words only (see also "
                  "--phone-determinize)");
-    po->Register("minimize", &minimize, "If true, push and minimize after "
+    po->Register("minimize", &minimize,
+                 "If true, push and minimize after "
                  "determinization.");
   }
 };
 
 /**
-    This function implements the normal version of DeterminizeLattice, in which the
+    This function implements the normal version of DeterminizeLattice, in which
+   the
     output strings are represented using sequences of arcs, where all but the
     first one has an epsilon on the input side.  It also prunes using the beam
-    in the "prune" parameter.  The input FST must be topologically sorted in order
-    for the algorithm to work. For efficiency it is recommended to sort ilabel as well.
-    Returns true on success, and false if it had to terminate the determinization
-    earlier than specified by the "prune" beam-- that is, if it terminated because
+    in the "prune" parameter.  The input FST must be topologically sorted in
+   order
+    for the algorithm to work. For efficiency it is recommended to sort ilabel
+   as well.
+    Returns true on success, and false if it had to terminate the
+   determinization
+    earlier than specified by the "prune" beam-- that is, if it terminated
+   because
     of the max_mem, max_loop or max_arcs constraints in the options.
-    CAUTION: you may want to use the version below which outputs to CompactLattice.
+    CAUTION: you may want to use the version below which outputs to
+   CompactLattice.
 */
-template<class Weight>
+template <class Weight>
 bool DeterminizeLatticePruned(
-    const ExpandedFst<ArcTpl<Weight> > &ifst,
-    double prune,
-    MutableFst<ArcTpl<Weight> > *ofst, 
+    const ExpandedFst<ArcTpl<Weight> > &ifst, double prune,
+    MutableFst<ArcTpl<Weight> > *ofst,
     DeterminizeLatticePrunedOptions opts = DeterminizeLatticePrunedOptions());
 
-
-/*  This is a version of DeterminizeLattice with a slightly more "natural" output format,
-    where the output sequences are encoded using the CompactLatticeArcTpl template
-    (i.e. the sequences of output symbols are represented directly as strings The input
-    FST must be topologically sorted in order for the algorithm to work. For efficiency
+/*  This is a version of DeterminizeLattice with a slightly more "natural"
+   output format,
+    where the output sequences are encoded using the CompactLatticeArcTpl
+   template
+    (i.e. the sequences of output symbols are represented directly as strings
+   The input
+    FST must be topologically sorted in order for the algorithm to work. For
+   efficiency
     it is recommended to sort the ilabel for the input FST as well.
-    Returns true on success, and false if it had to terminate the determinization
-    earlier than specified by the "prune" beam-- that is, if it terminated because
+    Returns true on success, and false if it had to terminate the
+   determinization
+    earlier than specified by the "prune" beam-- that is, if it terminated
+   because
     of the max_mem, max_loop or max_arcs constraints in the options.
     CAUTION: if Lattice is the input, you need to Invert() before calling this,
     so words are on the input side.
 */
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool DeterminizeLatticePruned(
-    const ExpandedFst<ArcTpl<Weight> >&ifst,
-    double prune,
+    const ExpandedFst<ArcTpl<Weight> > &ifst, double prune,
     MutableFst<ArcTpl<CompactLatticeWeightTpl<Weight, IntType> > > *ofst,
     DeterminizeLatticePrunedOptions opts = DeterminizeLatticePrunedOptions());
 
@@ -220,7 +247,7 @@ bool DeterminizeLatticePruned(
     returning value will be used by DeterminizeLatticeDeletePhones() where it
     works out the phones according to this value.
 */
-template<class Weight>
+template <class Weight>
 typename ArcTpl<Weight>::Label DeterminizeLatticeInsertPhones(
     const kaldi::TransitionModel &trans_model,
     MutableFst<ArcTpl<Weight> > *fst);
@@ -231,7 +258,7 @@ typename ArcTpl<Weight>::Label DeterminizeLatticeInsertPhones(
     (first_phone_label + original_phone_label). It is supposed to be used
     together with DeterminizeLatticeInsertPhones()
 */
-template<class Weight>
+template <class Weight>
 void DeterminizeLatticeDeletePhones(
     typename ArcTpl<Weight>::Label first_phone_label,
     MutableFst<ArcTpl<Weight> > *fst);
@@ -251,26 +278,24 @@ void DeterminizeLatticeDeletePhones(
     determinization in general, but for deeper lattices it is a bit faster,
     despite the fact that we now have two passes of determinization by default.
 */
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool DeterminizeLatticePhonePruned(
     const kaldi::TransitionModel &trans_model,
-    const ExpandedFst<ArcTpl<Weight> > &ifst,
-    double prune,
+    const ExpandedFst<ArcTpl<Weight> > &ifst, double prune,
     MutableFst<ArcTpl<CompactLatticeWeightTpl<Weight, IntType> > > *ofst,
-    DeterminizeLatticePhonePrunedOptions opts
-      = DeterminizeLatticePhonePrunedOptions());
+    DeterminizeLatticePhonePrunedOptions opts =
+        DeterminizeLatticePhonePrunedOptions());
 
 /** "Destructive" version of DeterminizeLatticePhonePruned() where the input
-    lattice might be changed. 
+    lattice might be changed.
 */
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool DeterminizeLatticePhonePruned(
     const kaldi::TransitionModel &trans_model,
-    MutableFst<ArcTpl<Weight> > *ifst,
-    double prune,
+    MutableFst<ArcTpl<Weight> > *ifst, double prune,
     MutableFst<ArcTpl<CompactLatticeWeightTpl<Weight, IntType> > > *ofst,
-    DeterminizeLatticePhonePrunedOptions opts
-      = DeterminizeLatticePhonePrunedOptions());
+    DeterminizeLatticePhonePrunedOptions opts =
+        DeterminizeLatticePhonePrunedOptions());
 
 /** This function is a wrapper of DeterminizeLatticePhonePruned() that works for
     Lattice type FSTs.  It simplifies the calling process by calling
@@ -281,14 +306,13 @@ bool DeterminizeLatticePhonePruned(
 */
 bool DeterminizeLatticePhonePrunedWrapper(
     const kaldi::TransitionModel &trans_model,
-    MutableFst<kaldi::LatticeArc> *ifst,
-    double prune,
+    MutableFst<kaldi::LatticeArc> *ifst, double prune,
     MutableFst<kaldi::CompactLatticeArc> *ofst,
-    DeterminizeLatticePhonePrunedOptions opts
-      = DeterminizeLatticePhonePrunedOptions());
+    DeterminizeLatticePhonePrunedOptions opts =
+        DeterminizeLatticePhonePrunedOptions());
 
 /// @} end "addtogroup fst_extensions"
 
-} // end namespace fst
+}  // end namespace fst
 
 #endif

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -32,7 +31,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Apply weight to silences in posts\n"
-        "Usage:  weight-silence-post [options] <silence-weight> <silence-phones> "
+        "Usage:  weight-silence-post [options] <silence-weight> "
+        "<silence-phones> "
         "<model> <posteriors-rspecifier> <posteriors-wspecifier>\n"
         "e.g.:\n"
         " weight-silence-post 0.0 1:2:3 1.mdl ark:1.post ark:nosil.post\n";
@@ -41,11 +41,13 @@ int main(int argc, char *argv[]) {
 
     bool distribute = false;
 
-    po.Register("distribute", &distribute, "If true, rather than weighting the "
-                "individual posteriors, apply the weighting to the whole frame: "
-                "i.e. on time t, scale all posterior entries by "
-                "p(sil)*silence-weight + p(non-sil)*1.0");
-    
+    po.Register(
+        "distribute", &distribute,
+        "If true, rather than weighting the "
+        "individual posteriors, apply the weighting to the whole frame: "
+        "i.e. on time t, scale all posterior entries by "
+        "p(sil)*silence-weight + p(non-sil)*1.0");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 5) {
@@ -53,22 +55,21 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
     std::string silence_weight_str = po.GetArg(1),
-        silence_phones_str = po.GetArg(2),
-        model_rxfilename = po.GetArg(3),
-        posteriors_rspecifier = po.GetArg(4),
-        posteriors_wspecifier = po.GetArg(5);
+                silence_phones_str = po.GetArg(2),
+                model_rxfilename = po.GetArg(3),
+                posteriors_rspecifier = po.GetArg(4),
+                posteriors_wspecifier = po.GetArg(5);
 
     BaseFloat silence_weight = 0.0;
     if (!ConvertStringToReal(silence_weight_str, &silence_weight))
       KALDI_ERR << "Invalid silence-weight parameter: expected float, got \""
-                 << silence_weight_str << '"';
+                << silence_weight_str << '"';
     std::vector<int32> silence_phones;
     if (!SplitStringToIntegers(silence_phones_str, ":", false, &silence_phones))
       KALDI_ERR << "Invalid silence-phones string " << silence_phones_str;
     if (silence_phones.empty())
-      KALDI_WARN <<"No silence phones, this will have no effect";
+      KALDI_WARN << "No silence phones, this will have no effect";
     ConstIntegerSet<int32> silence_set(silence_phones);  // faster lookup.
 
     TransitionModel trans_model;
@@ -84,19 +85,17 @@ int main(int argc, char *argv[]) {
       Posterior post = posterior_reader.Value();
       // Posterior is vector<vector<pair<int32, BaseFloat> > >
       if (distribute)
-        WeightSilencePostDistributed(trans_model, silence_set,
-                                     silence_weight, &post);
+        WeightSilencePostDistributed(trans_model, silence_set, silence_weight,
+                                     &post);
       else
-        WeightSilencePost(trans_model, silence_set,
-                          silence_weight, &post);
-      
+        WeightSilencePost(trans_model, silence_set, silence_weight, &post);
+
       posterior_writer.Write(posterior_reader.Key(), post);
     }
     KALDI_LOG << "Done " << num_posteriors << " posteriors.";
     return (num_posteriors != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
     using namespace kaldi;
     const char *usage =
         "Accumulate stats for FMLLR bases training.\n"
-        "Usage: sgmm-acc-fmllrbasis-ali [options] <model-in> <feature-rspecifier> "
+        "Usage: sgmm-acc-fmllrbasis-ali [options] <model-in> "
+        "<feature-rspecifier> "
         "<alignments-rspecifier> <spk2utt-rspecifier> <stats-out>\n"
         "e.g.: sgmm-acc-fmllrbasis-ali 1.mdl scp:train.scp ark:1.ali 1.acc\n";
 
@@ -56,10 +57,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        alignments_rspecifier = po.GetArg(3),
-        spk2utt_rspecifier = po.GetArg(4),
-        accs_wxfilename = po.GetArg(5);
+                feature_rspecifier = po.GetArg(2),
+                alignments_rspecifier = po.GetArg(3),
+                spk2utt_rspecifier = po.GetArg(4),
+                accs_wxfilename = po.GetArg(5);
 
     typedef kaldi::int32 int32;
 
@@ -84,11 +85,9 @@ int main(int argc, char *argv[]) {
 
     std::vector<int32> silence_phones;
     if (!SplitStringToIntegers(silphones_str, ":", false, &silence_phones)) {
-      KALDI_ERR << "Silence-phones string has wrong format "
-                << silphones_str;
+      KALDI_ERR << "Silence-phones string has wrong format " << silphones_str;
     }
     ConstIntegerSet<int32> silence_set(silence_phones);  // faster lookup.
-
 
     kaldi::SgmmPerFrameDerivedVars per_frame_vars;
     SpMatrix<double> fmllr_grad_scatter;
@@ -133,8 +132,8 @@ int main(int argc, char *argv[]) {
         const Matrix<BaseFloat> &feats = feature_reader.Value(utt);
 
         if (alignment.size() != feats.NumRows()) {
-          KALDI_WARN << "Alignments has wrong size "<< (alignment.size()) <<
-              " vs. "<< (feats.NumRows());
+          KALDI_WARN << "Alignments has wrong size " << (alignment.size())
+                     << " vs. " << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -142,7 +141,8 @@ int main(int argc, char *argv[]) {
         bool have_gselect = false;
         if (gselect_reader.IsOpen()) {
           if (gselect_reader.HasKey(utt)) {
-            have_gselect = (gselect_reader.Value(utt).size() == feats.NumRows());
+            have_gselect =
+                (gselect_reader.Value(utt).size() == feats.NumRows());
             if (!have_gselect)
               KALDI_WARN << "Gaussian-selection info available for utterance "
                          << utt << " has wrong size.";
@@ -156,11 +156,10 @@ int main(int argc, char *argv[]) {
             (have_gselect ? &gselect_reader.Value(utt) : NULL);
         double file_like = 0.0, file_t = 0.0;
 
-
         for (size_t i = 0; i < alignment.size(); i++) {
           int32 tid = alignment[i];  // transition identifier.
           int32 pdf_id = trans_model.TransitionIdToPdf(tid),
-              phone = trans_model.TransitionIdToPhone(tid);
+                phone = trans_model.TransitionIdToPhone(tid);
           BaseFloat weight = 1.0;
           if (silence_set.count(phone) != 0) {  // is a silence.
             if (sil_weight > 0.0)
@@ -176,29 +175,30 @@ int main(int argc, char *argv[]) {
             am_sgmm.GaussianSelection(sgmm_opts, feats.Row(i), &this_gselect);
           am_sgmm.ComputePerFrameVars(feats.Row(i), this_gselect, spk_vars, 0.0,
                                       &per_frame_vars);
-          file_like +=
-              spk_stats.Accumulate(am_sgmm, spk_vars, feats.Row(i),
-                                   per_frame_vars, pdf_id, weight);
+          file_like += spk_stats.Accumulate(am_sgmm, spk_vars, feats.Row(i),
+                                            per_frame_vars, pdf_id, weight);
           file_t += weight;
         }  // end looping over all the frames in the utterance
         KALDI_VLOG(1) << "Average likelihood for utterance " << utt << " is "
-                      << (file_like/file_t) << " over " << file_t << " frames";
+                      << (file_like / file_t) << " over " << file_t
+                      << " frames";
         tot_like += file_like;
         tot_t += file_t;
         num_done++;
         if (num_done % 20 == 0)
           KALDI_VLOG(1) << "After " << num_done << " utterances: Average "
-                        << "likelihood per frame = " << (tot_like/tot_t)
+                        << "likelihood per frame = " << (tot_like / tot_t)
                         << ", over " << tot_t << " frames";
       }  // end looping over all utterance for a given speaker
-      spk_stats.AccumulateForFmllrSubspace(am_sgmm, fmllr_globals, &fmllr_grad_scatter);
+      spk_stats.AccumulateForFmllrSubspace(am_sgmm, fmllr_globals,
+                                           &fmllr_grad_scatter);
     }  // end looping over all speakers
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_alignment
               << " with no alignments, " << num_other_error
               << " with other errors.";
 
-    KALDI_LOG << "Overall likelihood per frame frame = " << (tot_like/tot_t)
+    KALDI_LOG << "Overall likelihood per frame frame = " << (tot_like / tot_t)
               << " over " << tot_t << " frames.";
 
     {
@@ -207,10 +207,8 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Written accs to: " << accs_wxfilename;
     }
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

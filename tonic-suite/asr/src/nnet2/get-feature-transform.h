@@ -41,22 +41,29 @@ struct FeatureTransformEstimateOptions {
   int32 dim;
   BaseFloat within_class_factor;
   BaseFloat max_singular_value;
-  FeatureTransformEstimateOptions(): remove_offset(true), dim(200),
-                                     within_class_factor(0.001), max_singular_value(5.0) { }
-  
+  FeatureTransformEstimateOptions()
+      : remove_offset(true),
+        dim(200),
+        within_class_factor(0.001),
+        max_singular_value(5.0) {}
+
   void Register(OptionsItf *po) {
-    po->Register("remove-offset", &remove_offset, "If true, output an affine "
+    po->Register("remove-offset", &remove_offset,
+                 "If true, output an affine "
                  "transform that makes the projected data mean equal to zero.");
     po->Register("dim", &dim, "Dimension to project to with LDA");
-    po->Register("within-class-factor", &within_class_factor, "If 1.0, do "
-                 "conventional LDA where the within-class variance will be "
-                 "unit in the projected space.  May be set to less than 1.0, "
-                 "which scales the features to have less variance, particularly "
-                 "for dimensions where between-class variance is small. ");
-    po->Register("max-singular-value", &max_singular_value, "If >0, maximum "
+    po->Register(
+        "within-class-factor", &within_class_factor,
+        "If 1.0, do "
+        "conventional LDA where the within-class variance will be "
+        "unit in the projected space.  May be set to less than 1.0, "
+        "which scales the features to have less variance, particularly "
+        "for dimensions where between-class variance is small. ");
+    po->Register("max-singular-value", &max_singular_value,
+                 "If >0, maximum "
                  "allowed singular value of final transform (they are floored "
                  "to this)");
-  }    
+  }
 };
 
 /**
@@ -114,9 +121,9 @@ struct FeatureTransformEstimateOptions {
       variance is \lambda_i + 1.
       Below, "within-class-factor" is a constant that we set by default to
       0.001.  We scale the i'th dimension of the features by:
-      
+
          \f$  sqrt( (within-class-factor + \lambda_i) / (1 + \lambda_i) ) \f$
-           
+
       If \lambda_i >> 1, this scaling factor approaches 1 (we don't need to
       scale up dimensions with high between-class variance as they already
       naturally have a higher variance than other dimensions.  As \lambda_i
@@ -128,13 +135,14 @@ struct FeatureTransformEstimateOptions {
       \lambda_i), so by scaling the features by approximately sqrt((\lambda_i) /
       (1 + \lambda_i)), the variance becomes approximately \lambda_i [this is
       clear after noting that the variance gets scaled by the square of the
-      feature scale].      
+      feature scale].
  */
-class FeatureTransformEstimate: public LdaEstimate {
+class FeatureTransformEstimate : public LdaEstimate {
  public:
   /// Estimates the LDA transform matrix m.  If Mfull != NULL, it also outputs
   /// the full matrix (without dimensionality reduction), which is useful for
-  /// some purposes.  If opts.remove_offset == true, it will output both matrices
+  /// some purposes.  If opts.remove_offset == true, it will output both
+  /// matrices
   /// with an extra column which corresponds to mean-offset removal (the matrix
   /// should be multiplied by the feature with a 1 appended to give the correct
   /// result, as with other Kaldi transforms.)
@@ -144,17 +152,16 @@ class FeatureTransformEstimate: public LdaEstimate {
   void Estimate(const FeatureTransformEstimateOptions &opts,
                 Matrix<BaseFloat> *M,
                 TpMatrix<BaseFloat> *within_cholesky) const;
+
  protected:
   static void EstimateInternal(const FeatureTransformEstimateOptions &opts,
                                const SpMatrix<double> &total_covar,
                                const SpMatrix<double> &between_covar,
-                               const Vector<double> &mean,
-                               Matrix<BaseFloat> *M,
+                               const Vector<double> &mean, Matrix<BaseFloat> *M,
                                TpMatrix<BaseFloat> *C);
 };
 
-
-class FeatureTransformEstimateMulti: public FeatureTransformEstimate {
+class FeatureTransformEstimateMulti : public FeatureTransformEstimate {
  public:
   /// This is as FeatureTransformEstimate, but for use in
   /// nnet-get-feature-transform-multi.cc, see the usage message
@@ -172,9 +179,6 @@ class FeatureTransformEstimateMulti: public FeatureTransformEstimate {
                              Matrix<BaseFloat> *M) const;
 };
 
-
-
 }  // End namespace kaldi
 
 #endif  // KALDI_NNET2_GET_FEATURE_TRANSFORM_H_
-

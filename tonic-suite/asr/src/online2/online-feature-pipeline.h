@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ONLINE2_ONLINE_FEATURE_PIPELINE_H_
 #define KALDI_ONLINE2_ONLINE_FEATURE_PIPELINE_H_
 
@@ -62,46 +61,55 @@ struct OnlineFeaturePipelineCommandLineConfig {
   std::string splice_config;
   std::string lda_rxfilename;
 
-  OnlineFeaturePipelineCommandLineConfig() :
-    feature_type("mfcc"), add_pitch(false), add_deltas(false),
-    splice_feats(false) { }
+  OnlineFeaturePipelineCommandLineConfig()
+      : feature_type("mfcc"),
+        add_pitch(false),
+        add_deltas(false),
+        splice_feats(false) {}
 
   void Register(OptionsItf *po) {
     po->Register("feature-type", &feature_type,
                  "Base feature type [mfcc, plp, fbank]");
-    po->Register("mfcc-config", &mfcc_config, "Configuration file for "
+    po->Register("mfcc-config", &mfcc_config,
+                 "Configuration file for "
                  "MFCC features (e.g. conf/mfcc.conf)");
-    po->Register("plp-config", &plp_config, "Configuration file for "
+    po->Register("plp-config", &plp_config,
+                 "Configuration file for "
                  "PLP features (e.g. conf/plp.conf)");
-    po->Register("fbank-config", &fbank_config, "Configuration file for "
+    po->Register("fbank-config", &fbank_config,
+                 "Configuration file for "
                  "filterbank features (e.g. conf/fbank.conf)");
-    po->Register("add-pitch", &add_pitch, "Append pitch features to raw "
+    po->Register("add-pitch", &add_pitch,
+                 "Append pitch features to raw "
                  "MFCC/PLP features.");
-    po->Register("pitch-config", &pitch_config, "Configuration file for "
+    po->Register("pitch-config", &pitch_config,
+                 "Configuration file for "
                  "pitch features (e.g. conf/pitch.conf)");
     po->Register("pitch-process-config", &pitch_process_config,
                  "Configuration file for post-processing pitch features "
                  "(e.g. conf/pitch_process.conf)");
-    po->Register("cmvn-config", &cmvn_config, "Configuration class "
+    po->Register("cmvn-config", &cmvn_config,
+                 "Configuration class "
                  "file for online CMVN features (e.g. conf/online_cmvn.conf)");
     po->Register("global-cmvn-stats", &global_cmvn_stats_rxfilename,
                  "(Extended) filename for global CMVN stats, e.g. obtained "
                  "from 'matrix-sum scp:data/train/cmvn.scp -'");
-    po->Register("add-deltas", &add_deltas,
-                 "Append delta features.");
-    po->Register("delta-config", &delta_config, "Configuration file for "
+    po->Register("add-deltas", &add_deltas, "Append delta features.");
+    po->Register("delta-config", &delta_config,
+                 "Configuration file for "
                  "delta feature computation (if not supplied, will not apply "
                  "delta features; supply empty config to use defaults.)");
-    po->Register("splice-feats", &splice_feats, "Splice features with left and "
+    po->Register("splice-feats", &splice_feats,
+                 "Splice features with left and "
                  "right context.");
-    po->Register("splice-config", &splice_config, "Configuration file "
+    po->Register("splice-config", &splice_config,
+                 "Configuration file "
                  "for frame splicing, if done (e.g. prior to LDA)");
-    po->Register("lda-matrix", &lda_rxfilename, "Filename of LDA matrix (if "
+    po->Register("lda-matrix", &lda_rxfilename,
+                 "Filename of LDA matrix (if "
                  "using LDA), e.g. exp/foo/final.mat");
   }
 };
-
-
 
 /// This configuration class is responsible for storing the configuration
 /// options for OnlineFeaturePipeline, but it does not set them.  To do that you
@@ -110,9 +118,11 @@ struct OnlineFeaturePipelineCommandLineConfig {
 /// way with two config files, is to make it easier to configure from code as
 /// well as from the command line.
 struct OnlineFeaturePipelineConfig {
-  OnlineFeaturePipelineConfig():
-      feature_type("mfcc"), add_pitch(false), add_deltas(true),
-      splice_feats(false) { }
+  OnlineFeaturePipelineConfig()
+      : feature_type("mfcc"),
+        add_pitch(false),
+        add_deltas(true),
+        splice_feats(false) {}
 
   OnlineFeaturePipelineConfig(
       const OnlineFeaturePipelineCommandLineConfig &cmdline_config);
@@ -130,7 +140,7 @@ struct OnlineFeaturePipelineConfig {
   bool add_pitch;
   PitchExtractionOptions pitch_opts;  // Options for pitch extraction, if done.
   ProcessPitchOptions pitch_process_opts;  // Options for pitch
-                                                   // processing
+                                           // processing
 
   OnlineCmvnOptions cmvn_opts;  // Options for online CMN/CMVN computation.
 
@@ -146,15 +156,13 @@ struct OnlineFeaturePipelineConfig {
                                              // CMVN stats
 };
 
-
-
 /// OnlineFeaturePipeline is a class that's responsible for putting together the
 /// various stages of the feature-processing pipeline, in an online setting.
 /// This does not attempt to be fully generic, we just try to handle the common
 /// case.  Since the online-decoding code needs to "know about" things like CMN
 /// and fMLLR in order to do adaptation, it's hard to make this completely
 /// generic.
-class OnlineFeaturePipeline: public OnlineFeatureInterface {
+class OnlineFeaturePipeline : public OnlineFeatureInterface {
  public:
   explicit OnlineFeaturePipeline(const OnlineFeaturePipelineConfig &cfg);
 
@@ -166,7 +174,7 @@ class OnlineFeaturePipeline: public OnlineFeatureInterface {
 
   // This is supplied for debug purposes.
   void GetAsMatrix(Matrix<BaseFloat> *feats);
-  
+
   void FreezeCmvn();  // stop it from moving further (do this when you start
                       // using fMLLR). This will crash if NumFramesReady() == 0.
 
@@ -195,7 +203,6 @@ class OnlineFeaturePipeline: public OnlineFeatureInterface {
   // the empty matrix if you want to stop it using any transform.
   void SetTransform(const MatrixBase<BaseFloat> &transform);
 
-
   // Returns true if an fMLLR transform has been set using
   // SetTransform().
   bool HaveFmllrTransform() { return fmllr_ != NULL; }
@@ -223,13 +230,13 @@ class OnlineFeaturePipeline: public OnlineFeatureInterface {
   void Init();
 
   OnlineFeaturePipelineConfig config_;
-  Matrix<BaseFloat> lda_mat_;  // LDA matrix, if supplied.
+  Matrix<BaseFloat> lda_mat_;            // LDA matrix, if supplied.
   Matrix<BaseFloat> global_cmvn_stats_;  // Global CMVN stats.
 
-  OnlineBaseFeature *base_feature_;        // MFCC/PLP
-  OnlinePitchFeature *pitch_;              // Raw pitch
+  OnlineBaseFeature *base_feature_;    // MFCC/PLP
+  OnlinePitchFeature *pitch_;          // Raw pitch
   OnlineProcessPitch *pitch_feature_;  // Processed pitch
-  OnlineFeatureInterface *feature_;        // CMVN (+ processed pitch)
+  OnlineFeatureInterface *feature_;    // CMVN (+ processed pitch)
 
   OnlineCmvn *cmvn_;
   OnlineFeatureInterface *splice_or_delta_;  // This may be NULL if we're not
@@ -240,7 +247,7 @@ class OnlineFeaturePipeline: public OnlineFeatureInterface {
   /// returns lda_ if it exists, else splice_or_delta_, else cmvn_.  If this
   /// were not private we would have const and non-const versions returning
   /// const and non-const pointers.
-  OnlineFeatureInterface* UnadaptedFeature() const;
+  OnlineFeatureInterface *UnadaptedFeature() const;
 
   OnlineFeatureInterface *fmllr_;  // non-NULL if we currently have an fMLLR
                                    // transform.
@@ -248,15 +255,10 @@ class OnlineFeaturePipeline: public OnlineFeatureInterface {
   /// returns adapted feature if fmllr_ exists, else UnadaptedFeature().  If
   /// this were not private we would have const and non-const versions returning
   /// const and non-const pointers.
-  OnlineFeatureInterface* AdaptedFeature() const;
+  OnlineFeatureInterface *AdaptedFeature() const;
 };
-
-
-
 
 /// @} End of "addtogroup onlinefeat"
 }  // namespace kaldi
-
-
 
 #endif  // KALDI_ONLINE2_ONLINE_FEATURE_PIPELINE_H_

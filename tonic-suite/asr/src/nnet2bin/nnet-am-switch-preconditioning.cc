@@ -36,7 +36,8 @@ int main(int argc, char *argv[]) {
         "derived from AffineComponent to components of type\n"
         "AffineComponentPreconditionedOnline.\n"
         "\n"
-        "Usage:  nnet-am-switch-preconditioning [options] <nnet-in> <nnet-out>\n"
+        "Usage:  nnet-am-switch-preconditioning [options] <nnet-in> "
+        "<nnet-out>\n"
         "e.g.:\n"
         " nnet-am-switch-preconditioning --binary=false 1.mdl text.mdl\n";
 
@@ -44,33 +45,35 @@ int main(int argc, char *argv[]) {
     BaseFloat num_samples_history = 2000.0;
     BaseFloat alpha = 4.0;
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("rank-in", &rank_in,
-                "Rank used in online-preconditioning on input side of each layer");
-    po.Register("rank-out", &rank_out,
-                "Rank used in online-preconditioning on output side of each layer");
-    po.Register("update-period", &update_period,
-                "Affects how frequently we update the Fisher-matrix estimate (every "
-                "this-many minibatches).");
+    po.Register(
+        "rank-in", &rank_in,
+        "Rank used in online-preconditioning on input side of each layer");
+    po.Register(
+        "rank-out", &rank_out,
+        "Rank used in online-preconditioning on output side of each layer");
+    po.Register(
+        "update-period", &update_period,
+        "Affects how frequently we update the Fisher-matrix estimate (every "
+        "this-many minibatches).");
     po.Register("num-samples-history", &num_samples_history,
                 "Number of samples of history to use in online preconditioning "
                 "(affects speed vs accuracy of update of Fisher matrix)");
     po.Register("alpha", &alpha,
                 "Parameter that affects amount of smoothing with unit matrix "
                 "in online preconditioning (larger -> more smoothing)");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(2);
-    
+    std::string nnet_rxfilename = po.GetArg(1), nnet_wxfilename = po.GetArg(2);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -80,18 +83,18 @@ int main(int argc, char *argv[]) {
       am_nnet.Read(ki.Stream(), binary);
     }
 
-    am_nnet.GetNnet().SwitchToOnlinePreconditioning(rank_in, rank_out, update_period,
-                                                    num_samples_history, alpha);
-    
+    am_nnet.GetNnet().SwitchToOnlinePreconditioning(
+        rank_in, rank_out, update_period, num_samples_history, alpha);
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_nnet.Write(ko.Stream(), binary_write);
     }
-    KALDI_LOG << "Copied neural net from " << nnet_rxfilename
-              << " to " << nnet_wxfilename;
+    KALDI_LOG << "Copied neural net from " << nnet_rxfilename << " to "
+              << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

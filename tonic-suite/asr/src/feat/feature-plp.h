@@ -31,8 +31,6 @@ namespace kaldi {
 /// @addtogroup  feat FeatureExtraction
 /// @{
 
-
-
 /// PlpOptions contains basic options for computing PLP features.
 /// It only includes things that can be done in a "stateless" way, i.e.
 /// it does not include energy max-normalization.
@@ -41,7 +39,7 @@ struct PlpOptions {
   FrameExtractionOptions frame_opts;
   MelBanksOptions mel_opts;
   int32 lpc_order;
-  int32 num_ceps;  // num cepstra including zero
+  int32 num_ceps;   // num cepstra including zero
   bool use_energy;  // use energy; else C0
   BaseFloat energy_floor;
   bool raw_energy;  // If true, compute energy before preemphasis and windowing
@@ -52,19 +50,20 @@ struct PlpOptions {
   bool htk_compat;  // if true, put energy/C0 last and introduce a factor of
                     // sqrt(2) on C0 to be the same as HTK.
 
-  PlpOptions() : mel_opts(23),
-                 // default number of mel-banks for the PLP computation; this
-                 // seems to be common for 16kHz-sampled data. For 8kHz-sampled
-                 // data, 15 may be better.
-                 lpc_order(12),
-                 num_ceps(13),
-                 use_energy(true),
-                 energy_floor(0.0),  // not in log scale: a small value e.g. 1.0e-10
-                 raw_energy(true),
-                 compress_factor(0.33333),
-                 cepstral_lifter(22),
-                 cepstral_scale(1.0),
-                 htk_compat(false) {}
+  PlpOptions()
+      : mel_opts(23),
+        // default number of mel-banks for the PLP computation; this
+        // seems to be common for 16kHz-sampled data. For 8kHz-sampled
+        // data, 15 may be better.
+        lpc_order(12),
+        num_ceps(13),
+        use_energy(true),
+        energy_floor(0.0),  // not in log scale: a small value e.g. 1.0e-10
+        raw_energy(true),
+        compress_factor(0.33333),
+        cepstral_lifter(22),
+        cepstral_scale(1.0),
+        htk_compat(false) {}
 
   void Register(OptionsItf *po) {
     frame_opts.Register(po);
@@ -92,7 +91,6 @@ struct PlpOptions {
   }
 };
 
-
 /// Class for computing PLP features.  See \ref feat_plp where
 /// documentation will eventually be added.
 class Plp {
@@ -109,17 +107,16 @@ class Plp {
   /// have been partly processed), it's the start of the next window that we
   /// have not already processed.  Will throw exception on failure (e.g. if file
   /// too short for even one frame).
-  void Compute(const VectorBase<BaseFloat> &wave,
-               BaseFloat vtln_warp,
+  void Compute(const VectorBase<BaseFloat> &wave, BaseFloat vtln_warp,
                Matrix<BaseFloat> *output,
                Vector<BaseFloat> *wave_remainder = NULL);
 
   typedef PlpOptions Options;
   /// Const version of Compute()
-  void Compute(const VectorBase<BaseFloat> &wave,
-               BaseFloat vtln_warp,
+  void Compute(const VectorBase<BaseFloat> &wave, BaseFloat vtln_warp,
                Matrix<BaseFloat> *output,
                Vector<BaseFloat> *wave_remainder = NULL) const;
+
  private:
   void ComputeInternal(const VectorBase<BaseFloat> &wave,
                        const MelBanks &mel_banks,
@@ -136,13 +133,13 @@ class Plp {
   const Vector<BaseFloat> *GetEqualLoudness(BaseFloat vtln_warp,
                                             const MelBanks &mel_banks,
                                             bool *must_delete) const;
-  
+
   PlpOptions opts_;
   Vector<BaseFloat> lifter_coeffs_;
   Matrix<BaseFloat> idft_bases_;
   BaseFloat log_energy_floor_;
-  std::map<BaseFloat, MelBanks*> mel_banks_;  // BaseFloat is VTLN coefficient.
-  std::map<BaseFloat, Vector<BaseFloat>* > equal_loudness_;
+  std::map<BaseFloat, MelBanks *> mel_banks_;  // BaseFloat is VTLN coefficient.
+  std::map<BaseFloat, Vector<BaseFloat> *> equal_loudness_;
   FeatureWindowFunction feature_window_function_;
   SplitRadixRealFft<BaseFloat> *srfft_;
   KALDI_DISALLOW_COPY_AND_ASSIGN(Plp);
@@ -151,6 +148,5 @@ class Plp {
 /// @} End of "addtogroup feat"
 
 }  // namespace kaldi
-
 
 #endif  // KALDI_FEAT_FEATURE_PLP_H_

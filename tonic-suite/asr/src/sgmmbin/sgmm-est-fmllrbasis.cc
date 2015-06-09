@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        model_out_filename = po.GetArg(2);
+                model_out_filename = po.GetArg(2);
 
     kaldi::AmSgmm am_sgmm;
     kaldi::TransitionModel trans_model;
@@ -84,10 +84,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written model to " << model_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

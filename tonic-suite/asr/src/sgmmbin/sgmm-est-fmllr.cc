@@ -1,6 +1,7 @@
 // sgmmbin/sgmm-est-fmllr.cc
 
-// Copyright 2009-2012  Saarland University   Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Saarland University   Microsoft Corporation  Johns
+// Hopkins University (Author: Daniel Povey)
 //                2014  Guoguo Chen
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -32,16 +33,14 @@ using std::vector;
 
 namespace kaldi {
 
-void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
-                            const Matrix<BaseFloat> &transformed_feats, // if already fMLLR
-                            const std::vector<std::vector<int32> > &gselect,
-                            const SgmmGselectConfig &sgmm_config,
-                            const Posterior &post,
-                            const TransitionModel &trans_model,
-                            const AmSgmm &am_sgmm,
-                            const SgmmPerSpkDerivedVars &spk_vars,
-                            BaseFloat logdet,
-                            FmllrSgmmAccs *spk_stats) {
+void AccumulateForUtterance(
+    const Matrix<BaseFloat> &feats,
+    const Matrix<BaseFloat> &transformed_feats,  // if already fMLLR
+    const std::vector<std::vector<int32> > &gselect,
+    const SgmmGselectConfig &sgmm_config, const Posterior &post,
+    const TransitionModel &trans_model, const AmSgmm &am_sgmm,
+    const SgmmPerSpkDerivedVars &spk_vars, BaseFloat logdet,
+    FmllrSgmmAccs *spk_stats) {
   kaldi::SgmmPerFrameDerivedVars per_frame_vars;
 
   Posterior pdf_post;
@@ -51,24 +50,22 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
     if (!gselect.empty()) {
       KALDI_ASSERT(t < gselect.size());
       this_gselect = gselect[t];
-    } else  {
+    } else {
       am_sgmm.GaussianSelection(sgmm_config, feats.Row(t), &this_gselect);
     }
     // per-frame vars only used for computing posteriors... use the
     // transformed feats for this, if available.
-    am_sgmm.ComputePerFrameVars(transformed_feats.Row(t), this_gselect, spk_vars,
-                                0.0 /*fMLLR logdet*/, &per_frame_vars);
-
+    am_sgmm.ComputePerFrameVars(transformed_feats.Row(t), this_gselect,
+                                spk_vars, 0.0 /*fMLLR logdet*/,
+                                &per_frame_vars);
 
     for (size_t j = 0; j < pdf_post[t].size(); j++) {
       int32 pdf_id = pdf_post[t][j].first;
       Matrix<BaseFloat> posteriors;
-      am_sgmm.ComponentPosteriors(per_frame_vars, pdf_id,
-                                  &posteriors);
+      am_sgmm.ComponentPosteriors(per_frame_vars, pdf_id, &posteriors);
       posteriors.Scale(pdf_post[t][j].second);
       spk_stats->AccumulateFromPosteriors(am_sgmm, spk_vars, feats.Row(t),
-                                          this_gselect,
-                                          posteriors, pdf_id);
+                                          this_gselect, posteriors, pdf_id);
     }
   }
 }
@@ -92,7 +89,7 @@ int main(int argc, char *argv[]) {
     BaseFloat min_count = 100;
     SgmmFmllrConfig fmllr_opts;
     SgmmGselectConfig sgmm_opts;
-    
+
     po.Register("spk2utt", &spk2utt_rspecifier,
                 "File to read speaker to utterance-list map from.");
     po.Register("spkvec-min-count", &min_count,
@@ -105,7 +102,7 @@ int main(int argc, char *argv[]) {
                 "Precomputed Gaussian indices (rspecifier)");
     fmllr_opts.Register(&po);
     sgmm_opts.Register(&po);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -113,10 +110,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        fmllr_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), fmllr_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm am_sgmm;
@@ -201,23 +196,23 @@ int main(int argc, char *argv[]) {
             continue;
           }
 
-          bool have_gselect  = !gselect_rspecifier.empty()
-              && gselect_reader.HasKey(utt)
-              && gselect_reader.Value(utt).size() == feats.NumRows();
+          bool have_gselect =
+              !gselect_rspecifier.empty() && gselect_reader.HasKey(utt) &&
+              gselect_reader.Value(utt).size() == feats.NumRows();
           if (!gselect_rspecifier.empty() && !have_gselect)
             KALDI_WARN << "No Gaussian-selection info available for utterance "
                        << utt << " (or wrong size)";
           const std::vector<std::vector<int32> > *gselect =
               (have_gselect ? &gselect_reader.Value(utt) : &empty_gselect);
-          
+
           Matrix<BaseFloat> transformed_feats(feats);
           for (int32 r = 0; r < transformed_feats.NumRows(); r++) {
             SubVector<BaseFloat> row(transformed_feats, r);
             ApplyAffineTransform(fmllr_xform, &row);
           }
           AccumulateForUtterance(feats, transformed_feats, *gselect, sgmm_opts,
-                                 post, trans_model, am_sgmm, spk_vars,
-                                 logdet, &spk_stats);
+                                 post, trans_model, am_sgmm, spk_vars, logdet,
+                                 &spk_stats);
           num_done++;
         }  // end looping over all utterances of the current speaker
 
@@ -228,14 +223,13 @@ int main(int argc, char *argv[]) {
         fmllr_writer.Write(spk, fmllr_xform);
         tot_impr += impr;
         tot_t += spk_frame_count;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!post_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_err++;
           continue;
         }
@@ -270,8 +264,8 @@ int main(int argc, char *argv[]) {
         const Posterior &post = post_reader.Value(utt);
 
         if (static_cast<int32>(post.size()) != feats.NumRows()) {
-          KALDI_WARN << "post has wrong size " << (post.size())
-              << " vs. " << (feats.NumRows());
+          KALDI_WARN << "post has wrong size " << (post.size()) << " vs. "
+                     << (feats.NumRows());
           num_err++;
           continue;
         }
@@ -282,18 +276,18 @@ int main(int argc, char *argv[]) {
           SubVector<BaseFloat> row(transformed_feats, r);
           ApplyAffineTransform(fmllr_xform, &row);
         }
-        bool have_gselect  = !gselect_rspecifier.empty()
-            && gselect_reader.HasKey(utt)
-            && gselect_reader.Value(utt).size() == feats.NumRows();
+        bool have_gselect = !gselect_rspecifier.empty() &&
+                            gselect_reader.HasKey(utt) &&
+                            gselect_reader.Value(utt).size() == feats.NumRows();
         if (!gselect_rspecifier.empty() && !have_gselect)
           KALDI_WARN << "No Gaussian-selection info available for utterance "
                      << utt << " (or wrong size)";
         const std::vector<std::vector<int32> > *gselect =
             (have_gselect ? &gselect_reader.Value(utt) : &empty_gselect);
-        
+
         AccumulateForUtterance(feats, transformed_feats, *gselect, sgmm_opts,
-                               post, trans_model, am_sgmm, spk_vars,
-                               logdet, &spk_stats);
+                               post, trans_model, am_sgmm, spk_vars, logdet,
+                               &spk_stats);
         num_done++;
 
         BaseFloat impr, spk_frame_count;
@@ -306,13 +300,13 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    KALDI_LOG << "Done " << num_done << " files, " << num_err << " with errors.";
+    KALDI_LOG << "Done " << num_done << " files, " << num_err
+              << " with errors.";
     KALDI_LOG << "Overall auxf impr per frame is " << (tot_impr / tot_t)
               << " per frame, over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

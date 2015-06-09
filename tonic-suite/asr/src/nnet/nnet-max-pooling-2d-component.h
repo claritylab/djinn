@@ -1,6 +1,6 @@
 // nnet/nnet-average-pooling-component.h
 
-// Copyright 2014  Brno University of Technology (author: Karel Vesely), 
+// Copyright 2014  Brno University of Technology (author: Karel Vesely),
 //                 Johns Hopkins University (author: Sri Harish Mallidi)
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -18,10 +18,8 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_NNET_NNET_MAX_POOLING2D_COMPONENT_H_
 #define KALDI_NNET_NNET_MAX_POOLING2D_COMPONENT_H_
-
 
 #include "nnet/nnet-component.h"
 #include "nnet/nnet-various.h"
@@ -38,33 +36,46 @@ namespace nnet1 {
  */
 class MaxPooling2DComponent : public Component {
  public:
-  MaxPooling2DComponent(int32 dim_in, int32 dim_out) 
-      : Component(dim_in, dim_out), 
-        fmap_x_len_(0), fmap_y_len_(0), pool_x_len_(0), pool_y_len_(0), pool_x_step_(0), pool_y_step_(0)
-  { }
-  ~MaxPooling2DComponent()
-  { }
+  MaxPooling2DComponent(int32 dim_in, int32 dim_out)
+      : Component(dim_in, dim_out),
+        fmap_x_len_(0),
+        fmap_y_len_(0),
+        pool_x_len_(0),
+        pool_y_len_(0),
+        pool_x_step_(0),
+        pool_y_step_(0) {}
+  ~MaxPooling2DComponent() {}
 
-  Component* Copy() const { return new MaxPooling2DComponent(*this); }
+  Component *Copy() const { return new MaxPooling2DComponent(*this); }
   ComponentType GetType() const { return kMaxPooling2DComponent; }
-  
+
   void InitData(std::istream &is) {
     // parse config
-    std::string token; 
+    std::string token;
     while (!is.eof()) {
       ReadToken(is, false, &token);
-      /**/ if (token == "<FmapXLen>") ReadBasicType(is, false, &fmap_x_len_);
-      else if (token == "<FmapYLen>") ReadBasicType(is, false, &fmap_y_len_);
-      else if (token == "<PoolXLen>") ReadBasicType(is, false, &pool_x_len_);
-      else if (token == "<PoolYLen>") ReadBasicType(is, false, &pool_y_len_);
-      else if (token == "<PoolXStep>") ReadBasicType(is, false, &pool_x_step_);
-      else if (token == "<PoolYStep>") ReadBasicType(is, false, &pool_y_step_);
-      else KALDI_ERR << "Unknown token " << token << ", a typo in config?"
-                     << " (FmapXLen|FmapYLen|PoolXLen|PoolYLen|PoolXStep|PoolYStep)";
-      is >> std::ws; // eat-up whitespace
+      /**/ if (token == "<FmapXLen>")
+        ReadBasicType(is, false, &fmap_x_len_);
+      else if (token == "<FmapYLen>")
+        ReadBasicType(is, false, &fmap_y_len_);
+      else if (token == "<PoolXLen>")
+        ReadBasicType(is, false, &pool_x_len_);
+      else if (token == "<PoolYLen>")
+        ReadBasicType(is, false, &pool_y_len_);
+      else if (token == "<PoolXStep>")
+        ReadBasicType(is, false, &pool_x_step_);
+      else if (token == "<PoolYStep>")
+        ReadBasicType(is, false, &pool_y_step_);
+      else
+        KALDI_ERR
+            << "Unknown token " << token << ", a typo in config?"
+            << " (FmapXLen|FmapYLen|PoolXLen|PoolYLen|PoolXStep|PoolYStep)";
+      is >> std::ws;  // eat-up whitespace
     }
     // check
-    KALDI_ASSERT(fmap_x_len_ * fmap_y_len_ * pool_x_len_ * pool_y_len_ * pool_x_step_ * pool_y_step_  != 0 );
+    KALDI_ASSERT(fmap_x_len_ * fmap_y_len_ * pool_x_len_ * pool_y_len_ *
+                     pool_x_step_ * pool_y_step_ !=
+                 0);
   }
 
   void ReadData(std::istream &is, bool binary) {
@@ -82,7 +93,7 @@ class MaxPooling2DComponent : public Component {
     ExpectToken(is, binary, "<PoolYStep>");
     ReadBasicType(is, binary, &pool_y_step_);
 
-    // 
+    //
     // Sanity checks:
     //
     // input sanity checks
@@ -93,14 +104,13 @@ class MaxPooling2DComponent : public Component {
     // check if step is in sync with fmap_len and filt_len
     KALDI_ASSERT((fmap_x_len_ - pool_x_len_) % (pool_x_step_) == 0);
     KALDI_ASSERT((fmap_y_len_ - pool_y_len_) % (pool_y_step_) == 0);
-    int32 out_fmap_x_len = (fmap_x_len_ - pool_x_len_)/pool_x_step_ + 1;
-    int32 out_fmap_y_len = (fmap_y_len_ - pool_y_len_)/pool_y_step_ + 1;
+    int32 out_fmap_x_len = (fmap_x_len_ - pool_x_len_) / pool_x_step_ + 1;
+    int32 out_fmap_y_len = (fmap_y_len_ - pool_y_len_) / pool_y_step_ + 1;
     //    int32 out_fmap_size = out_fmap_x_len*out_fmap_y_len;
     // output sanity checks
-    KALDI_ASSERT(output_dim_ % (out_fmap_x_len * out_fmap_y_len)  == 0);
+    KALDI_ASSERT(output_dim_ % (out_fmap_x_len * out_fmap_y_len) == 0);
     int32 num_output_fmaps = output_dim_ / (out_fmap_x_len * out_fmap_y_len);
     KALDI_ASSERT(num_input_fmaps == num_output_fmaps);
-
   }
 
   void WriteData(std::ostream &os, bool binary) const {
@@ -117,11 +127,10 @@ class MaxPooling2DComponent : public Component {
     WriteBasicType(os, binary, pool_x_step_);
     WriteToken(os, binary, "<PoolYStep>");
     WriteBasicType(os, binary, pool_y_step_);
-
   }
 
-  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
-    
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in,
+                    CuMatrixBase<BaseFloat> *out) {
     // useful dims
     int32 num_input_fmaps = input_dim_ / (fmap_x_len_ * fmap_y_len_);
     // int32 inp_fmap_size = fmap_x_len_ * fmap_y_len_;
@@ -130,18 +139,20 @@ class MaxPooling2DComponent : public Component {
     // int32 out_fmap_size = out_fmap_x_len*out_fmap_y_len;
     // int32 num_output_fmaps = num_input_fmaps;
     // int32 num_frames = in.NumRows();
-    
-    int out_fmap_cnt=0;
-    for (int32 m=0; m < fmap_x_len_-pool_x_len_+1;m=m+pool_x_step_){
-      for (int32 n=0; n< fmap_y_len_-pool_y_len_+1; n=n+pool_y_step_){
-        int32 st=0;
-        st=(m*fmap_y_len_+n)*num_input_fmaps;      
-        CuSubMatrix<BaseFloat> pool(out->ColRange(out_fmap_cnt*num_input_fmaps, num_input_fmaps));
-        pool.Set(-1e20); // reset (large neg value)
-        for (int32 i=0; i< pool_x_len_; i++){
-          for (int32 j=0; j< pool_y_len_; j++){
-            int32 c=0;
-            c=st+i*(num_input_fmaps*fmap_y_len_)+j*num_input_fmaps;
+
+    int out_fmap_cnt = 0;
+    for (int32 m = 0; m < fmap_x_len_ - pool_x_len_ + 1; m = m + pool_x_step_) {
+      for (int32 n = 0; n < fmap_y_len_ - pool_y_len_ + 1;
+           n = n + pool_y_step_) {
+        int32 st = 0;
+        st = (m * fmap_y_len_ + n) * num_input_fmaps;
+        CuSubMatrix<BaseFloat> pool(
+            out->ColRange(out_fmap_cnt * num_input_fmaps, num_input_fmaps));
+        pool.Set(-1e20);  // reset (large neg value)
+        for (int32 i = 0; i < pool_x_len_; i++) {
+          for (int32 j = 0; j < pool_y_len_; j++) {
+            int32 c = 0;
+            c = st + i * (num_input_fmaps * fmap_y_len_) + j * num_input_fmaps;
             pool.Max(in.ColRange(c, num_input_fmaps));
           }
         }
@@ -150,9 +161,10 @@ class MaxPooling2DComponent : public Component {
     }
   }
 
-  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
-                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
-
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in,
+                        const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff,
+                        CuMatrixBase<BaseFloat> *in_diff) {
     // useful dims
     int32 num_input_fmaps = input_dim_ / (fmap_x_len_ * fmap_y_len_);
     int32 inp_fmap_size = fmap_x_len_ * fmap_y_len_;
@@ -169,60 +181,60 @@ class MaxPooling2DComponent : public Component {
     // used in more than one pool.
     //
 
-    in_diff->SetZero(); // reset
+    in_diff->SetZero();  // reset
 
-    int out_fmap_cnt=0;
-    for (int32 m=0; m < fmap_x_len_-pool_x_len_+1;m=m+pool_x_step_){
-      for (int32 n=0; n< fmap_y_len_-pool_y_len_+1; n=n+pool_y_step_){
-        int32 st=0;
-        st=(m*fmap_y_len_+n)*num_input_fmaps;
+    int out_fmap_cnt = 0;
+    for (int32 m = 0; m < fmap_x_len_ - pool_x_len_ + 1; m = m + pool_x_step_) {
+      for (int32 n = 0; n < fmap_y_len_ - pool_y_len_ + 1;
+           n = n + pool_y_step_) {
+        int32 st = 0;
+        st = (m * fmap_y_len_ + n) * num_input_fmaps;
 
+        for (int32 i = 0; i < pool_x_len_; i++) {
+          for (int32 j = 0; j < pool_y_len_; j++) {
+            int32 c = 0;
+            c = st + i * (num_input_fmaps * fmap_y_len_) + j * num_input_fmaps;
 
-        for (int32 i=0; i< pool_x_len_; i++){
-          for (int32 j=0; j< pool_y_len_; j++){
-            int32 c=0;
-            c=st+i*(num_input_fmaps*fmap_y_len_)+j*num_input_fmaps;
-        
             //
             CuSubMatrix<BaseFloat> in_p(in.ColRange(c, num_input_fmaps));
-            CuSubMatrix<BaseFloat> out_p(out.ColRange(out_fmap_cnt*num_input_fmaps, num_input_fmaps));
+            CuSubMatrix<BaseFloat> out_p(
+                out.ColRange(out_fmap_cnt * num_input_fmaps, num_input_fmaps));
             //
-        
-            CuSubMatrix<BaseFloat> tgt(in_diff->ColRange(c, num_input_fmaps));        
-            CuMatrix<BaseFloat> src(out_diff.ColRange(out_fmap_cnt*num_input_fmaps, num_input_fmaps));
+
+            CuSubMatrix<BaseFloat> tgt(in_diff->ColRange(c, num_input_fmaps));
+            CuMatrix<BaseFloat> src(out_diff.ColRange(
+                out_fmap_cnt * num_input_fmaps, num_input_fmaps));
 
             CuMatrix<BaseFloat> mask;
             in_p.EqualElementMask(out_p, &mask);
             src.MulElements(mask);
             tgt.AddMat(1.0, src);
 
-            patch_summands[c/num_input_fmaps] += 1;
+            patch_summands[c / num_input_fmaps] += 1;
           }
         }
         out_fmap_cnt++;
       }
     }
-    
+
     // divide diff by #summands (compensate for patches used in more pools)
-    for (int i=0; i<fmap_x_len_; i++){
-      for (int32 j=0; j<fmap_y_len_; j++){
-        int32 c=i*fmap_y_len_+j;
-        CuSubMatrix<BaseFloat> tgt(in_diff->ColRange(c*num_input_fmaps, num_input_fmaps));
-        KALDI_ASSERT(patch_summands[c] > 0); // patch at least in one pool
-        tgt.Scale(1.0/patch_summands[c]);
+    for (int i = 0; i < fmap_x_len_; i++) {
+      for (int32 j = 0; j < fmap_y_len_; j++) {
+        int32 c = i * fmap_y_len_ + j;
+        CuSubMatrix<BaseFloat> tgt(
+            in_diff->ColRange(c * num_input_fmaps, num_input_fmaps));
+        KALDI_ASSERT(patch_summands[c] > 0);  // patch at least in one pool
+        tgt.Scale(1.0 / patch_summands[c]);
       }
     }
-
   }
 
  private:
-  int32 fmap_x_len_, fmap_y_len_,
-    pool_x_len_, pool_y_len_,
-    pool_x_step_, pool_y_step_;
-
+  int32 fmap_x_len_, fmap_y_len_, pool_x_len_, pool_y_len_, pool_x_step_,
+      pool_y_step_;
 };
 
-} // namespace nnet1
-} // namespace kaldi
+}  // namespace nnet1
+}  // namespace kaldi
 
 #endif

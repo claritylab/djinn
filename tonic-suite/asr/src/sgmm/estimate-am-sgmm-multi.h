@@ -38,8 +38,12 @@ namespace kaldi {
 class MleAmSgmmGlobalAccs {
  public:
   explicit MleAmSgmmGlobalAccs()
-      : feature_dim_(0), phn_space_dim_(0), spk_space_dim_(0),
-        num_gaussians_(0), total_frames_(0.0), total_like_(0.0) {}
+      : feature_dim_(0),
+        phn_space_dim_(0),
+        spk_space_dim_(0),
+        num_gaussians_(0),
+        total_frames_(0.0),
+        total_like_(0.0) {}
 
   /// Resizes the accumulators to the correct sizes given the model. The flags
   /// argument control which accumulators to resize.
@@ -59,21 +63,21 @@ class MleAmSgmmGlobalAccs {
  private:
   /// The stats which are not tied to any state.
   /// Stats Y_{i} for phonetic-subspace projections M; Dim is [I][D][S].
-  std::vector< Matrix<double> > Y_;
+  std::vector<Matrix<double> > Y_;
   /// Stats Z_{i} for speaker-subspace projections N. Dim is [I][D][T].
-  std::vector< Matrix<double> > Z_;
+  std::vector<Matrix<double> > Z_;
   /// R_{i}, quadratic term for speaker subspace estimation. Dim is [I][T][T]
-  std::vector< SpMatrix<double> > R_;
+  std::vector<SpMatrix<double> > R_;
   /// S_{i}^{-}, scatter of adapted feature vectors x_{i}(t). Dim is [I][D][D].
-  std::vector< SpMatrix<double> > S_;
+  std::vector<SpMatrix<double> > S_;
   /// Total occupancies gamma_i for each Gaussian. Dim is [I]
   Vector<double> gamma_i_;
 
   /// Q_{i}, quadratic term for phonetic subspace estimation. Dim is [I][S][S]
-  std::vector< SpMatrix<double> > Q_;
+  std::vector<SpMatrix<double> > Q_;
   /// Eq (74): S_{i}^{(means)}, scatter of substate mean vectors for estimating
   /// the shared covariance matrices. Dimension is [I][D][D].
-  std::vector< SpMatrix<double> > S_means_;
+  std::vector<SpMatrix<double> > S_means_;
 
   /// Dimensionality of various subspaces
   int32 feature_dim_, phn_space_dim_, spk_space_dim_;
@@ -85,7 +89,6 @@ class MleAmSgmmGlobalAccs {
   friend class MleAmSgmmUpdaterMulti;
 };
 
-
 /** \class MleAmSgmmUpdaterMulti
  *  Contains the functions needed to update the parameters for multiple SGMMs
  *  whose global parameters are tied.
@@ -94,12 +97,14 @@ class MleAmSgmmUpdaterMulti {
  public:
   explicit MleAmSgmmUpdaterMulti(const AmSgmm &model,
                                  const MleAmSgmmOptions &options)
-      : update_options_(options), global_SigmaInv_(model.SigmaInv_),
-        global_M_(model.M_), global_N_(model.N_), global_w_(model.w_) {}
+      : update_options_(options),
+        global_SigmaInv_(model.SigmaInv_),
+        global_M_(model.M_),
+        global_N_(model.N_),
+        global_w_(model.w_) {}
 
-  void Update(const std::vector<MleAmSgmmAccs*> &accs,
-              const std::vector<AmSgmm*> &models,
-              SgmmUpdateFlagsType flags);
+  void Update(const std::vector<MleAmSgmmAccs *> &accs,
+              const std::vector<AmSgmm *> &models, SgmmUpdateFlagsType flags);
 
   /// Various model dimensions.
   int32 NumGauss() const { return global_M_.size(); }
@@ -114,9 +119,9 @@ class MleAmSgmmUpdaterMulti {
 
   /// SGMM global parameters that will be updated together and copied to the
   /// different models:
-  std::vector< SpMatrix<BaseFloat> > global_SigmaInv_;
-  std::vector< Matrix<BaseFloat> > global_M_;
-  std::vector< Matrix<BaseFloat> > global_N_;
+  std::vector<SpMatrix<BaseFloat> > global_SigmaInv_;
+  std::vector<Matrix<BaseFloat> > global_M_;
+  std::vector<Matrix<BaseFloat> > global_N_;
   Matrix<BaseFloat> global_w_;
 
   BaseFloat UpdateGlobals(const MleAmSgmmGlobalAccs &glob_accs,
@@ -125,22 +130,21 @@ class MleAmSgmmUpdaterMulti {
   double UpdateM(const MleAmSgmmGlobalAccs &accs);
   double UpdateN(const MleAmSgmmGlobalAccs &accs);
   double UpdateVars(const MleAmSgmmGlobalAccs &accs);
-  double UpdateWParallel(const std::vector<MleAmSgmmAccs*> &accs,
-                         const std::vector<AmSgmm*> &models);
-//  double UpdateWSequential(const std::vector<MleAmSgmmAccs*> &accs,
-//                           const std::vector<AmSgmm*> &models);
+  double UpdateWParallel(const std::vector<MleAmSgmmAccs *> &accs,
+                         const std::vector<AmSgmm *> &models);
+  //  double UpdateWSequential(const std::vector<MleAmSgmmAccs*> &accs,
+  //                           const std::vector<AmSgmm*> &models);
 
   void ComputeSmoothingTerms(const MleAmSgmmGlobalAccs &accs,
                              const std::vector<SpMatrix<double> > &H,
                              SpMatrix<double> *H_sm) const;
   void RenormalizeV(const SpMatrix<double> &H_sm,
-                    const std::vector<AmSgmm*> &models);
+                    const std::vector<AmSgmm *> &models);
 
   KALDI_DISALLOW_COPY_AND_ASSIGN(MleAmSgmmUpdaterMulti);
   MleAmSgmmUpdaterMulti() {}  // Prevent unconfigured updater.
 };
 
 }  // namespace kaldi
-
 
 #endif  // KALDI_SGMM_ESTIMATE_AM_SGMM_MULTI_H_

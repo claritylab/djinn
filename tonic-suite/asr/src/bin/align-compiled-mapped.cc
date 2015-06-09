@@ -25,7 +25,7 @@
 #include "decoder/faster-decoder.h"
 #include "decoder/training-graph-compiler.h"
 #include "decoder/decodable-matrix.h"
-#include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
+#include "lat/kaldi-lattice.h"  // for {Compact}LatticeArc
 
 int main(int argc, char *argv[]) {
   try {
@@ -37,13 +37,18 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Generate alignments, reading log-likelihoods as matrices.\n"
-        " (model is needed only for the integer mappings in its transition-model)\n"
-        "Usage:   align-compiled-mapped [options] trans-model-in graphs-rspecifier feature-rspecifier alignments-wspecifier\n"
+        " (model is needed only for the integer mappings in its "
+        "transition-model)\n"
+        "Usage:   align-compiled-mapped [options] trans-model-in "
+        "graphs-rspecifier feature-rspecifier alignments-wspecifier\n"
         "e.g.: \n"
-        " nnet-align-compiled trans.mdl ark:graphs.fsts scp:train.scp ark:nnet.ali\n"
+        " nnet-align-compiled trans.mdl ark:graphs.fsts scp:train.scp "
+        "ark:nnet.ali\n"
         "or:\n"
-        " compile-train-graphs tree trans.mdl lex.fst ark:train.tra b, ark:- | \\\n"
-        "   nnet-align-compiled trans.mdl ark:- scp:loglikes.scp t, ark:nnet.ali\n";
+        " compile-train-graphs tree trans.mdl lex.fst ark:train.tra b, ark:- | "
+        "\\\n"
+        "   nnet-align-compiled trans.mdl ark:- scp:loglikes.scp t, "
+        "ark:nnet.ali\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -55,10 +60,15 @@ int main(int argc, char *argv[]) {
 
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("beam", &beam, "Decoding beam");
-    po.Register("retry-beam", &retry_beam, "Decoding beam for second try at alignment");
-    po.Register("transition-scale", &transition_scale, "Transition-probability scale [relative to acoustics]");
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("self-loop-scale", &self_loop_scale, "Scale of self-loop versus non-self-loop log probs [relative to acoustics]");
+    po.Register("retry-beam", &retry_beam,
+                "Decoding beam for second try at alignment");
+    po.Register("transition-scale", &transition_scale,
+                "Transition-probability scale [relative to acoustics]");
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("self-loop-scale", &self_loop_scale,
+                "Scale of self-loop versus non-self-loop log probs [relative "
+                "to acoustics]");
     po.Read(argc, argv);
 
     if (po.NumArgs() < 4 || po.NumArgs() > 5) {
@@ -66,9 +76,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     if (retry_beam != 0 && retry_beam <= beam)
-      KALDI_WARN << "Beams do not make sense: beam " << beam
-                 << ", retry-beam " << retry_beam;
-    
+      KALDI_WARN << "Beams do not make sense: beam " << beam << ", retry-beam "
+                 << retry_beam;
+
     FasterDecoderOptions decode_opts;
     decode_opts.beam = beam;  // Don't set the other options.
 
@@ -113,31 +123,33 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        {  // Add transition-probs to the FST.
+        {                                    // Add transition-probs to the FST.
           std::vector<int32> disambig_syms;  // empty.
-          AddTransitionProbs(trans_model, disambig_syms,
-                             transition_scale, self_loop_scale,
-                             &decode_fst);
+          AddTransitionProbs(trans_model, disambig_syms, transition_scale,
+                             self_loop_scale, &decode_fst);
         }
 
         // SimpleDecoder decoder(decode_fst, beam);
         FasterDecoder decoder(decode_fst, decode_opts);
-        // makes it a bit faster: 37 sec -> 26 sec on 1000 RM utterances @ beam 200.
+        // makes it a bit faster: 37 sec -> 26 sec on 1000 RM utterances @ beam
+        // 200.
 
-        DecodableMatrixScaledMapped decodable(trans_model, loglikes, acoustic_scale);
+        DecodableMatrixScaledMapped decodable(trans_model, loglikes,
+                                              acoustic_scale);
 
         decoder.Decode(&decodable);
 
-        VectorFst<LatticeArc> decoded;  // linear FST.
-        bool ans = decoder.ReachedFinal() // consider only final states.
-            && decoder.GetBestPath(&decoded);  
+        VectorFst<LatticeArc> decoded;     // linear FST.
+        bool ans = decoder.ReachedFinal()  // consider only final states.
+                   && decoder.GetBestPath(&decoded);
         if (!ans && retry_beam != 0.0) {
-          KALDI_WARN << "Retrying utterance " << key << " with beam " << retry_beam;
+          KALDI_WARN << "Retrying utterance " << key << " with beam "
+                     << retry_beam;
           decode_opts.beam = retry_beam;
           decoder.SetOptions(decode_opts);
           decoder.Decode(&decodable);
-          ans = decoder.ReachedFinal() // consider only final states.
-              && decoder.GetBestPath(&decoded);  
+          ans = decoder.ReachedFinal()  // consider only final states.
+                && decoder.GetBestPath(&decoded);
           decode_opts.beam = beam;
           decoder.SetOptions(decode_opts);
         }
@@ -148,35 +160,37 @@ int main(int argc, char *argv[]) {
           frame_count += loglikes.NumRows();
 
           GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
-          BaseFloat like = -(weight.Value1()+weight.Value2()) / acoustic_scale;
+          BaseFloat like =
+              -(weight.Value1() + weight.Value2()) / acoustic_scale;
           tot_like += like;
           if (scores_writer.IsOpen())
-            scores_writer.Write(key, -(weight.Value1()+weight.Value2()));
+            scores_writer.Write(key, -(weight.Value1() + weight.Value2()));
           alignment_writer.Write(key, alignment);
-          num_success ++;
-          if (num_success % 50  == 0) {
+          num_success++;
+          if (num_success % 50 == 0) {
             KALDI_LOG << "Processed " << num_success << " utterances, "
                       << "log-like per frame for " << key << " is "
                       << (like / loglikes.NumRows()) << " over "
                       << loglikes.NumRows() << " frames.";
           }
         } else {
-          KALDI_WARN << "Did not successfully decode file " << key << ", len = "
-                     << (loglikes.NumRows());
+          KALDI_WARN << "Did not successfully decode file " << key
+                     << ", len = " << (loglikes.NumRows());
           num_other_error++;
         }
       }
     }
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count)
-              << " over " << frame_count<< " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
     KALDI_LOG << "Done " << num_success << ", could not find loglikes for "
               << num_no_feat << ", other errors on " << num_other_error;
-    if (num_success != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_success != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

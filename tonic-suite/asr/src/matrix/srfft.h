@@ -19,7 +19,8 @@
 // limitations under the License.
 //
 // This file includes a modified version of code originally published in Malvar,
-// H., "Signal processing with lapped transforms, " Artech House, Inc., 1992.  The
+// H., "Signal processing with lapped transforms, " Artech House, Inc., 1992.
+// The
 // current copyright holder of the original code, Henrique S. Malvar, has given
 // his permission for the release of this modified version under the Apache
 // License v2.0.
@@ -35,7 +36,6 @@ namespace kaldi {
 /// @addtogroup matrix_funcs_misc
 /// @{
 
-
 // This class is based on code by Henrique (Rico) Malvar, from his book
 // "Signal Processing with Lapped Transforms" (1992).  Copied with
 // permission, optimized by Go Vivace Inc., and converted into C++ by
@@ -44,7 +44,7 @@ namespace kaldi {
 // (declared in matrix-functios.h), but it only works for powers of 2.
 // Note: in multi-threaded code, you would need to have one of these objects per
 // thread, because multiple calls to Compute in parallel would not work.
-template<typename Real>
+template <typename Real>
 class SplitRadixComplexFft {
  public:
   typedef MatrixIndexT Integer;
@@ -67,10 +67,10 @@ class SplitRadixComplexFft {
   // same as the version above.
   void Compute(Real *x, bool forward);
 
-
   // This version of Compute is const; it operates on an array of size N*2
   // containing [ r0 im0 r1 im1 ... ], but it uses the argument "temp_buffer" as
-  // temporary storage instead of a class-member variable.  It will allocate it if
+  // temporary storage instead of a class-member variable.  It will allocate it
+  // if
   // needed.
   void Compute(Real *x, bool forward, std::vector<Real> *temp_buffer) const;
 
@@ -80,6 +80,7 @@ class SplitRadixComplexFft {
   // temp_buffer_ is allocated only if someone calls Compute with only one Real*
   // argument and we need a temporary buffer while creating interleaved data.
   std::vector<Real> temp_buffer_;
+
  private:
   void ComputeTables();
   void ComputeRecursive(Real *xr, Real *xi, Integer logn) const;
@@ -92,18 +93,21 @@ class SplitRadixComplexFft {
   // brseed is Evans' seed table, ref:  (Ref: D. M. W.
   // Evans, "An improved digit-reversal permutation algorithm ...",
   // IEEE Trans. ASSP, Aug. 1987, pp. 1120-1125).
-  Real **tab_;       // Tables of butterfly coefficients.
+  Real **tab_;  // Tables of butterfly coefficients.
 
   KALDI_DISALLOW_COPY_AND_ASSIGN(SplitRadixComplexFft);
 };
 
-template<typename Real>
-class SplitRadixRealFft: private SplitRadixComplexFft<Real> {
+template <typename Real>
+class SplitRadixRealFft : private SplitRadixComplexFft<Real> {
  public:
-  SplitRadixRealFft(MatrixIndexT N):  // will fail unless N>=4 and N is a power of 2.
-      SplitRadixComplexFft<Real> (N/2), N_(N) { }
-  
-  /// If forward == true, this function transforms from a sequence of N real points to its complex fourier
+  SplitRadixRealFft(MatrixIndexT N)
+      :  // will fail unless N>=4 and N is a power of 2.
+        SplitRadixComplexFft<Real>(N / 2),
+        N_(N) {}
+
+  /// If forward == true, this function transforms from a sequence of N real
+  /// points to its complex fourier
   /// transform; otherwise it goes in the reverse direction.  If you call it
   /// in the forward and then reverse direction and multiply by 1.0/N, you
   /// will get back the original data.
@@ -112,21 +116,17 @@ class SplitRadixRealFft: private SplitRadixComplexFft<Real> {
   /// i.e. [real0, real_{N/2}, real1, im1, real2, im2, real3, im3, ...].
   void Compute(Real *x, bool forward);
 
-
   /// This is as the other Compute() function, but it is a const version that
   /// uses a user-supplied buffer.
   void Compute(Real *x, bool forward, std::vector<Real> *temp_buffer) const;
 
  private:
-  KALDI_DISALLOW_COPY_AND_ASSIGN(SplitRadixRealFft);  
+  KALDI_DISALLOW_COPY_AND_ASSIGN(SplitRadixRealFft);
   int N_;
 };
 
-
 /// @} end of "addtogroup matrix_funcs_misc"
 
-} // end namespace kaldi
-
+}  // end namespace kaldi
 
 #endif
-

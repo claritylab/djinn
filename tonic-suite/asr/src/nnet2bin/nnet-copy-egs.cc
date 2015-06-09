@@ -35,13 +35,12 @@ int32 GetCount(double expected_count) {
     ans++;
     expected_count--;
   }
-  if (WithProb(expected_count))
-    ans++;
+  if (WithProb(expected_count)) ans++;
   return ans;
 }
 
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -52,33 +51,40 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Copy examples (typically single frames) for neural network training,\n"
-        "possibly changing the binary mode.  Supports multiple wspecifiers, in\n"
+        "possibly changing the binary mode.  Supports multiple wspecifiers, "
+        "in\n"
         "which case it will write the examples round-robin to the outputs.\n"
         "\n"
-        "Usage:  nnet-copy-egs [options] <egs-rspecifier> <egs-wspecifier1> [<egs-wspecifier2> ...]\n"
+        "Usage:  nnet-copy-egs [options] <egs-rspecifier> <egs-wspecifier1> "
+        "[<egs-wspecifier2> ...]\n"
         "\n"
         "e.g.\n"
         "nnet-copy-egs ark:train.egs ark,t:text.egs\n"
         "or:\n"
         "nnet-copy-egs ark:train.egs ark:1.egs ark:2.egs\n";
-        
+
     bool random = false;
     int32 srand_seed = 0;
     BaseFloat keep_proportion = 1.0;
     ParseOptions po(usage);
-    po.Register("random", &random, "If true, will write frames to output "
+    po.Register("random", &random,
+                "If true, will write frames to output "
                 "archives randomly, not round-robin.");
-    po.Register("keep-proportion", &keep_proportion, "If <1.0, this program will "
-                "randomly keep this proportion of the input samples.  If >1.0, it will "
-                "in expectation copy a sample this many times.  It will copy it a number "
-                "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
-    po.Register("srand", &srand_seed, "Seed for random number generator "
+    po.Register(
+        "keep-proportion", &keep_proportion,
+        "If <1.0, this program will "
+        "randomly keep this proportion of the input samples.  If >1.0, it will "
+        "in expectation copy a sample this many times.  It will copy it a "
+        "number "
+        "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
+    po.Register("srand", &srand_seed,
+                "Seed for random number generator "
                 "(only relevant if --random=true or --keep-proportion != 1.0)");
-    
+
     po.Read(argc, argv);
 
     srand(srand_seed);
-    
+
     if (po.NumArgs() < 2) {
       po.PrintUsage();
       exit(1);
@@ -89,11 +95,10 @@ int main(int argc, char *argv[]) {
     SequentialNnetExampleReader example_reader(examples_rspecifier);
 
     int32 num_outputs = po.NumArgs() - 1;
-    std::vector<NnetExampleWriter*> example_writers(num_outputs);
+    std::vector<NnetExampleWriter *> example_writers(num_outputs);
     for (int32 i = 0; i < num_outputs; i++)
-      example_writers[i] = new NnetExampleWriter(po.GetArg(i+2));
+      example_writers[i] = new NnetExampleWriter(po.GetArg(i + 2));
 
-    
     int64 num_read = 0, num_written = 0;
     for (; !example_reader.Done(); example_reader.Next(), num_read++) {
       int32 count = GetCount(keep_proportion);
@@ -101,21 +106,17 @@ int main(int argc, char *argv[]) {
         int32 index = (random ? Rand() : num_written) % num_outputs;
         std::ostringstream ostr;
         ostr << num_written;
-        example_writers[index]->Write(ostr.str(),
-                                      example_reader.Value());
+        example_writers[index]->Write(ostr.str(), example_reader.Value());
         num_written++;
       }
     }
-    
-    for (int32 i = 0; i < num_outputs; i++)
-      delete example_writers[i];
-    KALDI_LOG << "Read " << num_read << " neural-network training examples, wrote "
-              << num_written;
+
+    for (int32 i = 0; i < num_outputs; i++) delete example_writers[i];
+    KALDI_LOG << "Read " << num_read
+              << " neural-network training examples, wrote " << num_written;
     return (num_written == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

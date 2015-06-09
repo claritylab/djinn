@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     po.Register("frame-shift", &frame_shift,
                 "Frame shift in sec (e.g. 0.01), if segment files "
-                        "contains times instead of frames");
+                "contains times instead of frames");
 
     po.Read(argc, argv);
 
@@ -81,10 +81,8 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      string segment = split_line[0],
-        utt = split_line[1],
-        start_str = split_line[2],
-        end_str = split_line[3];
+      string segment = split_line[0], utt = split_line[1],
+             start_str = split_line[2], end_str = split_line[3];
 
       // if the segments are in time, we need to convert them to frame numbers
       int32 start = 0;
@@ -102,8 +100,8 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        start = (int) (t1 / frame_shift);
-        end = (int) (t2 / frame_shift);
+        start = (int)(t1 / frame_shift);
+        end = (int)(t2 / frame_shift);
       } else {
         if (!ConvertStringToInteger(start_str, &start)) {
           KALDI_ERR << "Invalid line in segments file [bad start]: " << line;
@@ -116,31 +114,31 @@ int main(int argc, char *argv[]) {
       }
 
       if (start < 0 || end - start <= 0) {
-        KALDI_WARN << "Invalid line in segments file [less than one frame]: " << line;
+        KALDI_WARN << "Invalid line in segments file [less than one frame]: "
+                   << line;
         continue;
       }
 
       if (reader.HasKey(utt)) {
         Vector<BaseFloat> vec = reader.Value(utt);
 
-        if (vec.Dim() < end)
-          end = vec.Dim();
+        if (vec.Dim() < end) end = vec.Dim();
 
-        SubVector<BaseFloat> to_write_sub(vec, start, end-start);
+        SubVector<BaseFloat> to_write_sub(vec, start, end - start);
         Vector<BaseFloat> to_write(to_write_sub);
         writer.Write(segment, to_write);
       } else {
         KALDI_WARN << "Missing requested utterance " << utt;
         num_missing += 1;
       }
-
     }
 
-    KALDI_LOG << "processed " << num_lines << " segments, " << (num_lines - num_missing)
-              << " successful, " << num_missing << " had invalid utterances";
+    KALDI_LOG << "processed " << num_lines << " segments, "
+              << (num_lines - num_missing) << " successful, " << num_missing
+              << " had invalid utterances";
 
     return ((num_lines - num_missing) > 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -38,12 +37,14 @@ int main(int argc, char *argv[]) {
         "format to standard from compact lattice.)\n"
         "Usage: lattice-copy [options] lattice-rspecifier lattice-wspecifier\n"
         " e.g.: lattice-copy --write-compact=false ark:1.lats ark,t:text.lats\n"
-        "See also: lattice-to-fst, and the script egs/wsj/s5/utils/convert_slf.pl\n";
-    
+        "See also: lattice-to-fst, and the script "
+        "egs/wsj/s5/utils/convert_slf.pl\n";
+
     ParseOptions po(usage);
     bool write_compact = true;
-    po.Register("write-compact", &write_compact, "If true, write in normal (compact) form.");
-    
+    po.Register("write-compact", &write_compact,
+                "If true, write in normal (compact) form.");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -51,11 +52,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
 
     int32 n_done = 0;
-    
+
     if (write_compact) {
       SequentialCompactLatticeReader lattice_reader(lats_rspecifier);
       CompactLatticeWriter lattice_writer(lats_wspecifier);
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Done copying " << n_done << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -43,7 +43,6 @@ namespace kaldi {
 /// which is the more natural form in which such problems arise in our case.
 /// Here, \f$ H = A^T A \in R^{n \times n} \f$ and \f$ g = A^T y \in R^n \f$.
 
-
 /** \struct GpsrConfig
  *  Configuration variables needed in the GPSR algorithm.
  */
@@ -52,12 +51,12 @@ struct GpsrConfig {
 
   /// The following options are common to both the basic & Barzilai-Borwein
   /// versions of GPSR
-  double stop_thresh;  ///< Stopping threshold
-  int32 max_iters;  ///< Maximum number of iterations
-  double gpsr_tau;  ///< Regularization scale
-  double alpha_min;  ///< Minimum step size in the feasible direction
-  double alpha_max;  ///< Maximum step size in the feasible direction
-  double max_sparsity;  ///< Maximum percentage of dimensions set to 0
+  double stop_thresh;    ///< Stopping threshold
+  int32 max_iters;       ///< Maximum number of iterations
+  double gpsr_tau;       ///< Regularization scale
+  double alpha_min;      ///< Minimum step size in the feasible direction
+  double alpha_max;      ///< Maximum step size in the feasible direction
+  double max_sparsity;   ///< Maximum percentage of dimensions set to 0
   double tau_reduction;  ///< Multiply tau by this if max_sparsity reached
 
   /// The following options are for the backtracking line search in basic GPSR.
@@ -98,44 +97,47 @@ struct GpsrConfig {
 
 inline void GpsrConfig::Register(OptionsItf *po) {
   std::string module = "GpsrConfig: ";
-  po->Register("use-gpsr-bb", &use_gpsr_bb, module+
-               "Use the Barzilai-Borwein gradient projection method.");
+  po->Register("use-gpsr-bb", &use_gpsr_bb,
+               module + "Use the Barzilai-Borwein gradient projection method.");
 
-  po->Register("stop-thresh", &stop_thresh, module+
-               "Stopping threshold for GPSR.");
-  po->Register("max-iters", &max_iters, module+
-               "Maximum number of iterations of GPSR.");
-  po->Register("gpsr-tau", &gpsr_tau, module+
-               "Regularization scale for GPSR.");
-  po->Register("alpha-min", &alpha_min, module+
-               "Minimum step size in feasible direction.");
-  po->Register("alpha-max", &alpha_max, module+
-               "Maximum step size in feasible direction.");
-  po->Register("max-sparsity", &max_sparsity, module+
-               "Maximum percentage of dimensions set to 0.");
-  po->Register("tau-reduction", &tau_reduction, module+
-               "Multiply tau by this if maximum sparsity is reached.");
+  po->Register("stop-thresh", &stop_thresh,
+               module + "Stopping threshold for GPSR.");
+  po->Register("max-iters", &max_iters,
+               module + "Maximum number of iterations of GPSR.");
+  po->Register("gpsr-tau", &gpsr_tau,
+               module + "Regularization scale for GPSR.");
+  po->Register("alpha-min", &alpha_min,
+               module + "Minimum step size in feasible direction.");
+  po->Register("alpha-max", &alpha_max,
+               module + "Maximum step size in feasible direction.");
+  po->Register("max-sparsity", &max_sparsity,
+               module + "Maximum percentage of dimensions set to 0.");
+  po->Register("tau-reduction", &tau_reduction,
+               module + "Multiply tau by this if maximum sparsity is reached.");
 
-  po->Register("gpsr-beta", &gpsr_beta, module+
-               "Step size reduction factor in backtracking line search (0<beta<1).");
-  po->Register("gpsr-mu", &gpsr_mu, module+
-               "Improvement factor in backtracking line search (0<mu<1).");
-  po->Register("max-iters-backtrack", &max_iters_backtrak, module+
-               "Maximum number of iterations of backtracking line search.");
+  po->Register(
+      "gpsr-beta", &gpsr_beta,
+      module +
+          "Step size reduction factor in backtracking line search (0<beta<1).");
+  po->Register(
+      "gpsr-mu", &gpsr_mu,
+      module + "Improvement factor in backtracking line search (0<mu<1).");
+  po->Register(
+      "max-iters-backtrack", &max_iters_backtrak,
+      module + "Maximum number of iterations of backtracking line search.");
 
-  po->Register("debias", &debias, module+
-               "Do final debiasing step.");
-  po->Register("stop-thresh-debias", &stop_thresh_debias, module+
-               "Stopping threshold for debiaisng step.");
-  po->Register("max-iters-debias", &max_iters_debias, module+
-               "Maximum number of iterations of debiasing.");
+  po->Register("debias", &debias, module + "Do final debiasing step.");
+  po->Register("stop-thresh-debias", &stop_thresh_debias,
+               module + "Stopping threshold for debiaisng step.");
+  po->Register("max-iters-debias", &max_iters_debias,
+               module + "Maximum number of iterations of debiasing.");
 }
 
 /// Solves a quadratic program in \f$ x \f$, with L_1 regularization:
 /// \f[ \min_x 0.5 * x^T H x - g^T x + \tau ||x||_1. \f]
 /// This is similar to SolveQuadraticProblem() in sp-matrix.h with an added
 /// L_1 term.
-template<typename Real>
+template <typename Real>
 Real Gpsr(const GpsrConfig &opts, const SpMatrix<Real> &H,
           const Vector<Real> &g, Vector<Real> *x,
           const char *debug_str = "[unknown]") {
@@ -148,18 +150,17 @@ Real Gpsr(const GpsrConfig &opts, const SpMatrix<Real> &H,
 /// This is the basic GPSR algorithm, where the step size is determined by a
 /// backtracking line search. The line search is called "Armijo rule along the
 /// projection arc" in Bertsekas, Nonlinear Programming, 2nd ed. page 230.
-template<typename Real>
+template <typename Real>
 Real GpsrBasic(const GpsrConfig &opts, const SpMatrix<Real> &H,
                const Vector<Real> &g, Vector<Real> *x,
                const char *debug_str = "[unknown]");
 
 /// This is the paper calls the Barzilai-Borwein variant. This is a constrained
 /// Netwon's method where the Hessian is approximated by scaled identity matrix
-template<typename Real>
+template <typename Real>
 Real GpsrBB(const GpsrConfig &opts, const SpMatrix<Real> &H,
             const Vector<Real> &g, Vector<Real> *x,
             const char *debug_str = "[unknown]");
-
 
 }  // namespace kaldi
 

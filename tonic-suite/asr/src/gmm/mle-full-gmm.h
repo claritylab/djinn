@@ -1,7 +1,7 @@
 // gmm/mle-full-gmm.h
 
 // Copyright 2009-2011  Jan Silovsky;  Saarland University;
-//                      Microsoft Corporation; 
+//                      Microsoft Corporation;
 //                      Univ. Erlangen Nuremberg, Korbinian Riedhammer
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -47,24 +47,27 @@ struct MleFullGmmOptions {
   BaseFloat max_condition;
   bool remove_low_count_gaussians;
   MleFullGmmOptions() {
-    min_gaussian_weight    = 1.0e-05;
-    min_gaussian_occupancy     = 100.0;
-    variance_floor         = 0.001;
-    max_condition          = 1.0e+04;
+    min_gaussian_weight = 1.0e-05;
+    min_gaussian_occupancy = 100.0;
+    variance_floor = 0.001;
+    max_condition = 1.0e+04;
     remove_low_count_gaussians = true;
   }
   void Register(OptionsItf *po) {
     std::string module = "MleFullGmmOptions: ";
     po->Register("min-gaussian-weight", &min_gaussian_weight,
-                 module+"Min Gaussian weight before we remove it.");
+                 module + "Min Gaussian weight before we remove it.");
     po->Register("min-gaussian-occupancy", &min_gaussian_occupancy,
-                 module+"Minimum count before we remove a Gaussian.");
+                 module + "Minimum count before we remove a Gaussian.");
     po->Register("variance-floor", &variance_floor,
-                 module+"Minimum eigenvalue of covariance matrix.");
-    po->Register("max-condition", &max_condition,
-                 module+"Maximum condition number of covariance matrix (use it to floor).");
-    po->Register("remove-low-count-gaussians", &remove_low_count_gaussians,
-                 module+"If true, remove Gaussians that fall below the floors.");
+                 module + "Minimum eigenvalue of covariance matrix.");
+    po->Register(
+        "max-condition", &max_condition,
+        module +
+            "Maximum condition number of covariance matrix (use it to floor).");
+    po->Register(
+        "remove-low-count-gaussians", &remove_low_count_gaussians,
+        module + "If true, remove Gaussians that fall below the floors.");
   }
 };
 
@@ -73,9 +76,9 @@ struct MleFullGmmOptions {
  */
 class AccumFullGmm {
  public:
-  AccumFullGmm(): dim_(0), num_comp_(0), flags_(0) { }
-  AccumFullGmm(int32 num_comp, int32 dim, GmmFlagsType flags):
-      dim_(0), num_comp_(0), flags_(0) {
+  AccumFullGmm() : dim_(0), num_comp_(0), flags_(0) {}
+  AccumFullGmm(int32 num_comp, int32 dim, GmmFlagsType flags)
+      : dim_(0), num_comp_(0), flags_(0) {
     Resize(num_comp, dim, flags);
   }
   explicit AccumFullGmm(const FullGmm &gmm, GmmFlagsType flags) {
@@ -91,7 +94,7 @@ class AccumFullGmm {
   void Resize(int32 num_components, int32 dim, GmmFlagsType flags);
   /// Calls Resize with arguments based on gmm_ptr_
   void Resize(const FullGmm &gmm, GmmFlagsType flags);
-  
+
   void ResizeVarAccumulator(int32 num_comp, int32 dim);
   /// Returns the number of mixture components
   int32 NumGauss() const { return num_comp_; }
@@ -122,11 +125,13 @@ class AccumFullGmm {
                                const VectorBase<BaseFloat> &data,
                                BaseFloat frame_posterior);
 
-  /// Accessors  
+  /// Accessors
   const GmmFlagsType Flags() const { return flags_; }
   const Vector<double> &occupancy() const { return occupancy_; }
   const Matrix<double> &mean_accumulator() const { return mean_accumulator_; }
-  const std::vector<SpMatrix<double> > &covariance_accumulator() const { return covariance_accumulator_; }
+  const std::vector<SpMatrix<double> > &covariance_accumulator() const {
+    return covariance_accumulator_;
+  }
 
  private:
   int32 dim_;
@@ -145,15 +150,12 @@ inline void AccumFullGmm::Resize(const FullGmm &gmm, GmmFlagsType flags) {
 /// for computing the maximum-likelihood estimates of the parameters of a
 /// Gaussian mixture model.  Update using the FullGmm exponential form
 void MleFullGmmUpdate(const MleFullGmmOptions &config,
-            const AccumFullGmm &fullgmm_acc,
-            GmmFlagsType flags,
-            FullGmm *gmm,
-            BaseFloat *obj_change_out,
-            BaseFloat *count_out);
+                      const AccumFullGmm &fullgmm_acc, GmmFlagsType flags,
+                      FullGmm *gmm, BaseFloat *obj_change_out,
+                      BaseFloat *count_out);
 
 /// Calc using the DiagGMM exponential form
-BaseFloat MlObjective(const FullGmm &gmm,
-                      const AccumFullGmm &fullgmm_acc);
+BaseFloat MlObjective(const FullGmm &gmm, const AccumFullGmm &fullgmm_acc);
 
 }  // End namespace kaldi
 

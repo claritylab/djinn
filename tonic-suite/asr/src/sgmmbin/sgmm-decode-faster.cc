@@ -1,6 +1,7 @@
 // sgmmbin/sgmm-decode-faster.cc
 
-// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns
+// Hopkins University (Author: Daniel Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -28,8 +29,7 @@ using std::string;
 #include "decoder/faster-decoder.h"
 #include "sgmm/decodable-am-sgmm.h"
 #include "base/timer.h"
-#include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
-
+#include "lat/kaldi-lattice.h"  // for {Compact}LatticeArc
 
 int main(int argc, char *argv[]) {
   try {
@@ -56,11 +56,11 @@ int main(int argc, char *argv[]) {
     sgmm_opts.Register(&po);
 
     po.Register("acoustic-scale", &acoustic_scale,
-        "Scaling factor for acoustic likelihoods");
+                "Scaling factor for acoustic likelihoods");
     po.Register("log-prune", &log_prune,
-        "Pruning beam used to reduce number of exp() evaluations.");
+                "Pruning beam used to reduce number of exp() evaluations.");
     po.Register("word-symbol-table", &word_syms_filename,
-        "Symbol table for words [for debug output]");
+                "Symbol table for words [for debug output]");
     po.Register("gselect", &gselect_rspecifier,
                 "rspecifier for precomputed per-frame Gaussian indices.");
     po.Register("spk-vecs", &spkvecs_rspecifier,
@@ -77,10 +77,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        fst_in_filename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        words_wspecifier = po.GetArg(4),
-        alignment_wspecifier = po.GetOptArg(5);
+                fst_in_filename = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                words_wspecifier = po.GetArg(4),
+                alignment_wspecifier = po.GetOptArg(5);
 
     TransitionModel trans_model;
     kaldi::AmSgmm am_sgmm;
@@ -95,10 +95,10 @@ int main(int argc, char *argv[]) {
     Int32VectorWriter alignment_writer(alignment_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "") 
+    if (word_syms_filename != "")
       if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
         KALDI_ERR << "Could not read symbol table from file "
-                   << word_syms_filename;
+                  << word_syms_filename;
 
     RandomAccessInt32VectorVectorReader gselect_reader(gselect_rspecifier);
 
@@ -146,8 +146,8 @@ int main(int argc, char *argv[]) {
 
       bool has_gselect = false;
       if (gselect_reader.IsOpen()) {
-        has_gselect = gselect_reader.HasKey(utt)
-                      && gselect_reader.Value(utt).size() == features.NumRows();
+        has_gselect = gselect_reader.HasKey(utt) &&
+                      gselect_reader.Value(utt).size() == features.NumRows();
         if (!has_gselect)
           KALDI_WARN << "No Gaussian-selection info available for utterance "
                      << utt << " (or wrong size)";
@@ -162,11 +162,12 @@ int main(int argc, char *argv[]) {
 
       VectorFst<LatticeArc> decoded;  // linear FST.
 
-      if ( (allow_partial || decoder.ReachedFinal())
-           && decoder.GetBestPath(&decoded) ) {
+      if ((allow_partial || decoder.ReachedFinal()) &&
+          decoder.GetBestPath(&decoded)) {
         if (!decoder.ReachedFinal())
-          KALDI_WARN << "Decoder did not reach end-state, "
-                     << "outputting partial traceback since --allow-partial=true";
+          KALDI_WARN
+              << "Decoder did not reach end-state, "
+              << "outputting partial traceback since --allow-partial=true";
         num_success++;
         std::vector<int32> alignment;
         std::vector<int32> words;
@@ -176,8 +177,7 @@ int main(int argc, char *argv[]) {
         GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
 
         words_writer.Write(utt, words);
-        if (alignment_writer.IsOpen())
-          alignment_writer.Write(utt, alignment);
+        if (alignment_writer.IsOpen()) alignment_writer.Write(utt, alignment);
         if (word_syms != NULL) {
           std::cerr << utt << ' ';
           for (size_t i = 0; i < words.size(); i++) {
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
           }
           std::cerr << '\n';
         }
-        BaseFloat like = -weight.Value1() -weight.Value2();
+        BaseFloat like = -weight.Value1() - weight.Value2();
         tot_like += like;
         KALDI_LOG << "Log-like per frame for utterance " << utt << " is "
                   << (like / features.NumRows()) << " over "
@@ -200,18 +200,19 @@ int main(int argc, char *argv[]) {
       }
     }
     double elapsed = timer.Elapsed();
-    KALDI_LOG << "Time taken [excluding initialization] "<< elapsed
+    KALDI_LOG << "Time taken [excluding initialization] " << elapsed
               << "s: real-time factor assuming 100 frames/sec is "
-              << (elapsed*100.0/frame_count);
+              << (elapsed * 100.0 / frame_count);
     KALDI_LOG << "Done " << num_success << " utterances, failed for "
               << num_fail;
-    KALDI_LOG << "Overall log-likelihood per frame = " << (tot_like/frame_count)
-              << " over " << frame_count << " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame = "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
 
     if (word_syms) delete word_syms;
     delete decode_fst;
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

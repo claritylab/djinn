@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -37,17 +36,21 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Add transition probabilities into graph part of lattice scores,\n"
-        "controlled by options --transition-scale and --self-loop-scale, which\n"
-        "for compatibility with the original graph, would normally be set to the same\n"
+        "controlled by options --transition-scale and --self-loop-scale, "
+        "which\n"
+        "for compatibility with the original graph, would normally be set to "
+        "the same\n"
         "values used in graph compilatoin\n"
         "\n"
-        "Usage: lattice-add-trans-probs [options] model lattice-rspecifier lattice-wspecifier\n"
-        " e.g.: lattice-add-trans-probs --transition-scale=1.0 --self-loop-scale=0.1 1.mdl ark:in.lats ark:out.lats\n";
-      
+        "Usage: lattice-add-trans-probs [options] model lattice-rspecifier "
+        "lattice-wspecifier\n"
+        " e.g.: lattice-add-trans-probs --transition-scale=1.0 "
+        "--self-loop-scale=0.1 1.mdl ark:in.lats ark:out.lats\n";
+
     ParseOptions po(usage);
 
     BaseFloat transition_scale = 1.0, self_loop_scale = 1.0;
-    
+
     po.Register("transition-scale", &transition_scale,
                 "Scale for transition probabilities (excluding self-loops)");
     po.Register("self-loop-scale", &self_loop_scale,
@@ -55,26 +58,24 @@ int main(int argc, char *argv[]) {
                 "probability mass.");
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string
-        model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
-    
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
+
     int32 n_done = 0;
 
     TransitionModel trans_model;
-    
+
     ReadKaldiObject(model_rxfilename, &trans_model);
-    
-    SequentialLatticeReader lattice_reader(lats_rspecifier); // read as
+
+    SequentialLatticeReader lattice_reader(lats_rspecifier);  // read as
     // regular lattice.
-    CompactLatticeWriter clat_writer(lats_wspecifier); // write as compact.
+    CompactLatticeWriter clat_writer(lats_wspecifier);  // write as compact.
     for (; !lattice_reader.Done(); lattice_reader.Next(), n_done++) {
       Lattice lat(lattice_reader.Value());
       AddTransitionProbs(trans_model, transition_scale, self_loop_scale, &lat);
@@ -83,9 +84,10 @@ int main(int argc, char *argv[]) {
       clat_writer.Write(lattice_reader.Key(), clat);
       n_done++;
     }
-    KALDI_LOG << "Done adding transition probabilities to " << n_done << " lattices.";
+    KALDI_LOG << "Done adding transition probabilities to " << n_done
+              << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

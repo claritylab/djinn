@@ -17,12 +17,10 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 #include "ivector/voice-activity-detection.h"
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -30,9 +28,11 @@ int main(int argc, char *argv[]) {
     using kaldi::int32;
 
     const char *usage =
-        "This program reads input features and writes out, for each utterance,\n"
+        "This program reads input features and writes out, for each "
+        "utterance,\n"
         "a vector of floats that are 1.0 if we judge the frame voice and 0.0\n"
-        "otherwise.  The algorithm is very simple and is based on thresholding\n"
+        "otherwise.  The algorithm is very simple and is based on "
+        "thresholding\n"
         "the log mel energy (and taking the consensus of threshold decisions\n"
         "within a window centered on the current frame).  See the options for\n"
         "more details, and egs/sid/s1/run.sh for examples; this program is\n"
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage: compute-vad [options] <feats-rspecifier> <vad-wspecifier>\n"
         "e.g.: compute-vad scp:feats.scp ark:vad.ark\n";
-    
+
     ParseOptions po(usage);
     bool omit_unvoiced_utts = false;
     po.Register("omit-unvoiced-utts", &omit_unvoiced_utts,
@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
     int32 num_done = 0, num_err = 0;
     int32 num_unvoiced = 0;
     double tot_length = 0.0, tot_decision = 0.0;
-    
-    for (;!feat_reader.Done(); feat_reader.Next()) {
+
+    for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string utt = feat_reader.Key();
       Matrix<BaseFloat> feat(feat_reader.Value());
       if (feat.NumRows() == 0) {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
       }
       tot_decision += vad_result.Sum();
       tot_length += vad_result.Dim();
-      
+
       if (!(omit_unvoiced_utts && sum == 0)) {
         vad_writer.Write(utt, vad_result);
       }
@@ -97,10 +97,10 @@ int main(int argc, char *argv[]) {
               << num_err << " had empty features, and " << num_unvoiced
               << " were completely unvoiced.";
     KALDI_LOG << "Proportion of voiced frames was "
-              << (tot_decision / tot_length) << " over "
-              << tot_length << " frames.";
+              << (tot_decision / tot_length) << " over " << tot_length
+              << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

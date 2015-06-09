@@ -45,12 +45,13 @@ void AccumDiagGmm::Read(std::istream &in_stream, bool binary, bool add) {
 
   if (add) {
     if ((NumGauss() != 0 || Dim() != 0 || Flags() != 0)) {
-      if (num_components != NumGauss() || dimension != Dim()
-          || flags != Flags())
+      if (num_components != NumGauss() || dimension != Dim() ||
+          flags != Flags())
         KALDI_ERR << "MlEstimatediagGmm::Read, dimension or flags mismatch, "
                   << NumGauss() << ", " << Dim() << ", "
-                  << GmmFlagsToString(Flags()) << " vs. " << num_components << ", "
-                  << dimension << ", " << flags << " (mixing accs from different "
+                  << GmmFlagsToString(Flags()) << " vs. " << num_components
+                  << ", " << dimension << ", " << flags
+                  << " (mixing accs from different "
                   << "models?";
     } else {
       Resize(num_components, dimension, flags);
@@ -102,7 +103,6 @@ void AccumDiagGmm::Write(std::ostream &out_stream, bool binary) const {
   WriteToken(out_stream, binary, "</GMMACCS>");
 }
 
-
 void AccumDiagGmm::Resize(int32 num_comp, int32 dim, GmmFlagsType flags) {
   KALDI_ASSERT(num_comp > 0 && dim > 0);
   num_comp_ = num_comp;
@@ -127,7 +127,6 @@ void AccumDiagGmm::SetZero(GmmFlagsType flags) {
   if (flags & kGmmVariances) variance_accumulator_.SetZero();
 }
 
-
 void AccumDiagGmm::Scale(BaseFloat f, GmmFlagsType flags) {
   if (flags & ~flags_)
     KALDI_ERR << "Flags in argument do not match the active accumulators";
@@ -139,8 +138,7 @@ void AccumDiagGmm::Scale(BaseFloat f, GmmFlagsType flags) {
 
 void AccumDiagGmm::AccumulateForComponent(const VectorBase<BaseFloat> &data,
                                           int32 comp_index, BaseFloat weight) {
-  if (flags_ & kGmmMeans)
-    KALDI_ASSERT(data.Dim() == Dim());
+  if (flags_ & kGmmMeans) KALDI_ASSERT(data.Dim() == Dim());
   double wt = static_cast<double>(weight);
   KALDI_ASSERT(comp_index < NumGauss());
   // accumulate
@@ -155,24 +153,20 @@ void AccumDiagGmm::AccumulateForComponent(const VectorBase<BaseFloat> &data,
   }
 }
 
-void AccumDiagGmm::AddStatsForComponent(int32 g,
-                                        double occ,
+void AccumDiagGmm::AddStatsForComponent(int32 g, double occ,
                                         const VectorBase<double> &x_stats,
                                         const VectorBase<double> &x2_stats) {
   KALDI_ASSERT(g < NumGauss());
   occupancy_(g) += occ;
-  if (flags_ & kGmmMeans)
-    mean_accumulator_.Row(g).AddVec(1.0, x_stats);
+  if (flags_ & kGmmMeans) mean_accumulator_.Row(g).AddVec(1.0, x_stats);
   if (flags_ & kGmmVariances)
     variance_accumulator_.Row(g).AddVec(1.0, x2_stats);
 }
 
-
 void AccumDiagGmm::AccumulateFromPosteriors(
     const VectorBase<BaseFloat> &data,
     const VectorBase<BaseFloat> &posteriors) {
-  if (flags_ & kGmmMeans)
-    KALDI_ASSERT(static_cast<int32>(data.Dim()) == Dim());
+  if (flags_ & kGmmMeans) KALDI_ASSERT(static_cast<int32>(data.Dim()) == Dim());
   KALDI_ASSERT(static_cast<int32>(posteriors.Dim()) == NumGauss());
   Vector<double> post_d(posteriors);  // Copy with type-conversion
 
@@ -217,7 +211,6 @@ void AccumDiagGmm::SmoothStats(BaseFloat tau) {
   occupancy_.Add(static_cast<double>(tau));
 }
 
-
 // want to add tau "virtual counts" of each Gaussian from "src_acc"
 // to each Gaussian in this acc.
 // Careful: this wouldn't be valid if it were used to update the
@@ -225,7 +218,8 @@ void AccumDiagGmm::SmoothStats(BaseFloat tau) {
 void AccumDiagGmm::SmoothWithAccum(BaseFloat tau, const AccumDiagGmm &src_acc) {
   KALDI_ASSERT(src_acc.NumGauss() == num_comp_ && src_acc.Dim() == dim_);
   for (int32 i = 0; i < num_comp_; i++) {
-    if (src_acc.occupancy_(i) != 0.0) { // can only smooth if src was nonzero...
+    if (src_acc.occupancy_(i) !=
+        0.0) {  // can only smooth if src was nonzero...
       occupancy_(i) += tau;
       mean_accumulator_.Row(i).AddVec(tau / src_acc.occupancy_(i),
                                       src_acc.mean_accumulator_.Row(i));
@@ -235,7 +229,6 @@ void AccumDiagGmm::SmoothWithAccum(BaseFloat tau, const AccumDiagGmm &src_acc) {
       KALDI_WARN << "Could not smooth since source acc had zero occupancy.";
   }
 }
-
 
 void AccumDiagGmm::SmoothWithModel(BaseFloat tau, const DiagGmm &gmm) {
   KALDI_ASSERT(gmm.NumGauss() == num_comp_ && gmm.Dim() == dim_);
@@ -253,13 +246,14 @@ void AccumDiagGmm::SmoothWithModel(BaseFloat tau, const DiagGmm &gmm) {
 }
 
 AccumDiagGmm::AccumDiagGmm(const AccumDiagGmm &other)
-    : dim_(other.dim_), num_comp_(other.num_comp_),
-      flags_(other.flags_), occupancy_(other.occupancy_),
+    : dim_(other.dim_),
+      num_comp_(other.num_comp_),
+      flags_(other.flags_),
+      occupancy_(other.occupancy_),
       mean_accumulator_(other.mean_accumulator_),
       variance_accumulator_(other.variance_accumulator_) {}
 
-BaseFloat MlObjective(const DiagGmm &gmm,
-                      const AccumDiagGmm &diag_gmm_acc) {
+BaseFloat MlObjective(const DiagGmm &gmm, const AccumDiagGmm &diag_gmm_acc) {
   GmmFlagsType acc_flags = diag_gmm_acc.Flags();
   Vector<BaseFloat> occ_bf(diag_gmm_acc.occupancy());
   Matrix<BaseFloat> mean_accs_bf(diag_gmm_acc.mean_accumulator());
@@ -273,10 +267,8 @@ BaseFloat MlObjective(const DiagGmm &gmm,
 }
 
 void MleDiagGmmUpdate(const MleDiagGmmOptions &config,
-                      const AccumDiagGmm &diag_gmm_acc,
-                      GmmFlagsType flags,
-                      DiagGmm *gmm,
-                      BaseFloat *obj_change_out,
+                      const AccumDiagGmm &diag_gmm_acc, GmmFlagsType flags,
+                      DiagGmm *gmm, BaseFloat *obj_change_out,
                       BaseFloat *count_out) {
   KALDI_ASSERT(gmm != NULL);
 
@@ -308,16 +300,15 @@ void MleDiagGmmUpdate(const MleDiagGmmOptions &config,
     else
       prob = 1.0 / num_gauss;
 
-    if (occ > static_cast<double>(config.min_gaussian_occupancy)
-        && prob > static_cast<double>(config.min_gaussian_weight)) {
-      
+    if (occ > static_cast<double>(config.min_gaussian_occupancy) &&
+        prob > static_cast<double>(config.min_gaussian_weight)) {
       ngmm.weights_(i) = prob;
-      
+
       // copy old mean for later normalizations
       Vector<double> old_mean(ngmm.means_.Row(i));
-      
-      // update mean, then variance, as far as there are accumulators 
-      if (diag_gmm_acc.Flags() & (kGmmMeans|kGmmVariances)) {
+
+      // update mean, then variance, as far as there are accumulators
+      if (diag_gmm_acc.Flags() & (kGmmMeans | kGmmVariances)) {
         Vector<double> mean(diag_gmm_acc.mean_accumulator().Row(i));
         mean.Scale(1.0 / occ);
         // transfer to estimate
@@ -329,8 +320,8 @@ void MleDiagGmmUpdate(const MleDiagGmmOptions &config,
         Vector<double> var(diag_gmm_acc.variance_accumulator().Row(i));
         var.Scale(1.0 / occ);
         var.AddVec2(-1.0, ngmm.means_.Row(i));  // subtract squared means.
-        
-        // if we intend to only update the variances, we need to compensate by 
+
+        // if we intend to only update the variances, we need to compensate by
         // adding the difference between the new and old mean
         if (!(flags & kGmmMeans)) {
           old_mean.AddVec(-1.0, ngmm.means_.Row(i));
@@ -351,36 +342,36 @@ void MleDiagGmmUpdate(const MleDiagGmmOptions &config,
       }
     } else {  // Insufficient occupancy.
       if (config.remove_low_count_gaussians &&
-          static_cast<int32>(to_remove.size()) < num_gauss-1) {
+          static_cast<int32>(to_remove.size()) < num_gauss - 1) {
         // remove the component, unless it is the last one.
         KALDI_WARN << "Too little data - removing Gaussian (weight "
-                   << std::fixed << prob
-                   << ", occupation count " << std::fixed << diag_gmm_acc.occupancy()(i)
-                   << ", vector size " << gmm->Dim() << ")";
+                   << std::fixed << prob << ", occupation count " << std::fixed
+                   << diag_gmm_acc.occupancy()(i) << ", vector size "
+                   << gmm->Dim() << ")";
         to_remove.push_back(i);
       } else {
         KALDI_WARN << "Gaussian has too little data but not removing it because"
-                   << (config.remove_low_count_gaussians ?
-                       " it is the last Gaussian: i = "
-                       : " remove-low-count-gaussians == false: g = ") << i
-                   << ", occ = " << diag_gmm_acc.occupancy()(i) << ", weight = " << prob;
+                   << (config.remove_low_count_gaussians
+                           ? " it is the last Gaussian: i = "
+                           : " remove-low-count-gaussians == false: g = ") << i
+                   << ", occ = " << diag_gmm_acc.occupancy()(i)
+                   << ", weight = " << prob;
         ngmm.weights_(i) =
             std::max(prob, static_cast<double>(config.min_gaussian_weight));
       }
     }
   }
-  
+
   // copy to natural representation according to flags
   ngmm.CopyToDiagGmm(gmm, flags);
 
   gmm->ComputeGconsts();  // or MlObjective will fail.
   BaseFloat obj_new = MlObjective(*gmm, diag_gmm_acc);
-  
-  if (obj_change_out) 
-    *obj_change_out = (obj_new - obj_old);
-  
+
+  if (obj_change_out) *obj_change_out = (obj_new - obj_old);
+
   if (count_out) *count_out = occ_sum;
-  
+
   if (to_remove.size() > 0) {
     gmm->RemoveComponents(to_remove, true /*renormalize weights*/);
     gmm->ComputeGconsts();
@@ -401,29 +392,26 @@ void AccumDiagGmm::Add(double scale, const AccumDiagGmm &acc) {
     variance_accumulator_.AddMat(scale, acc.variance_accumulator_);
 }
 
-
 void MapDiagGmmUpdate(const MapDiagGmmOptions &config,
-                      const AccumDiagGmm &diag_gmm_acc,
-                      GmmFlagsType flags,
-                      DiagGmm *gmm,
-                      BaseFloat *obj_change_out,
+                      const AccumDiagGmm &diag_gmm_acc, GmmFlagsType flags,
+                      DiagGmm *gmm, BaseFloat *obj_change_out,
                       BaseFloat *count_out) {
   KALDI_ASSERT(gmm != NULL);
 
   if (flags & ~diag_gmm_acc.Flags())
     KALDI_ERR << "Flags in argument do not match the active accumulators";
-  
+
   KALDI_ASSERT(diag_gmm_acc.NumGauss() == gmm->NumGauss() &&
                diag_gmm_acc.Dim() == gmm->Dim());
-  
+
   int32 num_gauss = gmm->NumGauss();
   double occ_sum = diag_gmm_acc.occupancy().Sum();
-  
+
   // remember the old objective function value
   gmm->ComputeGconsts();
   BaseFloat obj_old = MlObjective(*gmm, diag_gmm_acc);
 
-  // allocate the gmm in normal representation; all parameters of this will be 
+  // allocate the gmm in normal representation; all parameters of this will be
   // updated, but only the flagged ones will be transferred back to gmm
   DiagGmmNormal ngmm(*gmm);
 
@@ -433,8 +421,7 @@ void MapDiagGmmUpdate(const MapDiagGmmOptions &config,
     // First update the weight.  The weight_tau is a tau for the
     // whole state.
     ngmm.weights_(i) = (occ + ngmm.weights_(i) * config.weight_tau) /
-        (occ_sum + config.weight_tau);
-
+                       (occ_sum + config.weight_tau);
 
     if (occ > 0.0 && (flags & kGmmMeans)) {
       // Update the Gaussian mean.
@@ -444,7 +431,7 @@ void MapDiagGmmUpdate(const MapDiagGmmOptions &config,
       mean.AddVec(config.mean_tau / (occ + config.mean_tau), old_mean);
       ngmm.means_.CopyRowFromVec(mean, i);
     }
-    
+
     if (occ > 0.0 && (flags & kGmmVariances)) {
       // Computing the variance around the updated mean; this is:
       // E( (x - mu)^2 ) = E( x^2 - 2 x mu + mu^2 ) =
@@ -464,46 +451,50 @@ void MapDiagGmmUpdate(const MapDiagGmmOptions &config,
       ngmm.vars_.Row(i).CopyFromVec(var);
     }
   }
-  
+
   // Copy to natural/exponential representation.
   ngmm.CopyToDiagGmm(gmm, flags);
 
   gmm->ComputeGconsts();  // or MlObjective will fail.
   BaseFloat obj_new = MlObjective(*gmm, diag_gmm_acc);
-  
-  if (obj_change_out) 
-    *obj_change_out = (obj_new - obj_old);
-  
+
+  if (obj_change_out) *obj_change_out = (obj_new - obj_old);
+
   if (count_out) *count_out = occ_sum;
 }
 
-
-class AccumulateMultiThreadedClass: public MultiThreadable {
+class AccumulateMultiThreadedClass : public MultiThreadable {
  public:
   AccumulateMultiThreadedClass(const DiagGmm &diag_gmm,
                                const MatrixBase<BaseFloat> &data,
                                const VectorBase<BaseFloat> &frame_weights,
-                               AccumDiagGmm *accum,
-                               double *tot_like):
-      diag_gmm_(diag_gmm), data_(data),
-      frame_weights_(frame_weights), dest_accum_(accum),
-      tot_like_ptr_(tot_like), tot_like_(0.0) { }
-  AccumulateMultiThreadedClass(const AccumulateMultiThreadedClass &other):
-    diag_gmm_(other.diag_gmm_), data_(other.data_),
-    frame_weights_(other.frame_weights_), dest_accum_(other.dest_accum_),
-    accum_(diag_gmm_, dest_accum_->Flags()), tot_like_ptr_(other.tot_like_ptr_),
-    tot_like_(0.0) {
+                               AccumDiagGmm *accum, double *tot_like)
+      : diag_gmm_(diag_gmm),
+        data_(data),
+        frame_weights_(frame_weights),
+        dest_accum_(accum),
+        tot_like_ptr_(tot_like),
+        tot_like_(0.0) {}
+  AccumulateMultiThreadedClass(const AccumulateMultiThreadedClass &other)
+      : diag_gmm_(other.diag_gmm_),
+        data_(other.data_),
+        frame_weights_(other.frame_weights_),
+        dest_accum_(other.dest_accum_),
+        accum_(diag_gmm_, dest_accum_->Flags()),
+        tot_like_ptr_(other.tot_like_ptr_),
+        tot_like_(0.0) {
     KALDI_ASSERT(data_.NumRows() == frame_weights_.Dim());
   }
-  void operator () () {
+  void operator()() {
     int32 num_frames = data_.NumRows(), num_threads = num_threads_,
-        block_size = (num_frames + num_threads - 1) / num_threads,
-        block_start = block_size * thread_id_,
-        block_end = std::min(num_frames, block_start + block_size);
+          block_size = (num_frames + num_threads - 1) / num_threads,
+          block_start = block_size * thread_id_,
+          block_end = std::min(num_frames, block_start + block_size);
     tot_like_ = 0.0;
     double tot_weight = 0.0;
     for (int32 t = block_start; t < block_end; t++) {
-      tot_like_ += frame_weights_(t) *
+      tot_like_ +=
+          frame_weights_(t) *
           accum_.AccumulateFromDiag(diag_gmm_, data_.Row(t), frame_weights_(t));
       tot_weight += frame_weights_(t);
     }
@@ -512,12 +503,13 @@ class AccumulateMultiThreadedClass: public MultiThreadable {
                   << " (weighted) frames.";
   }
   ~AccumulateMultiThreadedClass() {
-    if (accum_.Dim() != 0) { // if our accumulator is set up (this is not true
+    if (accum_.Dim() != 0) {  // if our accumulator is set up (this is not true
       // for the single object we use to initialize the others)
       dest_accum_->Add(1.0, accum_);
       *tot_like_ptr_ += tot_like_;
     }
   }
+
  private:
   const DiagGmm &diag_gmm_;
   const MatrixBase<BaseFloat> &data_;
@@ -527,17 +519,13 @@ class AccumulateMultiThreadedClass: public MultiThreadable {
   double *tot_like_ptr_;
   double tot_like_;
 };
-  
 
 BaseFloat AccumDiagGmm::AccumulateFromDiagMultiThreaded(
-    const DiagGmm &gmm,
-    const MatrixBase<BaseFloat> &data,
-    const VectorBase<BaseFloat> &frame_weights,
-    int32 num_threads) {
-
+    const DiagGmm &gmm, const MatrixBase<BaseFloat> &data,
+    const VectorBase<BaseFloat> &frame_weights, int32 num_threads) {
   double tot_like = 0.0;
-  AccumulateMultiThreadedClass accumulator(gmm, data, frame_weights,
-                                           this, &tot_like);
+  AccumulateMultiThreadedClass accumulator(gmm, data, frame_weights, this,
+                                           &tot_like);
   {
     // Note: everything happens in the constructor and destructor of
     // the object created below.
@@ -556,6 +544,5 @@ void AccumDiagGmm::AssertEqual(const AccumDiagGmm &other) {
   KALDI_ASSERT(mean_accumulator_.ApproxEqual(other.mean_accumulator_));
   KALDI_ASSERT(variance_accumulator_.ApproxEqual(other.variance_accumulator_));
 }
-
 
 }  // End of namespace kaldi

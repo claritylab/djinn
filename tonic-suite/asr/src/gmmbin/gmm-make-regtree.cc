@@ -25,7 +25,6 @@
 #include "hmm/transition-model.h"
 #include "transform/regression-tree.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
@@ -34,7 +33,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Build regression class tree.\n"
         "Usage: gmm-make-regtree [options] <model-file> <regtree-out>\n"
-        "E.g.: gmm-make-regtree --silphones=1:2:3 --state-occs=1.occs 1.mdl 1.regtree\n"
+        "E.g.: gmm-make-regtree --silphones=1:2:3 --state-occs=1.occs 1.mdl "
+        "1.regtree\n"
         " [Note: state-occs come from --write-occs option of gmm-est]\n";
 
     std::string occs_in_filename;
@@ -42,10 +42,16 @@ int main(int argc, char *argv[]) {
     bool binary_write = true;
     int32 max_leaves = 1;
     kaldi::ParseOptions po(usage);
-    po.Register("state-occs", &occs_in_filename, "File containing state occupancies (use --write-occs in gmm-est)");
-    po.Register("sil-phones", &sil_phones_str, "Colon-separated list of integer ids of silence phones, e.g. 1:2:3; if used, create top-level speech/sil split (only one reg-class for silence).");
+    po.Register(
+        "state-occs", &occs_in_filename,
+        "File containing state occupancies (use --write-occs in gmm-est)");
+    po.Register("sil-phones", &sil_phones_str,
+                "Colon-separated list of integer ids of silence phones, e.g. "
+                "1:2:3; if used, create top-level speech/sil split (only one "
+                "reg-class for silence).");
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("max-leaves", &max_leaves, "Maximum number of leaves in regression tree.");
+    po.Register("max-leaves", &max_leaves,
+                "Maximum number of leaves in regression tree.");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -54,7 +60,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        tree_out_filename = po.GetArg(2);
+                tree_out_filename = po.GetArg(2);
 
     kaldi::AmDiagGmm am_gmm;
     kaldi::TransitionModel trans_model;
@@ -71,7 +77,8 @@ int main(int argc, char *argv[]) {
       kaldi::Input ki(occs_in_filename, &binary_read);
       state_occs.Read(ki.Stream(), binary_read);
     } else {
-      KALDI_LOG << "--state-occs option not provided so using constant occupancies.";
+      KALDI_LOG
+          << "--state-occs option not provided so using constant occupancies.";
       state_occs.Resize(am_gmm.NumPdfs());
       state_occs.Set(1.0);
     }
@@ -79,14 +86,16 @@ int main(int argc, char *argv[]) {
     std::vector<int32> sil_pdfs;
     if (sil_phones_str != "") {
       std::vector<int32> sil_phones;
-      if (!kaldi::SplitStringToIntegers(sil_phones_str, ":", false, &sil_phones))
+      if (!kaldi::SplitStringToIntegers(sil_phones_str, ":", false,
+                                        &sil_phones))
         KALDI_ERR << "invalid sil-phones option " << sil_phones_str;
       std::sort(sil_phones.begin(), sil_phones.end());
       bool ans = GetPdfsForPhones(trans_model, sil_phones, &sil_pdfs);
       if (!ans)
-        KALDI_WARN << "Pdfs associated with silence phones are not only "
-            "associated with silence phones: your speech-silence split "
-            "may not be meaningful.";
+        KALDI_WARN
+            << "Pdfs associated with silence phones are not only "
+               "associated with silence phones: your speech-silence split "
+               "may not be meaningful.";
     }
 
     kaldi::RegressionTree regtree;
@@ -98,10 +107,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written regression tree to " << tree_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

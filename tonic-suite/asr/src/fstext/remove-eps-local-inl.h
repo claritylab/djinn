@@ -20,45 +20,42 @@
 #ifndef KALDI_FSTEXT_REMOVE_EPS_LOCAL_INL_H_
 #define KALDI_FSTEXT_REMOVE_EPS_LOCAL_INL_H_
 
-
 namespace fst {
 
-
-template<class Weight>
+template <class Weight>
 struct ReweightPlusDefault {
-  inline Weight operator () (const Weight &a, const Weight &b) {
+  inline Weight operator()(const Weight &a, const Weight &b) {
     return Plus(a, b);
   }
 };
 
 struct ReweightPlusLogArc {
-  inline TropicalWeight operator () (const TropicalWeight &a, const TropicalWeight &b) {
+  inline TropicalWeight operator()(const TropicalWeight &a,
+                                   const TropicalWeight &b) {
     LogWeight a_log(a.Value()), b_log(b.Value());
     return TropicalWeight(Plus(a_log, b_log).Value());
   }
 };
 
-
-
-template<class Arc, class ReweightPlus = ReweightPlusDefault<typename Arc::Weight> >
+template <class Arc,
+          class ReweightPlus = ReweightPlusDefault<typename Arc::Weight> >
 class RemoveEpsLocalClass {
   typedef typename Arc::StateId StateId;
   typedef typename Arc::Label Label;
   typedef typename Arc::Weight Weight;
 
  public:
-  RemoveEpsLocalClass(MutableFst<Arc> *fst):
-      fst_(fst) {
+  RemoveEpsLocalClass(MutableFst<Arc> *fst) : fst_(fst) {
     if (fst_->Start() == kNoStateId) return;  // empty.
     non_coacc_state_ = fst_->AddState();
     InitNumArcs();
     StateId num_states = fst_->NumStates();
     for (StateId s = 0; s < num_states; s++)
-      for (size_t pos = 0; pos < fst_->NumArcs(s); pos++)
-        RemoveEps(s, pos);
+      for (size_t pos = 0; pos < fst_->NumArcs(s); pos++) RemoveEps(s, pos);
     assert(CheckNumArcs());
     Connect(fst);  // remove inaccessible states.
   }
+
  private:
   MutableFst<Arc> *fst_;
   StateId non_coacc_state_;  //  use this to delete arcs: make it nextstate
@@ -76,8 +73,10 @@ class RemoveEpsLocalClass {
     return true;
   }
 
-  static bool CanCombineFinal(const Arc &a, Weight final_prob, Weight *final_prob_out) {
-    if (a.ilabel != 0 || a.olabel != 0) return false;
+  static bool CanCombineFinal(const Arc &a, Weight final_prob,
+                              Weight *final_prob_out) {
+    if (a.ilabel != 0 || a.olabel != 0)
+      return false;
     else {
       *final_prob_out = Times(a.weight, final_prob);
       return true;
@@ -91,8 +90,9 @@ class RemoveEpsLocalClass {
     num_arcs_in_[fst_->Start()]++;  // count start as trans in.
     for (StateId s = 0; s < num_states; s++) {
       if (fst_->Final(s) != Weight::Zero())
-      num_arcs_out_[s]++;  // count final as transition.
-      for (ArcIterator<MutableFst<Arc> > aiter(*fst_, s); !aiter.Done(); aiter.Next()) {
+        num_arcs_out_[s]++;  // count final as transition.
+      for (ArcIterator<MutableFst<Arc> > aiter(*fst_, s); !aiter.Done();
+           aiter.Next()) {
         num_arcs_in_[aiter.Value().nextstate]++;
         num_arcs_out_[s]++;
       }
@@ -101,12 +101,13 @@ class RemoveEpsLocalClass {
 
   bool CheckNumArcs() {  // check num arcs in/out of each state, at end.  Debug.
     num_arcs_in_[fst_->Start()]--;  // count start as trans in.
-    StateId num_states =   fst_->NumStates();
+    StateId num_states = fst_->NumStates();
     for (StateId s = 0; s < num_states; s++) {
       if (s == non_coacc_state_) continue;
       if (fst_->Final(s) != Weight::Zero())
         num_arcs_out_[s]--;  // count final as transition.
-      for (ArcIterator<MutableFst<Arc> > aiter(*fst_, s); !aiter.Done(); aiter.Next()) {
+      for (ArcIterator<MutableFst<Arc> > aiter(*fst_, s); !aiter.Done();
+           aiter.Next()) {
         if (aiter.Value().nextstate == non_coacc_state_) continue;
         num_arcs_in_[aiter.Value().nextstate]--;
         num_arcs_out_[s]--;
@@ -131,7 +132,6 @@ class RemoveEpsLocalClass {
     aiter.SetValue(arc);
   }
 
-
   void Reweight(StateId s, size_t pos, Weight reweight) {
     // Reweight is called from RemoveEpsPatter1; it is a step we
     // do to preserve stochasticity.  This function multiplies the
@@ -147,8 +147,7 @@ class RemoveEpsLocalClass {
     aiter.SetValue(arc);
 
     for (MutableArcIterator<MutableFst<Arc> > aiter_next(fst_, arc.nextstate);
-         !aiter_next.Done();
-         aiter_next.Next()) {
+         !aiter_next.Done(); aiter_next.Next()) {
       Arc nextarc = aiter_next.Value();
       if (nextarc.nextstate != non_coacc_state_) {
         nextarc.weight = Divide(nextarc.weight, reweight, DIVIDE_LEFT);
@@ -169,11 +168,10 @@ class RemoveEpsLocalClass {
   void RemoveEpsPattern1(StateId s, size_t pos, Arc arc) {
     const StateId nextstate = arc.nextstate;
     Weight total_removed = Weight::Zero(),
-        total_kept = Weight::Zero();  // totals out of nextstate.
-    vector<Arc> arcs_to_add;  // to add to state s.
+           total_kept = Weight::Zero();  // totals out of nextstate.
+    vector<Arc> arcs_to_add;             // to add to state s.
     for (MutableArcIterator<MutableFst<Arc> > aiter_next(fst_, nextstate);
-        !aiter_next.Done();
-        aiter_next.Next()) {
+         !aiter_next.Done(); aiter_next.Next()) {
       Arc nextarc = aiter_next.Value();
       if (nextarc.nextstate == non_coacc_state_) continue;  // deleted.
       Arc combined;
@@ -207,7 +205,7 @@ class RemoveEpsLocalClass {
     }
 
     if (total_removed != Weight::Zero()) {  // did something...
-      if (total_kept == Weight::Zero()) {  // removed everything: remove arc.
+      if (total_kept == Weight::Zero()) {   // removed everything: remove arc.
         num_arcs_out_[s]--;
         num_arcs_in_[arc.nextstate]--;
         arc.nextstate = non_coacc_state_;
@@ -228,7 +226,6 @@ class RemoveEpsLocalClass {
   }
 
   void RemoveEpsPattern2(StateId s, size_t pos, Arc arc) {
-
     // Pattern 2 is where "nextstate" has only one arc out, counting
     // being-the-final-state as an arc, but possibly multiple arcs in.
     // Also, nextstate != s.
@@ -240,7 +237,8 @@ class RemoveEpsLocalClass {
     bool delete_arc = false;  // set to true if this arc to be deleted.
 
     Weight next_final = fst_->Final(arc.nextstate);
-    if (next_final != Weight::Zero()) {  // nextstate has no actual arcs out, only final-prob.
+    if (next_final !=
+        Weight::Zero()) {  // nextstate has no actual arcs out, only final-prob.
       Weight new_final;
       if (CanCombineFinal(arc, next_final, &new_final)) {
         if (fst_->Final(s) == Weight::Zero())
@@ -284,7 +282,8 @@ class RemoveEpsLocalClass {
   }
 
   void RemoveEps(StateId s, size_t pos) {
-    // Tries to do local epsilon-removal for arc sequences starting with this arc
+    // Tries to do local epsilon-removal for arc sequences starting with this
+    // arc
     Arc arc;
     GetArc(s, pos, &arc);
     StateId nextstate = arc.nextstate;
@@ -297,20 +296,18 @@ class RemoveEpsLocalClass {
       RemoveEpsPattern2(s, pos, arc);
     }
   }
-
 };
 
-
-template<class Arc>
+template <class Arc>
 void RemoveEpsLocal(MutableFst<Arc> *fst) {
   RemoveEpsLocalClass<Arc> c(fst);  // work gets done in initializer.
 }
 
-
 void RemoveEpsLocalSpecial(MutableFst<StdArc> *fst) {
-  RemoveEpsLocalClass<StdArc, ReweightPlusLogArc> c(fst);  // work gets done in initializer.
+  RemoveEpsLocalClass<StdArc, ReweightPlusLogArc> c(
+      fst);  // work gets done in initializer.
 }
 
-} // end namespace fst.
+}  // end namespace fst.
 
 #endif

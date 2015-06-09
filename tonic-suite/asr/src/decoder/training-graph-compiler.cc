@@ -16,20 +16,24 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 #include "decoder/training-graph-compiler.h"
-#include "hmm/hmm-utils.h" // for GetHTransducer
+#include "hmm/hmm-utils.h"  // for GetHTransducer
 
 namespace kaldi {
 
-
-TrainingGraphCompiler::TrainingGraphCompiler(const TransitionModel &trans_model,
-                                             const ContextDependency &ctx_dep,  // Does not maintain reference to this.
-                                             fst::VectorFst<fst::StdArc> *lex_fst,
-                                             const std::vector<int32> &disambig_syms,
-                                             const TrainingGraphCompilerOptions &opts):
-    trans_model_(trans_model), ctx_dep_(ctx_dep), lex_fst_(lex_fst),
-    disambig_syms_(disambig_syms), opts_(opts) {
+TrainingGraphCompiler::TrainingGraphCompiler(
+    const TransitionModel &trans_model,
+    const ContextDependency &ctx_dep,  // Does not maintain reference to this.
+    fst::VectorFst<fst::StdArc> *lex_fst,
+    const std::vector<int32> &disambig_syms,
+    const TrainingGraphCompilerOptions &opts)
+    : trans_model_(trans_model),
+      ctx_dep_(ctx_dep),
+      lex_fst_(lex_fst),
+      disambig_syms_(disambig_syms),
+      opts_(opts) {
   using namespace fst;
-  const std::vector<int32> &phone_syms = trans_model_.GetPhones();  // needed to create context fst.
+  const std::vector<int32> &phone_syms =
+      trans_model_.GetPhones();  // needed to create context fst.
 
   KALDI_ASSERT(!phone_syms.empty());
   KALDI_ASSERT(IsSortedAndUniq(phone_syms));
@@ -39,15 +43,14 @@ TrainingGraphCompiler::TrainingGraphCompiler(const TransitionModel &trans_model,
                            disambig_syms_[i]))
       KALDI_ERR << "Disambiguation symbol " << disambig_syms_[i]
                 << " is also a phone.";
-  
+
   int32 subseq_symbol = 1 + phone_syms.back();
   if (!disambig_syms_.empty() && subseq_symbol <= disambig_syms_.back())
     subseq_symbol = 1 + disambig_syms_.back();
 
   {
-    int32 N = ctx_dep.ContextWidth(),
-        P = ctx_dep.CentralPosition();
-    if (P != N-1)
+    int32 N = ctx_dep.ContextWidth(), P = ctx_dep.CentralPosition();
+    if (P != N - 1)
       AddSubsequentialLoop(subseq_symbol, lex_fst_);  // This is needed for
     // systems with right-context or we will not successfully compose
     // with C.
@@ -68,10 +71,11 @@ bool TrainingGraphCompiler::CompileGraphFromText(
   return CompileGraph(word_fst, out_fst);
 }
 
-bool TrainingGraphCompiler::CompileGraph(const fst::VectorFst<fst::StdArc> &word_fst,
-                                         fst::VectorFst<fst::StdArc> *out_fst) {
+bool TrainingGraphCompiler::CompileGraph(
+    const fst::VectorFst<fst::StdArc> &word_fst,
+    fst::VectorFst<fst::StdArc> *out_fst) {
   using namespace fst;
-  KALDI_ASSERT(lex_fst_ !=NULL);
+  KALDI_ASSERT(lex_fst_ != NULL);
   KALDI_ASSERT(out_fst != NULL);
 
   VectorFst<StdArc> phone2word_fst;
@@ -82,14 +86,13 @@ bool TrainingGraphCompiler::CompileGraph(const fst::VectorFst<fst::StdArc> &word
 
   ContextFst<StdArc> *cfst = NULL;
   {  // make cfst [ it's expanded on the fly ]
-    const std::vector<int32> &phone_syms = trans_model_.GetPhones();  // needed to create context fst.
+    const std::vector<int32> &phone_syms =
+        trans_model_.GetPhones();  // needed to create context fst.
     int32 subseq_symbol = phone_syms.back() + 1;
     if (!disambig_syms_.empty() && subseq_symbol <= disambig_syms_.back())
       subseq_symbol = 1 + disambig_syms_.back();
 
-    cfst = new ContextFst<StdArc>(subseq_symbol,
-                                  phone_syms,
-                                  disambig_syms_,
+    cfst = new ContextFst<StdArc>(subseq_symbol, phone_syms, disambig_syms_,
                                   ctx_dep_.ContextWidth(),
                                   ctx_dep_.CentralPosition());
   }
@@ -104,39 +107,32 @@ bool TrainingGraphCompiler::CompileGraph(const fst::VectorFst<fst::StdArc> &word
   HTransducerConfig h_cfg;
   h_cfg.transition_scale = opts_.transition_scale;
 
-  std::vector<int32> disambig_syms_h; // disambiguation symbols on
+  std::vector<int32> disambig_syms_h;  // disambiguation symbols on
   // input side of H.
-  VectorFst<StdArc> *H = GetHTransducer(cfst->ILabelInfo(),
-                                        ctx_dep_,
-                                        trans_model_,
-                                        h_cfg,
-                                        &disambig_syms_h);
-  
+  VectorFst<StdArc> *H = GetHTransducer(cfst->ILabelInfo(), ctx_dep_,
+                                        trans_model_, h_cfg, &disambig_syms_h);
+
   VectorFst<StdArc> &trans2word_fst = *out_fst;  // transition-id to word.
   TableCompose(*H, ctx2word_fst, &trans2word_fst);
-  
+
   KALDI_ASSERT(trans2word_fst.Start() != kNoStateId);
 
-  // Epsilon-removal and determinization combined. This will fail if not determinizable.
+  // Epsilon-removal and determinization combined. This will fail if not
+  // determinizable.
   DeterminizeStarInLog(&trans2word_fst);
 
   if (!disambig_syms_h.empty()) {
     RemoveSomeInputSymbols(disambig_syms_h, &trans2word_fst);
     // we elect not to remove epsilons after this phase, as it is
     // a little slow.
-    if (opts_.rm_eps)
-      RemoveEpsLocal(&trans2word_fst);
+    if (opts_.rm_eps) RemoveEpsLocal(&trans2word_fst);
   }
 
-  
   // Encoded minimization.
   MinimizeEncoded(&trans2word_fst);
 
   std::vector<int32> disambig;
-  AddSelfLoops(trans_model_,
-               disambig,
-               opts_.self_loop_scale,
-               opts_.reorder,
+  AddSelfLoops(trans_model_, disambig, opts_.self_loop_scale, opts_.reorder,
                &trans2word_fst);
 
   delete H;
@@ -144,43 +140,39 @@ bool TrainingGraphCompiler::CompileGraph(const fst::VectorFst<fst::StdArc> &word
   return true;
 }
 
-
 bool TrainingGraphCompiler::CompileGraphsFromText(
     const std::vector<std::vector<int32> > &transcripts,
-    std::vector<fst::VectorFst<fst::StdArc>*> *out_fsts) {
+    std::vector<fst::VectorFst<fst::StdArc> *> *out_fsts) {
   using namespace fst;
-  std::vector<const VectorFst<StdArc>* > word_fsts(transcripts.size());
+  std::vector<const VectorFst<StdArc> *> word_fsts(transcripts.size());
   for (size_t i = 0; i < transcripts.size(); i++) {
     VectorFst<StdArc> *word_fst = new VectorFst<StdArc>();
     MakeLinearAcceptor(transcripts[i], word_fst);
     word_fsts[i] = word_fst;
-  }    
+  }
   bool ans = CompileGraphs(word_fsts, out_fsts);
-  for (size_t i = 0; i < transcripts.size(); i++)
-    delete word_fsts[i];
+  for (size_t i = 0; i < transcripts.size(); i++) delete word_fsts[i];
   return ans;
 }
 
 bool TrainingGraphCompiler::CompileGraphs(
-    const std::vector<const fst::VectorFst<fst::StdArc>* > &word_fsts,
-    std::vector<fst::VectorFst<fst::StdArc>* > *out_fsts) {
-
+    const std::vector<const fst::VectorFst<fst::StdArc> *> &word_fsts,
+    std::vector<fst::VectorFst<fst::StdArc> *> *out_fsts) {
   using namespace fst;
-  KALDI_ASSERT(lex_fst_ !=NULL);
+  KALDI_ASSERT(lex_fst_ != NULL);
   KALDI_ASSERT(out_fsts != NULL && out_fsts->empty());
   out_fsts->resize(word_fsts.size(), NULL);
   if (word_fsts.empty()) return true;
 
   ContextFst<StdArc> *cfst = NULL;
   {  // make cfst [ it's expanded on the fly ]
-    const std::vector<int32> &phone_syms = trans_model_.GetPhones();  // needed to create context fst.
+    const std::vector<int32> &phone_syms =
+        trans_model_.GetPhones();  // needed to create context fst.
     int32 subseq_symbol = phone_syms.back() + 1;
     if (!disambig_syms_.empty() && subseq_symbol <= disambig_syms_.back())
       subseq_symbol = 1 + disambig_syms_.back();
 
-    cfst = new ContextFst<StdArc>(subseq_symbol,
-                                  phone_syms,
-                                  disambig_syms_,
+    cfst = new ContextFst<StdArc>(subseq_symbol, phone_syms, disambig_syms_,
                                   ctx_dep_.ContextWidth(),
                                   ctx_dep_.CentralPosition());
   }
@@ -192,15 +184,17 @@ bool TrainingGraphCompiler::CompileGraphs(
 
     KALDI_ASSERT(phone2word_fst.Start() != kNoStateId &&
                  "Perhaps you have words missing in your lexicon?");
-    
+
     VectorFst<StdArc> ctx2word_fst;
     ComposeContextFst(*cfst, phone2word_fst, &ctx2word_fst);
-    // ComposeContextFst is like Compose but faster for this particular Fst type.
+    // ComposeContextFst is like Compose but faster for this particular Fst
+    // type.
     // [and doesn't expand too many arcs in the ContextFst.]
 
     KALDI_ASSERT(ctx2word_fst.Start() != kNoStateId);
 
-    (*out_fsts)[i] = ctx2word_fst.Copy();  // For now this contains the FST with symbols
+    (*out_fsts)[i] =
+        ctx2word_fst.Copy();  // For now this contains the FST with symbols
     // representing phones-in-context.
   }
 
@@ -208,11 +202,8 @@ bool TrainingGraphCompiler::CompileGraphs(
   h_cfg.transition_scale = opts_.transition_scale;
 
   std::vector<int32> disambig_syms_h;
-  VectorFst<StdArc> *H = GetHTransducer(cfst->ILabelInfo(),
-                                        ctx_dep_,
-                                        trans_model_,
-                                        h_cfg,
-                                        &disambig_syms_h);
+  VectorFst<StdArc> *H = GetHTransducer(cfst->ILabelInfo(), ctx_dep_,
+                                        trans_model_, h_cfg, &disambig_syms_h);
 
   for (size_t i = 0; i < out_fsts->size(); i++) {
     VectorFst<StdArc> &ctx2word_fst = *((*out_fsts)[i]);
@@ -223,18 +214,14 @@ bool TrainingGraphCompiler::CompileGraphs(
 
     if (!disambig_syms_h.empty()) {
       RemoveSomeInputSymbols(disambig_syms_h, &trans2word_fst);
-      if (opts_.rm_eps)
-        RemoveEpsLocal(&trans2word_fst);
+      if (opts_.rm_eps) RemoveEpsLocal(&trans2word_fst);
     }
-    
+
     // Encoded minimization.
     MinimizeEncoded(&trans2word_fst);
 
     std::vector<int32> disambig;
-    AddSelfLoops(trans_model_,
-                 disambig,
-                 opts_.self_loop_scale,
-                 opts_.reorder,
+    AddSelfLoops(trans_model_, disambig, opts_.self_loop_scale, opts_.reorder,
                  &trans2word_fst);
 
     KALDI_ASSERT(trans2word_fst.Start() != kNoStateId);
@@ -246,6 +233,5 @@ bool TrainingGraphCompiler::CompileGraphs(
   delete cfst;
   return true;
 }
-
 
 }  // end namespace kaldi

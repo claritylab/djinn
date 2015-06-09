@@ -21,8 +21,6 @@
 // (*) incorporates, with permission, FFT code from his book
 // "Signal Processing with Lapped Transforms", Artech, 1992.
 
-
-
 #ifndef KALDI_MATRIX_MATRIX_FUNCTIONS_H_
 #define KALDI_MATRIX_MATRIX_FUNCTIONS_H_
 
@@ -62,13 +60,17 @@ namespace kaldi {
    See also SplitRadixComplexFft, declared in srfft.h, which is more efficient
    but only works if the length of the input is a power of 2.
  */
-template<typename Real> void ComplexFft (VectorBase<Real> *v, bool forward, Vector<Real> *tmp_work = NULL);
+template <typename Real>
+void ComplexFft(VectorBase<Real> *v, bool forward,
+                Vector<Real> *tmp_work = NULL);
 
 /// ComplexFt is the same as ComplexFft but it implements the Fourier
-/// transform in an inefficient way.  It is mainly included for testing purposes.
-/// See comment for ComplexFft to describe the input and outputs and what it does.
-template<typename Real> void ComplexFt (const VectorBase<Real> &in,
-                                     VectorBase<Real> *out, bool forward);
+/// transform in an inefficient way.  It is mainly included for testing
+/// purposes.
+/// See comment for ComplexFft to describe the input and outputs and what it
+/// does.
+template <typename Real>
+void ComplexFt(const VectorBase<Real> &in, VectorBase<Real> *out, bool forward);
 
 /// RealFft is a fourier transform of real inputs.  Internally it uses
 /// ComplexFft.  The input dimension N must be even.  If forward == true,
@@ -82,12 +84,13 @@ template<typename Real> void ComplexFt (const VectorBase<Real> &in,
 /// See also SplitRadixRealFft, declared in srfft.h, which is more efficient
 /// but only works if the length of the input is a power of 2.
 
-template<typename Real> void RealFft (VectorBase<Real> *v, bool forward);
-
+template <typename Real>
+void RealFft(VectorBase<Real> *v, bool forward);
 
 /// RealFt has the same input and output format as RealFft above, but it is
 /// an inefficient implementation included for testing purposes.
-template<typename Real> void RealFftInefficient (VectorBase<Real> *v, bool forward);
+template <typename Real>
+void RealFftInefficient(VectorBase<Real> *v, bool forward);
 
 /// ComputeDctMatrix computes a matrix corresponding to the DCT, such that
 /// M * v equals the DCT of vector v.  M must be square at input.
@@ -103,22 +106,23 @@ template<typename Real> void RealFftInefficient (VectorBase<Real> *v, bool forwa
 /// because it was this way from the start and changing it would affect the
 /// feature generation.
 
-template<typename Real> void ComputeDctMatrix(Matrix<Real> *M);
-
+template <typename Real>
+void ComputeDctMatrix(Matrix<Real> *M);
 
 /// ComplexMul implements, inline, the complex multiplication b *= a.
-template<typename Real> inline void ComplexMul(const Real &a_re, const Real &a_im,
-                                            Real *b_re, Real *b_im);
+template <typename Real>
+inline void ComplexMul(const Real &a_re, const Real &a_im, Real *b_re,
+                       Real *b_im);
 
 /// ComplexMul implements, inline, the complex operation c += (a * b).
-template<typename Real> inline void ComplexAddProduct(const Real &a_re, const Real &a_im,
-                                                   const Real &b_re, const Real &b_im,
-                                                   Real *c_re, Real *c_im);
-
+template <typename Real>
+inline void ComplexAddProduct(const Real &a_re, const Real &a_im,
+                              const Real &b_re, const Real &b_im, Real *c_re,
+                              Real *c_im);
 
 /// ComplexImExp implements a <-- exp(i x), inline.
-template<typename Real> inline void ComplexImExp(Real x, Real *a_re, Real *a_im);
-
+template <typename Real>
+inline void ComplexImExp(Real x, Real *a_re, Real *a_im);
 
 // This class allows you to compute the matrix exponential function
 // B = I + A + 1/2! A^2 + 1/3! A^3 + ...
@@ -128,27 +132,32 @@ template<typename Real> inline void ComplexImExp(Real x, Real *a_re, Real *a_im)
 // It also provides a function that allows you do back-propagate the
 // derivative of a scalar function through this calculation.
 // The
-template<typename Real>
+template <typename Real>
 class MatrixExponential {
  public:
-  MatrixExponential() { }
+  MatrixExponential() {}
 
-  void Compute(const MatrixBase<Real> &M, MatrixBase<Real> *X);  // does *X = exp(M)
+  void Compute(const MatrixBase<Real> &M,
+               MatrixBase<Real> *X);  // does *X = exp(M)
 
   // Version for symmetric matrices (it just copies to full matrix).
   void Compute(const SpMatrix<Real> &M, SpMatrix<Real> *X);  // does *X = exp(M)
 
-  void Backprop(const MatrixBase<Real> &hX, MatrixBase<Real> *hM) const;  // Propagates
+  void Backprop(const MatrixBase<Real> &hX,
+                MatrixBase<Real> *hM) const;  // Propagates
   // the gradient of a scalar function f backwards through this operation, i.e.:
-  // if the parameter dX represents df/dX (with no transpose, so element i, j of dX
+  // if the parameter dX represents df/dX (with no transpose, so element i, j of
+  // dX
   // is the derivative of f w.r.t. E(i, j)), it sets dM to df/dM, again with no
-  // transpose (of course, only the part thereof that comes through the effect of
-  // A on B).  This applies to the values of A and E that were called most recently
+  // transpose (of course, only the part thereof that comes through the effect
+  // of
+  // A on B).  This applies to the values of A and E that were called most
+  // recently
   // with Compute().
 
   // Version for symmetric matrices (it just copies to full matrix).
   void Backprop(const SpMatrix<Real> &hX, SpMatrix<Real> *hM) const;
-  
+
  private:
   void Clear();
 
@@ -162,14 +171,13 @@ class MatrixExponential {
 
   // Backprop through the Taylor-series computation above.
   // note: hX is \hat{X} in the math; hM is \hat{M} in the math.
-  void BackpropTaylor(const MatrixBase<Real> &hX,
-                      MatrixBase<Real> *hM) const;
+  void BackpropTaylor(const MatrixBase<Real> &hX, MatrixBase<Real> *hM) const;
 
-  Matrix<Real> P_;  // Equals M * 2^(-N_)
+  Matrix<Real> P_;                // Equals M * 2^(-N_)
   std::vector<Matrix<Real> > B_;  // B_[0] = exp(P_) - I,
-                                 //  B_[k] = 2 B_[k-1] + B_[k-1]^2   [k > 0],
-                                 //  ( = exp(P_)^k - I )
-                                 // goes from 0..N_ [size N_+1].
+                                  //  B_[k] = 2 B_[k-1] + B_[k-1]^2   [k > 0],
+                                  //  ( = exp(P_)^k - I )
+                                  // goes from 0..N_ [size N_+1].
 
   std::vector<Matrix<Real> > powers_;  // powers (>1) of P_ stored here,
   // up to all but the last one used in the Taylor expansion (this is the
@@ -180,7 +188,6 @@ class MatrixExponential {
   // that the Taylor series will converge fast.
 };
 
-
 /**
     ComputePCA does a PCA computation, using either outer products
     or inner products, whichever is more efficient.  Let D be
@@ -190,7 +197,8 @@ class MatrixExponential {
 
     @param X [in]  An N x D matrix.  Each row of X is a point x_i.
     @param U [out] A G x D matrix.  Each row of U is a basis element u_i.
-    @param A [out] An N x D matrix, or NULL.  Each row of A is a set of coefficients
+    @param A [out] An N x D matrix, or NULL.  Each row of A is a set of
+   coefficients
          in the basis for a point x_i, so A(i, g) is the coefficient of u_i
          in x_i.
     @param print_eigs [in] If true, prints out diagnostic information about the
@@ -200,37 +208,29 @@ class MatrixExponential {
          method.
 */
 
-template<typename Real>
-void ComputePca(const MatrixBase<Real> &X,
-                MatrixBase<Real> *U,
-                MatrixBase<Real> *A,
-                bool print_eigs = false,
+template <typename Real>
+void ComputePca(const MatrixBase<Real> &X, MatrixBase<Real> *U,
+                MatrixBase<Real> *A, bool print_eigs = false,
                 bool exact = true);
-
-
 
 // This function does: *plus += max(0, a b^T),
 // *minus += max(0, -(a b^T)).
-template<typename Real>
-void AddOuterProductPlusMinus(Real alpha,
-                              const VectorBase<Real> &a,
-                              const VectorBase<Real> &b,
-                              MatrixBase<Real> *plus, 
+template <typename Real>
+void AddOuterProductPlusMinus(Real alpha, const VectorBase<Real> &a,
+                              const VectorBase<Real> &b, MatrixBase<Real> *plus,
                               MatrixBase<Real> *minus);
 
-template<typename Real1, typename Real2>
-inline void AssertSameDim(const MatrixBase<Real1> &mat1, const MatrixBase<Real2> &mat2) {
-  KALDI_ASSERT(mat1.NumRows() == mat2.NumRows()
-               && mat1.NumCols() == mat2.NumCols());
+template <typename Real1, typename Real2>
+inline void AssertSameDim(const MatrixBase<Real1> &mat1,
+                          const MatrixBase<Real2> &mat2) {
+  KALDI_ASSERT(mat1.NumRows() == mat2.NumRows() &&
+               mat1.NumCols() == mat2.NumCols());
 }
-
 
 /// @} end of "addtogroup matrix_funcs_misc"
 
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #include "matrix/matrix-functions-inl.h"
 
-
 #endif
-

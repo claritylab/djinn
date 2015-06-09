@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/hmm-topology.h"
@@ -34,7 +33,7 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Copy decision tree (possibly changing binary/text format)\n"
         "Usage:  copy-tree [--binary=false] <tree-in> <tree-out>\n";
-        
+
     bool binary = true;
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
@@ -47,13 +46,13 @@ int main(int argc, char *argv[]) {
     }
 
     std::string tree_in_filename = po.GetArg(1),
-        tree_out_filename = po.GetArg(2);
+                tree_out_filename = po.GetArg(2);
 
     ContextDependency ctx_dep;
     ReadKaldiObject(tree_in_filename, &ctx_dep);
     WriteKaldiObject(ctx_dep, tree_out_filename, binary);
     KALDI_LOG << "Copied tree";
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

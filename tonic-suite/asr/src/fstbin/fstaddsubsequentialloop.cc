@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/parse-options.h"
@@ -26,10 +25,11 @@
 #include "fstext/fstext-utils.h"
 #include "fstext/context-fst.h"
 
-
 /* some test  examples:
- ( echo "0 0 0 0"; echo "0 0" ) | fstcompile | fstaddsubsequentialloop 1 | fstprint
- ( echo "0 1 0 0"; echo " 0 2 0 0"; echo "1 0"; echo "2 0"; ) | fstcompile | fstaddsubsequentialloop 1 | fstprint
+ ( echo "0 0 0 0"; echo "0 0" ) | fstcompile | fstaddsubsequentialloop 1 |
+ fstprint
+ ( echo "0 1 0 0"; echo " 0 2 0 0"; echo "1 0"; echo "2 0"; ) | fstcompile |
+ fstaddsubsequentialloop 1 | fstprint
 */
 
 int main(int argc, char *argv[]) {
@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
     using kaldi::int32;
 
     const char *usage =
-        "Minimizes FST after encoding [this algorithm applicable to all FSTs in tropical semiring]\n"
+        "Minimizes FST after encoding [this algorithm applicable to all FSTs "
+        "in tropical semiring]\n"
         "\n"
         "Usage:  fstaddsubsequentialloop subseq_sym [in.fst [out.fst] ]\n"
         "E.g.:   fstaddsubsequentialloop 52 < LG.fst > LG_sub.fst\n";
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]) {
 
     int32 subseq_sym;
     if (!ConvertStringToInteger(po.GetArg(1), &subseq_sym))
-      KALDI_ERR << "Invalid subsequential symbol "<<po.GetArg(1);
+      KALDI_ERR << "Invalid subsequential symbol " << po.GetArg(1);
 
     std::string fst_in_filename = po.GetOptArg(2);
 
@@ -67,7 +68,9 @@ int main(int argc, char *argv[]) {
 
     int32 h = HighestNumberedInputSymbol(*fst);
     if (subseq_sym <= h) {
-      std::cerr << "fstaddsubsequentialloop.cc: subseq symbol does not seem right, "<<subseq_sym<<" <= "<<h<<'\n';
+      std::cerr
+          << "fstaddsubsequentialloop.cc: subseq symbol does not seem right, "
+          << subseq_sym << " <= " << h << '\n';
     }
 
     AddSubsequentialLoop(subseq_sym, fst);
@@ -75,9 +78,8 @@ int main(int argc, char *argv[]) {
     WriteFstKaldi(*fst, fst_out_filename);
     delete fst;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

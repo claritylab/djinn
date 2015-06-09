@@ -21,7 +21,6 @@
 #include "gmm/mle-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   try {
@@ -42,16 +41,14 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        scale_string = po.GetArg(1),
-        stats_rxfilename = po.GetArg(2),
-        stats_wxfilename = po.GetArg(3);
+    std::string scale_string = po.GetArg(1), stats_rxfilename = po.GetArg(2),
+                stats_wxfilename = po.GetArg(3);
 
     BaseFloat scale;
     if (!ConvertStringToReal(scale_string, &scale))
       KALDI_ERR << "Invalid first argument to gmm-scale-accs: expect a number: "
                 << scale_string;
-          
+
     kaldi::Vector<double> transition_accs;
     kaldi::AccumAmDiagGmm gmm_accs;
 
@@ -63,7 +60,7 @@ int main(int argc, char *argv[]) {
     }
     transition_accs.Scale(scale);
     gmm_accs.Scale(scale);
-    
+
     // Write out the scaled accs.
     {
       kaldi::Output ko(stats_wxfilename, binary);
@@ -71,10 +68,8 @@ int main(int argc, char *argv[]) {
       gmm_accs.Write(ko.Stream(), binary);
     }
     KALDI_LOG << "Scaled accs with scale " << scale;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

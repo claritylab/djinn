@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_LVTLN_H_
 #define KALDI_TRANSFORM_LVTLN_H_
 
@@ -28,7 +27,6 @@
 #include "transform/transform-common.h"
 #include "transform/fmllr-diag-gmm.h"
 
-
 namespace kaldi {
 
 /*
@@ -36,10 +34,9 @@ namespace kaldi {
   see \ref transform_lvtln.
 */
 
-
 class LinearVtln {
  public:
-  LinearVtln() { } // This initializer will probably be used prior to calling
+  LinearVtln() {}  // This initializer will probably be used prior to calling
   // Read().
 
   LinearVtln(int32 dim, int32 num_classes, int32 default_class);
@@ -59,41 +56,43 @@ class LinearVtln {
   // make sure the output matrix is sized Dim() by Dim().
   void GetTransform(int32 i, MatrixBase<BaseFloat> *transform) const;
 
-
   /// Compute the transform for the speaker.
-  void ComputeTransform(const FmllrDiagGmmAccs &accs,
-                        std::string norm_type,  // type of regular fMLLR computation: "none", "offset", "diag"
-                        BaseFloat logdet_scale,  // scale on logdet (1.0 is "correct" but less may work better)
-                        MatrixBase<BaseFloat> *Ws,  // output fMLLR transform, should be size dim x dim+1
-                        int32 *class_idx,  // the transform that was chosen...
-                        BaseFloat *logdet_out,
-                        BaseFloat *objf_impr = NULL,  // versus no transform
-                        BaseFloat *count = NULL);
+  void ComputeTransform(
+      const FmllrDiagGmmAccs &accs,
+      std::string norm_type,   // type of regular fMLLR computation: "none",
+                               // "offset", "diag"
+      BaseFloat logdet_scale,  // scale on logdet (1.0 is "correct" but less may
+                               // work better)
+      MatrixBase<BaseFloat> *
+          Ws,            // output fMLLR transform, should be size dim x dim+1
+      int32 *class_idx,  // the transform that was chosen...
+      BaseFloat *logdet_out,
+      BaseFloat *objf_impr = NULL,  // versus no transform
+      BaseFloat *count = NULL);
 
   void Read(std::istream &is, bool binary);
 
   void Write(std::ostream &os, bool binary) const;
 
-  int32 Dim() const { KALDI_ASSERT(!A_.empty()); return A_[0].NumRows(); }
+  int32 Dim() const {
+    KALDI_ASSERT(!A_.empty());
+    return A_[0].NumRows();
+  }
   int32 NumClasses() const { return A_.size(); }
   // This computes the offset term for this class given these
   // stats.
-  void GetOffset(const FmllrDiagGmmAccs &speaker_stats,
-                 int32 class_idx,
+  void GetOffset(const FmllrDiagGmmAccs &speaker_stats, int32 class_idx,
                  VectorBase<BaseFloat> *offset) const;
 
   friend class LinearVtlnStats;
+
  protected:
   int32 default_class_;  // transform we return if we have no data.
   std::vector<Matrix<BaseFloat> > A_;  // Square parts of the FMLLR matrices.
   std::vector<BaseFloat> logdets_;
-  std::vector<BaseFloat> warps_; // This variable can be used to store the
-                                 // warp factors that each transform correspond to.
-  
-
+  std::vector<BaseFloat> warps_;  // This variable can be used to store the
+  // warp factors that each transform correspond to.
 };
-
-
 
 }  // namespace kaldi
 

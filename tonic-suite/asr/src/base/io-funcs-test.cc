@@ -34,38 +34,38 @@ void UnitTestIo(bool binary) {
     if (!binary) outfile << "\t";
     char c = Rand();
     WriteBasicType(outfile, binary, c);
-    if (!binary && Rand()%2 == 0) outfile << " \n";
+    if (!binary && Rand() % 2 == 0) outfile << " \n";
     std::vector<int32> vec1;
     WriteIntegerVector(outfile, binary, vec1);
-    if (!binary && Rand()%2 == 0) outfile << " \n";
+    if (!binary && Rand() % 2 == 0) outfile << " \n";
     std::vector<uint16> vec2;
-    for (size_t i = 0; i < 10; i++) vec2.push_back(Rand()%100 - 10);
+    for (size_t i = 0; i < 10; i++) vec2.push_back(Rand() % 100 - 10);
     WriteIntegerVector(outfile, binary, vec2);
     if (!binary) outfile << " \n";
     std::vector<char> vec3;
-    for (size_t i = 0; i < 10; i++) vec3.push_back(Rand()%100);
+    for (size_t i = 0; i < 10; i++) vec3.push_back(Rand() % 100);
     WriteIntegerVector(outfile, binary, vec3);
-    if (!binary && Rand()%2 == 0) outfile << " \n";
+    if (!binary && Rand() % 2 == 0) outfile << " \n";
     const char *token1 = "Hi";
     WriteToken(outfile, binary, token1);
     if (!binary) outfile << " \n";
     std::string token2 = "There.";
     WriteToken(outfile, binary, token2);
-    if (!binary && Rand()%2 == 0) outfile << " \n";
+    if (!binary && Rand() % 2 == 0) outfile << " \n";
     std::string token3 = "You.";
     WriteToken(outfile, binary, token3);
-    if (!binary && Rand()%2 == 0) outfile << " ";
+    if (!binary && Rand() % 2 == 0) outfile << " ";
     float f1 = RandUniform();
     WriteBasicType(outfile, binary, f1);
-    if (!binary && Rand()%2 == 0) outfile << "\t";
+    if (!binary && Rand() % 2 == 0) outfile << "\t";
     float f2 = RandUniform();
     WriteBasicType(outfile, binary, f2);
     double d1 = RandUniform();
     WriteBasicType(outfile, binary, d1);
-    if (!binary && Rand()%2 == 0) outfile << "\t";
+    if (!binary && Rand() % 2 == 0) outfile << "\t";
     double d2 = RandUniform();
     WriteBasicType(outfile, binary, d2);
-    if (!binary && Rand()%2 == 0) outfile << "\t";
+    if (!binary && Rand() % 2 == 0) outfile << "\t";
     outfile.close();
 
     {
@@ -90,9 +90,9 @@ void UnitTestIo(bool binary) {
       std::vector<char> vec3_in;
       ReadIntegerVector(infile, binary_in, &vec3_in);
       KALDI_ASSERT(vec3_in == vec3);
-      std::string  token1_in, token2_in;
+      std::string token1_in, token2_in;
       KALDI_ASSERT(Peek(infile, binary_in) == static_cast<int>(*token1));
-      KALDI_ASSERT(PeekToken(infile, binary_in) == (int)*token1); // Note:
+      KALDI_ASSERT(PeekToken(infile, binary_in) == (int)*token1);  // Note:
       // the stuff with skipping over '<' is tested in ../util/kaldi-io-test.cc,
       // since we need to make sure it works with pipes.
       ReadToken(infile, binary_in, &token1_in);
@@ -122,8 +122,6 @@ void UnitTestIo(bool binary) {
   }
 }
 
-
-
 }  // end namespace kaldi.
 
 int main() {
@@ -132,7 +130,7 @@ int main() {
     UnitTestIo(false);
     UnitTestIo(true);
   }
-  KALDI_ASSERT(1);  // just wanted to check that KALDI_ASSERT does not fail for 1.
+  KALDI_ASSERT(
+      1);  // just wanted to check that KALDI_ASSERT does not fail for 1.
   return 0;
 }
-

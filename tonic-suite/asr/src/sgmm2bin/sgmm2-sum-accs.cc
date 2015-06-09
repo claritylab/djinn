@@ -22,7 +22,6 @@
 #include "sgmm2/estimate-am-sgmm2.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
@@ -35,9 +34,11 @@ int main(int argc, char *argv[]) {
     bool parallel = false;
     kaldi::ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("parallel", &parallel, "If true, the program makes sure to open all "
-                "filehandles before reading for any (useful when summing accs from "
-                "long processes)");
+    po.Register(
+        "parallel", &parallel,
+        "If true, the program makes sure to open all "
+        "filehandles before reading for any (useful when summing accs from "
+        "long processes)");
     po.Read(argc, argv);
 
     if (po.NumArgs() < 2) {
@@ -50,10 +51,10 @@ int main(int argc, char *argv[]) {
     kaldi::MleAmSgmm2Accs sgmm_accs;
 
     if (parallel) {
-      std::vector<kaldi::Input*> inputs(po.NumArgs() - 1);
+      std::vector<kaldi::Input *> inputs(po.NumArgs() - 1);
       for (int i = 0; i < po.NumArgs() - 1; i++) {
         std::string stats_in_filename = po.GetArg(i + 2);
-        inputs[i] = new kaldi::Input(stats_in_filename); // Don't try
+        inputs[i] = new kaldi::Input(stats_in_filename);  // Don't try
         // to work out binary status yet; this would cause us to wait
         // for the output of that process.  We delay it till later.
       }
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
         transition_accs.Read(inputs[i]->Stream(), b, true /* add values */);
         sgmm_accs.Read(inputs[i]->Stream(), b, true /* add values */);
         delete inputs[i];
-      }      
+      }
     } else {
       for (int i = 2, max = po.NumArgs(); i <= max; i++) {
         std::string stats_in_filename = po.GetArg(i);
@@ -82,10 +83,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written stats to " << stats_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

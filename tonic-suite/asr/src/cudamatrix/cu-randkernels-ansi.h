@@ -17,8 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 #ifndef KALDI_CUDAMATRIX_CU_RANDKERNELS_ANSI_H_
 #define KALDI_CUDAMATRIX_CU_RANDKERNELS_ANSI_H_
 
@@ -32,23 +30,32 @@ extern "C" {
 /*********************************************************
  * float CUDA kernel calls
  */
-void cudaF_rand(dim3 Gr, dim3 Bl, float *mat, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
-void cudaF_gauss_rand(dim3 Gr, dim3 Bl, float *mat, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
-void cudaF_vec_gauss_rand(int Gr, int Bl, float *v, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, int dim);
-void cudaF_binarize_probs(dim3 Gr, dim3 Bl, float *states, const float *probs, float *rand, MatrixDim d);
+void cudaF_rand(dim3 Gr, dim3 Bl, float *mat, uint32_cuda *z1, uint32_cuda *z2,
+                uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
+void cudaF_gauss_rand(dim3 Gr, dim3 Bl, float *mat, uint32_cuda *z1,
+                      uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4,
+                      MatrixDim d);
+void cudaF_vec_gauss_rand(int Gr, int Bl, float *v, uint32_cuda *z1,
+                          uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4,
+                          int dim);
+void cudaF_binarize_probs(dim3 Gr, dim3 Bl, float *states, const float *probs,
+                          float *rand, MatrixDim d);
 
 /*********************************************************
  * double CUDA kernel calls
  */
-void cudaD_rand(dim3 Gr, dim3 Bl, double *mat, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
-void cudaD_gauss_rand(dim3 Gr, dim3 Bl, double *mat, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
-void cudaD_vec_gauss_rand(int Gr, int Bl, double *v, uint32_cuda *z1, uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4, int dim);
-void cudaD_binarize_probs(dim3 Gr, dim3 Bl, double *states, const double *probs, double *rand, MatrixDim d);
-
+void cudaD_rand(dim3 Gr, dim3 Bl, double *mat, uint32_cuda *z1, uint32_cuda *z2,
+                uint32_cuda *z3, uint32_cuda *z4, MatrixDim d);
+void cudaD_gauss_rand(dim3 Gr, dim3 Bl, double *mat, uint32_cuda *z1,
+                      uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4,
+                      MatrixDim d);
+void cudaD_vec_gauss_rand(int Gr, int Bl, double *v, uint32_cuda *z1,
+                          uint32_cuda *z2, uint32_cuda *z3, uint32_cuda *z4,
+                          int dim);
+void cudaD_binarize_probs(dim3 Gr, dim3 Bl, double *states, const double *probs,
+                          double *rand, MatrixDim d);
 }
 
-
-
-#endif // HAVE_CUDA
+#endif  // HAVE_CUDA
 
 #endif

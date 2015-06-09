@@ -17,13 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "thread/kaldi-thread.h"
 #include "hmm/transition-model.h"
 #include "sgmm/estimate-am-sgmm-ebw.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -33,22 +31,24 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Estimate SGMM model parameters discriminatively using Extended\n"
         "Baum-Welch style of update\n"
-        "Usage: sgmm-est-ebw [options] <model-in> <num-stats-in> <den-stats-in> <model-out>\n";
-
+        "Usage: sgmm-est-ebw [options] <model-in> <num-stats-in> "
+        "<den-stats-in> <model-out>\n";
 
     string update_flags_str = "vMNwcSt";
     bool binary_write = true;
     string write_flags_str = "gsnu";
     EbwAmSgmmOptions opts;
 
-    
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which SGMM parameters to "
+    po.Register("update-flags", &update_flags_str,
+                "Which SGMM parameters to "
                 "update: subset of vMNwcSt.");
-    po.Register("write-flags", &write_flags_str, "Which SGMM parameters to "
+    po.Register("write-flags", &write_flags_str,
+                "Which SGMM parameters to "
                 "write: subset of gsnu");
-    po.Register("num-threads", &g_num_threads, "Number of threads to use in "
+    po.Register("num-threads", &g_num_threads,
+                "Number of threads to use in "
                 "weight update and normalizer computation");
     opts.Register(&po);
 
@@ -57,12 +57,11 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-    string model_in_filename = po.GetArg(1),
-        num_stats_filename = po.GetArg(2),
-        den_stats_filename = po.GetArg(3),
-        model_out_filename = po.GetArg(4);
-    
-    SgmmUpdateFlagsType update_flags = StringToSgmmUpdateFlags(update_flags_str);
+    string model_in_filename = po.GetArg(1), num_stats_filename = po.GetArg(2),
+           den_stats_filename = po.GetArg(3), model_out_filename = po.GetArg(4);
+
+    SgmmUpdateFlagsType update_flags =
+        StringToSgmmUpdateFlags(update_flags_str);
     SgmmWriteFlagsType write_flags = StringToSgmmWriteFlags(write_flags_str);
 
     AmSgmm am_sgmm;
@@ -77,30 +76,34 @@ int main(int argc, char *argv[]) {
     MleAmSgmmAccs sgmm_num_accs;
     {
       bool binary;
-      Vector<double> transition_accs; // won't be used.
+      Vector<double> transition_accs;  // won't be used.
       Input ki(num_stats_filename, &binary);
       transition_accs.Read(ki.Stream(), binary);
-      sgmm_num_accs.Read(ki.Stream(), binary, false);  // false == add; doesn't matter.
+      sgmm_num_accs.Read(ki.Stream(), binary,
+                         false);  // false == add; doesn't matter.
     }
     MleAmSgmmAccs sgmm_den_accs;
     {
       bool binary;
-      Vector<double> transition_accs; // won't be used.
+      Vector<double> transition_accs;  // won't be used.
       Input ki(den_stats_filename, &binary);
       transition_accs.Read(ki.Stream(), binary);
-      sgmm_den_accs.Read(ki.Stream(), binary, false);  // false == add; doesn't matter.
+      sgmm_den_accs.Read(ki.Stream(), binary,
+                         false);  // false == add; doesn't matter.
     }
-    
-    sgmm_num_accs.Check(am_sgmm, true); // Will check consistency and print some diagnostics.
-    sgmm_den_accs.Check(am_sgmm, true); // Will check consistency and print some diagnostics.    
+
+    sgmm_num_accs.Check(
+        am_sgmm, true);  // Will check consistency and print some diagnostics.
+    sgmm_den_accs.Check(
+        am_sgmm, true);  // Will check consistency and print some diagnostics.
 
     {  // Update SGMM.
       BaseFloat auxf_impr, count;
       kaldi::EbwAmSgmmUpdater sgmm_updater(opts);
-      sgmm_updater.Update(sgmm_num_accs, sgmm_den_accs, &am_sgmm,
-                          update_flags, &auxf_impr, &count);
-      KALDI_LOG << "Overall auxf impr/frame from SGMM update is " << (auxf_impr/count)
-                << " over " << count << " frames.";
+      sgmm_updater.Update(sgmm_num_accs, sgmm_den_accs, &am_sgmm, update_flags,
+                          &auxf_impr, &count);
+      KALDI_LOG << "Overall auxf impr/frame from SGMM update is "
+                << (auxf_impr / count) << " over " << count << " frames.";
     }
 
     {
@@ -108,10 +111,10 @@ int main(int argc, char *argv[]) {
       trans_model.Write(ko.Stream(), binary_write);
       am_sgmm.Write(ko.Stream(), binary_write, write_flags);
     }
-    
+
     KALDI_LOG << "Wrote model to " << model_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

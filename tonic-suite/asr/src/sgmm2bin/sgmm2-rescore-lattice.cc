@@ -39,10 +39,12 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-      "Replace the acoustic scores on a lattice using a new model.\n"
-      "Usage: sgmm2-rescore-lattice [options] <model-in> <lattice-rspecifier> "
-      "<feature-rspecifier> <lattice-wspecifier>\n"
-      " e.g.: sgmm2-rescore-lattice 1.mdl ark:1.lats scp:trn.scp ark:2.lats\n";
+        "Replace the acoustic scores on a lattice using a new model.\n"
+        "Usage: sgmm2-rescore-lattice [options] <model-in> "
+        "<lattice-rspecifier> "
+        "<feature-rspecifier> <lattice-wspecifier>\n"
+        " e.g.: sgmm2-rescore-lattice 1.mdl ark:1.lats scp:trn.scp "
+        "ark:2.lats\n";
 
     kaldi::BaseFloat old_acoustic_scale = 0.0;
     bool speedup = false;
@@ -54,7 +56,8 @@ int main(int argc, char *argv[]) {
                 "Add the current acoustic scores with some scale.");
     po.Register("log-prune", &log_prune,
                 "Pruning beam used to reduce number of exp() evaluations.");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors (rspecifier)");
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
     po.Register("gselect", &gselect_rspecifier,
@@ -65,7 +68,6 @@ int main(int argc, char *argv[]) {
                 "by only sometimes (randomly) computing the probabilities, and "
                 "then scaling them up to preserve corpus-level diagnostics.");
 
-    
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -75,10 +77,9 @@ int main(int argc, char *argv[]) {
     if (gselect_rspecifier == "")
       KALDI_ERR << "--gselect-rspecifier option is required.";
 
-    std::string model_filename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        lats_wspecifier = po.GetArg(4);
+    std::string model_filename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                lats_wspecifier = po.GetArg(4);
 
     AmSgmm2 am_sgmm;
     TransitionModel trans_model;
@@ -137,29 +138,29 @@ int main(int argc, char *argv[]) {
       const std::vector<std::vector<int32> > &gselect =
           gselect_reader.Value(utt);
 
-      DecodableAmSgmm2 sgmm2_decodable(am_sgmm, trans_model, feats,
-                                       gselect, log_prune, &spk_vars);
+      DecodableAmSgmm2 sgmm2_decodable(am_sgmm, trans_model, feats, gselect,
+                                       log_prune, &spk_vars);
 
       if (!speedup) {
         if (kaldi::RescoreCompactLattice(&sgmm2_decodable, &clat)) {
           compact_lattice_writer.Write(utt, clat);
           num_done++;
-        } else num_err++;
+        } else
+          num_err++;
       } else {
-        BaseFloat speedup_factor = 100.0; 
+        BaseFloat speedup_factor = 100.0;
         if (kaldi::RescoreCompactLatticeSpeedup(trans_model, speedup_factor,
-                                                &sgmm2_decodable,
-                                                &clat)) {
+                                                &sgmm2_decodable, &clat)) {
           compact_lattice_writer.Write(utt, clat);
           num_done++;
-        } else num_err++;
-      }        
+        } else
+          num_err++;
+      }
     }
 
-    KALDI_LOG << "Done " << num_done << " lattices, errors on "
-              << num_err;
+    KALDI_LOG << "Done " << num_done << " lattices, errors on " << num_err;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

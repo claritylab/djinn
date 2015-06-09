@@ -31,20 +31,19 @@ namespace kaldi {
 nnet2::Component *ConvertAffineTransformComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::AffineTransform *affine =
-      dynamic_cast<const nnet1::AffineTransform*>(&nnet1_component);
+      dynamic_cast<const nnet1::AffineTransform *>(&nnet1_component);
   KALDI_ASSERT(affine != NULL);
   // default learning rate is 1.0e-05, you can use the --learning-rate or
   // --learning-rates option to nnet-am-copy to change it if you need.
-  BaseFloat learning_rate = 1.0e-05; 
-  return new nnet2::AffineComponent(affine->GetLinearity(),
-                                    affine->GetBias(),
+  BaseFloat learning_rate = 1.0e-05;
+  return new nnet2::AffineComponent(affine->GetLinearity(), affine->GetBias(),
                                     learning_rate);
 }
 
 nnet2::Component *ConvertSoftmaxComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::Softmax *softmax =
-      dynamic_cast<const nnet1::Softmax*>(&nnet1_component);
+      dynamic_cast<const nnet1::Softmax *>(&nnet1_component);
   KALDI_ASSERT(softmax != NULL);
   return new nnet2::SoftmaxComponent(softmax->InputDim());
 }
@@ -52,7 +51,7 @@ nnet2::Component *ConvertSoftmaxComponent(
 nnet2::Component *ConvertSigmoidComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::Sigmoid *sigmoid =
-      dynamic_cast<const nnet1::Sigmoid*>(&nnet1_component);
+      dynamic_cast<const nnet1::Sigmoid *>(&nnet1_component);
   KALDI_ASSERT(sigmoid != NULL);
   return new nnet2::SigmoidComponent(sigmoid->InputDim());
 }
@@ -60,7 +59,7 @@ nnet2::Component *ConvertSigmoidComponent(
 nnet2::Component *ConvertSpliceComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::Splice *splice =
-      dynamic_cast<const nnet1::Splice*>(&nnet1_component);
+      dynamic_cast<const nnet1::Splice *>(&nnet1_component);
   KALDI_ASSERT(splice != NULL);
   int32 low, high;
   std::vector<int32> frame_offsets;
@@ -72,7 +71,7 @@ nnet2::Component *ConvertSpliceComponent(
   ReadIntegerVector(istr, false, &frame_offsets);
 
   for (size_t i = 1; i < frame_offsets.size(); i++) {
-    KALDI_ASSERT(frame_offsets[i-1] + 1 == frame_offsets[i]);
+    KALDI_ASSERT(frame_offsets[i - 1] + 1 == frame_offsets[i]);
   }
 
   low = frame_offsets[0];
@@ -83,11 +82,10 @@ nnet2::Component *ConvertSpliceComponent(
   return res;
 }
 
-
 nnet2::Component *ConvertAddShiftComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::AddShift *add_shift =
-      dynamic_cast<const nnet1::AddShift*>(&nnet1_component);
+      dynamic_cast<const nnet1::AddShift *>(&nnet1_component);
   KALDI_ASSERT(add_shift != NULL);
   Vector<BaseFloat> bias;
 
@@ -102,7 +100,7 @@ nnet2::Component *ConvertAddShiftComponent(
 nnet2::Component *ConvertRescaleComponent(
     const nnet1::Component &nnet1_component) {
   const nnet1::Rescale *rescale =
-      dynamic_cast<const nnet1::Rescale*>(&nnet1_component);
+      dynamic_cast<const nnet1::Rescale *>(&nnet1_component);
   KALDI_ASSERT(rescale != NULL);
 
   Vector<BaseFloat> scale;
@@ -121,42 +119,46 @@ nnet2::Component *ConvertComponent(const nnet1::Component &nnet1_component) {
     case nnet1::Component::kAffineTransform:
       return ConvertAffineTransformComponent(nnet1_component);
     case nnet1::Component::kSoftmax:
-      return ConvertSoftmaxComponent(nnet1_component);      
+      return ConvertSoftmaxComponent(nnet1_component);
     case nnet1::Component::kSigmoid:
       return ConvertSigmoidComponent(nnet1_component);
     case nnet1::Component::kSplice:
-      return ConvertSpliceComponent(nnet1_component); // note, this will for now only handle the
-      // special case nnet1::Component::where all splice indexes in nnet1_component are contiguous, e.g.
-      // -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 .
+      return ConvertSpliceComponent(
+          nnet1_component);  // note, this will for now only handle the
+    // special case nnet1::Component::where all splice indexes in
+    // nnet1_component are contiguous, e.g.
+    // -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 .
     case nnet1::Component::kAddShift:
-      return ConvertAddShiftComponent(nnet1_component); // convert to FixedBiasComponent
+      return ConvertAddShiftComponent(
+          nnet1_component);  // convert to FixedBiasComponent
     case nnet1::Component::kRescale:
-      return ConvertRescaleComponent(nnet1_component); // convert to FixedScaleComponent
-    default: KALDI_ERR << "Un-handled nnet1 component type "
-                       << nnet1::Component::TypeToMarker(type_in);
-    return NULL;
+      return ConvertRescaleComponent(
+          nnet1_component);  // convert to FixedScaleComponent
+    default:
+      KALDI_ERR << "Un-handled nnet1 component type "
+                << nnet1::Component::TypeToMarker(type_in);
+      return NULL;
   }
 }
 
-
 nnet2::Nnet *ConvertNnet1ToNnet2(const nnet1::Nnet &nnet1) {
-  // get a vector of nnet2::Component pointers and initialize the nnet2::Nnet with it.
+  // get a vector of nnet2::Component pointers and initialize the nnet2::Nnet
+  // with it.
   size_t size = nnet1.NumComponents();
-  std::vector<nnet2::Component*> *components = new std::vector<nnet2::Component*>();
+  std::vector<nnet2::Component *> *components =
+      new std::vector<nnet2::Component *>();
   components->resize(size);
   for (size_t i = 0; i < size; i++) {
     (*components)[i] = ConvertComponent(nnet1.GetComponent(i));
   }
-  
+
   nnet2::Nnet *res = new nnet2::Nnet();
   res->Init(components);
   // not de-allocate the memory for components
   // since the nnet takes the ownership
   return res;
 }
-
 }
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -169,25 +171,26 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage:  nnet1-to-raw-nnet [options] <nnet1-in> <nnet2-out>\n"
         "e.g.:\n"
-        " nnet1-to-raw-nnet srcdir/final.nnet - | nnet-am-init dest/tree dest/topo - dest/0.mdl\n";
+        " nnet1-to-raw-nnet srcdir/final.nnet - | nnet-am-init dest/tree "
+        "dest/topo - dest/0.mdl\n";
 
     bool binary_write = true;
     int32 srand_seed = 0;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    
+
     po.Read(argc, argv);
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string nnet1_rxfilename = po.GetArg(1),
-        raw_nnet2_wxfilename = po.GetArg(2);
-    
+                raw_nnet2_wxfilename = po.GetArg(2);
+
     nnet1::Nnet nnet1;
     ReadKaldiObject(nnet1_rxfilename, &nnet1);
     nnet2::Nnet *nnet2 = ConvertNnet1ToNnet2(nnet1);
@@ -196,7 +199,7 @@ int main(int argc, char *argv[]) {
               << PrintableWxfilename(raw_nnet2_wxfilename);
     delete nnet2;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

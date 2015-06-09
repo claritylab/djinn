@@ -33,10 +33,10 @@ namespace kaldi {
 // is the index into the vector, and the value it finds there is used
 // to index into the base decodable object.
 
-class DecodableMapped: public DecodableInterface {
+class DecodableMapped : public DecodableInterface {
  public:
-  DecodableMapped(const std::vector<int32> &index_map, DecodableInterface *d):
-      index_map_(index_map), decodable_(d) { }
+  DecodableMapped(const std::vector<int32> &index_map, DecodableInterface *d)
+      : index_map_(index_map), decodable_(d) {}
 
   // Note, frames are numbered from zero.  But state_index is numbered
   // from one (this routine is called by FSTs).
@@ -44,26 +44,26 @@ class DecodableMapped: public DecodableInterface {
     KALDI_ASSERT(static_cast<size_t>(state_index) < index_map_.size());
     return decodable_->LogLikelihood(frame, index_map_[state_index]);
   }
-  
+
   // note: indices are assumed to be numbered from one, so
   // NumIndices() will be the same as the largest index.
-  virtual int32 NumIndices() const { return static_cast<int32>(index_map_.size()) - 1; }
-  
+  virtual int32 NumIndices() const {
+    return static_cast<int32>(index_map_.size()) - 1;
+  }
+
   virtual bool IsLastFrame(int32 frame) const {
-    // We require all the decodables have the same #frames.  We don't check this though.
+    // We require all the decodables have the same #frames.  We don't check this
+    // though.
     return decodable_->IsLastFrame(frame);
-  }    
+  }
 
  private:
   std::vector<int32> index_map_;
   DecodableInterface *decodable_;
-  
+
   KALDI_DISALLOW_COPY_AND_ASSIGN(DecodableMapped);
 };
-
-
 
 }  // namespace kaldi
 
 #endif  // KALDI_DECODER_DECODABLE_MAPPED_H_
-

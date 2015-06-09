@@ -27,10 +27,9 @@
 #include "online/online-faster-decoder.h"
 #include "online/onlinebin-util.h"
 
-
 int main(int argc, char *argv[]) {
 #ifndef KALDI_NO_PORTAUDIO
-    try {
+  try {
     using namespace kaldi;
     using namespace fst;
 
@@ -40,7 +39,7 @@ int main(int argc, char *argv[]) {
     // Up to delta-delta derivative features are calculated (unless LDA is used)
     const int32 kDeltaOrder = 2;
     // Time out interval for the PortAudio source
-    const int32 kTimeout = 500; // half second
+    const int32 kTimeout = 500;  // half second
     // Input sampling frequency is fixed to 16KHz
     const int32 kSampleFreq = 16000;
     // PortAudio's internal ring buffer size in bytes
@@ -51,7 +50,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Decode speech, using microphone input(PortAudio)\n\n"
         "Utterance segmentation is done on-the-fly.\n"
-        "Feature splicing/LDA transform is used, if the optional(last) argument "
+        "Feature splicing/LDA transform is used, if the optional(last) "
+        "argument "
         "is given.\n"
         "Otherwise delta/delta-delta(2-nd order) features are produced.\n\n"
         "Usage: online-gmm-decode-faster [options] <model-in>"
@@ -70,12 +70,15 @@ int main(int argc, char *argv[]) {
     OnlineFeatureMatrixOptions feature_reading_opts;
     decoder_opts.Register(&po, true);
     feature_reading_opts.Register(&po);
-    
-    po.Register("left-context", &left_context, "Number of frames of left context");
-    po.Register("right-context", &right_context, "Number of frames of right context");
+
+    po.Register("left-context", &left_context,
+                "Number of frames of left context");
+    po.Register("right-context", &right_context,
+                "Number of frames of right context");
     po.Register("acoustic-scale", &acoustic_scale,
                 "Scaling factor for acoustic likelihoods");
-    po.Register("cmn-window", &cmn_window,
+    po.Register(
+        "cmn-window", &cmn_window,
         "Number of feat. vectors used in the running average CMN calculation");
     po.Register("min-cmn-window", &min_cmn_window,
                 "Minumum CMN window used at start of decoding (adds "
@@ -86,12 +89,11 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       return 1;
     }
-    
-    std::string model_rxfilename = po.GetArg(1),
-        fst_rxfilename = po.GetArg(2),
-        word_syms_filename = po.GetArg(3),
-        silence_phones_str = po.GetArg(4),
-        lda_mat_rspecifier = po.GetOptArg(5);
+
+    std::string model_rxfilename = po.GetArg(1), fst_rxfilename = po.GetArg(2),
+                word_syms_filename = po.GetArg(3),
+                silence_phones_str = po.GetArg(4),
+                lda_mat_rspecifier = po.GetOptArg(5);
 
     Matrix<BaseFloat> lda_transform;
     if (lda_mat_rspecifier != "") {
@@ -102,27 +104,27 @@ int main(int argc, char *argv[]) {
 
     std::vector<int32> silence_phones;
     if (!SplitStringToIntegers(silence_phones_str, ":", false, &silence_phones))
-        KALDI_ERR << "Invalid silence-phones string " << silence_phones_str;
-    if (silence_phones.empty())
-        KALDI_ERR << "No silence phones given!";
+      KALDI_ERR << "Invalid silence-phones string " << silence_phones_str;
+    if (silence_phones.empty()) KALDI_ERR << "No silence phones given!";
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
     {
-        bool binary;
-        Input ki(model_rxfilename, &binary);
-        trans_model.Read(ki.Stream(), binary);
-        am_gmm.Read(ki.Stream(), binary);
+      bool binary;
+      Input ki(model_rxfilename, &binary);
+      trans_model.Read(ki.Stream(), binary);
+      am_gmm.Read(ki.Stream(), binary);
     }
 
     fst::SymbolTable *word_syms = NULL;
     if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
-        KALDI_ERR << "Could not read symbol table from file "
-                    << word_syms_filename;
+      KALDI_ERR << "Could not read symbol table from file "
+                << word_syms_filename;
 
     fst::Fst<fst::StdArc> *decode_fst = ReadDecodeGraph(fst_rxfilename);
 
-    // We are not properly registering/exposing MFCC and frame extraction options,
+    // We are not properly registering/exposing MFCC and frame extraction
+    // options,
     // because there are parts of the online decoding code, where some of these
     // options are hardwired(ToDo: we should fix this at some point)
     MfccOptions mfcc_opts;
@@ -132,29 +134,26 @@ int main(int argc, char *argv[]) {
 
     int32 window_size = right_context + left_context + 1;
     decoder_opts.batch_size = std::max(decoder_opts.batch_size, window_size);
-    OnlineFasterDecoder decoder(*decode_fst, decoder_opts,
-                                silence_phones, trans_model);
+    OnlineFasterDecoder decoder(*decode_fst, decoder_opts, silence_phones,
+                                trans_model);
     VectorFst<LatticeArc> out_fst;
     OnlinePaSource au_src(kTimeout, kSampleFreq, kPaRingSize, kPaReportInt);
     Mfcc mfcc(mfcc_opts);
-    FeInput fe_input(&au_src, &mfcc,
-                     frame_length * (kSampleFreq / 1000),
+    FeInput fe_input(&au_src, &mfcc, frame_length * (kSampleFreq / 1000),
                      frame_shift * (kSampleFreq / 1000));
     OnlineCmnInput cmn_input(&fe_input, cmn_window, min_cmn_window);
     OnlineFeatInputItf *feat_transform = 0;
     if (lda_mat_rspecifier != "") {
-      feat_transform = new OnlineLdaInput(
-                               &cmn_input, lda_transform,
-                               left_context, right_context);
+      feat_transform = new OnlineLdaInput(&cmn_input, lda_transform,
+                                          left_context, right_context);
     } else {
       DeltaFeaturesOptions opts;
       opts.order = kDeltaOrder;
       feat_transform = new OnlineDeltaInput(opts, &cmn_input);
     }
-    
+
     // feature_reading_opts contains number of retries, batch size.
-    OnlineFeatureMatrix feature_matrix(feature_reading_opts,
-                                       feat_transform);
+    OnlineFeatureMatrix feature_matrix(feature_reading_opts, feat_transform);
 
     OnlineDecodableDiagGmmScaled decodable(am_gmm, trans_model, acoustic_scale,
                                            &feature_matrix);
@@ -164,28 +163,24 @@ int main(int argc, char *argv[]) {
       if (dstate & (decoder.kEndFeats | decoder.kEndUtt)) {
         std::vector<int32> word_ids;
         decoder.FinishTraceBack(&out_fst);
-        fst::GetLinearSymbolSequence(out_fst,
-                                     static_cast<vector<int32> *>(0),
+        fst::GetLinearSymbolSequence(out_fst, static_cast<vector<int32> *>(0),
                                      &word_ids,
-                                     static_cast<LatticeArc::Weight*>(0));
+                                     static_cast<LatticeArc::Weight *>(0));
         PrintPartialResult(word_ids, word_syms, partial_res || word_ids.size());
         partial_res = false;
         if (dstate == decoder.kEndFeats) {
-          if (au_src.TimedOut())
-            KALDI_WARN << "PortAudio time out detected!";
+          if (au_src.TimedOut()) KALDI_WARN << "PortAudio time out detected!";
           KALDI_LOG << "No more features available from PortAudio!";
           break;
         }
       } else {
         std::vector<int32> word_ids;
         if (decoder.PartialTraceback(&out_fst)) {
-          fst::GetLinearSymbolSequence(out_fst,
-                                       static_cast<vector<int32> *>(0),
+          fst::GetLinearSymbolSequence(out_fst, static_cast<vector<int32> *>(0),
                                        &word_ids,
-                                       static_cast<LatticeArc::Weight*>(0));
+                                       static_cast<LatticeArc::Weight *>(0));
           PrintPartialResult(word_ids, word_syms, false);
-          if (!partial_res)
-            partial_res = (word_ids.size() > 0);
+          if (!partial_res) partial_res = (word_ids.size() > 0);
         }
       }
     }
@@ -194,9 +189,9 @@ int main(int argc, char *argv[]) {
     if (word_syms) delete word_syms;
     if (decode_fst) delete decode_fst;
     return 0;
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 #endif
-} // main()
+}  // main()

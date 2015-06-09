@@ -23,7 +23,6 @@
 #include "nnet2/am-nnet.h"
 #include "nnet2/nnet-compute-discriminative-parallel.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -33,34 +32,37 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Train the neural network parameters with a discriminative objective\n"
-        "function (MMI, SMBR or MPFE).  This uses training examples prepared with\n"
+        "function (MMI, SMBR or MPFE).  This uses training examples prepared "
+        "with\n"
         "nnet-get-egs-discriminative\n"
         "This version uses multiple threads (but no GPU)"
         "\n"
-        "Usage:  nnet-train-discriminative-parallel [options] <model-in> <training-examples-in> <model-out>\n"
+        "Usage:  nnet-train-discriminative-parallel [options] <model-in> "
+        "<training-examples-in> <model-out>\n"
         "e.g.:\n"
-        "nnet-train-discriminative-parallel --num-threads=8 1.nnet ark:1.degs 2.nnet\n";
-    
+        "nnet-train-discriminative-parallel --num-threads=8 1.nnet ark:1.degs "
+        "2.nnet\n";
+
     bool binary_write = true;
     std::string use_gpu = "yes";
     int32 num_threads = 1;
     NnetDiscriminativeUpdateOptions update_opts;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("num-threads", &num_threads, "Number of threads to use");
     update_opts.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::string nnet_rxfilename = po.GetArg(1),
-        examples_rspecifier = po.GetArg(2),
-        nnet_wxfilename = po.GetArg(3);
+                examples_rspecifier = po.GetArg(2),
+                nnet_wxfilename = po.GetArg(3);
 
     TransitionModel trans_model;
     AmNnet am_nnet;
@@ -71,13 +73,12 @@ int main(int argc, char *argv[]) {
       am_nnet.Read(ki.Stream(), binary_read);
     }
 
-    
     NnetDiscriminativeStats stats;
     SequentialDiscriminativeNnetExampleReader example_reader(
         examples_rspecifier);
 
-    NnetDiscriminativeUpdateParallel(am_nnet, trans_model,
-                                     update_opts, num_threads, &example_reader,
+    NnetDiscriminativeUpdateParallel(am_nnet, trans_model, update_opts,
+                                     num_threads, &example_reader,
                                      &(am_nnet.GetNnet()), &stats);
     {
       Output ko(nnet_wxfilename, binary_write);
@@ -86,10 +87,8 @@ int main(int argc, char *argv[]) {
     }
 
     return (stats.tot_t == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

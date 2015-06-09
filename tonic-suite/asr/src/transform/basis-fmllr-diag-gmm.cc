@@ -34,24 +34,18 @@ using std::string;
 
 namespace kaldi {
 
-
 /// This function takes the step direction (delta) of fMLLR matrix as argument,
 /// and optimize step size using Newton's method. This is an iterative method,
 /// where each iteration should not decrease the auxiliary function. Note that
 /// the resulting step size \k should be close to 1. If \k <<1 or >>1, there
 /// maybe problems with preconditioning or the speaker stats.
 static BaseFloat CalBasisFmllrStepSize(
-    const AffineXformStats &spk_stats,
-    const Matrix<BaseFloat> &spk_stats_tmp_K,
+    const AffineXformStats &spk_stats, const Matrix<BaseFloat> &spk_stats_tmp_K,
     const std::vector<SpMatrix<BaseFloat> > &spk_stats_tmp_G,
-    const Matrix<BaseFloat> &delta,
-    const Matrix<BaseFloat> &A,
-    const Matrix<BaseFloat> &S,
-    int32 max_iters);
-
+    const Matrix<BaseFloat> &delta, const Matrix<BaseFloat> &A,
+    const Matrix<BaseFloat> &S, int32 max_iters);
 
 void BasisFmllrAccus::Write(std::ostream &os, bool binary) const {
-
   WriteToken(os, binary, "<BASISFMLLRACCUS>");
   WriteToken(os, binary, "<BETA>");
   WriteBasicType(os, binary, beta_);
@@ -63,8 +57,7 @@ void BasisFmllrAccus::Write(std::ostream &os, bool binary) const {
   WriteToken(os, binary, "</BASISFMLLRACCUS>");
 }
 
-void BasisFmllrAccus::Read(std::istream &is, bool binary,
-                           bool add) {
+void BasisFmllrAccus::Read(std::istream &is, bool binary, bool add) {
   ExpectToken(is, binary, "<BASISFMLLRACCUS>");
   ExpectToken(is, binary, "<BETA>");
   double tmp_beta = 0;
@@ -81,16 +74,14 @@ void BasisFmllrAccus::Read(std::istream &is, bool binary,
 
 void BasisFmllrAccus::ResizeAccus(int32 dim) {
   if (dim <= 0) {
-    KALDI_ERR << "Invalid feature dimension " << dim; // dim=0 is not allowed
+    KALDI_ERR << "Invalid feature dimension " << dim;  // dim=0 is not allowed
   } else {
     // 'kSetZero' may not be necessary, but makes computation safe
     grad_scatter_.Resize((dim + 1) * dim, kSetZero);
   }
 }
 
-void BasisFmllrAccus::AccuGradientScatter(
-                      const AffineXformStats &spk_stats) {
-
+void BasisFmllrAccus::AccuGradientScatter(const AffineXformStats &spk_stats) {
   // Gradient of auxf w.r.t. xform_spk
   // Eq. (33)
   Matrix<double> grad_mat(dim_, dim_ + 1);
@@ -98,11 +89,11 @@ void BasisFmllrAccus::AccuGradientScatter(
   grad_mat.Scale(spk_stats.beta_);
   grad_mat.AddMat(1.0, spk_stats.K_);
   for (int d = 0; d < dim_; ++d) {
-      Matrix<double> G_d_mat(spk_stats.G_[d]);
-       grad_mat.Row(d).AddVec(-1.0, G_d_mat.Row(d));
+    Matrix<double> G_d_mat(spk_stats.G_[d]);
+    grad_mat.Row(d).AddVec(-1.0, G_d_mat.Row(d));
   }
   // Row stack of gradient matrix
-  Vector<BaseFloat> grad_vec((dim_+1) * dim_);
+  Vector<BaseFloat> grad_vec((dim_ + 1) * dim_);
   grad_vec.CopyRowsFromMat(grad_mat);
   // The amount of data beta_ is likely to be ZERO, especially
   // when silence-weight is set to be 0 and we are using the
@@ -162,9 +153,8 @@ void BasisFmllrEstimate::ComputeAmDiagPrecond(const AmDiagGmm &am_gmm,
   int32 num_pdf = am_gmm.NumPdfs();
   Matrix<double> H_mat((dim_ + 1) * dim_, (dim_ + 1) * dim_);
   // expected values of fMLLR G statistics
-  vector< SpMatrix<double> > G_hat(dim_);
-  for (int32 d = 0; d < dim_; ++d)
-       G_hat[d].Resize(dim_ + 1, kSetZero);
+  vector<SpMatrix<double> > G_hat(dim_);
+  for (int32 d = 0; d < dim_; ++d) G_hat[d].Resize(dim_ + 1, kSetZero);
 
   // extend mean vectors with 1  [mule_jm 1]
   Vector<double> extend_mean(dim_ + 1);
@@ -176,7 +166,8 @@ void BasisFmllrEstimate::ComputeAmDiagPrecond(const AmDiagGmm &am_gmm,
     // means, covariance and mixture weights for this diagonal GMM
     Matrix<double> means(num_comp, dim_);
     Matrix<double> vars(num_comp, dim_);
-    diag_gmm.GetMeans(&means); diag_gmm.GetVars(&vars);
+    diag_gmm.GetMeans(&means);
+    diag_gmm.GetVars(&vars);
     Vector<BaseFloat> weights(diag_gmm.weights());
 
     for (int32 m = 0; m < num_comp; ++m) {
@@ -194,15 +185,15 @@ void BasisFmllrEstimate::ComputeAmDiagPrecond(const AmDiagGmm &am_gmm,
         // add vector to the diagonal elements of the matrix
         // not work for full covariance matrices
         G_hat[d].AddDiagVec(alpha, extend_var);
-      } // loop over dimension
-    } //  loop over Gaussians
-  }  // loop over states
+      }  // loop over dimension
+    }    //  loop over Gaussians
+  }      // loop over states
 
   // fill H_ with G_hat[i]; build the block diagonal structure
   // Eq. (31)
   for (int32 d = 0; d < dim_; d++) {
     H_mat.Range(d * (dim_ + 1), (dim_ + 1), d * (dim_ + 1), (dim_ + 1))
-              .CopyFromSp(G_hat[d]);
+        .CopyFromSp(G_hat[d]);
   }
 
   // add the extra H(1) elements
@@ -217,13 +208,12 @@ void BasisFmllrEstimate::ComputeAmDiagPrecond(const AmDiagGmm &am_gmm,
 }
 
 void BasisFmllrEstimate::EstimateFmllrBasis(
-                              const AmDiagGmm &am_gmm,
-                              const BasisFmllrAccus &basis_accus) {
+    const AmDiagGmm &am_gmm, const BasisFmllrAccus &basis_accus) {
   // Compute the preconditioner
   SpMatrix<double> precond_mat((dim_ + 1) * dim_);
   ComputeAmDiagPrecond(am_gmm, &precond_mat);
   // H = C C^T
-  TpMatrix<double> C((dim_+1) * dim_);
+  TpMatrix<double> C((dim_ + 1) * dim_);
   C.Cholesky(precond_mat);
   TpMatrix<double> C_inv(C);
   C_inv.InvertDouble();
@@ -260,18 +250,18 @@ void BasisFmllrEstimate::EstimateFmllrBasis(
   // in the training data, to get the per-frame values.
   Vector<double> Lvec_scaled(Lvec);
   Lvec_scaled.Scale(1.0 / (2 * basis_accus.beta_));
-  KALDI_LOG << "The [per-frame] eigenvalues sorted from largest to smallest: " << Lvec_scaled;
+  KALDI_LOG << "The [per-frame] eigenvalues sorted from largest to smallest: "
+            << Lvec_scaled;
   /// The sum of the [per-frame] eigenvalues is roughly equal to
   /// the improvement of log-likelihood of the training data.
   KALDI_LOG << "Sum of the [per-frame] eigenvalues, that is"
-          " the log-likelihood improvement, is " << Lvec_scaled.Sum();
+               " the log-likelihood improvement, is " << Lvec_scaled.Sum();
 }
 
-double BasisFmllrEstimate::ComputeTransform(
-    const AffineXformStats &spk_stats,
-    Matrix<BaseFloat> *out_xform,
-    Vector<BaseFloat> *coefficient,
-    BasisFmllrOptions options) const {
+double BasisFmllrEstimate::ComputeTransform(const AffineXformStats &spk_stats,
+                                            Matrix<BaseFloat> *out_xform,
+                                            Vector<BaseFloat> *coefficient,
+                                            BasisFmllrOptions options) const {
   if (coefficient == NULL) {
     Vector<BaseFloat> tmp;
     return ComputeTransform(spk_stats, out_xform, &tmp, options);
@@ -283,7 +273,7 @@ double BasisFmllrEstimate::ComputeTransform(
     coefficient->Resize(0);
     return 0.0;
   } else {
-    if (out_xform->NumRows() != dim_ || out_xform->NumCols() != (dim_ +1)) {
+    if (out_xform->NumRows() != dim_ || out_xform->NumCols() != (dim_ + 1)) {
       out_xform->Resize(dim_, dim_ + 1, kSetZero);
     }
     // Initialized either as [I;0] or as the current transform
@@ -304,8 +294,8 @@ double BasisFmllrEstimate::ComputeTransform(
 
     // Number of bases for this speaker, according to the available
     // adaptation data
-    int32 basis_size = int32 (std::min( double(basis_size_),
-                               options.size_scale * spk_stats.beta_));
+    int32 basis_size = int32(
+        std::min(double(basis_size_), options.size_scale * spk_stats.beta_));
 
     coefficient->Resize(basis_size, kSetZero);
 
@@ -319,7 +309,6 @@ double BasisFmllrEstimate::ComputeTransform(
       Matrix<BaseFloat> S(dim_, dim_ + 1);
       for (int32 d = 0; d < dim_; ++d)
         S.Row(d).AddSpVec(1.0, stats_tmp_G[d], W_mat.Row(d), 0.0);
-
 
       // W_mat = [A; b]
       Matrix<BaseFloat> A(dim_, dim_);
@@ -350,15 +339,16 @@ double BasisFmllrEstimate::ComputeTransform(
         delta_W.AddMat(delta_d(n), fmllr_basis_[n]);
       }
 
-      BaseFloat step_size = CalBasisFmllrStepSize(spk_stats, stats_tmp_K,
-        stats_tmp_G, delta_W, A, S, options.step_size_iters);
+      BaseFloat step_size =
+          CalBasisFmllrStepSize(spk_stats, stats_tmp_K, stats_tmp_G, delta_W, A,
+                                S, options.step_size_iters);
       W_mat.AddMat(step_size, delta_W, kNoTrans);
       coefficient->AddVec(step_size, delta_d);
       // Check auxiliary function
       BaseFloat end_obj = FmllrAuxFuncDiagGmm(W_mat, spk_stats);
 
-      KALDI_VLOG(4) << "Objective function (iter=" << iter << "): "
-                    << start_obj / spk_stats.beta_  << " -> "
+      KALDI_VLOG(4) << "Objective function (iter=" << iter
+                    << "): " << start_obj / spk_stats.beta_ << " -> "
                     << (end_obj / spk_stats.beta_) << " over "
                     << spk_stats.beta_ << " frames";
 
@@ -371,21 +361,18 @@ double BasisFmllrEstimate::ComputeTransform(
 }
 
 // static
-BaseFloat CalBasisFmllrStepSize(const AffineXformStats &spk_stats,
-  const Matrix<BaseFloat> &spk_stats_tmp_K,
-  const std::vector<SpMatrix<BaseFloat> > &spk_stats_tmp_G,
-  const Matrix<BaseFloat> &delta,
-  const Matrix<BaseFloat> &A,
-  const Matrix<BaseFloat> &S,
-  int32 max_iters) {
-
+BaseFloat CalBasisFmllrStepSize(
+    const AffineXformStats &spk_stats, const Matrix<BaseFloat> &spk_stats_tmp_K,
+    const std::vector<SpMatrix<BaseFloat> > &spk_stats_tmp_G,
+    const Matrix<BaseFloat> &delta, const Matrix<BaseFloat> &A,
+    const Matrix<BaseFloat> &S, int32 max_iters) {
   int32 dim = spk_stats.dim_;
   KALDI_ASSERT(dim == delta.NumRows() && dim == S.NumRows());
   // The first D columns of delta_W
   SubMatrix<BaseFloat> delta_Dim(delta, 0, dim, 0, dim);
   // Eq. (46): b = tr(delta K^T) - tr(delta S^T)
-  BaseFloat b = TraceMatMat(delta, spk_stats_tmp_K, kTrans)
-                 - TraceMatMat(delta, S, kTrans);
+  BaseFloat b = TraceMatMat(delta, spk_stats_tmp_K, kTrans) -
+                TraceMatMat(delta, S, kTrans);
   // Eq. (47): c = sum_d tr(delta_{d} G_{d} delta_{d})
   BaseFloat c = 0;
   Vector<BaseFloat> G_row_delta(dim + 1);
@@ -408,7 +395,8 @@ BaseFloat CalBasisFmllrStepSize(const AffineXformStats &spk_stats,
     }
 
     // Eq. (49): N = (A + k * delta_Dim)^{-1} delta_Dim
-    // In case of bad condition, careful preconditioning should be done. Maybe safer
+    // In case of bad condition, careful preconditioning should be done. Maybe
+    // safer
     // to use SolveQuadraticMatrixProblem. Future work for Yajie.
     Matrix<BaseFloat> tmp_A(A);
     tmp_A.AddMat(step_size, delta_Dim, kNoTrans);
@@ -432,28 +420,33 @@ BaseFloat CalBasisFmllrStepSize(const AffineXformStats &spk_stats,
     BaseFloat step_size_change = -(d1 / d2);
     step_size += step_size_change;
 
-    // Repeatedly check auxiliary function; halve step size change if auxf decreases.
+    // Repeatedly check auxiliary function; halve step size change if auxf
+    // decreases.
     // According to the paper, we should limit the number of repetitions. The
-    // following implementation seems to work well. But the termination condition/judgment
+    // following implementation seems to work well. But the termination
+    // condition/judgment
     // should be optimized later.
     do {
-      // Eq. (48): auxf = beta * logdet(A + k * delta_Dim) + kb - 0.5 * k * k * c
+      // Eq. (48): auxf = beta * logdet(A + k * delta_Dim) + kb - 0.5 * k * k *
+      // c
       tmp_A.CopyFromMat(A);
       tmp_A.AddMat(step_size, delta_Dim, kNoTrans);
       obj_new = spk_stats.beta_ * tmp_A.LogDet() + step_size * b -
-          0.5 * step_size * step_size * c;
+                0.5 * step_size * step_size * c;
 
-      if (obj_new - obj_old < -1.0e-04 * spk_stats.beta_) {  // deal with numerical issues
+      if (obj_new - obj_old <
+          -1.0e-04 * spk_stats.beta_) {  // deal with numerical issues
         KALDI_WARN << "Objective function decreased (" << obj_old << "->"
                    << obj_new << "). Halving step size change ( step size "
-                   << step_size << " -> " << (step_size - (step_size_change/2))
-                   << ")";
+                   << step_size << " -> "
+                   << (step_size - (step_size_change / 2)) << ")";
         step_size_change /= 2;
         step_size -= step_size_change;
       }
-    } while (obj_new - obj_old < -1.0e-04 * spk_stats.beta_ && step_size_change > 1e-05);
+    } while (obj_new - obj_old < -1.0e-04 * spk_stats.beta_ &&
+             step_size_change > 1e-05);
   }
   return step_size;
 }
 
-} // namespace kaldi
+}  // namespace kaldi

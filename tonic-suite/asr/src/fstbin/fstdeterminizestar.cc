@@ -17,46 +17,43 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/determinize-star.h"
 #include "fstext/fstext-utils.h"
 #ifndef _MSC_VER
-#include <signal.h> // Comment this line and the call to signal below if
+#include <signal.h>  // Comment this line and the call to signal below if
 // it causes compilation problems.  It is only to enable a debugging procedure
-// when determinization does not terminate.  
+// when determinization does not terminate.
 #endif
 
 /* some test  examples:
  ( echo "0 0 0 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
  ( echo "0 0 1 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
- ( echo "0 0 1 0"; echo "0 1 1 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
+ ( echo "0 0 1 0"; echo "0 1 1 0"; echo "0 0" ) | fstcompile |
+ fstdeterminizestar | fstprint
  # this last one fails [correctly]:
  ( echo "0 0 0 1"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
 
   cd ~/tmpdir
   while true; do
     fstrand > 1.fst
-    fstpredeterminize out.lst 1.fst | fstdeterminizestar | fstrmsymbols out.lst > 2.fst
+    fstpredeterminize out.lst 1.fst | fstdeterminizestar | fstrmsymbols out.lst
+ > 2.fst
     fstequivalent --random=true 1.fst 2.fst || echo "Test failed"
     echo -n "."
   done
 
  Test of debugging [with non-determinizable input]:
- ( echo " 0 0 1 0 1.0"; echo "0 1 1 0"; echo "1 1 1 0 0"; echo "0 2 2 0"; echo "2"; echo "1" ) | fstcompile | fstdeterminizestar
+ ( echo " 0 0 1 0 1.0"; echo "0 1 1 0"; echo "1 1 1 0 0"; echo "0 2 2 0"; echo
+ "2"; echo "1" ) | fstcompile | fstdeterminizestar
   kill -SIGUSR1 [the process-id of fstdeterminizestar]
   # prints out a bunch of debugging output showing the mess it got itself into.
 */
 
-
 bool debug_location = false;
-void signal_handler(int) {
-  debug_location = true;
-}
-
-
+void signal_handler(int) { debug_location = true; }
 
 int main(int argc, char *argv[]) {
   try {
@@ -76,8 +73,11 @@ int main(int argc, char *argv[]) {
     bool use_log = false;
     ParseOptions po(usage);
     po.Register("use-log", &use_log, "Determinize in log semiring.");
-    po.Register("delta", &delta, "Delta value used to determine equivalence of weights.");
-    po.Register("max-states", &max_states, "Maximum number of states in determinized FST before it will abort.");
+    po.Register("delta", &delta,
+                "Delta value used to determine equivalence of weights.");
+    po.Register(
+        "max-states", &max_states,
+        "Maximum number of states in determinized FST before it will abort.");
     po.Read(argc, argv);
 
     if (po.NumArgs() > 2) {
@@ -85,11 +85,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fst_in_str = po.GetOptArg(1),
-        fst_out_str = po.GetOptArg(2);
+    std::string fst_in_str = po.GetOptArg(1), fst_out_str = po.GetOptArg(2);
 
-    // This enables us to get traceback info from determinization that is
-    // not seeming to terminate.
+// This enables us to get traceback info from determinization that is
+// not seeming to terminate.
 #ifndef _MSC_VER
     signal(SIGUSR1, signal_handler);
 #endif
@@ -108,14 +107,14 @@ int main(int argc, char *argv[]) {
       }
       WriteFstKaldi(*fst, fst_out_str);
       delete fst;
-    } else { // Dealing with archives.
+    } else {  // Dealing with archives.
       SequentialTableReader<VectorFstHolder> fst_reader(fst_in_str);
       TableWriter<VectorFstHolder> fst_writer(fst_out_str);
       for (; !fst_reader.Done(); fst_reader.Next()) {
         std::string key = fst_reader.Key();
         VectorFst<StdArc> fst(fst_reader.Value());
         fst_reader.FreeCurrent();
-        ArcSort(&fst, ILabelCompare<StdArc>()); // improves speed.
+        ArcSort(&fst, ILabelCompare<StdArc>());  // improves speed.
         try {
           if (use_log) {
             DeterminizeStarInLog(&fst, delta, &debug_location, max_states);
@@ -132,9 +131,8 @@ int main(int argc, char *argv[]) {
       }
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

@@ -27,7 +27,6 @@ namespace kaldi {
 /// @ingroup Interfaces
 /// @{
 
-
 /**
     DecodableInterface provides a link between the (acoustic-modeling and
     feature-processing) code and the decoder.  The idea is to make this
@@ -42,23 +41,29 @@ namespace kaldi {
 
     For online decoding, where the features are coming in in real time, it is
     important to understand the IsLastFrame() and NumFramesReady() functions.
-    There are two ways these are used: the old online-decoding code, in ../online/,
-    and the new online-decoding code, in ../online2/.  In the old online-decoding
+    There are two ways these are used: the old online-decoding code, in
+   ../online/,
+    and the new online-decoding code, in ../online2/.  In the old
+   online-decoding
     code, the decoder would do:
     \code{.cc}
     for (int frame = 0; !decodable.IsLastFrame(frame); frame++) {
       // Process this frame
     }
     \endcode
-   and the the call to IsLastFrame would block if the features had not arrived yet.
+   and the the call to IsLastFrame would block if the features had not arrived
+   yet.
    The decodable object would have to know when to terminate the decoding.  This
-   online-decoding mode is still supported, it is what happens when you call, for
+   online-decoding mode is still supported, it is what happens when you call,
+   for
    example, LatticeFasterDecoder::Decode().
 
    We realized that this "blocking" mode of decoding is not very convenient
    because it forces the program to be multi-threaded and makes it complex to
-   control endpointing.  In the "new" decoding code, you don't call (for example)
-   LatticeFasterDecoder::Decode(), you call LatticeFasterDecoder::InitDecoding(),
+   control endpointing.  In the "new" decoding code, you don't call (for
+   example)
+   LatticeFasterDecoder::Decode(), you call
+   LatticeFasterDecoder::InitDecoding(),
    and then each time you get more features, you provide them to the decodable
    object, and you call LatticeFasterDecoder::AdvanceDecoding(), which does
    something like this:
@@ -68,11 +73,13 @@ namespace kaldi {
    }
    \endcode
    So the decodable object never has IsLastFrame() called.  For decoding where
-   you are starting with a matrix of features, the NumFramesReady() function will
+   you are starting with a matrix of features, the NumFramesReady() function
+   will
    always just return the number of frames in the file, and IsLastFrame() will
    return true for the last frame.
 
-   For truly online decoding, the "old" online decodable objects in ../online/ have a
+   For truly online decoding, the "old" online decodable objects in ../online/
+   have a
    "blocking" IsLastFrame() and will crash if you call NumFramesReady().
    The "new" online decodable objects in ../online2/ return the number of frames
    currently accessible if you call NumFramesReady().  You will likely not need
@@ -99,11 +106,15 @@ class DecodableInterface {
   /// decoding-from-matrix setting where we want to allow the last delta or LDA
   /// features to be flushed out for compatibility with the baseline setup.
   virtual bool IsLastFrame(int32 frame) const = 0;
-  
-  /// The call NumFramesReady() will return the number of frames currently available
-  /// for this decodable object.  This is for use in setups where you don't want the
-  /// decoder to block while waiting for input.  This is newly added as of Jan 2014,
-  /// and I hope, going forward, to rely on this mechanism more than IsLastFrame to
+
+  /// The call NumFramesReady() will return the number of frames currently
+  /// available
+  /// for this decodable object.  This is for use in setups where you don't want
+  /// the
+  /// decoder to block while waiting for input.  This is newly added as of Jan
+  /// 2014,
+  /// and I hope, going forward, to rely on this mechanism more than IsLastFrame
+  /// to
   /// know when to stop decoding.
   virtual int32 NumFramesReady() const {
     KALDI_ERR << "NumFramesReady() not implemented for this decodable type.";
@@ -114,7 +125,7 @@ class DecodableInterface {
   /// (they will be indexed one-based, i.e. from 1 to NumIndices();
   /// this is for compatibility with OpenFst.
   virtual int32 NumIndices() const = 0;
-  
+
   virtual ~DecodableInterface() {}
 };
 /// @}

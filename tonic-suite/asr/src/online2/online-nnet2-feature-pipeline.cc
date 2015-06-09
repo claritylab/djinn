@@ -52,12 +52,11 @@ OnlineNnet2FeaturePipelineInfo::OnlineNnet2FeaturePipelineInfo(
       KALDI_WARN << "--fbank-config option has no effect "
                  << "since feature type is set to " << feature_type << ".";
   }  // else use the defaults.
-  
+
   add_pitch = config.add_pitch;
-  
+
   if (config.online_pitch_config != "") {
-    ReadConfigsFromFile(config.online_pitch_config,
-                        &pitch_opts,
+    ReadConfigsFromFile(config.online_pitch_config, &pitch_opts,
                         &pitch_process_opts);
     if (!add_pitch)
       KALDI_WARN << "--online-pitch-config option has no effect "
@@ -76,8 +75,8 @@ OnlineNnet2FeaturePipelineInfo::OnlineNnet2FeaturePipelineInfo(
 }
 
 OnlineNnet2FeaturePipeline::OnlineNnet2FeaturePipeline(
-    const OnlineNnet2FeaturePipelineInfo &info):
-    info_(info) {
+    const OnlineNnet2FeaturePipelineInfo &info)
+    : info_(info) {
   if (info_.feature_type == "mfcc") {
     base_feature_ = new OnlineMfcc(info_.mfcc_opts);
   } else if (info_.feature_type == "plp") {
@@ -90,10 +89,9 @@ OnlineNnet2FeaturePipeline::OnlineNnet2FeaturePipeline(
 
   if (info_.add_pitch) {
     pitch_ = new OnlinePitchFeature(info_.pitch_opts);
-    pitch_feature_ = new OnlineProcessPitch(info_.pitch_process_opts,
-                                            pitch_);
-    feature_plus_optional_pitch_ = new OnlineAppendFeature(base_feature_,
-                                                           pitch_feature_);
+    pitch_feature_ = new OnlineProcessPitch(info_.pitch_process_opts, pitch_);
+    feature_plus_optional_pitch_ =
+        new OnlineAppendFeature(base_feature_, pitch_feature_);
   } else {
     pitch_ = NULL;
     pitch_feature_ = NULL;
@@ -101,10 +99,10 @@ OnlineNnet2FeaturePipeline::OnlineNnet2FeaturePipeline(
   }
 
   if (info_.use_ivectors) {
-    ivector_feature_ = new OnlineIvectorFeature(info_.ivector_extractor_info,
-                                                base_feature_);
-    final_feature_ = new OnlineAppendFeature(feature_plus_optional_pitch_,
-                                             ivector_feature_);
+    ivector_feature_ =
+        new OnlineIvectorFeature(info_.ivector_extractor_info, base_feature_);
+    final_feature_ =
+        new OnlineAppendFeature(feature_plus_optional_pitch_, ivector_feature_);
   } else {
     ivector_feature_ = NULL;
     final_feature_ = feature_plus_optional_pitch_;
@@ -143,14 +141,12 @@ void OnlineNnet2FeaturePipeline::GetAdaptationState(
   // else silently do nothing, as there is nothing to do.
 }
 
-
 OnlineNnet2FeaturePipeline::~OnlineNnet2FeaturePipeline() {
   // Note: the delete command only deletes pointers that are non-NULL.  Not all
   // of the pointers below will be non-NULL.
   // Some of the online-feature pointers are just copies of other pointers,
   // and we do have to avoid deleting them in those cases.
-  if (final_feature_ != feature_plus_optional_pitch_)
-    delete final_feature_;
+  if (final_feature_ != feature_plus_optional_pitch_) delete final_feature_;
   delete ivector_feature_;
   if (feature_plus_optional_pitch_ != base_feature_)
     delete feature_plus_optional_pitch_;
@@ -160,17 +156,14 @@ OnlineNnet2FeaturePipeline::~OnlineNnet2FeaturePipeline() {
 }
 
 void OnlineNnet2FeaturePipeline::AcceptWaveform(
-    BaseFloat sampling_rate,
-    const VectorBase<BaseFloat> &waveform) {
+    BaseFloat sampling_rate, const VectorBase<BaseFloat> &waveform) {
   base_feature_->AcceptWaveform(sampling_rate, waveform);
-  if (pitch_)
-    pitch_->AcceptWaveform(sampling_rate, waveform);
+  if (pitch_) pitch_->AcceptWaveform(sampling_rate, waveform);
 }
 
 void OnlineNnet2FeaturePipeline::InputFinished() {
   base_feature_->InputFinished();
-  if (pitch_)
-    pitch_->InputFinished();
+  if (pitch_) pitch_->InputFinished();
 }
 
 BaseFloat OnlineNnet2FeaturePipelineInfo::FrameShiftInSeconds() const {

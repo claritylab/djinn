@@ -34,15 +34,14 @@ namespace nnet2 {
   dividing by, the prior of each context-dependent state.
 */
 
-
 class AmNnet {
  public:
-  AmNnet() { }
+  AmNnet() {}
 
-  AmNnet(const AmNnet &other): nnet_(other.nnet_), priors_(other.priors_) { }
+  AmNnet(const AmNnet &other) : nnet_(other.nnet_), priors_(other.priors_) {}
 
-  explicit AmNnet(const Nnet &nnet): nnet_(nnet) { }
-  
+  explicit AmNnet(const Nnet &nnet) : nnet_(nnet) {}
+
   /// Initialize the neural network based acoustic model from a config file.
   /// At this point the priors won't be initialized; you'd have to do
   /// SetPriors for that.
@@ -53,30 +52,28 @@ class AmNnet {
   void Init(const Nnet &nnet);
 
   int32 NumPdfs() const { return nnet_.OutputDim(); }
-  
+
   void Write(std::ostream &os, bool binary) const;
-  
+
   void Read(std::istream &is, bool binary);
 
   const Nnet &GetNnet() const { return nnet_; }
-  
+
   Nnet &GetNnet() { return nnet_; }
 
   void SetPriors(const VectorBase<BaseFloat> &priors);
-  
+
   const VectorBase<BaseFloat> &Priors() const { return priors_; }
 
   std::string Info() const;
 
  private:
-  const AmNnet &operator = (const AmNnet &other); // Disallow.
+  const AmNnet &operator=(const AmNnet &other);  // Disallow.
   Nnet nnet_;
   Vector<BaseFloat> priors_;
 };
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_AM_NNET_H_
+#endif  // KALDI_NNET2_AM_NNET_H_

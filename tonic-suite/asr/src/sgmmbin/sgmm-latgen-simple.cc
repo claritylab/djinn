@@ -34,24 +34,17 @@ namespace kaldi {
 
 // the reference arguments at the beginning are not const as the style guide
 // requires, but are best viewed as inputs.
-bool ProcessUtterance(LatticeSimpleDecoder &decoder,
-                      const AmSgmm &am_sgmm,
-                      const TransitionModel &trans_model,
-                      const SgmmGselectConfig &sgmm_opts,
-                      double log_prune,
-                      double acoustic_scale,
-                      const Matrix<BaseFloat> &features,
-                      RandomAccessInt32VectorVectorReader &gselect_reader,
-                      RandomAccessBaseFloatVectorReaderMapped &spkvecs_reader,
-                      const fst::SymbolTable *word_syms,
-                      const std::string &utt,
-                      bool determinize,
-                      bool allow_partial,
-                      Int32VectorWriter *alignments_writer,
-                      Int32VectorWriter *words_writer,
-                      CompactLatticeWriter *compact_lattice_writer,
-                      LatticeWriter *lattice_writer,
-                      double *like_ptr) { // puts utterance's like in like_ptr on success.
+bool ProcessUtterance(
+    LatticeSimpleDecoder &decoder, const AmSgmm &am_sgmm,
+    const TransitionModel &trans_model, const SgmmGselectConfig &sgmm_opts,
+    double log_prune, double acoustic_scale, const Matrix<BaseFloat> &features,
+    RandomAccessInt32VectorVectorReader &gselect_reader,
+    RandomAccessBaseFloatVectorReaderMapped &spkvecs_reader,
+    const fst::SymbolTable *word_syms, const std::string &utt, bool determinize,
+    bool allow_partial, Int32VectorWriter *alignments_writer,
+    Int32VectorWriter *words_writer,
+    CompactLatticeWriter *compact_lattice_writer, LatticeWriter *lattice_writer,
+    double *like_ptr) {  // puts utterance's like in like_ptr on success.
   using fst::VectorFst;
 
   SgmmPerSpkDerivedVars spk_vars;
@@ -60,18 +53,20 @@ bool ProcessUtterance(LatticeSimpleDecoder &decoder,
       spk_vars.v_s = spkvecs_reader.Value(utt);
       am_sgmm.ComputePerSpkDerivedVars(&spk_vars);
     } else {
-      KALDI_WARN << "Cannot find speaker vector for " << utt << ", not decoding this utterance";
-      return false; // We could use zero, but probably the user would want to know about this
+      KALDI_WARN << "Cannot find speaker vector for " << utt
+                 << ", not decoding this utterance";
+      return false;  // We could use zero, but probably the user would want to
+                     // know about this
       // (this would normally be a script error or some kind of failure).
     }
   }
   bool has_gselect = false;
   if (gselect_reader.IsOpen()) {
-    has_gselect = gselect_reader.HasKey(utt)
-        && gselect_reader.Value(utt).size() == features.NumRows();
+    has_gselect = gselect_reader.HasKey(utt) &&
+                  gselect_reader.Value(utt).size() == features.NumRows();
     if (!has_gselect)
-      KALDI_WARN << "No Gaussian-selection info available for utterance "
-                 << utt << " (or wrong size)";
+      KALDI_WARN << "No Gaussian-selection info available for utterance " << utt
+                 << " (or wrong size)";
   }
   std::vector<std::vector<int32> > empty_gselect;
   const std::vector<std::vector<int32> > *gselect =
@@ -86,7 +81,7 @@ bool ProcessUtterance(LatticeSimpleDecoder &decoder,
       compact_lattice_writer, lattice_writer, like_ptr);
 }
 
-} //  end namespace kaldi
+}  //  end namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -99,7 +94,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Decode features using SGMM-based model.\n"
         "Usage:  sgmm-latgen-simple [options] <model-in> <fst-in> "
-        "<features-rspecifier> <lattices-wspecifier> [<words-wspecifier> [<alignments-wspecifier>] ]\n";
+        "<features-rspecifier> <lattices-wspecifier> [<words-wspecifier> "
+        "[<alignments-wspecifier>] ]\n";
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 0.1;
     bool allow_partial = false;
@@ -109,15 +105,15 @@ int main(int argc, char *argv[]) {
 
     LatticeSimpleDecoderConfig decoder_opts;
     SgmmGselectConfig sgmm_opts;
-    decoder_opts.Register(&po);    
+    decoder_opts.Register(&po);
     sgmm_opts.Register(&po);
 
     po.Register("acoustic-scale", &acoustic_scale,
-        "Scaling factor for acoustic likelihoods");
+                "Scaling factor for acoustic likelihoods");
     po.Register("log-prune", &log_prune,
-        "Pruning beam used to reduce number of exp() evaluations.");
+                "Pruning beam used to reduce number of exp() evaluations.");
     po.Register("word-symbol-table", &word_syms_filename,
-        "Symbol table for words [for debug output]");
+                "Symbol table for words [for debug output]");
     po.Register("allow-partial", &allow_partial,
                 "Produce output even when final state was not reached");
     po.Register("gselect", &gselect_rspecifier,
@@ -134,11 +130,11 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        fst_in_filename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        lattice_wspecifier = po.GetArg(4),
-        words_wspecifier = po.GetOptArg(5),
-        alignment_wspecifier = po.GetOptArg(6);
+                fst_in_filename = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                lattice_wspecifier = po.GetArg(4),
+                words_wspecifier = po.GetOptArg(5),
+                alignment_wspecifier = po.GetOptArg(6);
 
     TransitionModel trans_model;
     kaldi::AmSgmm am_sgmm;
@@ -152,26 +148,26 @@ int main(int argc, char *argv[]) {
     CompactLatticeWriter compact_lattice_writer;
     LatticeWriter lattice_writer;
     bool determinize = decoder_opts.determinize_lattice;
-    if (! (determinize ? compact_lattice_writer.Open(lattice_wspecifier)
-           : lattice_writer.Open(lattice_wspecifier)))
+    if (!(determinize ? compact_lattice_writer.Open(lattice_wspecifier)
+                      : lattice_writer.Open(lattice_wspecifier)))
       KALDI_ERR << "Could not open table for writing lattices: "
-                 << lattice_wspecifier;
-    
+                << lattice_wspecifier;
+
     Int32VectorWriter words_writer(words_wspecifier);
 
     Int32VectorWriter alignment_writer(alignment_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "") 
+    if (word_syms_filename != "")
       if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
         KALDI_ERR << "Could not read symbol table from file "
-                   << word_syms_filename;
+                  << word_syms_filename;
 
     RandomAccessInt32VectorVectorReader gselect_reader(gselect_rspecifier);
 
     RandomAccessBaseFloatVectorReaderMapped spkvecs_reader(spkvecs_rspecifier,
                                                            utt2spk_rspecifier);
-    
+
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
 
     // It's important that we initialize decode_fst after feature_reader, as it
@@ -185,7 +181,7 @@ int main(int argc, char *argv[]) {
     kaldi::int64 frame_count = 0;
     int num_success = 0, num_fail = 0;
     LatticeSimpleDecoder decoder(*decode_fst, decoder_opts);
-    
+
     Timer timer;
 
     for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -209,24 +205,24 @@ int main(int argc, char *argv[]) {
                   << (like / features.NumRows()) << " over "
                   << features.NumRows() << " frames.";
         num_success++;
-      } else num_fail++;
+      } else
+        num_fail++;
     }
     double elapsed = timer.Elapsed();
-    KALDI_LOG << "Time taken [excluding initialization] "<< elapsed
+    KALDI_LOG << "Time taken [excluding initialization] " << elapsed
               << "s: real-time factor assuming 100 frames/sec is "
-              << (elapsed*100.0/frame_count);
+              << (elapsed * 100.0 / frame_count);
     KALDI_LOG << "Done " << num_success << " utterances, failed for "
               << num_fail;
-    KALDI_LOG << "Overall log-likelihood per frame = " << (tot_like/frame_count)
-              << " over " << frame_count << " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame = "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
 
     if (word_syms) delete word_syms;
     delete decode_fst;
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

@@ -37,7 +37,7 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
                             const Posterior &post,
                             const TransitionModel &trans_model,
                             const AmSgmm2 &am_sgmm,
-                            const vector< vector<int32> > &gselect,
+                            const vector<vector<int32> > &gselect,
                             Sgmm2PerSpkDerivedVars *spk_vars,
                             MleSgmm2SpeakerAccs *spk_stats) {
   kaldi::Sgmm2PerFrameDerivedVars per_frame_vars;
@@ -46,9 +46,9 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   Posterior pdf_post;
   ConvertPosteriorToPdfs(trans_model, post, &pdf_post);
   for (size_t i = 0; i < post.size(); i++) {
-    am_sgmm.ComputePerFrameVars(feats.Row(i), gselect[i],
-                                *spk_vars, &per_frame_vars);
-    
+    am_sgmm.ComputePerFrameVars(feats.Row(i), gselect[i], *spk_vars,
+                                &per_frame_vars);
+
     for (size_t j = 0; j < pdf_post[i].size(); j++) {
       int32 pdf_id = pdf_post[i][j].first;
       spk_stats->Accumulate(am_sgmm, per_frame_vars, pdf_id,
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         "Usage: sgmm2-est-spkvecs [options] <model-in> <feature-rspecifier> "
         "<post-rspecifier> <vecs-wspecifier>\n"
         "note: --gselect option is required.";
-    
+
     ParseOptions po(usage);
     string gselect_rspecifier, spk2utt_rspecifier, spkvecs_rspecifier;
     BaseFloat min_count = 100;
@@ -79,24 +79,22 @@ int main(int argc, char *argv[]) {
     po.Register("gselect", &gselect_rspecifier,
                 "rspecifier for precomputed per-frame Gaussian indices from.");
     po.Register("spk2utt", &spk2utt_rspecifier,
-        "File to read speaker to utterance-list map from.");
+                "File to read speaker to utterance-list map from.");
     po.Register("spkvec-min-count", &min_count,
-        "Minimum count needed to estimate speaker vectors");
+                "Minimum count needed to estimate speaker vectors");
     po.Register("rand-prune", &rand_prune, "Pruning threshold for posteriors");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors to use during aligment (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors to use during aligment (rspecifier)");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
-    if (gselect_rspecifier == "")
-      KALDI_ERR << "--gselect option is mandatory.";
-    
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        vecs_wspecifier = po.GetArg(4);
+    if (gselect_rspecifier == "") KALDI_ERR << "--gselect option is mandatory.";
+
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), vecs_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm2 am_sgmm;
@@ -135,7 +133,7 @@ int main(int argc, char *argv[]) {
           } else {
             KALDI_WARN << "Cannot find speaker vector for speaker " << spk
                        << ", not processing this speaker.";
-            num_err++; // standard Kaldi behavior is to not process data
+            num_err++;  // standard Kaldi behavior is to not process data
             // when errors like this happen, as it's generally a script error;
             continue;
           }
@@ -169,9 +167,9 @@ int main(int argc, char *argv[]) {
           }
           const std::vector<std::vector<int32> > &gselect =
               gselect_reader.Value(utt);
-          
-          AccumulateForUtterance(feats, post, trans_model, am_sgmm,
-                                 gselect, &spk_vars, &spk_stats);
+
+          AccumulateForUtterance(feats, post, trans_model, am_sgmm, gselect,
+                                 &spk_vars, &spk_stats);
           num_done++;
         }  // end looping over all utterances of the current speaker
 
@@ -183,20 +181,21 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(am_sgmm, min_count, &spk_vec, &impr, &spk_tot_t);
           vecs_writer.Write(spk, spk_vec);
         }
-        KALDI_LOG << "For speaker " << spk << ", auxf-impr from speaker vector is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+        KALDI_LOG << "For speaker " << spk
+                  << ", auxf-impr from speaker vector is " << (impr / spk_tot_t)
+                  << ", over " << spk_tot_t << " frames.";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
-        string utt = feature_reader.Key();        
+        string utt = feature_reader.Key();
         const Matrix<BaseFloat> &feats = feature_reader.Value();
         if (!post_reader.HasKey(utt) ||
             post_reader.Value(utt).size() != feats.NumRows()) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt << " (or wrong size).";
+          KALDI_WARN << "Did not find posts for utterance " << utt
+                     << " (or wrong size).";
           num_err++;
           continue;
         }
@@ -214,7 +213,7 @@ int main(int argc, char *argv[]) {
             continue;
           }
         }  // else spk_vars is "empty"
-        
+
         num_done++;
 
         if (!gselect_reader.HasKey(utt) ||
@@ -228,9 +227,9 @@ int main(int argc, char *argv[]) {
             gselect_reader.Value(utt);
 
         spk_stats.Clear();
-        
-        AccumulateForUtterance(feats, post, trans_model, am_sgmm,
-                               gselect, &spk_vars, &spk_stats);
+
+        AccumulateForUtterance(feats, post, trans_model, am_sgmm, gselect,
+                               &spk_vars, &spk_stats);
 
         BaseFloat impr, utt_tot_t;
         {  // Compute the spk_vec and write it out.
@@ -240,20 +239,21 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(am_sgmm, min_count, &spk_vec, &impr, &utt_tot_t);
           vecs_writer.Write(utt, spk_vec);
         }
-        KALDI_LOG << "For utterance " << utt << ", auxf-impr from speaker vectors is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+        KALDI_LOG << "For utterance " << utt
+                  << ", auxf-impr from speaker vectors is "
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_impr += impr;
         tot_t += utt_tot_t;
       }
     }
 
-    KALDI_LOG << "Overall auxf impr per frame is "
-              << (tot_impr / tot_t) << " over " << tot_t << " frames.";
-    KALDI_LOG << "Done " << num_done << " files, " << num_err << " with errors.";
+    KALDI_LOG << "Overall auxf impr per frame is " << (tot_impr / tot_t)
+              << " over " << tot_t << " frames.";
+    KALDI_LOG << "Done " << num_done << " files, " << num_err
+              << " with errors.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

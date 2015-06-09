@@ -26,8 +26,7 @@
 
 namespace kaldi {
 
-static void
-RandFullCova(Matrix<BaseFloat> *matrix) {
+static void RandFullCova(Matrix<BaseFloat> *matrix) {
   size_t dim = matrix->NumCols();
   KALDI_ASSERT(matrix->NumCols() == matrix->NumRows());
 
@@ -50,25 +49,17 @@ RandFullCova(Matrix<BaseFloat> *matrix) {
   matrix->CopyFromSp(tmp2);
 }
 
-
 /// Generate features for a certain covariance type
 /// covariance_type == 0: full covariance
 /// covariance_type == 1: diagonal covariance
 
-enum cova_type {
-  full,
-  diag
-};
+enum cova_type { full, diag };
 
-static void
-generate_features(cova_type covariance_type,
-                  size_t n_gaussians,
-                  size_t dim,
-                  Matrix<BaseFloat> &trans_mat,
-                  size_t frames_per_gaussian,
-                  std::vector<Vector<BaseFloat>*> & train_feats,
-                  std::vector<Vector<BaseFloat>*> & adapt_feats
-                  ) {
+static void generate_features(cova_type covariance_type, size_t n_gaussians,
+                              size_t dim, Matrix<BaseFloat> &trans_mat,
+                              size_t frames_per_gaussian,
+                              std::vector<Vector<BaseFloat> *> &train_feats,
+                              std::vector<Vector<BaseFloat> *> &adapt_feats) {
   // compute inverse of the transformation matrix
   Matrix<BaseFloat> inv_trans_mat(dim, dim);
   inv_trans_mat.CopyFromMat(trans_mat, kNoTrans);
@@ -83,8 +74,8 @@ generate_features(cova_type covariance_type,
   Matrix<BaseFloat> actual_means(dim, n_gaussians);
 
   // actual_means = inv_trans_mat * untransformed_means
-  actual_means.AddMatMat(1.0, inv_trans_mat, kNoTrans,
-                         untransformed_means, kNoTrans, 0.0);
+  actual_means.AddMatMat(1.0, inv_trans_mat, kNoTrans, untransformed_means,
+                         kNoTrans, 0.0);
 
   size_t train_counter = 0;
 
@@ -98,7 +89,7 @@ generate_features(cova_type covariance_type,
       // random diagonal covariance for gaussian j
       Sj.SetZero();
       for (size_t d = 0; d < dim; d++) {
-        Sj(d, d) = 2*exp(RandGauss());
+        Sj(d, d) = 2 * exp(RandGauss());
       }
     }
     if (covariance_type == full) {
@@ -127,8 +118,7 @@ generate_features(cova_type covariance_type,
       for (size_t d = 0; d < dim; d++) {
         randomvec(d) = RandGauss();
       }
-      train_feats[train_counter]->AddMatVec(1.0, Sj, kNoTrans,
-                                            randomvec, 1.0);
+      train_feats[train_counter]->AddMatVec(1.0, Sj, kNoTrans, randomvec, 1.0);
       adapt_feats[train_counter]->AddMatVec(1.0, tmp_matrix, kNoTrans,
                                             randomvec, 1.0);
       train_counter++;
@@ -158,23 +148,18 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
   std::cout << "Condition of original Trans_Mat: " << trans_mat.Cond() << '\n';
 
   // generate many feature vectors for each of the mixture components
-  std::vector<Vector<BaseFloat>*>
-      train_feats(n_gaussians * frames_per_gaussian);
-  std::vector<Vector<BaseFloat>*>
-      adapt_feats(n_gaussians * frames_per_gaussian);
+  std::vector<Vector<BaseFloat> *> train_feats(n_gaussians *
+                                               frames_per_gaussian);
+  std::vector<Vector<BaseFloat> *> adapt_feats(n_gaussians *
+                                               frames_per_gaussian);
 
-  generate_features(feature_type,
-                    n_gaussians,
-                    dim,
-                    trans_mat,
-                    frames_per_gaussian,
-                    train_feats,
-                    adapt_feats);
+  generate_features(feature_type, n_gaussians, dim, trans_mat,
+                    frames_per_gaussian, train_feats, adapt_feats);
 
   // initial values for a GMM
   Vector<BaseFloat> weights(1);
   Matrix<BaseFloat> means(1, dim), vars(1, dim), invvars(1, dim);
-  for (size_t d= 0; d < dim; d++) {
+  for (size_t d = 0; d < dim; d++) {
     means(0, d) = 0.0F;
     vars(0, d) = 1.0F;
   }
@@ -210,12 +195,11 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
     MleAmDiagGmmUpdate(opts, *est_am, flags, am, NULL, NULL);
 
     std::cout << "Loglikelihood before iteration " << iteration << " : "
-              << std::scientific << loglike << " number of components: "
-              << am->NumGaussInPdf(0) << '\n';
+              << std::scientific << loglike
+              << " number of components: " << am->NumGaussInPdf(0) << '\n';
 
-    if ((iteration % 3 == 1) &&
-        (am->NumGaussInPdf(0) * 2 <= maxcomponents)) {
-      size_t n = am->NumGaussInPdf(0)*2;
+    if ((iteration % 3 == 1) && (am->NumGaussInPdf(0) * 2 <= maxcomponents)) {
+      size_t n = am->NumGaussInPdf(0) * 2;
       am->SplitPdf(0, n, 0.001);
     }
     iteration++;
@@ -223,22 +207,22 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
 
   // adapt HMM to the transformed feature vectors
   iteration = 0;
-  RegtreeFmllrDiagGmmAccs * fmllr_accs = new RegtreeFmllrDiagGmmAccs();
+  RegtreeFmllrDiagGmmAccs *fmllr_accs = new RegtreeFmllrDiagGmmAccs();
   RegressionTree regtree;
 
   RegtreeFmllrOptions xform_opts;
   xform_opts.min_count = 100 * (1 + Rand() % 10);
-  xform_opts.use_regtree = (RandUniform() < 0.5)? false : true;
+  xform_opts.use_regtree = (RandUniform() < 0.5) ? false : true;
 
   size_t num_pdfs = 1;
   Vector<BaseFloat> occs(num_pdfs);
   for (int32 i = 0; i < static_cast<int32>(num_pdfs); i++) {
-    occs(i) = 1.0/static_cast<BaseFloat>(num_pdfs);
+    occs(i) = 1.0 / static_cast<BaseFloat>(num_pdfs);
   }
   std::vector<int32> silphones;
   regtree.BuildTree(occs, silphones, *am, max_bclass);
   maxiterations = 10;
-  std::vector<Vector<BaseFloat>*> logdet(adapt_feats.size());
+  std::vector<Vector<BaseFloat> *> logdet(adapt_feats.size());
   for (size_t j = 0; j < adapt_feats.size(); j++) {
     logdet[j] = new Vector<BaseFloat>(1);
     logdet[j]->operator()(0) = 0.0;
@@ -249,7 +233,8 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
     RegtreeFmllrDiagGmm *new_fmllr = new RegtreeFmllrDiagGmm();
     loglike = 0;
     for (size_t j = 0; j < adapt_feats.size(); j++) {
-      loglike += fmllr_accs->AccumulateForGmm(regtree, *am, *adapt_feats[j], 0, 1.0);
+      loglike +=
+          fmllr_accs->AccumulateForGmm(regtree, *am, *adapt_feats[j], 0, 1.0);
       loglike += logdet[j]->operator()(0);
     }
     std::cout << "FMLLR: Loglikelihood before iteration " << iteration << " : "
@@ -257,7 +242,7 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
 
     fmllr_accs->Update(regtree, xform_opts, new_fmllr, NULL, NULL);
     std::cout << "Got " << new_fmllr->NumBaseClasses() << " baseclasses\n";
-    bool binary = (RandUniform() < 0.5)? true : false;
+    bool binary = (RandUniform() < 0.5) ? true : false;
     std::cout << "Writing the transform to disk.\n";
     new_fmllr->Write(Output("tmpf", binary).Stream(), binary);
     RegtreeFmllrDiagGmm *fmllr_read = new RegtreeFmllrDiagGmm();
@@ -270,7 +255,7 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
     // transform features
     std::vector<Vector<BaseFloat> > trans_feats(1);
     Vector<BaseFloat> trans_logdet;
-//    new_fmllr->ComputeLogDets();
+    //    new_fmllr->ComputeLogDets();
     trans_logdet.Resize(fmllr_read->NumRegClasses());
     fmllr_read->GetLogDets(&trans_logdet);
     for (size_t j = 0; j < adapt_feats.size(); j++) {
@@ -281,18 +266,18 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
     iteration++;
     delete new_fmllr;
     delete fmllr_read;
-    
+
     unlink("tmpf");
   }
 
-//  // transform features with empty transform
-//  std::vector<Vector<BaseFloat> > trans_feats(1);
-//  RegtreeFmllrDiagGmm *empty_fmllr = new RegtreeFmllrDiagGmm();
-//  empty_fmllr->Init(0, 0);
-//  for (size_t j = 0; j < adapt_feats.size(); j++) {
-//    empty_fmllr->TransformFeature(*adapt_feats[j], &trans_feats);
-//  }
-//  delete empty_fmllr;
+  //  // transform features with empty transform
+  //  std::vector<Vector<BaseFloat> > trans_feats(1);
+  //  RegtreeFmllrDiagGmm *empty_fmllr = new RegtreeFmllrDiagGmm();
+  //  empty_fmllr->Init(0, 0);
+  //  for (size_t j = 0; j < adapt_feats.size(); j++) {
+  //    empty_fmllr->TransformFeature(*adapt_feats[j], &trans_feats);
+  //  }
+  //  delete empty_fmllr;
 
   // clean up
   delete fmllr_accs;
@@ -306,15 +291,14 @@ void UnitTestRegtreeFmllrDiagGmm(cova_type feature_type, size_t max_bclass) {
 }  // namespace kaldi ends here
 
 int main() {
-  for (int i = 0; i <= 8; i+=2) {  // test is too slow so can't do too many
+  for (int i = 0; i <= 8; i += 2) {  // test is too slow so can't do too many
     std::cout << "--------------------------------------" << '\n';
     std::cout << "Test number " << i << '\n';
     std::cout << "--\nfeatures = full\n";
-    kaldi::UnitTestRegtreeFmllrDiagGmm(kaldi::full, (i%10+1));
+    kaldi::UnitTestRegtreeFmllrDiagGmm(kaldi::full, (i % 10 + 1));
     std::cout << "--\nfeatures = diag\n";
-    kaldi::UnitTestRegtreeFmllrDiagGmm(kaldi::diag, (i%10+1));
+    kaldi::UnitTestRegtreeFmllrDiagGmm(kaldi::diag, (i % 10 + 1));
     std::cout << "--------------------------------------" << '\n';
   }
   std::cout << "Test OK.\n";
 }
-

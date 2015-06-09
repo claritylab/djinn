@@ -37,36 +37,38 @@ int main(int argc, char *argv[]) {
         "without an associated acoustic model.\n"
         "See example scripts to see how this works in practice.\n"
         "\n"
-        "Usage:  nnet-am-init [options] <tree-in> <topology-in> <raw-nnet-in> <nnet-am-out>\n"
-        "or:  nnet-am-init [options] <transition-model-in> <raw-nnet-in> <nnet-am-out>\n"
+        "Usage:  nnet-am-init [options] <tree-in> <topology-in> <raw-nnet-in> "
+        "<nnet-am-out>\n"
+        "or:  nnet-am-init [options] <transition-model-in> <raw-nnet-in> "
+        "<nnet-am-out>\n"
         "e.g.:\n"
         " nnet-am-init tree topo \"nnet-init nnet.config - |\" 1.mdl\n";
-        
+
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3 && po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string raw_nnet_rxfilename, nnet_wxfilename;
-    
+
     TransitionModel *trans_model = NULL;
 
     if (po.NumArgs() == 4) {
       std::string tree_rxfilename = po.GetArg(1),
-          topo_rxfilename = po.GetArg(2);
+                  topo_rxfilename = po.GetArg(2);
       raw_nnet_rxfilename = po.GetArg(3);
       nnet_wxfilename = po.GetArg(4);
-    
+
       ContextDependency ctx_dep;
       ReadKaldiObject(tree_rxfilename, &ctx_dep);
-    
+
       HmmTopology topo;
       ReadKaldiObject(topo_rxfilename, &topo);
 
@@ -79,8 +81,8 @@ int main(int argc, char *argv[]) {
       trans_model = new TransitionModel();
       ReadKaldiObject(trans_model_rxfilename, trans_model);
     }
-    
-    AmNnet am_nnet;    
+
+    AmNnet am_nnet;
     {
       Nnet nnet;
       bool binary;
@@ -88,7 +90,7 @@ int main(int argc, char *argv[]) {
       nnet.Read(ki.Stream(), binary);
       am_nnet.Init(nnet);
     }
-    
+
     if (am_nnet.NumPdfs() != trans_model->NumPdfs())
       KALDI_ERR << "Mismatch in number of pdfs, neural net has "
                 << am_nnet.NumPdfs() << ", transition model has "
@@ -102,10 +104,8 @@ int main(int argc, char *argv[]) {
     delete trans_model;
     KALDI_LOG << "Initialized neural net and wrote it to " << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

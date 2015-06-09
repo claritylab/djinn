@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/transition-model.h"
@@ -26,15 +25,17 @@
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
-    typedef kaldi::int32 int32;  
+    typedef kaldi::int32 int32;
 
     const char *usage =
         "Convert posteriors to phone-level posteriors\n"
         "See also: post-to-pdf-post, post-to-weights, get-post-on-ali\n"
         "\n"
-        "Usage: post-to-phone-post [options] <model> <post-rspecifier> <phone-post-wspecifier>\n"
-        " e.g.: post-to-phone-post --binary=false 1.mdl \"ark:ali-to-post 1.ali|\" ark,t:-\n";
-    
+        "Usage: post-to-phone-post [options] <model> <post-rspecifier> "
+        "<phone-post-wspecifier>\n"
+        " e.g.: post-to-phone-post --binary=false 1.mdl \"ark:ali-to-post "
+        "1.ali|\" ark,t:-\n";
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -43,22 +44,21 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-      
-    std::string model_rxfilename = po.GetArg(1),
-        post_rspecifier = po.GetArg(2),
-        phone_post_wspecifier = po.GetArg(3);
+
+    std::string model_rxfilename = po.GetArg(1), post_rspecifier = po.GetArg(2),
+                phone_post_wspecifier = po.GetArg(3);
 
     kaldi::SequentialPosteriorReader posterior_reader(post_rspecifier);
     kaldi::PosteriorWriter posterior_writer(phone_post_wspecifier);
 
-    TransitionModel trans_model;    
+    TransitionModel trans_model;
     {
       bool binary_in;
       Input ki(model_rxfilename, &binary_in);
       trans_model.Read(ki.Stream(), binary_in);
     }
-    int32 num_done = 0;      
-    
+    int32 num_done = 0;
+
     for (; !posterior_reader.Done(); posterior_reader.Next()) {
       const kaldi::Posterior &posterior = posterior_reader.Value();
       kaldi::Posterior phone_posterior;
@@ -69,9 +69,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done converting posteriors to phone posteriors for "
               << num_done << " utterances.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

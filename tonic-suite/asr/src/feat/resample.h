@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_FEAT_RESAMPLE_H_
 #define KALDI_FEAT_RESAMPLE_H_
 
@@ -26,7 +25,6 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
-
 
 #include "matrix/matrix-lib.h"
 #include "util/common-utils.h"
@@ -38,7 +36,7 @@ namespace kaldi {
 
 /**
    \file[resample.h]
-   
+
    This header contains declarations of classes for resampling signals.  The
    normal cases of resampling a signal are upsampling and downsampling
    (increasing and decreasing the sample rate of a signal, respectively),
@@ -49,7 +47,7 @@ namespace kaldi {
    The input signal is always evenly spaced, say sampled with frequency S, and
    we assume the original signal was band-limited to S/2 or lower.  The n'th
    input sample x_n (with n = 0, 1, ...) is interpreted as the original
-   signal's value at time n/S.  
+   signal's value at time n/S.
 
    For resampling, it is convenient to view the input signal as a
    continuous function x(t) of t, where each sample x_n becomes a delta function
@@ -62,38 +60,43 @@ namespace kaldi {
    Anyway, suppose we want to bandlimit to C, with 0 < C < C/2.  The perfect
    rectangular filter with cutoff C is the sinc function,
    \f[         f(t) = 2C sinc(2Ct),                   \f]
-   where sinc is the normalized sinc function \f$ sinc(t) = sin(pi t) / (pi t) \f$, with
+   where sinc is the normalized sinc function \f$ sinc(t) = sin(pi t) / (pi t)
+  \f$, with
   \f$  sinc(0) = 1 \f$.  This is not a practical filter, though, because it has
    infinite support.  At the cost of less-than-perfect rolloff, we can choose
    a suitable windowing function g(t), and use f(t) g(t) as the filter.  For
    a windowing function we choose raised-cosine (Hanning) window with support
    on [-w/2C, w/2C], where w >= 2 is an integer chosen by the user.  w = 1
-   means we window the sinc function out to its first zero on the left and right,
-   w = 2 means the second zero, and so on; we normally choose w to be at least two.
+   means we window the sinc function out to its first zero on the left and
+  right,
+   w = 2 means the second zero, and so on; we normally choose w to be at least
+  two.
    We call this num_zeros, not w, in the code.
-   
-   Convolving the signal x(t) with this windowed filter h(t) = f(t)g(t) and evaluating the resulting
+
+   Convolving the signal x(t) with this windowed filter h(t) = f(t)g(t) and
+  evaluating the resulting
    signal s(t) at an arbitrary time t is easy: we have
     \f[          s(t) = 1/S \sum_n x_n h(t - n/S)        \f].
-   (note: the sign of t - n/S might be wrong, but it doesn't matter as the filter
+   (note: the sign of t - n/S might be wrong, but it doesn't matter as the
+  filter
    and window are symmetric).
-   This is true for arbitrary values of t.  What the class ArbitraryResample does
-   is to allow you to evaluate the signal for specified values of t.  
+   This is true for arbitrary values of t.  What the class ArbitraryResample
+  does
+   is to allow you to evaluate the signal for specified values of t.
 */
-
 
 /**
    Class ArbitraryResample allows you to resample a signal (assumed zero outside
    the sample region, not periodic) at arbitrary specified time values, which
    don't have to be linearly spaced.  The low-pass filter cutoff
    "filter_cutoff_hz" should be less than half the sample rate;
-   "num_zeros" should probably be at least two preferably more; higher numbers give
-   sharper filters but will be less efficient. 
+   "num_zeros" should probably be at least two preferably more; higher numbers
+   give
+   sharper filters but will be less efficient.
 */
 class ArbitraryResample {
  public:
-  ArbitraryResample(int32 num_samples_in,
-                    BaseFloat samp_rate_hz,
+  ArbitraryResample(int32 num_samples_in, BaseFloat samp_rate_hz,
                     BaseFloat filter_cutoff_hz,
                     const Vector<BaseFloat> &sample_points_secs,
                     int32 num_zeros);
@@ -113,7 +116,8 @@ class ArbitraryResample {
   /// This version of the Resample function processes just
   /// one vector.
   void Resample(const VectorBase<BaseFloat> &input,
-                VectorBase<BaseFloat> *output) const;  
+                VectorBase<BaseFloat> *output) const;
+
  private:
   void SetIndexes(const Vector<BaseFloat> &sample_points);
 
@@ -130,7 +134,6 @@ class ArbitraryResample {
                                     // over, for this output-sample index.
   std::vector<Vector<BaseFloat> > weights_;
 };
-
 
 /**
    LinearResample is a special case of ArbitraryResample, where we want to
@@ -150,10 +153,8 @@ class LinearResample {
   /// than samp_rate_in_hz/2 and less than samp_rate_out_hz/2.  num_zeros
   /// controls the sharpness of the filter, more == sharper but less efficient.
   /// We suggest around 4 to 10 for normal use.
-  LinearResample(int32 samp_rate_in_hz,
-                 int32 samp_rate_out_hz,
-                 BaseFloat filter_cutoff_hz,
-                 int32 num_zeros);
+  LinearResample(int32 samp_rate_in_hz, int32 samp_rate_out_hz,
+                 BaseFloat filter_cutoff_hz, int32 num_zeros);
 
   /// This function does the resampling.  If you call it with flush == true and
   /// you have never called it with flush == false, it just resamples the input
@@ -171,8 +172,7 @@ class LinearResample {
   /// the input signal it can process it correctly.
   /// If your most recent call to the object was with flush == false, it will
   /// have internal state; you can remove this by calling Reset().
-  void Resample(const VectorBase<BaseFloat> &input,
-                bool flush,
+  void Resample(const VectorBase<BaseFloat> &input, bool flush,
                 Vector<BaseFloat> *output);
 
   /// Calling the function Reset() resets the state of the object prior to
@@ -182,6 +182,7 @@ class LinearResample {
   /// Resample(x, y, true) for the last piece.  Call it unnecessarily between
   /// signals will not do any harm.
   void Reset();
+
  private:
   /// This function outputs the number of output samples we will output
   /// for a signal with "input_num_samp" input samples.  If flush == true,
@@ -193,13 +194,11 @@ class LinearResample {
   /// [ 0, input_num_samp/samp_rate_in_ - window_width ).
   int64 GetNumOutputSamples(int64 input_num_samp, bool flush) const;
 
-
   /// Given an output-sample index, this function outputs to *first_samp_in the
   /// first input-sample index that we have a weight on (may be negative),
   /// and to *samp_out_wrapped the index into weights_ where we can get the
   /// corresponding weights on the input.
-  inline void GetIndexes(int64 samp_out,
-                         int64 *first_samp_in,
+  inline void GetIndexes(int64 samp_out, int64 *first_samp_in,
                          int32 *samp_out_wrapped) const;
 
   void SetRemainder(const VectorBase<BaseFloat> &input);
@@ -223,7 +222,6 @@ class LinearResample {
                                   ///< samp_rate_out_hz / Gcd(samp_rate_in_hz,
                                   ///< samp_rate_out_hz)
 
-
   /// The first input-sample index that we sum over, for this output-sample
   /// index.  May be negative; any truncation at the beginning is handled
   /// separately.  This is just for the first few output samples, but we can
@@ -236,16 +234,14 @@ class LinearResample {
   // the following variables keep track of where we are in a particular signal,
   // if it is being provided over multiple calls to Resample().
 
-  int64 input_sample_offset_;  ///< The number of input samples we have
-                               ///< already received for this signal
-                               ///< (including anything in remainder_)
+  int64 input_sample_offset_;   ///< The number of input samples we have
+                                ///< already received for this signal
+                                ///< (including anything in remainder_)
   int64 output_sample_offset_;  ///< The number of samples we have already
                                 ///< output for this signal.
   Vector<BaseFloat> input_remainder_;  ///< A small trailing part of the
                                        ///< previously seen input signal.
 };
-
-
 
 /// @} End of "addtogroup feat"
 }  // namespace kaldi

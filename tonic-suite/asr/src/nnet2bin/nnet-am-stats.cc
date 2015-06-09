@@ -32,27 +32,28 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Print some statistics about the average derivatives of the sigmoid layers\n"
+        "Print some statistics about the average derivatives of the sigmoid "
+        "layers\n"
         "of the neural net, that are stored in the net\n"
         "\n"
         "Usage:  nnet-am-stats [options] <nnet-in>\n"
         "e.g.:\n"
         " nnet-am-stats 1.mdl 1_fixed.mdl\n";
-    
+
     NnetStatsConfig config;
-    
+
     ParseOptions po(usage);
     config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 1) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string nnet_rxfilename = po.GetArg(1);
-    
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -68,10 +69,9 @@ int main(int argc, char *argv[]) {
       KALDI_WARN << "No stats obtained (possibly nnet has wrong topology,"
                  << "expect affine followed by (nonlinear but not softmax)";
     }
-    for (size_t i = 0; i < stats.size(); i++)
-      stats[i].PrintStats(std::cout);
+    for (size_t i = 0; i < stats.size(); i++) stats[i].PrintStats(std::cout);
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

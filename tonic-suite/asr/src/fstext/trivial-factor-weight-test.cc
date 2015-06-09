@@ -24,51 +24,54 @@
 #include "fstext/fst-test-utils.h"
 // Just check that it compiles, for now.
 
-namespace fst
-{
+namespace fst {
 
 // Don't instantiate with log semiring, as RandEquivalent may fail.
-template<class Arc>  void TestFactor() {
+template <class Arc>
+void TestFactor() {
   typedef typename Arc::Label Label;
   typedef typename Arc::StateId StateId;
   typedef typename Arc::Weight Weight;
 
   VectorFst<Arc> *fst = new VectorFst<Arc>();
-  int n_syms = 2 + kaldi::Rand() % 5, n_states = 3 + kaldi::Rand() % 10, n_arcs = 5 + kaldi::Rand() % 30, n_final = 1 + kaldi::Rand()%3;  // Up to 2 unique symbols.
-  cout << "Testing pre-determinize with "<<n_syms<<" symbols, "<<n_states<<" states and "<<n_arcs<<" arcs and "<<n_final<<" final states.\n";
+  int n_syms = 2 + kaldi::Rand() % 5, n_states = 3 + kaldi::Rand() % 10,
+      n_arcs = 5 + kaldi::Rand() % 30,
+      n_final = 1 + kaldi::Rand() % 3;  // Up to 2 unique symbols.
+  cout << "Testing pre-determinize with " << n_syms << " symbols, " << n_states
+       << " states and " << n_arcs << " arcs and " << n_final
+       << " final states.\n";
   SymbolTable *sptr = NULL;
 
   vector<Label> all_syms;  // including epsilon.
   // Put symbols in the symbol table from 1..n_syms-1.
-  for (size_t i = 0;i < (size_t)n_syms;i++)
-    all_syms.push_back(i);
+  for (size_t i = 0; i < (size_t)n_syms; i++) all_syms.push_back(i);
 
   // Create states.
   vector<StateId> all_states;
-  for (size_t i = 0;i < (size_t)n_states;i++) {
+  for (size_t i = 0; i < (size_t)n_states; i++) {
     StateId this_state = fst->AddState();
     if (i == 0) fst->SetStart(i);
     all_states.push_back(this_state);
   }
   // Set final states.
-  for (size_t j = 0;j < (size_t)n_final;j++) {
+  for (size_t j = 0; j < (size_t)n_final; j++) {
     StateId id = all_states[kaldi::Rand() % n_states];
-    Weight weight = (Weight)(0.33*(kaldi::Rand() % 5) );
+    Weight weight = (Weight)(0.33 * (kaldi::Rand() % 5));
     printf("calling SetFinal with %d and %f\n", id, weight.Value());
     fst->SetFinal(id, weight);
   }
   // Create arcs.
-  for (size_t i = 0;i < (size_t)n_arcs;i++) {
+  for (size_t i = 0; i < (size_t)n_arcs; i++) {
     Arc a;
     a.nextstate = all_states[kaldi::Rand() % n_states];
     a.ilabel = all_syms[kaldi::Rand() % n_syms];
     a.olabel = all_syms[kaldi::Rand() % n_syms];  // same input+output vocab.
-    a.weight = (Weight) (0.33*(kaldi::Rand() % 2));
+    a.weight = (Weight)(0.33 * (kaldi::Rand() % 2));
     StateId start_state = all_states[kaldi::Rand() % n_states];
     fst->AddArc(start_state, a);
   }
 
-  std::cout <<" printing before trimming\n";
+  std::cout << " printing before trimming\n";
   {
     FstPrinter<Arc> fstprinter(*fst, sptr, sptr, NULL, false, true);
     fstprinter.Print(&std::cout, "standard output");
@@ -76,7 +79,7 @@ template<class Arc>  void TestFactor() {
   // Trim resulting FST.
   Connect(fst);
 
-  std::cout <<" printing after trimming\n";
+  std::cout << " printing after trimming\n";
   {
     FstPrinter<Arc> fstprinter(*fst, sptr, sptr, NULL, false, true);
     fstprinter.Print(&std::cout, "standard output");
@@ -87,35 +90,34 @@ template<class Arc>  void TestFactor() {
     PreDeterminize(fst, 1000, &extra_syms);
   }
 
-  std::cout <<" printing after predeterminization\n";
+  std::cout << " printing after predeterminization\n";
   {
     FstPrinter<Arc> fstprinter(*fst, sptr, sptr, NULL, false, true);
     fstprinter.Print(&std::cout, "standard output");
   }
 
-
   {  // Remove epsilon.  All default args.
     bool connect = true;
     Weight weight_threshold = Weight::Zero();
-    int64 nstate = -1;  // Relates to pruning.
-    double delta = kDelta;  // I think a small weight value.  Relates to some kind of pruning,
+    int64 nstate = -1;      // Relates to pruning.
+    double delta = kDelta;  // I think a small weight value.  Relates to some
+                            // kind of pruning,
     // I guess.  But with no epsilon cycles, probably doensn't matter.
-    RmEpsilon(fst, connect,  weight_threshold, nstate, delta);
+    RmEpsilon(fst, connect, weight_threshold, nstate, delta);
   }
 
-  std::cout <<" printing after double-epsilon removal\n";
+  std::cout << " printing after double-epsilon removal\n";
   {
     FstPrinter<Arc> fstprinter(*fst, sptr, sptr, NULL, false, true);
     fstprinter.Print(&std::cout, "standard output");
   }
   VectorFst<Arc> ofst_star;
-  
+
   {
     printf("Converting to Gallic semiring");
     VectorFst<GallicArc<Arc> > gallic_fst;
     VectorFst<GallicArc<Arc> > gallic_fst_noeps;
     VectorFst<GallicArc<Arc> > gallic_fst_det;
-
 
     {
       printf("Determinizing with DeterminizeStar, converting to Gallic\n");
@@ -123,44 +125,47 @@ template<class Arc>  void TestFactor() {
     }
 
     {
-      std::cout <<" printing gallic FST\n";
-      FstPrinter<GallicArc<Arc> >  fstprinter(gallic_fst, sptr, sptr, NULL, false, true);
+      std::cout << " printing gallic FST\n";
+      FstPrinter<GallicArc<Arc> > fstprinter(gallic_fst, sptr, sptr, NULL,
+                                             false, true);
       fstprinter.Print(&std::cout, "standard output");
     }
 
-
     // Map(ofst_star, &gallic_fst, ToGallicMapper<Arc, STRING_LEFT>());
-    
+
     printf("Converting gallic back to regular\n");
-    TrivialFactorWeightFst< GallicArc<Arc, STRING_LEFT>, GallicFactor<typename Arc::Label,
-        typename Arc::Weight, STRING_LEFT> > fwfst(gallic_fst);
+    TrivialFactorWeightFst<
+        GallicArc<Arc, STRING_LEFT>,
+        GallicFactor<typename Arc::Label, typename Arc::Weight, STRING_LEFT> >
+        fwfst(gallic_fst);
     {
-      std::cout <<" printing factor-weight FST\n";
-      FstPrinter<GallicArc<Arc> >  fstprinter(fwfst, sptr, sptr, NULL, false, true);
+      std::cout << " printing factor-weight FST\n";
+      FstPrinter<GallicArc<Arc> > fstprinter(fwfst, sptr, sptr, NULL, false,
+                                             true);
       fstprinter.Print(&std::cout, "standard output");
     }
 
     Map(fwfst, &ofst_star, FromGallicMapper<Arc, STRING_LEFT>());
-    
+
     {
-      std::cout <<" printing after converting back to regular FST\n";
+      std::cout << " printing after converting back to regular FST\n";
       FstPrinter<Arc> fstprinter(ofst_star, sptr, sptr, NULL, false, true);
       fstprinter.Print(&std::cout, "standard output");
     }
 
-
     VectorFst<GallicArc<Arc> > new_gallic_fst;
     Map(ofst_star, &new_gallic_fst, ToGallicMapper<Arc, STRING_LEFT>());
 
-    assert(RandEquivalent(gallic_fst, new_gallic_fst, 5/*paths*/, 0.01/*delta*/, kaldi::Rand()/*seed*/, 100/*path length-- max?*/));
-
+    assert(RandEquivalent(gallic_fst, new_gallic_fst, 5 /*paths*/,
+                          0.01 /*delta*/, kaldi::Rand() /*seed*/,
+                          100 /*path length-- max?*/));
   }
 
   delete fst;
 }
 
-
-template<class Arc, class inttype> void TestStringRepository() {
+template <class Arc, class inttype>
+void TestStringRepository() {
   typedef typename Arc::Label Label;
 
   StringRepository<Label, inttype> sr;
@@ -170,18 +175,24 @@ template<class Arc, class inttype> void TestStringRepository() {
   vector<vector<Label> > strings(N);
   vector<inttype> ids(N);
 
-  for (size_t i = 0;i < N;i++) {
+  for (size_t i = 0; i < N; i++) {
     size_t len = kaldi::Rand() % 4;
     vector<Label> vec;
-    for (size_t j = 0;j < len;j++) vec.push_back( (kaldi::Rand()%10) + 150*(kaldi::Rand()%2));  // make it have reasonable range.
-    if (i < 500 && vec.size() == 0) ids[i] = sr.IdOfEmpty();
-    else if (i < 500 && vec.size() == 1) ids[i] = sr.IdOfLabel(vec[0]);
-    else ids[i] = sr.IdOfSeq(vec);
+    for (size_t j = 0; j < len; j++)
+      vec.push_back((kaldi::Rand() % 10) +
+                    150 *
+                        (kaldi::Rand() % 2));  // make it have reasonable range.
+    if (i < 500 && vec.size() == 0)
+      ids[i] = sr.IdOfEmpty();
+    else if (i < 500 && vec.size() == 1)
+      ids[i] = sr.IdOfLabel(vec[0]);
+    else
+      ids[i] = sr.IdOfSeq(vec);
 
     strings[i] = vec;
   }
 
-  for (size_t i = 0;i < N;i++) {
+  for (size_t i = 0; i < N; i++) {
     vector<Label> tmpv;
     tmpv.push_back(10);  // just put in garbage.
     sr.SeqOfId(ids[i], &tmpv);
@@ -195,20 +206,17 @@ template<class Arc, class inttype> void TestStringRepository() {
       inttype s2 = sr.RemovePrefix(ids[i], prefix_len);
       vector<Label> vec2;
       sr.SeqOfId(s2, &vec2);
-      for (size_t j = 0;j < strings[i].size()-prefix_len;j++) {
-        assert(vec2[j] == strings[i][j+prefix_len]);
+      for (size_t j = 0; j < strings[i].size() - prefix_len; j++) {
+        assert(vec2[j] == strings[i][j + prefix_len]);
       }
     }
-
   }
 }
 
-} // end namespace fst
+}  // end namespace fst
 
 int main() {
-  for (int i = 0;i < 25;i++) {
+  for (int i = 0; i < 25; i++) {
     fst::TestFactor<fst::StdArc>();
   }
 }
-
-

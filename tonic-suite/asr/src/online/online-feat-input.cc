@@ -25,7 +25,6 @@
 
 namespace kaldi {
 
-
 // This is a wrapper for ComputeInternal.  It behaves exactly the
 // same as ComputeInternal, except that at the start of the file,
 // ComputeInternal may return empty output multiple times in a row.
@@ -33,17 +32,15 @@ namespace kaldi {
 // may otherwise confuse decoder code into thinking there is
 // a problem with the stream (too many timeouts), and cause it to fail.
 bool OnlineCmnInput::Compute(Matrix<BaseFloat> *output) {
-  
   int32 orig_nr = output->NumRows(), orig_nc = output->NumCols();
   int32 initial_t_in = t_in_;
   bool ans;
   while ((ans = ComputeInternal(output))) {
-    if (output->NumRows() == 0 &&
-        t_in_ != initial_t_in) {
+    if (output->NumRows() == 0 && t_in_ != initial_t_in) {
       // we produced no output but added to our internal buffer.
       // Call ComputeInternal again.
       initial_t_in = t_in_;
-      output->Resize(orig_nr, orig_nc); // make the same request.
+      output->Resize(orig_nr, orig_nc);  // make the same request.
     } else {
       return ans;
     }
@@ -52,7 +49,6 @@ bool OnlineCmnInput::Compute(Matrix<BaseFloat> *output) {
   // ans = false.  If ComputeInternal returned false,
   // it means we are done, so no point calling it again.
 }
-
 
 int32 OnlineCmnInput::NumOutputFrames(int32 num_new_frames,
                                       bool more_data) const {
@@ -65,29 +61,27 @@ int32 OnlineCmnInput::NumOutputFrames(int32 num_new_frames,
     // If this takes us to "min_window_" frames, we'll output all we have.
     return num_new_frames + t_in_ - t_out_;
   } else {
-    return 0; // We'll wait till we have at least "min_window_" frames.
+    return 0;  // We'll wait till we have at least "min_window_" frames.
   }
 }
 
-
 // What happens at the start of the utterance is not really ideal, it would be
-// better to have some "fake stats" extracted from typical data from this domain,
+// better to have some "fake stats" extracted from typical data from this
+// domain,
 // to start with.  We'll have to do this later.
 bool OnlineCmnInput::ComputeInternal(Matrix<BaseFloat> *output) {
   KALDI_ASSERT(output->NumRows() > 0 && output->NumCols() == Dim());
 
   Matrix<BaseFloat> input;
   input.Swap(output);
-  
+
   bool more_data = input_->Compute(&input);
 
   int32 num_input_frames = input.NumRows();
-  
-  int32 output_frames = NumOutputFrames(num_input_frames,
-                                        more_data);
-  output->Resize(output_frames,
-                 output_frames == 0 ? 0 : Dim());
-  
+
+  int32 output_frames = NumOutputFrames(num_input_frames, more_data);
+  output->Resize(output_frames, output_frames == 0 ? 0 : Dim());
+
   int32 output_counter = 0;
   for (int32 i = 0; i < num_input_frames; i++) {
     AcceptFrame(input.Row(i));
@@ -114,66 +108,63 @@ void OnlineCmnInput::AcceptFrame(const VectorBase<BaseFloat> &input) {
 
 // Output the frame indexed "t_out_".
 void OnlineCmnInput::OutputFrame(VectorBase<BaseFloat> *output) {
-  KALDI_ASSERT(t_out_ < t_in_); // or there is nothing to output.
+  KALDI_ASSERT(t_out_ < t_in_);  // or there is nothing to output.
   // First set "sum_".
-  if (t_out_ == 0) { // This is the first request for an output frame,
+  if (t_out_ == 0) {  // This is the first request for an output frame,
     // so in general we need to set sum_ to the sum of the first "min_window_"
     // frames.  We will have less than min_window_ frames if the input finished
     // before then (if the input were not finished, we'd not have reached this
     // code).
     int32 num_frames = t_in_ < min_window_ ? t_in_ : min_window_;
-    for (int32 i = 0; i < num_frames; i++)
-      sum_.AddVec(1.0, history_.Row(i));
+    for (int32 i = 0; i < num_frames; i++) sum_.AddVec(1.0, history_.Row(i));
   }
   int32 num_history_frames;
-  if (t_out_ >= cmn_window_) num_history_frames = cmn_window_;
+  if (t_out_ >= cmn_window_)
+    num_history_frames = cmn_window_;
   else if (t_out_ < min_window_)
     num_history_frames = (t_in_ < min_window_ ? t_in_ : min_window_);
   else
     num_history_frames = t_out_;
-  
+
   SubVector<BaseFloat> input_frame(history_, t_out_ % (cmn_window_ + 1));
   output->CopyFromVec(input_frame);
-  output->AddVec(-1.0 / num_history_frames, sum_); // Apply CMN to the output.
-  
+  output->AddVec(-1.0 / num_history_frames, sum_);  // Apply CMN to the output.
+
   // Update sum.
-  if (t_out_ >= min_window_)
-    sum_.AddVec(1.0, input_frame);
-  if (t_out_ >= cmn_window_) { // Remove the frame from "cmn_window_" frames ago.
+  if (t_out_ >= min_window_) sum_.AddVec(1.0, input_frame);
+  if (t_out_ >=
+      cmn_window_) {  // Remove the frame from "cmn_window_" frames ago.
     sum_.AddVec(-1.0, history_.Row((t_out_ - cmn_window_) % (cmn_window_ + 1)));
-    KALDI_ASSERT(t_in_ == t_out_ + 1); // or else the frame indexed t_out_ -
-                                       // cmn_window_ would not be the right one.
+    KALDI_ASSERT(t_in_ == t_out_ + 1);  // or else the frame indexed t_out_ -
+    // cmn_window_ would not be the right one.
   }
   t_out_++;
 }
 
 #if !defined(_MSC_VER)
 
-OnlineUdpInput::OnlineUdpInput(int32 port, int32 feature_dim):
-    feature_dim_(feature_dim) {
-  server_addr_.sin_family = AF_INET; // IPv4
-  server_addr_.sin_addr.s_addr = INADDR_ANY; // listen on all interfaces
+OnlineUdpInput::OnlineUdpInput(int32 port, int32 feature_dim)
+    : feature_dim_(feature_dim) {
+  server_addr_.sin_family = AF_INET;          // IPv4
+  server_addr_.sin_addr.s_addr = INADDR_ANY;  // listen on all interfaces
   server_addr_.sin_port = htons(port);
   sock_desc_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sock_desc_ == -1)
-    KALDI_ERR << "socket() call failed!";
+  if (sock_desc_ == -1) KALDI_ERR << "socket() call failed!";
   int32 rcvbuf_size = 30000;
-  if (setsockopt(sock_desc_, SOL_SOCKET, SO_RCVBUF,
-                 &rcvbuf_size, sizeof(rcvbuf_size)) == -1)
-      KALDI_ERR << "setsockopt() failed to set receive buffer size!";
-  if (bind(sock_desc_,
-           reinterpret_cast<sockaddr*>(&server_addr_),
+  if (setsockopt(sock_desc_, SOL_SOCKET, SO_RCVBUF, &rcvbuf_size,
+                 sizeof(rcvbuf_size)) == -1)
+    KALDI_ERR << "setsockopt() failed to set receive buffer size!";
+  if (bind(sock_desc_, reinterpret_cast<sockaddr *>(&server_addr_),
            sizeof(server_addr_)) == -1)
     KALDI_ERR << "bind() call failed!";
 }
 
-
 bool OnlineUdpInput::Compute(Matrix<BaseFloat> *output) {
   char buf[65535];
   socklen_t caddr_len = sizeof(client_addr_);
-  ssize_t nrecv = recvfrom(sock_desc_, buf, sizeof(buf), 0,
-                           reinterpret_cast<sockaddr*>(&client_addr_),
-                           &caddr_len);
+  ssize_t nrecv =
+      recvfrom(sock_desc_, buf, sizeof(buf), 0,
+               reinterpret_cast<sockaddr *>(&client_addr_), &caddr_len);
   if (nrecv == -1) {
     KALDI_WARN << "recvfrom() call error!";
     output->Resize(0, 0);
@@ -187,22 +178,21 @@ bool OnlineUdpInput::Compute(Matrix<BaseFloat> *output) {
 
 #endif
 
-
 OnlineLdaInput::OnlineLdaInput(OnlineFeatInputItf *input,
                                const Matrix<BaseFloat> &transform,
-                               int32 left_context,
-                               int32 right_context):
-    input_(input), input_dim_(input->Dim()),
-    left_context_(left_context), right_context_(right_context) {
-
+                               int32 left_context, int32 right_context)
+    : input_(input),
+      input_dim_(input->Dim()),
+      left_context_(left_context),
+      right_context_(right_context) {
   int32 tot_context = left_context + 1 + right_context;
   if (transform.NumCols() == input_dim_ * tot_context) {
     linear_transform_ = transform;
     // and offset_ stays empty.
   } else if (transform.NumCols() == input_dim_ * tot_context + 1) {
     linear_transform_.Resize(transform.NumRows(), transform.NumCols() - 1);
-    linear_transform_.CopyFromMat(transform.Range(0, transform.NumRows(),
-                                           0, transform.NumCols() - 1));
+    linear_transform_.CopyFromMat(
+        transform.Range(0, transform.NumRows(), 0, transform.NumCols() - 1));
     offset_.Resize(transform.NumRows());
     offset_.CopyColFromMat(transform, transform.NumCols() - 1);
   } else {
@@ -218,12 +208,13 @@ void OnlineLdaInput::SpliceFrames(const MatrixBase<BaseFloat> &input1,
                                   Matrix<BaseFloat> *output) {
   KALDI_ASSERT(context_window > 0);
   const int32 size1 = input1.NumRows(), size2 = input2.NumRows(),
-      size3 = input3.NumRows();
+              size3 = input3.NumRows();
   int32 num_frames_in = size1 + size2 + size3,
-      num_frames_out = num_frames_in - (context_window - 1),
-      dim = std::max(input1.NumCols(), std::max(input2.NumCols(), input3.NumCols()));
+        num_frames_out = num_frames_in - (context_window - 1),
+        dim = std::max(input1.NumCols(),
+                       std::max(input2.NumCols(), input3.NumCols()));
   // do std::max in case one or more of the input matrices is empty.
-  
+
   if (num_frames_out <= 0) {
     output->Resize(0, 0);
     return;
@@ -243,16 +234,15 @@ void OnlineLdaInput::SpliceFrames(const MatrixBase<BaseFloat> &input1,
   }
 }
 
-void OnlineLdaInput::TransformToOutput(const MatrixBase<BaseFloat> &spliced_feats,
-                                       Matrix<BaseFloat> *output) {
+void OnlineLdaInput::TransformToOutput(
+    const MatrixBase<BaseFloat> &spliced_feats, Matrix<BaseFloat> *output) {
   if (spliced_feats.NumRows() == 0) {
     output->Resize(0, 0);
   } else {
     output->Resize(spliced_feats.NumRows(), linear_transform_.NumRows());
-    output->AddMatMat(1.0, spliced_feats, kNoTrans,
-                      linear_transform_, kTrans, 0.0);
-    if (offset_.Dim() != 0)
-      output->AddVecToRows(1.0, offset_);
+    output->AddMatMat(1.0, spliced_feats, kNoTrans, linear_transform_, kTrans,
+                      0.0);
+    if (offset_.Dim() != 0) output->AddVecToRows(1.0, offset_);
   }
 }
 
@@ -299,22 +289,22 @@ bool OnlineLdaInput::Compute(Matrix<BaseFloat> *output) {
         tail.Row(i).CopyFromVec(remainder_.Row(remainder_.NumRows() - 1));
     }
   }
-  
+
   Matrix<BaseFloat> spliced_feats;
   int32 context_window = left_context_ + 1 + right_context_;
   // The next line is a call to a member function.
   SpliceFrames(remainder_, input, tail, context_window, &spliced_feats);
   TransformToOutput(spliced_feats, output);
   ComputeNextRemainder(input);
-  return ans; 
+  return ans;
 }
 
 void OnlineLdaInput::ComputeNextRemainder(const MatrixBase<BaseFloat> &input) {
   // The size of the remainder that we propagate to the next frame is
   // context_window - 1, if available.
   int32 context_window = left_context_ + 1 + right_context_;
-  int32 next_remainder_len = std::min(context_window - 1,
-                                      remainder_.NumRows() + input.NumRows());
+  int32 next_remainder_len =
+      std::min(context_window - 1, remainder_.NumRows() + input.NumRows());
   if (next_remainder_len == 0) {
     remainder_.Resize(0, 0);
     return;
@@ -326,17 +316,17 @@ void OnlineLdaInput::ComputeNextRemainder(const MatrixBase<BaseFloat> &input) {
     int32 t = (rsize + isize) - next_remainder_len + i;
     // Here, t is an offset into a numbering of the frames where we first have
     // the old "remainder" frames, then the regular frames.
-    if (t < rsize) dest.CopyFromVec(remainder_.Row(t));
-    else dest.CopyFromVec(input.Row(t - rsize));
+    if (t < rsize)
+      dest.CopyFromVec(remainder_.Row(t));
+    else
+      dest.CopyFromVec(input.Row(t - rsize));
   }
   remainder_ = next_remainder;
 }
 
-
 bool OnlineCacheInput::Compute(Matrix<BaseFloat> *output) {
   bool ans = input_->Compute(output);
-  if (output->NumRows() != 0)
-    data_.push_back(new Matrix<BaseFloat>(*output));
+  if (output->NumRows() != 0) data_.push_back(new Matrix<BaseFloat>(*output));
   return ans;
 }
 
@@ -361,11 +351,9 @@ void OnlineCacheInput::Deallocate() {
   data_.clear();
 }
 
-
 OnlineDeltaInput::OnlineDeltaInput(const DeltaFeaturesOptions &delta_opts,
-                                   OnlineFeatInputItf *input):
-    input_(input), opts_(delta_opts), input_dim_(input_->Dim()) { }
-
+                                   OnlineFeatInputItf *input)
+    : input_(input), opts_(delta_opts), input_dim_(input_->Dim()) {}
 
 // static
 void OnlineDeltaInput::AppendFrames(const MatrixBase<BaseFloat> &input1,
@@ -373,20 +361,18 @@ void OnlineDeltaInput::AppendFrames(const MatrixBase<BaseFloat> &input1,
                                     const MatrixBase<BaseFloat> &input3,
                                     Matrix<BaseFloat> *output) {
   const int32 size1 = input1.NumRows(), size2 = input2.NumRows(),
-      size3 = input3.NumRows(), size_out = size1 + size2 + size3;
+              size3 = input3.NumRows(), size_out = size1 + size2 + size3;
   if (size_out == 0) {
     output->Resize(0, 0);
     return;
   }
-  // do std::max in case one or more of the input matrices is empty.  
-  int32 dim = std::max(input1.NumCols(),
-                       std::max(input2.NumCols(), input3.NumCols()));
+  // do std::max in case one or more of the input matrices is empty.
+  int32 dim =
+      std::max(input1.NumCols(), std::max(input2.NumCols(), input3.NumCols()));
 
   output->Resize(size_out, dim);
-  if (size1 != 0)
-    output->Range(0, size1, 0, dim).CopyFromMat(input1);
-  if (size2 != 0)
-    output->Range(size1, size2, 0, dim).CopyFromMat(input2);
+  if (size1 != 0) output->Range(0, size1, 0, dim).CopyFromMat(input1);
+  if (size2 != 0) output->Range(size1, size2, 0, dim).CopyFromMat(input2);
   if (size3 != 0)
     output->Range(size1 + size2, size3, 0, dim).CopyFromMat(input3);
 }
@@ -395,14 +381,13 @@ void OnlineDeltaInput::DeltaComputation(const MatrixBase<BaseFloat> &input,
                                         Matrix<BaseFloat> *output,
                                         Matrix<BaseFloat> *remainder) const {
   int32 input_rows = input.NumRows(),
-      output_rows = std::max(0, input_rows - Context() * 2),
-      remainder_rows = std::min(input_rows, Context() * 2),
-      input_dim = input_dim_,
-      output_dim = Dim();
+        output_rows = std::max(0, input_rows - Context() * 2),
+        remainder_rows = std::min(input_rows, Context() * 2),
+        input_dim = input_dim_, output_dim = Dim();
   if (remainder_rows > 0) {
     remainder->Resize(remainder_rows, input_dim);
-    remainder->CopyFromMat(input.Range(input_rows - remainder_rows,
-                                       remainder_rows, 0, input_dim));
+    remainder->CopyFromMat(
+        input.Range(input_rows - remainder_rows, remainder_rows, 0, input_dim));
   } else {
     remainder->Resize(0, 0);
   }
@@ -417,11 +402,10 @@ void OnlineDeltaInput::DeltaComputation(const MatrixBase<BaseFloat> &input,
   } else {
     output->Resize(0, 0);
   }
-}                                     
+}
 
 bool OnlineDeltaInput::Compute(Matrix<BaseFloat> *output) {
-  KALDI_ASSERT(output->NumRows() > 0 &&
-               output->NumCols() == Dim());
+  KALDI_ASSERT(output->NumRows() > 0 && output->NumCols() == Dim());
   // If output->NumRows() == 0, it corresponds to a request for zero frames,
   // which makes no sense.
 
@@ -462,18 +446,16 @@ bool OnlineDeltaInput::Compute(Matrix<BaseFloat> *output) {
         tail.Row(i).CopyFromVec(remainder_.Row(remainder_.NumRows() - 1));
     }
   }
-  
+
   Matrix<BaseFloat> appended_feats;
   AppendFrames(remainder_, input, tail, &appended_feats);
   DeltaComputation(appended_feats, output, &remainder_);
-  return ans; 
+  return ans;
 }
 
-
-
 void OnlineFeatureMatrix::GetNextFeatures() {
-  if (finished_) return; // Nothing to do.
-  
+  if (finished_) return;  // Nothing to do.
+
   // We always keep the most recent frame of features, if present,
   // in case it is needed (this may happen when someone calls
   // IsLastFrame(), which requires us to get the next frame, while
@@ -486,38 +468,37 @@ void OnlineFeatureMatrix::GetNextFeatures() {
   int32 iter;
   for (iter = 0; iter < opts_.num_tries; iter++) {
     Matrix<BaseFloat> next_features(opts_.batch_size, feat_dim_);
-    finished_ = ! input_->Compute(&next_features);
-    if (next_features.NumRows() == 0 && ! finished_) {
+    finished_ = !input_->Compute(&next_features);
+    if (next_features.NumRows() == 0 && !finished_) {
       // It timed out.  Try again.
       continue;
     }
     if (next_features.NumRows() > 0) {
-      int32 new_size = (have_last_frame ? 1 : 0) +
-          next_features.NumRows();
+      int32 new_size = (have_last_frame ? 1 : 0) + next_features.NumRows();
       feat_offset_ += feat_matrix_.NumRows() -
-          (have_last_frame ? 1 : 0); // we're discarding this many
-                                     // frames.
+                      (have_last_frame ? 1 : 0);  // we're discarding this many
+                                                  // frames.
       feat_matrix_.Resize(new_size, feat_dim_, kUndefined);
       if (have_last_frame) {
         feat_matrix_.Row(0).CopyFromVec(last_frame);
-        feat_matrix_.Range(1, next_features.NumRows(), 0, feat_dim_).
-            CopyFromMat(next_features);
+        feat_matrix_.Range(1, next_features.NumRows(), 0, feat_dim_)
+            .CopyFromMat(next_features);
       } else {
         feat_matrix_.CopyFromMat(next_features);
       }
     }
     break;
   }
-  if (iter == opts_.num_tries) { // we fell off the loop
-    KALDI_WARN << "After " << opts_.num_tries << ", got no features, giving up.";
-    finished_ = true; // We set finished_ to true even though the stream
+  if (iter == opts_.num_tries) {  // we fell off the loop
+    KALDI_WARN << "After " << opts_.num_tries
+               << ", got no features, giving up.";
+    finished_ = true;  // We set finished_ to true even though the stream
     // doesn't say it's finished, because the delay is too much-- we gave up.
   }
 }
 
-
-bool OnlineFeatureMatrix::IsValidFrame (int32 frame) {
-   KALDI_ASSERT(frame >= feat_offset_ &&
+bool OnlineFeatureMatrix::IsValidFrame(int32 frame) {
+  KALDI_ASSERT(frame >= feat_offset_ &&
                "You are attempting to get expired frames.");
   if (frame < feat_offset_ + feat_matrix_.NumRows())
     return true;
@@ -526,7 +507,8 @@ bool OnlineFeatureMatrix::IsValidFrame (int32 frame) {
     if (frame < feat_offset_ + feat_matrix_.NumRows())
       return true;
     else {
-      if (finished_) return false;
+      if (finished_)
+        return false;
       else {
         KALDI_WARN << "Unexpected point reached in code: "
                    << "possibly you are skipping frames?";
@@ -537,13 +519,10 @@ bool OnlineFeatureMatrix::IsValidFrame (int32 frame) {
 }
 
 SubVector<BaseFloat> OnlineFeatureMatrix::GetFrame(int32 frame) {
-  if (frame < feat_offset_)
-    KALDI_ERR << "Attempting to get a discarded frame.";
+  if (frame < feat_offset_) KALDI_ERR << "Attempting to get a discarded frame.";
   if (frame >= feat_offset_ + feat_matrix_.NumRows())
     KALDI_ERR << "Attempt get frame without check its validity.";
   return feat_matrix_.Row(frame - feat_offset_);
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi

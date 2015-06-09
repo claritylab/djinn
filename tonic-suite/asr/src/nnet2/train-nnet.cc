@@ -22,12 +22,14 @@
 namespace kaldi {
 namespace nnet2 {
 
-
-NnetSimpleTrainer::NnetSimpleTrainer(
-    const NnetSimpleTrainerConfig &config,
-    Nnet *nnet):
-    config_(config), nnet_(nnet), logprob_this_phase_(0.0),
-    weight_this_phase_(0.0), logprob_total_(0.0), weight_total_(0.0) {
+NnetSimpleTrainer::NnetSimpleTrainer(const NnetSimpleTrainerConfig &config,
+                                     Nnet *nnet)
+    : config_(config),
+      nnet_(nnet),
+      logprob_this_phase_(0.0),
+      weight_this_phase_(0.0),
+      logprob_total_(0.0),
+      weight_total_(0.0) {
   num_phases_ = 0;
   bool first_time = true;
   BeginNewPhase(first_time);
@@ -42,9 +44,7 @@ void NnetSimpleTrainer::TrainOnExample(const NnetExample &value) {
 void NnetSimpleTrainer::TrainOneMinibatch() {
   KALDI_ASSERT(!buffer_.empty());
   // The following function is declared in nnet-update.h.
-  logprob_this_phase_ += DoBackprop(*nnet_,
-                                    buffer_,
-                                    nnet_);
+  logprob_this_phase_ += DoBackprop(*nnet_, buffer_, nnet_);
   weight_this_phase_ += TotalNnetTrainingWeight(buffer_);
   buffer_.clear();
   minibatches_seen_this_phase_++;
@@ -57,7 +57,7 @@ void NnetSimpleTrainer::TrainOneMinibatch() {
 void NnetSimpleTrainer::BeginNewPhase(bool first_time) {
   if (!first_time)
     KALDI_LOG << "Training objective function (this phase) is "
-              << (logprob_this_phase_/weight_this_phase_) << " over "
+              << (logprob_this_phase_ / weight_this_phase_) << " over "
               << weight_this_phase_ << " frames.";
   logprob_total_ += logprob_this_phase_;
   weight_total_ += weight_this_phase_;
@@ -67,11 +67,9 @@ void NnetSimpleTrainer::BeginNewPhase(bool first_time) {
   num_phases_++;
 }
 
-
 NnetSimpleTrainer::~NnetSimpleTrainer() {
   if (!buffer_.empty()) {
-    KALDI_LOG << "Doing partial minibatch of size "
-              << buffer_.size();
+    KALDI_LOG << "Doing partial minibatch of size " << buffer_.size();
     TrainOneMinibatch();
     if (minibatches_seen_this_phase_ != 0) {
       bool first_time = false;
@@ -89,6 +87,5 @@ NnetSimpleTrainer::~NnetSimpleTrainer() {
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi

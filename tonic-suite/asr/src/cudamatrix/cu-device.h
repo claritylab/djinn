@@ -17,8 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 #ifndef KALDI_CUDAMATRIX_CU_DEVICE_H_
 #define KALDI_CUDAMATRIX_CU_DEVICE_H_
 
@@ -33,14 +31,14 @@
 
 namespace kaldi {
 
-class CuAllocator; // Forward declaration.
+class CuAllocator;  // Forward declaration.
 
 /**
  * Singleton object which represents CUDA device
  * responsible for CUBLAS initilalisation, collects profiling info
  */
 class CuDevice {
- // Singleton object (there should only be one instantiated per program)
+  // Singleton object (there should only be one instantiated per program)
  public:
   ~CuDevice();
   static inline CuDevice& Instantiate() { return global_device_; }
@@ -50,63 +48,58 @@ class CuDevice {
   // previous allocations to avoid the very large overhead that CUDA's
   // allocation seems to give for some setups.
   void* Malloc(size_t size);
-  
-  void* MallocPitch(size_t row_bytes, size_t num_rows, size_t *pitch);
-  
-  void Free(void *ptr);
+
+  void* MallocPitch(size_t row_bytes, size_t num_rows, size_t* pitch);
+
+  void Free(void* ptr);
 
   /// Disable GPU memory caching
   void DisableCaching();
-  
+
   /// Select a GPU for computation, the 'use_gpu' modes are:
   ///  "yes"      -- Select GPU automatically and die if this fails.
-  ///  "optional" -- Do as above, but if it fails, back off to CPU. 
-  ///  "no"       -- Run on CPU. 
+  ///  "optional" -- Do as above, but if it fails, back off to CPU.
+  ///  "no"       -- Run on CPU.
   ///  (more comments in cu-device.cc)
   void SelectGpuId(std::string use_gpu);
 
   /// Check if the CUDA GPU is selected for use
-  bool Enabled() const {
-    return (active_gpu_id_ > -1); 
-  }
+  bool Enabled() const { return (active_gpu_id_ > -1); }
 
   /// Get the active GPU id
-  int32 ActiveGpuId() {
-    return active_gpu_id_;
-  }
+  int32 ActiveGpuId() { return active_gpu_id_; }
 
   /// Returns true if either we have no GPU, or we have a GPU
   /// and it supports double precision.
   bool DoublePrecisionSupported();
 
-  void SetVerbose(bool verbose) {  verbose_ = verbose; }
+  void SetVerbose(bool verbose) { verbose_ = verbose; }
 
   /// Sum the IO time
-  void AccuProfile(const std::string &key, double time);
-  void PrintProfile(); 
+  void AccuProfile(const std::string& key, double time);
+  void PrintProfile();
 
   void PrintMemoryUsage() const;
-  
-  void ResetProfile() { 
-    profile_map_.clear(); 
-  }
-  
+
+  void ResetProfile() { profile_map_.clear(); }
+
   /// Get the actual GPU memory use stats
   std::string GetFreeMemory(int64* free = NULL, int64* total = NULL) const;
   /// Get the name of the GPU
-  void DeviceGetName(char* name, int32 len, int32 dev); 
+  void DeviceGetName(char* name, int32 len, int32 dev);
 
-  /// Check if GPU is in good condition by multiplying small matrices on GPU+CPU.
+  /// Check if GPU is in good condition by multiplying small matrices on
+  /// GPU+CPU.
   /// Overheated GPUs may give inaccurate results, which we want to detect.
   void CheckGpuHealth();
-  
+
  private:
   CuDevice();
-  CuDevice(CuDevice&); // Disallow.
-  CuDevice &operator=(CuDevice&);  // Disallow.
+  CuDevice(CuDevice&);             // Disallow.
+  CuDevice& operator=(CuDevice&);  // Disallow.
 
   static CuDevice global_device_;
-  
+
   /// Check if the GPU run in compute exclusive mode Returns true if it is
   /// running in compute exclusive mode and we have a GPU.  Returns false
   /// otherwise.  Sets error to true if there was some error, such as that we
@@ -121,37 +114,35 @@ class CuDevice {
   bool SelectGpuIdManual(int32 gpu_id);
 
   void FinalizeActiveGpu();
-  
-  /// Should only be called if Enabled() == true. 
+
+  /// Should only be called if Enabled() == true.
   int32 MajorDeviceVersion();
 
-  /// Should only be called if Enabled() == true. 
+  /// Should only be called if Enabled() == true.
   int32 MinorDeviceVersion();
 
   std::map<std::string, double> profile_map_;
-  
+
   /// active_gpu_id_ values:
-  /// -3 default (default, the SelectGpuId was not called, we did not want to use GPU)
+  /// -3 default (default, the SelectGpuId was not called, we did not want to
+  /// use GPU)
   /// -2 SelectGpuId was called, but no GPU was present
   /// -1 SelectGpuId was called, but the GPU was manually disabled
   /// 0..N Normal GPU IDs
-  int32 active_gpu_id_; 
-  
+  int32 active_gpu_id_;
+
   int64 free_memory_at_startup_;
-  
+
   cudaDeviceProp properties_;
 
   bool verbose_;
 
-  CuAllocator *allocator_;
-  
-}; // class CuDevice
+  CuAllocator* allocator_;
 
-
+};  // class CuDevice
 
 }  // namespace
 
-#endif // HAVE_CUDA
-
+#endif  // HAVE_CUDA
 
 #endif

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "tree/context-dep.h"
@@ -27,7 +26,7 @@
 #include "decoder/faster-decoder.h"
 #include "decoder/decodable-matrix.h"
 #include "base/timer.h"
-#include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
+#include "lat/kaldi-lattice.h"  // for {Compact}LatticeArc
 
 int main(int argc, char *argv[]) {
   try {
@@ -38,10 +37,13 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Decode, reading log-likelihoods (of transition-ids or whatever symbol is on the graph)\n"
-        "as matrices.  Note: you'll usually want decode-faster-mapped rather than this program.\n"
+        "Decode, reading log-likelihoods (of transition-ids or whatever symbol "
+        "is on the graph)\n"
+        "as matrices.  Note: you'll usually want decode-faster-mapped rather "
+        "than this program.\n"
         "\n"
-        "Usage:   decode-faster [options] <fst-in> <loglikes-rspecifier> <words-wspecifier> [<alignments-wspecifier>]\n";
+        "Usage:   decode-faster [options] <fst-in> <loglikes-rspecifier> "
+        "<words-wspecifier> [<alignments-wspecifier>]\n";
     ParseOptions po(usage);
     bool binary = true;
     BaseFloat acoustic_scale = 0.1;
@@ -50,9 +52,12 @@ int main(int argc, char *argv[]) {
     FasterDecoderOptions decoder_opts;
     decoder_opts.Register(&po, true);  // true == include obscure settings.
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("allow-partial", &allow_partial, "Produce output even when final state was not reached");
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("word-symbol-table", &word_syms_filename, "Symbol table for words [for debug output]");
+    po.Register("allow-partial", &allow_partial,
+                "Produce output even when final state was not reached");
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("word-symbol-table", &word_syms_filename,
+                "Symbol table for words [for debug output]");
 
     po.Read(argc, argv);
 
@@ -61,10 +66,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string  fst_in_filename = po.GetArg(1),
-        loglikes_rspecifier = po.GetArg(2),
-        words_wspecifier = po.GetArg(3),
-        alignment_wspecifier = po.GetOptArg(4);
+    std::string fst_in_filename = po.GetArg(1),
+                loglikes_rspecifier = po.GetArg(2),
+                words_wspecifier = po.GetArg(3),
+                alignment_wspecifier = po.GetOptArg(4);
 
     Int32VectorWriter words_writer(words_wspecifier);
 
@@ -74,7 +79,8 @@ int main(int argc, char *argv[]) {
     if (word_syms_filename != "") {
       word_syms = fst::SymbolTable::ReadText(word_syms_filename);
       if (!word_syms)
-        KALDI_ERR << "Could not read symbol table from file "<<word_syms_filename;
+        KALDI_ERR << "Could not read symbol table from file "
+                  << word_syms_filename;
     }
 
     SequentialBaseFloatMatrixReader loglikes_reader(loglikes_rspecifier);
@@ -95,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     for (; !loglikes_reader.Done(); loglikes_reader.Next()) {
       std::string key = loglikes_reader.Key();
-      const Matrix<BaseFloat> &loglikes (loglikes_reader.Value());
+      const Matrix<BaseFloat> &loglikes(loglikes_reader.Value());
 
       if (loglikes.NumRows() == 0) {
         KALDI_WARN << "Zero-length utterance: " << key;
@@ -108,12 +114,13 @@ int main(int argc, char *argv[]) {
 
       VectorFst<LatticeArc> decoded;  // linear FST.
 
-      if ( (allow_partial || decoder.ReachedFinal())
-           && decoder.GetBestPath(&decoded) ) {
+      if ((allow_partial || decoder.ReachedFinal()) &&
+          decoder.GetBestPath(&decoded)) {
         num_success++;
         if (!decoder.ReachedFinal())
-          KALDI_WARN << "Decoder did not reach end-state, outputting partial traceback.";
-          
+          KALDI_WARN << "Decoder did not reach end-state, outputting partial "
+                        "traceback.";
+
         std::vector<int32> alignment;
         std::vector<int32> words;
         LatticeWeight weight;
@@ -122,19 +129,18 @@ int main(int argc, char *argv[]) {
         GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
 
         words_writer.Write(key, words);
-        if (alignment_writer.IsOpen())
-          alignment_writer.Write(key, alignment);
+        if (alignment_writer.IsOpen()) alignment_writer.Write(key, alignment);
         if (word_syms != NULL) {
           std::cerr << key << ' ';
           for (size_t i = 0; i < words.size(); i++) {
             std::string s = word_syms->Find(words[i]);
             if (s == "")
-              KALDI_ERR << "Word-id " << words[i] <<" not in symbol table.";
+              KALDI_ERR << "Word-id " << words[i] << " not in symbol table.";
             std::cerr << s << ' ';
           }
           std::cerr << '\n';
         }
-        BaseFloat like = -weight.Value1() -weight.Value2();
+        BaseFloat like = -weight.Value1() - weight.Value2();
         tot_like += like;
         KALDI_LOG << "Log-like per frame for utterance " << key << " is "
                   << (like / loglikes.NumRows()) << " over "
@@ -148,22 +154,23 @@ int main(int argc, char *argv[]) {
     }
 
     double elapsed = timer.Elapsed();
-    KALDI_LOG << "Time taken [excluding initialization] "<< elapsed
+    KALDI_LOG << "Time taken [excluding initialization] " << elapsed
               << "s: real-time factor assuming 100 frames/sec is "
-              << (elapsed*100.0/frame_count);
+              << (elapsed * 100.0 / frame_count);
     KALDI_LOG << "Done " << num_success << " utterances, failed for "
               << num_fail;
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count)
-              << " over " << frame_count << " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
 
     if (word_syms) delete word_syms;
     delete decode_fst;
-    if (num_success != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_success != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

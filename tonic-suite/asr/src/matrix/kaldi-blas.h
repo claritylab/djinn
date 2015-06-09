@@ -40,78 +40,76 @@
 // so we define HAVE_Svd to be zero and this directs our implementation to
 // supply its own "by hand" implementation which is based on TNT code.
 
-
-
-
-#if (defined(HAVE_CLAPACK) && (defined(HAVE_ATLAS) || defined(HAVE_MKL))) \
-    || (defined(HAVE_ATLAS) && defined(HAVE_MKL))
+#if (defined(HAVE_CLAPACK) && (defined(HAVE_ATLAS) || defined(HAVE_MKL))) || \
+    (defined(HAVE_ATLAS) && defined(HAVE_MKL))
 #error "Do not define more than one of HAVE_CLAPACK, HAVE_ATLAS and HAVE_MKL"
 #endif
 
 #ifdef HAVE_ATLAS
-  extern "C" {
-    #include <cblas.h>
-    #include <clapack.h>
-  }
+extern "C" {
+#include <cblas.h>
+#include <clapack.h>
+}
 #elif defined(HAVE_CLAPACK)
-  #ifdef __APPLE__
-    #include <Accelerate/Accelerate.h>
-    typedef __CLPK_integer          integer;
-    typedef __CLPK_logical          logical;
-    typedef __CLPK_real             real;
-    typedef __CLPK_doublereal       doublereal;
-    typedef __CLPK_complex          complex;
-    typedef __CLPK_doublecomplex    doublecomplex;
-    typedef __CLPK_ftnlen           ftnlen;
-  #else
-    extern "C" {
-      // May be in /usr/[local]/include if installed; else this uses the one
-      // from the tools/CLAPACK_include directory.
-      #include <cblas.h>
-      #include <f2c.h>
-      #include <clapack.h>  
+#ifdef __APPLE__
+#include <Accelerate/Accelerate.h>
+typedef __CLPK_integer integer;
+typedef __CLPK_logical logical;
+typedef __CLPK_real real;
+typedef __CLPK_doublereal doublereal;
+typedef __CLPK_complex complex;
+typedef __CLPK_doublecomplex doublecomplex;
+typedef __CLPK_ftnlen ftnlen;
+#else
+extern "C" {
+// May be in /usr/[local]/include if installed; else this uses the one
+// from the tools/CLAPACK_include directory.
+#include <cblas.h>
+#include <f2c.h>
+#include <clapack.h>
 
-      // get rid of macros from f2c.h -- these are dangerous.
-      #undef abs
-      #undef dabs
-      #undef min
-      #undef max
-      #undef dmin
-      #undef dmax
-      #undef bit_test
-      #undef bit_clear
-      #undef bit_set
-    }
-  #endif
+// get rid of macros from f2c.h -- these are dangerous.
+#undef abs
+#undef dabs
+#undef min
+#undef max
+#undef dmin
+#undef dmax
+#undef bit_test
+#undef bit_clear
+#undef bit_set
+}
+#endif
 #elif defined(HAVE_MKL)
-  extern "C" {
-    #include <mkl.h>
-  }
+extern "C" {
+#include <mkl.h>
+}
 #elif defined(HAVE_OPENBLAS)
 extern "C" {
-  // getting cblas.h and lapacke.h from <openblas-install-dir>/.
-  // putting in "" not <> to search -I before system libraries.
-  #include "cblas.h"
-  #include "lapacke.h"
-  #undef I
-  #undef complex
-  // get rid of macros from f2c.h -- these are dangerous.
-  #undef abs
-  #undef dabs
-  #undef min
-  #undef max
-  #undef dmin
-  #undef dmax
-  #undef bit_test
-  #undef bit_clear
-  #undef bit_set
+// getting cblas.h and lapacke.h from <openblas-install-dir>/.
+// putting in "" not <> to search -I before system libraries.
+#include "cblas.h"
+#include "lapacke.h"
+#undef I
+#undef complex
+// get rid of macros from f2c.h -- these are dangerous.
+#undef abs
+#undef dabs
+#undef min
+#undef max
+#undef dmin
+#undef dmax
+#undef bit_test
+#undef bit_clear
+#undef bit_set
 }
 #else
-  #error "You need to define (using the preprocessor) either HAVE_CLAPACK or HAVE_ATLAS or HAVE_MKL (but not more than one)"  
+#error \
+    "You need to define (using the preprocessor) either HAVE_CLAPACK or HAVE_ATLAS or HAVE_MKL (but not more than one)"
 #endif
 
 #ifdef HAVE_OPENBLAS
-typedef int KaldiBlasInt; // try int.
+typedef int KaldiBlasInt;  // try int.
 #endif
 #ifdef HAVE_CLAPACK
 typedef integer KaldiBlasInt;
@@ -124,6 +122,5 @@ typedef MKL_INT KaldiBlasInt;
 // in this case there is no need for KaldiBlasInt-- this typedef is only needed
 // for Svd code which is not included in ATLAS (we re-implement it).
 #endif
-
 
 #endif  // KALDI_MATRIX_KALDI_BLAS_H_

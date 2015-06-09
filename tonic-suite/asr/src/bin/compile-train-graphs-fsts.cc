@@ -25,7 +25,6 @@
 #include "fstext/fstext-lib.h"
 #include "decoder/training-graph-compiler.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -35,15 +34,21 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Creates training graphs (without transition-probabilities, by default)\n"
-        "This version takes FSTs as inputs (e.g., representing a separate weighted\n"
+        "Creates training graphs (without transition-probabilities, by "
+        "default)\n"
+        "This version takes FSTs as inputs (e.g., representing a separate "
+        "weighted\n"
         "grammar for each utterance)\n"
-        "Note: the lexicon should contain disambiguation symbols and you should\n"
-        "supply the --read-disambig-syms option which is the filename of a list\n"
+        "Note: the lexicon should contain disambiguation symbols and you "
+        "should\n"
+        "supply the --read-disambig-syms option which is the filename of a "
+        "list\n"
         "of disambiguation symbols.\n"
-        "Warning: you probably want to set the --transition-scale and --self-loop-scale\n"
+        "Warning: you probably want to set the --transition-scale and "
+        "--self-loop-scale\n"
         "options; the defaults (zero) are probably not appropriate.\n"
-        "Usage:   compile-train-graphs-fsts [options] <tree-in> <model-in> <lexicon-fst-in> "
+        "Usage:   compile-train-graphs-fsts [options] <tree-in> <model-in> "
+        "<lexicon-fst-in> "
         " <graphs-rspecifier> <graphs-wspecifier>\n"
         "e.g.: \n"
         " compile-train-graphs-fsts --read-disambig-syms=disambig.list\\\n"
@@ -52,7 +57,8 @@ int main(int argc, char *argv[]) {
 
     TrainingGraphCompilerOptions gopts;
     int32 batch_size = 250;
-    gopts.transition_scale = 0.0;  // Change the default to 0.0 since we will generally add the
+    gopts.transition_scale =
+        0.0;  // Change the default to 0.0 since we will generally add the
     // transition probs in the alignment phase (since they change each time)
     gopts.self_loop_scale = 0.0;  // Ditto for self-loop probs.
     std::string disambig_rxfilename;
@@ -61,9 +67,10 @@ int main(int argc, char *argv[]) {
     po.Register("batch-size", &batch_size,
                 "Number of FSTs to compile at a time (more -> faster but uses "
                 "more memory.  E.g. 500");
-    po.Register("read-disambig-syms", &disambig_rxfilename, "File containing "
+    po.Register("read-disambig-syms", &disambig_rxfilename,
+                "File containing "
                 "list of disambiguation symbols in phone symbol table");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 5) {
@@ -96,27 +103,30 @@ int main(int argc, char *argv[]) {
     std::vector<int32> disambig_syms;
     if (disambig_rxfilename != "")
       if (!ReadIntegerVectorSimple(disambig_rxfilename, &disambig_syms))
-        KALDI_ERR << "fstcomposecontext: Could not read disambiguation symbols from "
-                  << disambig_rxfilename;
+        KALDI_ERR
+            << "fstcomposecontext: Could not read disambiguation symbols from "
+            << disambig_rxfilename;
     if (disambig_syms.empty())
       KALDI_WARN << "You supplied no disambiguation symbols; note, these are "
                  << "typically necessary when compiling graphs from FSTs (i.e. "
                  << "supply L_disambig.fst and the list of disambig syms with\n"
                  << "--read-disambig-syms)";
-    TrainingGraphCompiler gc(trans_model, ctx_dep, lex_fst, disambig_syms, gopts);
+    TrainingGraphCompiler gc(trans_model, ctx_dep, lex_fst, disambig_syms,
+                             gopts);
 
     lex_fst = NULL;  // we gave ownership to gc.
 
     SequentialTableReader<fst::VectorFstHolder> fst_reader(fsts_rspecifier);
     TableWriter<fst::VectorFstHolder> fst_writer(fsts_wspecifier);
-    
+
     int num_succeed = 0, num_fail = 0;
 
-    if (batch_size == 1) {  // We treat batch_size of 1 as a special case in order
+    if (batch_size ==
+        1) {  // We treat batch_size of 1 as a special case in order
       // to test more parts of the code.
       for (; !fst_reader.Done(); fst_reader.Next()) {
         std::string key = fst_reader.Key();
-        const VectorFst<StdArc> &grammar = fst_reader.Value(); // weighted
+        const VectorFst<StdArc> &grammar = fst_reader.Value();  // weighted
         // grammar for this utterance.
         VectorFst<StdArc> decode_fst;
 
@@ -127,24 +137,23 @@ int main(int argc, char *argv[]) {
           num_succeed++;
           fst_writer.Write(key, decode_fst);
         } else {
-          KALDI_WARN << "Empty decoding graph for utterance "
-                     << key;
+          KALDI_WARN << "Empty decoding graph for utterance " << key;
           num_fail++;
         }
       }
     } else {
       std::vector<std::string> keys;
-      std::vector<const VectorFst<StdArc>*> grammars; // word grammars.
+      std::vector<const VectorFst<StdArc> *> grammars;  // word grammars.
       while (!fst_reader.Done()) {
         keys.clear();
         grammars.clear();
         for (; !fst_reader.Done() &&
-                static_cast<int32>(grammars.size()) < batch_size;
-            fst_reader.Next()) {
+                   static_cast<int32>(grammars.size()) < batch_size;
+             fst_reader.Next()) {
           keys.push_back(fst_reader.Key());
           grammars.push_back(new VectorFst<StdArc>(fst_reader.Value()));
         }
-        std::vector<fst::VectorFst<fst::StdArc>* > fsts;
+        std::vector<fst::VectorFst<fst::StdArc> *> fsts;
         if (!gc.CompileGraphs(grammars, &fsts))
           KALDI_ERR << "Not expecting CompileGraphs to fail.";
         KALDI_ASSERT(fsts.size() == keys.size());
@@ -155,8 +164,7 @@ int main(int argc, char *argv[]) {
             num_succeed++;
             fst_writer.Write(keys[i], *(fsts[i]));
           } else {
-            KALDI_WARN << "Empty decoding graph for utterance "
-                       << keys[i];
+            KALDI_WARN << "Empty decoding graph for utterance " << keys[i];
             num_fail++;
           }
         }
@@ -166,7 +174,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "compile-train-graphs: succeeded for " << num_succeed
               << " graphs, failed for " << num_fail;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

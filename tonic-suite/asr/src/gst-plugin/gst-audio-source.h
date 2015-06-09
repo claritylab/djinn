@@ -26,7 +26,6 @@
 
 namespace kaldi {
 
-
 // OnlineAudioSourceItf implementation using a queue of Gst Buffers
 class GstBufferSource : public OnlineAudioSourceItf {
  public:
@@ -44,8 +43,7 @@ class GstBufferSource : public OnlineAudioSourceItf {
   ~GstBufferSource();
 
  private:
-
-  GAsyncQueue* buf_queue_;
+  GAsyncQueue *buf_queue_;
   gint pos_in_current_buf_;
   GstBuffer *current_buffer_;
   bool ended_;

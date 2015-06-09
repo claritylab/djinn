@@ -1,6 +1,7 @@
 // gmm/am-diag-gmm.cc
 
-// Copyright 2012   Arnab Ghoshal  Johns Hopkins University (Author: Daniel Povey)  Karel Vesely
+// Copyright 2012   Arnab Ghoshal  Johns Hopkins University (Author: Daniel
+// Povey)  Karel Vesely
 // Copyright 2009-2011  Saarland University;  Microsoft Corporation;
 //                      Georg Stemmer
 
@@ -31,14 +32,12 @@ using std::vector;
 
 namespace kaldi {
 
-AmDiagGmm::~AmDiagGmm() {
-  DeletePointers(&densities_);
-}
+AmDiagGmm::~AmDiagGmm() { DeletePointers(&densities_); }
 
 void AmDiagGmm::Init(const DiagGmm &proto, int32 num_pdfs) {
   if (densities_.size() != 0) {
     KALDI_WARN << "Init() called on a non-empty object. Contents will be "
-        "overwritten";
+                  "overwritten";
     DeletePointers(&densities_);
   }
   if (num_pdfs == 0) {
@@ -47,8 +46,9 @@ void AmDiagGmm::Init(const DiagGmm &proto, int32 num_pdfs) {
   }
 
   densities_.resize(num_pdfs, NULL);
-  for (vector<DiagGmm*>::iterator itr = densities_.begin(),
-      end = densities_.end(); itr != end; ++itr) {
+  for (vector<DiagGmm *>::iterator itr = densities_.begin(),
+                                   end = densities_.end();
+       itr != end; ++itr) {
     *itr = new DiagGmm();
     (*itr)->CopyFromDiagGmm(proto);
   }
@@ -89,47 +89,40 @@ void AmDiagGmm::CopyFromAmDiagGmm(const AmDiagGmm &other) {
 
 int32 AmDiagGmm::ComputeGconsts() {
   int32 num_bad = 0;
-  for (std::vector<DiagGmm*>::iterator itr = densities_.begin(),
-      end = densities_.end(); itr != end; ++itr) {
+  for (std::vector<DiagGmm *>::iterator itr = densities_.begin(),
+                                        end = densities_.end();
+       itr != end; ++itr) {
     num_bad += (*itr)->ComputeGconsts();
   }
-  if (num_bad > 0)
-    KALDI_WARN << "Found " << num_bad << " Gaussian components.";
+  if (num_bad > 0) KALDI_WARN << "Found " << num_bad << " Gaussian components.";
   return num_bad;
 }
 
-
 void AmDiagGmm::SplitByCount(const Vector<BaseFloat> &state_occs,
-                             int32 target_components,
-                             float perturb_factor, BaseFloat power,
-                             BaseFloat min_count) {
+                             int32 target_components, float perturb_factor,
+                             BaseFloat power, BaseFloat min_count) {
   int32 gauss_at_start = NumGauss();
   std::vector<int32> targets;
-  GetSplitTargets(state_occs, target_components, power,
-                  min_count, &targets);
+  GetSplitTargets(state_occs, target_components, power, min_count, &targets);
 
   for (int32 i = 0; i < NumPdfs(); i++) {
     if (densities_[i]->NumGauss() < targets[i])
       densities_[i]->Split(targets[i], perturb_factor);
   }
 
-  KALDI_LOG << "Split " << NumPdfs() << " states with target = "
-            << target_components << ", power = " << power
-            << ", perturb_factor = " << perturb_factor
-            << " and min_count = " << min_count
-            << ", split #Gauss from " << gauss_at_start << " to "
-            << NumGauss();
+  KALDI_LOG << "Split " << NumPdfs()
+            << " states with target = " << target_components
+            << ", power = " << power << ", perturb_factor = " << perturb_factor
+            << " and min_count = " << min_count << ", split #Gauss from "
+            << gauss_at_start << " to " << NumGauss();
 }
 
-
 void AmDiagGmm::MergeByCount(const Vector<BaseFloat> &state_occs,
-                             int32 target_components,
-                             BaseFloat power,
+                             int32 target_components, BaseFloat power,
                              BaseFloat min_count) {
   int32 gauss_at_start = NumGauss();
   std::vector<int32> targets;
-  GetSplitTargets(state_occs, target_components,
-                  power, min_count, &targets);
+  GetSplitTargets(state_occs, target_components, power, min_count, &targets);
 
   for (int32 i = 0; i < NumPdfs(); i++) {
     if (targets[i] == 0) targets[i] = 1;  // can't merge below 1.
@@ -137,11 +130,10 @@ void AmDiagGmm::MergeByCount(const Vector<BaseFloat> &state_occs,
       densities_[i]->Merge(targets[i]);
   }
 
-  KALDI_LOG << "Merged " << NumPdfs() << " states with target = "
-            << target_components << ", power = " << power
-            << " and min_count = " << min_count
-            << ", merged from " << gauss_at_start << " to "
-            << NumGauss();
+  KALDI_LOG << "Merged " << NumPdfs()
+            << " states with target = " << target_components
+            << ", power = " << power << " and min_count = " << min_count
+            << ", merged from " << gauss_at_start << " to " << NumGauss();
 }
 
 void AmDiagGmm::Read(std::istream &in_stream, bool binary) {
@@ -169,8 +161,9 @@ void AmDiagGmm::Write(std::ostream &out_stream, bool binary) const {
   WriteBasicType(out_stream, binary, dim);
   WriteToken(out_stream, binary, "<NUMPDFS>");
   WriteBasicType(out_stream, binary, static_cast<int32>(densities_.size()));
-  for (std::vector<DiagGmm*>::const_iterator it = densities_.begin(),
-      end = densities_.end(); it != end; ++it) {
+  for (std::vector<DiagGmm *>::const_iterator it = densities_.begin(),
+                                              end = densities_.end();
+       it != end; ++it) {
     (*it)->Write(out_stream, binary);
   }
 }
@@ -185,8 +178,7 @@ void UbmClusteringOptions::Check() {
   if (ubm_num_gauss <= 0)
     KALDI_ERR << "Invalid parameters: --ubm-num_gauss=" << ubm_num_gauss;
   if (cluster_varfloor <= 0)
-    KALDI_ERR << "Invalid parameters: --cluster-varfloor="
-              << cluster_varfloor;
+    KALDI_ERR << "Invalid parameters: --cluster-varfloor=" << cluster_varfloor;
   if (reduce_state_factor <= 0 || reduce_state_factor > 1)
     KALDI_ERR << "Invalid parameters: --reduce-state-factor="
               << reduce_state_factor;
@@ -194,15 +186,14 @@ void UbmClusteringOptions::Check() {
 
 void ClusterGaussiansToUbm(const AmDiagGmm &am,
                            const Vector<BaseFloat> &state_occs,
-                           UbmClusteringOptions opts,
-                           DiagGmm *ubm_out) {
+                           UbmClusteringOptions opts, DiagGmm *ubm_out) {
   opts.Check();  // Make sure the various # of Gaussians make sense.
   if (am.NumGauss() > opts.max_am_gauss) {
-    KALDI_LOG << "ClusterGaussiansToUbm: first reducing num-gauss from " << am.NumGauss()
-              << " to " << opts.max_am_gauss;
+    KALDI_LOG << "ClusterGaussiansToUbm: first reducing num-gauss from "
+              << am.NumGauss() << " to " << opts.max_am_gauss;
     AmDiagGmm tmp_am;
     tmp_am.CopyFromAmDiagGmm(am);
-    BaseFloat power = 1.0, min_count = 1.0; // Make the power 1, which I feel
+    BaseFloat power = 1.0, min_count = 1.0;  // Make the power 1, which I feel
     // is appropriate to the way we're doing the overall clustering procedure.
     tmp_am.MergeByCount(state_occs, opts.max_am_gauss, power, min_count);
 
@@ -214,15 +205,15 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
     ClusterGaussiansToUbm(tmp_am, state_occs, opts, ubm_out);
     return;
   }
-  
-  int32 num_pdfs = static_cast<int32>(am.NumPdfs()),
-      dim = am.Dim(),
-      num_clust_states = static_cast<int32>(opts.reduce_state_factor*num_pdfs);
+
+  int32 num_pdfs = static_cast<int32>(am.NumPdfs()), dim = am.Dim(),
+        num_clust_states =
+            static_cast<int32>(opts.reduce_state_factor * num_pdfs);
 
   Vector<BaseFloat> tmp_mean(dim);
   Vector<BaseFloat> tmp_var(dim);
   DiagGmm tmp_gmm;
-  vector<Clusterable*> states;
+  vector<Clusterable *> states;
   states.reserve(num_pdfs);  // NOT resize(); uses push_back.
 
   // Replace the GMM for each state with a single Gaussian.
@@ -238,15 +229,15 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
     tmp_mean.Scale(this_weight);
     tmp_var.Scale(this_weight);
     states.push_back(new GaussClusterable(tmp_mean, tmp_var,
-                          opts.cluster_varfloor, this_weight));
+                                          opts.cluster_varfloor, this_weight));
   }
 
   // Bottom-up clustering of the Gaussians corresponding to each state, which
   // gives a partial clustering of states in the 'state_clusters' vector.
   vector<int32> state_clusters;
   KALDI_VLOG(1) << "Creating " << num_clust_states << " clusters of states.";
-  ClusterBottomUp(states, std::numeric_limits<BaseFloat>::max(), num_clust_states,
-                  NULL /*actual clusters not needed*/,
+  ClusterBottomUp(states, std::numeric_limits<BaseFloat>::max(),
+                  num_clust_states, NULL /*actual clusters not needed*/,
                   &state_clusters /*get the cluster assignments*/);
   DeletePointers(&states);
 
@@ -254,17 +245,17 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
   // states, weighted by the state occupancies. This is done so that initially
   // only the Gaussians corresponding to "similar" states (similarity as
   // determined by the previous clustering) are merged.
-  vector< vector<Clusterable*> > state_clust_gauss;
+  vector<vector<Clusterable *> > state_clust_gauss;
   state_clust_gauss.resize(num_clust_states);
   for (int32 pdf_index = 0; pdf_index < num_pdfs; pdf_index++) {
     int32 current_cluster = state_clusters[pdf_index];
-    for (int32 num_gauss = am.GetPdf(pdf_index).NumGauss(),
-        gauss_index = 0; gauss_index < num_gauss; ++gauss_index) {
+    for (int32 num_gauss = am.GetPdf(pdf_index).NumGauss(), gauss_index = 0;
+         gauss_index < num_gauss; ++gauss_index) {
       am.GetGaussianMean(pdf_index, gauss_index, &tmp_mean);
       am.GetGaussianVariance(pdf_index, gauss_index, &tmp_var);
       tmp_var.AddVec2(1.0, tmp_mean);  // make it x^2 stats.
-      BaseFloat this_weight =  state_occs(pdf_index) *
-          (am.GetPdf(pdf_index).weights())(gauss_index);
+      BaseFloat this_weight =
+          state_occs(pdf_index) * (am.GetPdf(pdf_index).weights())(gauss_index);
       tmp_mean.Scale(this_weight);
       tmp_var.Scale(this_weight);
       state_clust_gauss[current_cluster].push_back(new GaussClusterable(
@@ -288,14 +279,14 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
                << ", increasing it to " << num_clust_states;
     opts.intermediate_num_gauss = num_clust_states;
   }
-    
+
   KALDI_VLOG(1) << "Merging from " << am.NumGauss() << " Gaussians in the "
                 << "acoustic model, down to " << opts.intermediate_num_gauss
                 << " Gaussians.";
-  vector< vector<Clusterable*> > gauss_clusters_out;
-  ClusterBottomUpCompartmentalized(state_clust_gauss, std::numeric_limits<BaseFloat>::max(),
-                                   opts.intermediate_num_gauss,
-                                   &gauss_clusters_out, NULL);
+  vector<vector<Clusterable *> > gauss_clusters_out;
+  ClusterBottomUpCompartmentalized(
+      state_clust_gauss, std::numeric_limits<BaseFloat>::max(),
+      opts.intermediate_num_gauss, &gauss_clusters_out, NULL);
   for (int32 clust_index = 0; clust_index < num_clust_states; clust_index++)
     DeletePointers(&state_clust_gauss[clust_index]);
 
@@ -308,17 +299,17 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
   Vector<BaseFloat> tmp_vec(dim);
   int32 gauss_index = 0;
   for (int32 clust_index = 0; clust_index < num_clust_states; clust_index++) {
-    for (int32 i = gauss_clusters_out[clust_index].size()-1; i >=0; --i) {
-      GaussClusterable *this_cluster = static_cast<GaussClusterable*>(
-          gauss_clusters_out[clust_index][i]);
+    for (int32 i = gauss_clusters_out[clust_index].size() - 1; i >= 0; --i) {
+      GaussClusterable *this_cluster =
+          static_cast<GaussClusterable *>(gauss_clusters_out[clust_index][i]);
       BaseFloat weight = this_cluster->count();
       KALDI_ASSERT(weight > 0);
       tmp_weights(gauss_index) = weight;
       tmp_vec.CopyFromVec(this_cluster->x_stats());
-      tmp_vec.Scale(1/weight);
+      tmp_vec.Scale(1 / weight);
       tmp_means.CopyRowFromVec(tmp_vec, gauss_index);
       tmp_vec.CopyFromVec(this_cluster->x2_stats());
-      tmp_vec.Scale(1/weight);
+      tmp_vec.Scale(1 / weight);
       tmp_vec.AddVec2(-1.0, tmp_means.Row(gauss_index));  // x^2 stats to var.
       tmp_vars.CopyRowFromVec(tmp_vec, gauss_index);
       gauss_index++;
@@ -326,7 +317,7 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
     DeletePointers(&(gauss_clusters_out[clust_index]));
   }
   tmp_gmm.Resize(opts.intermediate_num_gauss, dim);
-  tmp_weights.Scale(1.0/tmp_weights.Sum());
+  tmp_weights.Scale(1.0 / tmp_weights.Sum());
   tmp_gmm.SetWeights(tmp_weights);
   tmp_vars.InvertElements();  // need inverse vars...
   tmp_gmm.SetInvVarsAndMeans(tmp_vars, tmp_means);
@@ -336,8 +327,8 @@ void ClusterGaussiansToUbm(const AmDiagGmm &am,
     tmp_gmm.Merge(opts.ubm_num_gauss);
     KALDI_VLOG(1) << "Merged down to " << tmp_gmm.NumGauss() << " Gaussians.";
   } else {
-    KALDI_WARN << "Not merging Gaussians since " << opts.ubm_num_gauss
-               << " < " << tmp_gmm.NumGauss();
+    KALDI_WARN << "Not merging Gaussians since " << opts.ubm_num_gauss << " < "
+               << tmp_gmm.NumGauss();
   }
   ubm_out->CopyFromDiagGmm(tmp_gmm);
 }

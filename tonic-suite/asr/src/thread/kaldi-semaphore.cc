@@ -17,14 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 #include "base/kaldi-error.h"
 #include "thread/kaldi-semaphore.h"
 
 namespace kaldi {
 
-  
 Semaphore::Semaphore(int32 initValue) {
   counter_ = initValue;
   if (pthread_mutex_init(&mutex_, NULL) != 0) {
@@ -35,8 +32,6 @@ Semaphore::Semaphore(int32 initValue) {
   }
 }
 
-
-
 Semaphore::~Semaphore() {
   if (pthread_mutex_destroy(&mutex_) != 0) {
     KALDI_ERR << "Cannot destroy pthread mutex";
@@ -45,8 +40,6 @@ Semaphore::~Semaphore() {
     KALDI_ERR << "Cannot destroy pthread conditional variable";
   }
 }
-
-
 
 bool Semaphore::TryWait() {
   int32 ret = 0;
@@ -63,8 +56,6 @@ bool Semaphore::TryWait() {
   return try_wait_succeeded;
 }
 
-
-
 void Semaphore::Wait() {
   int32 ret = 0;
   ret |= pthread_mutex_lock(&mutex_);
@@ -78,8 +69,6 @@ void Semaphore::Wait() {
   }
 }
 
-
-
 void Semaphore::Signal() {
   int32 ret = 0;
   ret |= pthread_mutex_lock(&mutex_);
@@ -91,5 +80,4 @@ void Semaphore::Signal() {
   }
 }
 
-
-} // namespace kaldi
+}  // namespace kaldi

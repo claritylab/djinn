@@ -26,12 +26,12 @@ namespace nnet1 {
 PdfPrior::PdfPrior(const PdfPriorOptions &opts)
     : prior_scale_(opts.prior_scale) {
   if (opts.class_frame_counts == "") {
-    //Empty file with counts is not an error, 
-    //there are cases when PdfPrior is not active 
+    // Empty file with counts is not an error,
+    // there are cases when PdfPrior is not active
     //(example: nnet-forward over feature transform, bn-feature extractor)
     return;
 
-    //KALDI_ERR << "--class-frame-counts is empty: Cannot initialize priors "
+    // KALDI_ERR << "--class-frame-counts is empty: Cannot initialize priors "
     //          << "without the counts.";
   }
 
@@ -51,12 +51,13 @@ PdfPrior::PdfPrior(const PdfPriorOptions &opts)
   for (int32 i = 0; i < prior_dim; i++) {
     if (tmp_priors(i) < opts.prior_cutoff) {
       tmp_priors(i) = opts.prior_cutoff;
-      tmp_mask(i) = FLT_MAX/2;  // not using -kLogZeroFloat to prevent NANs
+      tmp_mask(i) = FLT_MAX / 2;  // not using -kLogZeroFloat to prevent NANs
       num_cutoff++;
     }
   }
   if (num_cutoff > 0) {
-    KALDI_WARN << num_cutoff << " out of " << prior_dim << " classes have counts"
+    KALDI_WARN << num_cutoff << " out of " << prior_dim
+               << " classes have counts"
                << " lower than " << opts.prior_cutoff;
   }
 
@@ -78,13 +79,12 @@ PdfPrior::PdfPrior(const PdfPriorOptions &opts)
   log_priors_.CopyFromVec(tmp_priors_f);
 }
 
-
 void PdfPrior::SubtractOnLogpost(CuMatrixBase<BaseFloat> *llk) {
-  if(log_priors_.Dim() == 0) {
+  if (log_priors_.Dim() == 0) {
     KALDI_ERR << "--class-frame-counts is empty: Cannot initialize priors "
               << "without the counts.";
   }
-  if(log_priors_.Dim() != llk->NumCols()) {
+  if (log_priors_.Dim() != llk->NumCols()) {
     KALDI_ERR << "Dimensionality mismatch,"
               << " class_frame_counts " << log_priors_.Dim()
               << " pdf_output_llk " << llk->NumCols();

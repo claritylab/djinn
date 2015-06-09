@@ -27,7 +27,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Sum stats obtained with gmm-acc-mllt.\n"
-        "Usage: sum-mllt-accs [options] <stats-out> <stats-in1> <stats-in2> ...\n";
+        "Usage: sum-mllt-accs [options] <stats-out> <stats-in1> <stats-in2> "
+        "...\n";
 
     bool binary = true;
     ParseOptions po(usage);
@@ -51,10 +52,8 @@ int main(int argc, char *argv[]) {
     Output ko(stats_out_filename, binary);
     mllt_accs.Write(ko.Stream(), binary);
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

@@ -31,8 +31,11 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Do HLDA update\n"
-        "Usage:  gmm-est-hlda [options] <model-in> <full-hlda-mat-in> <model-out> <full-hlda-mat-out> <partial-hlda-mat-out> <stats-in1> <stats-in2> ... \n"
-        "e.g.: gmm-est-hlda 1.mdl 1.hldafull 2.mdl 2.hldafull 2.hlda 1.0.hacc 1.1.hacc ... \n";
+        "Usage:  gmm-est-hlda [options] <model-in> <full-hlda-mat-in> "
+        "<model-out> <full-hlda-mat-out> <partial-hlda-mat-out> <stats-in1> "
+        "<stats-in2> ... \n"
+        "e.g.: gmm-est-hlda 1.mdl 1.hldafull 2.mdl 2.hldafull 2.hlda 1.0.hacc "
+        "1.1.hacc ... \n";
 
     bool binary = true;  // write in binary if true.
 
@@ -47,11 +50,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        hldafull_in_filename = po.GetArg(2),
-        model_out_filename = po.GetArg(3),
-        hldafull_out_filename = po.GetArg(4),
-        hldapart_out_filename = po.GetArg(5);
-
+                hldafull_in_filename = po.GetArg(2),
+                model_out_filename = po.GetArg(3),
+                hldafull_out_filename = po.GetArg(4),
+                hldapart_out_filename = po.GetArg(5);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -72,16 +74,17 @@ int main(int argc, char *argv[]) {
 
     Matrix<BaseFloat> hlda_mat_full;
     ReadKaldiObject(hldafull_in_filename, &hlda_mat_full);
-    KALDI_ASSERT(hlda_mat_full.NumRows() == hlda_accs.FeatureDim()
-                 && hlda_mat_full.NumCols() == hlda_accs.FeatureDim());
+    KALDI_ASSERT(hlda_mat_full.NumRows() == hlda_accs.FeatureDim() &&
+                 hlda_mat_full.NumCols() == hlda_accs.FeatureDim());
 
     Matrix<BaseFloat> hlda_mat_part(hlda_accs.ModelDim(),
                                     hlda_accs.FeatureDim());
 
     BaseFloat objf_impr, count;
-    hlda_accs.Update(&am_gmm, &hlda_mat_full, &hlda_mat_part, &objf_impr, &count);
+    hlda_accs.Update(&am_gmm, &hlda_mat_full, &hlda_mat_part, &objf_impr,
+                     &count);
 
-    KALDI_LOG << "Updated HLDA, total objf impr is " << (objf_impr/count)
+    KALDI_LOG << "Updated HLDA, total objf impr is " << (objf_impr / count)
               << " over " << count << " frames, logdet is "
               << hlda_mat_full.LogDet();
 
@@ -93,10 +96,8 @@ int main(int argc, char *argv[]) {
       am_gmm.Write(ko.Stream(), binary);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

@@ -45,9 +45,10 @@ int main(int argc, char *argv[]) {
 
     kaldi::BaseFloat old_acoustic_scale = 0.0;
     kaldi::ParseOptions po(usage);
-    po.Register("old-acoustic-scale", &old_acoustic_scale,
-                "Add in the scores in the input lattices with this scale, rather "
-                "than discarding them.");
+    po.Register(
+        "old-acoustic-scale", &old_acoustic_scale,
+        "Add in the scores in the input lattices with this scale, rather "
+        "than discarding them.");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -55,10 +56,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_filename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        lats_wspecifier = po.GetArg(4);
+    std::string model_filename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                lats_wspecifier = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -97,13 +97,14 @@ int main(int argc, char *argv[]) {
         compact_lattice_writer.Write(key, clat);
         num_done++;
         num_frames += feats.NumRows();
-      } else num_err++;
+      } else
+        num_err++;
     }
 
-    KALDI_LOG << "Done " << num_done << " lattices with errors on "
-              << num_err << ", #frames is " << num_frames;
+    KALDI_LOG << "Done " << num_done << " lattices with errors on " << num_err
+              << ", #frames is " << num_frames;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

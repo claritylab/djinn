@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/transition-model.h"
@@ -35,15 +34,18 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Accumulate LDA statistics based on pdf-ids.\n"
-        "Usage:  acc-lda [options] <transition-gmm/model> <features-rspecifier> <posteriors-rspecifier> <lda-acc-out>\n"
+        "Usage:  acc-lda [options] <transition-gmm/model> "
+        "<features-rspecifier> <posteriors-rspecifier> <lda-acc-out>\n"
         "Typical usage:\n"
-        " ali-to-post ark:1.ali ark:- | lda-acc 1.mdl \"ark:splice-feats scp:train.scp|\"  ark:- ldaacc.1\n";
+        " ali-to-post ark:1.ali ark:- | lda-acc 1.mdl \"ark:splice-feats "
+        "scp:train.scp|\"  ark:- ldaacc.1\n";
 
     bool binary = true;
     BaseFloat rand_prune = 0.0;
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write accumulators in binary mode.");
-    po.Register("rand-prune", &rand_prune, "Randomized pruning threshold for posteriors");
+    po.Register("rand-prune", &rand_prune,
+                "Randomized pruning threshold for posteriors");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -70,28 +72,27 @@ int main(int argc, char *argv[]) {
     RandomAccessPosteriorReader posterior_reader(posteriors_rspecifier);
 
     int32 num_done = 0, num_fail = 0;
-    for (;!feature_reader.Done(); feature_reader.Next()) {
+    for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string utt = feature_reader.Key();
       if (!posterior_reader.HasKey(utt)) {
         KALDI_WARN << "No posteriors for utterance " << utt;
         num_fail++;
         continue;
       }
-      const Posterior &post (posterior_reader.Value(utt));
+      const Posterior &post(posterior_reader.Value(utt));
       const Matrix<BaseFloat> &feats(feature_reader.Value());
 
-      if (lda.Dim() == 0)
-        lda.Init(trans_model.NumPdfs(), feats.NumCols());
+      if (lda.Dim() == 0) lda.Init(trans_model.NumPdfs(), feats.NumCols());
 
       if (feats.NumRows() != static_cast<int32>(post.size())) {
-        KALDI_WARN << "Posterior vs. feats size mismatch "
-                   << feats.NumRows() << " vs. " <<post.size();
+        KALDI_WARN << "Posterior vs. feats size mismatch " << feats.NumRows()
+                   << " vs. " << post.size();
         num_fail++;
         continue;
       }
       if (lda.Dim() != 0 && lda.Dim() != feats.NumCols()) {
-        KALDI_WARN << "Feature dimension mismatch " << lda.Dim()
-                   << " vs. " << feats.NumCols();
+        KALDI_WARN << "Feature dimension mismatch " << lda.Dim() << " vs. "
+                   << feats.NumCols();
         num_fail++;
         continue;
       }
@@ -113,17 +114,14 @@ int main(int argc, char *argv[]) {
         KALDI_LOG << "Done " << num_done << " utterances.";
     }
 
-    KALDI_LOG << "Done " << num_done << " files, failed for "
-              << num_fail;
+    KALDI_LOG << "Done " << num_done << " files, failed for " << num_fail;
 
     Output ko(acc_wxfilename, binary);
     lda.Write(ko.Stream(), binary);
     KALDI_LOG << "Written statistics.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

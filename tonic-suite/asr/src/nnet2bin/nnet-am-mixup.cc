@@ -32,8 +32,10 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Add mixture-components to a neural net (comparable to mixtures in a Gaussian\n"
-        "mixture model).  Number of mixture components must be greater than the number\n"
+        "Add mixture-components to a neural net (comparable to mixtures in a "
+        "Gaussian\n"
+        "mixture model).  Number of mixture components must be greater than "
+        "the number\n"
         "of pdfs\n"
         "\n"
         "Usage:  nnet-am-mixup [options] <nnet-in> <nnet-out>\n"
@@ -42,20 +44,19 @@ int main(int argc, char *argv[]) {
 
     NnetMixupConfig config;
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     config.Register(&po);
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(2);
-    
+    std::string nnet_rxfilename = po.GetArg(1), nnet_wxfilename = po.GetArg(2);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Mixed up neural net from " << nnet_rxfilename
               << " and wrote it to " << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

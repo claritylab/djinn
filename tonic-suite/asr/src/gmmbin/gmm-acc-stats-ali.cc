@@ -1,6 +1,7 @@
 // gmmbin/gmm-acc-stats-ali.cc
 
-// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author:
+// Daniel Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -17,15 +18,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "gmm/mle-am-diag-gmm.h"
-
-
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -48,9 +45,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        alignments_rspecifier = po.GetArg(3),
-        accs_wxfilename = po.GetArg(4);
+                feature_rspecifier = po.GetArg(2),
+                alignments_rspecifier = po.GetArg(3),
+                accs_wxfilename = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -96,16 +93,16 @@ int main(int argc, char *argv[]) {
           int32 tid = alignment[i],  // transition identifier.
               pdf_id = trans_model.TransitionIdToPdf(tid);
           trans_model.Accumulate(1.0, tid, &transition_accs);
-          tot_like_this_file += gmm_accs.AccumulateForGmm(am_gmm, mat.Row(i),
-                                                          pdf_id, 1.0);
+          tot_like_this_file +=
+              gmm_accs.AccumulateForGmm(am_gmm, mat.Row(i), pdf_id, 1.0);
         }
         tot_like += tot_like_this_file;
         tot_t += alignment.size();
         if (num_done % 50 == 0) {
           KALDI_LOG << "Processed " << num_done << " utterances; for utterance "
                     << key << " avg. like is "
-                    << (tot_like_this_file/alignment.size())
-                    << " over " << alignment.size() <<" frames.";
+                    << (tot_like_this_file / alignment.size()) << " over "
+                    << alignment.size() << " frames.";
         }
       }
     }
@@ -113,7 +110,7 @@ int main(int argc, char *argv[]) {
               << " with errors.";
 
     KALDI_LOG << "Overall avg like per frame (Gaussian only) = "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
 
     {
       Output ko(accs_wxfilename, binary);
@@ -125,10 +122,8 @@ int main(int argc, char *argv[]) {
       return 0;
     else
       return 1;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

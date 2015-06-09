@@ -19,14 +19,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "sgmm2/am-sgmm2.h"
 #include "hmm/transition-model.h"
 #include "sgmm2/estimate-am-sgmm2.h"
 #include "hmm/posterior.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -35,13 +33,16 @@ int main(int argc, char *argv[]) {
         "Convert posteriors to Gaussian-level posteriors for SGMM training.\n"
         "Usage: sgmm2-post-to-gpost [options] <model-in> <feature-rspecifier> "
         "<posteriors-rspecifier> <gpost-wspecifier>\n"
-        "e.g.: sgmm2-post-to-gpost 1.mdl 1.ali scp:train.scp 'ark:ali-to-post ark:1.ali ark:-|' ark:-";
+        "e.g.: sgmm2-post-to-gpost 1.mdl 1.ali scp:train.scp 'ark:ali-to-post "
+        "ark:1.ali ark:-|' ark:-";
 
     ParseOptions po(usage);
     std::string gselect_rspecifier, spkvecs_rspecifier, utt2spk_rspecifier;
 
-    po.Register("gselect", &gselect_rspecifier, "Precomputed Gaussian indices (rspecifier)");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors (rspecifier)");
+    po.Register("gselect", &gselect_rspecifier,
+                "Precomputed Gaussian indices (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors (rspecifier)");
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
 
@@ -51,13 +52,12 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-    if (gselect_rspecifier == "")
-      KALDI_ERR << "--gselect option is required";
-    
+    if (gselect_rspecifier == "") KALDI_ERR << "--gselect option is required";
+
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        gpost_wspecifier = po.GetArg(4);
+                feature_rspecifier = po.GetArg(2),
+                posteriors_rspecifier = po.GetArg(3),
+                gpost_wspecifier = po.GetArg(4);
 
     using namespace kaldi;
     typedef kaldi::int32 int32;
@@ -81,15 +81,15 @@ int main(int argc, char *argv[]) {
                                                            utt2spk_rspecifier);
 
     Sgmm2PerFrameDerivedVars per_frame_vars;
-    
+
     Sgmm2GauPostWriter gpost_writer(gpost_wspecifier);
-    
+
     int32 num_done = 0, num_err = 0;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
       std::string utt = feature_reader.Key();
-      if (!posteriors_reader.HasKey(utt)
-          || posteriors_reader.Value(utt).size() != mat.NumRows()) {
+      if (!posteriors_reader.HasKey(utt) ||
+          posteriors_reader.Value(utt).size() != mat.NumRows()) {
         KALDI_WARN << "No posteriors available for utterance " << utt
                    << " (or wrong size)";
         num_err++;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
           num_err++;
           continue;
         }
-      } // else spk_vars is "empty"
+      }  // else spk_vars is "empty"
 
       num_done++;
       BaseFloat tot_like_this_file = 0.0, tot_weight = 0.0;
@@ -129,14 +129,14 @@ int main(int argc, char *argv[]) {
       BaseFloat prev_like = 0;
       Matrix<BaseFloat> prev_posterior;
       for (size_t i = 0; i < posterior.size(); i++) {
-        am_sgmm.ComputePerFrameVars(mat.Row(i), gselect[i],
-                                    spk_vars, &per_frame_vars);
+        am_sgmm.ComputePerFrameVars(mat.Row(i), gselect[i], spk_vars,
+                                    &per_frame_vars);
 
         gpost[i].gselect = gselect[i];
         gpost[i].tids.resize(posterior[i].size());
         gpost[i].posteriors.resize(posterior[i].size());
 
-        prev_pdf_id = -1;       // Only cache for the same frame.
+        prev_pdf_id = -1;  // Only cache for the same frame.
         for (size_t j = 0; j < posterior[i].size(); j++) {
           int32 tid = posterior[i][j].first,  // transition identifier.
               pdf_id = trans_model.TransitionIdToPdf(tid);
@@ -148,8 +148,7 @@ int main(int argc, char *argv[]) {
             // variables.
             prev_pdf_id = pdf_id;
             prev_like = am_sgmm.ComponentPosteriors(per_frame_vars, pdf_id,
-                                                    &spk_vars,
-                                                    &prev_posterior);
+                                                    &spk_vars, &prev_posterior);
           }
 
           gpost[i].posteriors[j] = prev_posterior;
@@ -160,27 +159,24 @@ int main(int argc, char *argv[]) {
       }
 
       KALDI_VLOG(2) << "Average like for this file is "
-                    << (tot_like_this_file/posterior.size()) << " over "
-                    << posterior.size() <<" frames.";
+                    << (tot_like_this_file / posterior.size()) << " over "
+                    << posterior.size() << " frames.";
       tot_like += tot_like_this_file;
       tot_t += posterior.size();
       if (num_done % 10 == 0)
-        KALDI_LOG << "Avg like per frame so far is "
-                  << (tot_like/tot_t);
+        KALDI_LOG << "Avg like per frame so far is " << (tot_like / tot_t);
       gpost_writer.Write(utt, gpost);
     }
-    
+
     KALDI_LOG << "Overall like per frame (Gaussian only) = "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
 
     KALDI_LOG << "Done " << num_done << " files, " << num_err
               << " with errors.";
 
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

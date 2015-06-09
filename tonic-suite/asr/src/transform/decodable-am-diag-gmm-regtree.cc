@@ -25,9 +25,8 @@ using std::vector;
 
 namespace kaldi {
 
-
 BaseFloat DecodableAmDiagGmmRegtreeFmllr::LogLikelihoodZeroBased(int32 frame,
-                                                          int32 state) {
+                                                                 int32 state) {
   KALDI_ASSERT(frame < NumFrames() && frame >= 0);
   KALDI_ASSERT(state < NumIndices() && state >= 0);
 
@@ -46,32 +45,34 @@ BaseFloat DecodableAmDiagGmmRegtreeFmllr::LogLikelihoodZeroBased(int32 frame,
 
   // check if everything is in order
   if (pdf.Dim() != data.Dim()) {
-    KALDI_ERR << "Dim mismatch: data dim = "  << data.Dim()
-        << " vs. model dim = " << pdf.Dim();
+    KALDI_ERR << "Dim mismatch: data dim = " << data.Dim()
+              << " vs. model dim = " << pdf.Dim();
   }
   if (!pdf.valid_gconsts()) {
-    KALDI_ERR << "State "  << (state)  << ": Must call ComputeGconsts() "
-        "before computing likelihood.";
+    KALDI_ERR << "State " << (state) << ": Must call ComputeGconsts() "
+                                        "before computing likelihood.";
   }
 
   if (frame != previous_frame_) {  // cache the transformed & squared stats.
     fmllr_xform_.TransformFeature(data, &xformed_data_);
     xformed_data_squared_ = xformed_data_;
-    vector< Vector <BaseFloat> >::iterator it = xformed_data_squared_.begin(),
-        end = xformed_data_squared_.end();
-    for (; it != end; ++it) { it->ApplyPow(2.0); }
+    vector<Vector<BaseFloat> >::iterator it = xformed_data_squared_.begin(),
+                                         end = xformed_data_squared_.end();
+    for (; it != end; ++it) {
+      it->ApplyPow(2.0);
+    }
     previous_frame_ = frame;
   }
 
   Vector<BaseFloat> loglikes(pdf.gconsts());  // need to recreate for each pdf
   int32 baseclass, regclass;
   for (int32 comp_id = 0, num_comp = pdf.NumGauss(); comp_id < num_comp;
-      ++comp_id) {
+       ++comp_id) {
     baseclass = regtree_.Gauss2BaseclassId(state, comp_id);
     regclass = fmllr_xform_.Base2RegClass(baseclass);
     // loglikes +=  means * inv(vars) * data.
-    loglikes(comp_id) += VecVec(pdf.means_invvars().Row(comp_id),
-                                xformed_data_[regclass]);
+    loglikes(comp_id) +=
+        VecVec(pdf.means_invvars().Row(comp_id), xformed_data_[regclass]);
     // loglikes += -0.5 * inv(vars) * data_sq.
     loglikes(comp_id) -= 0.5 * VecVec(pdf.inv_vars().Row(comp_id),
                                       xformed_data_squared_[regclass]);
@@ -93,19 +94,15 @@ DecodableAmDiagGmmRegtreeMllr::~DecodableAmDiagGmmRegtreeMllr() {
   DeletePointers(&xformed_gconsts_);
 }
 
-
 void DecodableAmDiagGmmRegtreeMllr::InitCache() {
-  if (xformed_mean_invvars_.size() != 0)
-    DeletePointers(&xformed_mean_invvars_);
-  if (xformed_gconsts_.size() != 0)
-    DeletePointers(&xformed_gconsts_);
+  if (xformed_mean_invvars_.size() != 0) DeletePointers(&xformed_mean_invvars_);
+  if (xformed_gconsts_.size() != 0) DeletePointers(&xformed_gconsts_);
   int32 num_pdfs = acoustic_model_.NumPdfs();
   xformed_mean_invvars_.resize(num_pdfs);
   xformed_gconsts_.resize(num_pdfs);
   is_cached_.resize(num_pdfs, false);
   ResetLogLikeCache();
 }
-
 
 // This is almost the same code as DiagGmm::ComputeGconsts, except that
 // means are used instead of means * inv(vars). This saves some computation.
@@ -115,8 +112,8 @@ static void ComputeGconsts(const VectorBase<BaseFloat> &weights,
                            VectorBase<BaseFloat> *gconsts_out) {
   int32 num_gauss = weights.Dim();
   int32 dim = means.NumCols();
-  KALDI_ASSERT(means.NumRows() == num_gauss
-      && inv_vars.NumRows() == num_gauss && inv_vars.NumCols() == dim);
+  KALDI_ASSERT(means.NumRows() == num_gauss &&
+               inv_vars.NumRows() == num_gauss && inv_vars.NumCols() == dim);
   KALDI_ASSERT(gconsts_out->Dim() == num_gauss);
 
   BaseFloat offset = -0.5 * M_LOG_2PI * dim;  // constant term in gconst.
@@ -126,12 +123,13 @@ static void ComputeGconsts(const VectorBase<BaseFloat> &weights,
     KALDI_ASSERT(weights(gauss) >= 0);  // Cannot have negative weights.
     BaseFloat gc = log(weights(gauss)) + offset;  // May be -inf if weights == 0
     for (int32 d = 0; d < dim; d++) {
-      gc += 0.5 * log(inv_vars(gauss, d)) - 0.5 * means(gauss, d)
-        * means(gauss, d) * inv_vars(gauss, d);  // diff from DiagGmm version.
+      gc += 0.5 * log(inv_vars(gauss, d)) -
+            0.5 * means(gauss, d) * means(gauss, d) *
+                inv_vars(gauss, d);  // diff from DiagGmm version.
     }
 
     if (KALDI_ISNAN(gc)) {  // negative infinity is OK but NaN is not acceptable
-      KALDI_ERR << "At component "  << gauss
+      KALDI_ERR << "At component " << gauss
                 << ", not a number in gconst computation";
     }
     if (KALDI_ISINF(gc)) {
@@ -147,8 +145,7 @@ static void ComputeGconsts(const VectorBase<BaseFloat> &weights,
                << "gconsts.";
 }
 
-
-const Matrix<BaseFloat>& DecodableAmDiagGmmRegtreeMllr::GetXformedMeanInvVars(
+const Matrix<BaseFloat> &DecodableAmDiagGmmRegtreeMllr::GetXformedMeanInvVars(
     int32 state) {
   if (is_cached_[state]) {  // found in cache
     KALDI_ASSERT(xformed_mean_invvars_[state] != NULL);
@@ -159,7 +156,7 @@ const Matrix<BaseFloat>& DecodableAmDiagGmmRegtreeMllr::GetXformedMeanInvVars(
     KALDI_ASSERT(xformed_mean_invvars_[state] == NULL);
     KALDI_VLOG(3) << "For PDF index " << state << ": transforming means.";
     int32 num_gauss = acoustic_model_.GetPdf(state).NumGauss(),
-        dim = acoustic_model_.Dim();
+          dim = acoustic_model_.Dim();
     const Vector<BaseFloat> &weights = acoustic_model_.GetPdf(state).weights();
     const Matrix<BaseFloat> &invvars = acoustic_model_.GetPdf(state).inv_vars();
     xformed_mean_invvars_[state] = new Matrix<BaseFloat>(num_gauss, dim);
@@ -177,7 +174,7 @@ const Matrix<BaseFloat>& DecodableAmDiagGmmRegtreeMllr::GetXformedMeanInvVars(
   }
 }
 
-const Vector<BaseFloat>& DecodableAmDiagGmmRegtreeMllr::GetXformedGconsts(
+const Vector<BaseFloat> &DecodableAmDiagGmmRegtreeMllr::GetXformedGconsts(
     int32 state) {
   if (!is_cached_[state]) {
     KALDI_ERR << "GConsts not cached for state: " << state << ". Must call "
@@ -189,7 +186,7 @@ const Vector<BaseFloat>& DecodableAmDiagGmmRegtreeMllr::GetXformedGconsts(
 
 BaseFloat DecodableAmDiagGmmRegtreeMllr::LogLikelihoodZeroBased(int32 frame,
                                                                 int32 state) {
-//  KALDI_ERR << "Function not completely implemented yet.";
+  //  KALDI_ERR << "Function not completely implemented yet.";
   KALDI_ASSERT(frame < NumFrames() && frame >= 0);
   KALDI_ASSERT(state < NumIndices() && state >= 0);
 
@@ -202,8 +199,8 @@ BaseFloat DecodableAmDiagGmmRegtreeMllr::LogLikelihoodZeroBased(int32 frame,
 
   // check if everything is in order
   if (pdf.Dim() != data.Dim()) {
-    KALDI_ERR << "Dim mismatch: data dim = "  << data.Dim()
-        << " vs. model dim = " << pdf.Dim();
+    KALDI_ERR << "Dim mismatch: data dim = " << data.Dim()
+              << " vs. model dim = " << pdf.Dim();
   }
 
   if (frame != previous_frame_) {  // cache the squared stats.

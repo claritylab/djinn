@@ -17,20 +17,17 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "fstext/rand-fst.h"
 #include "fstext/epsilon-property.h"
-
 
 namespace fst {
 
 void TestEnsureEpsilonProperty() {
-  
   for (int32 i = 0; i < 10; i++) {
     RandFstOptions opts;
     opts.acyclic = true;
     VectorFst<LogArc> *fst = RandFst<LogArc>(opts);
-    VectorFst<LogArc> fst2(*fst); // copy it...
+    VectorFst<LogArc> fst2(*fst);  // copy it...
     EnsureEpsilonProperty(&fst2);
 
     std::vector<char> info;
@@ -42,12 +39,12 @@ void TestEnsureEpsilonProperty() {
       assert(!((c & kStateHasEpsilonArcsLeaving) != 0 &&
                (c & kStateHasNonEpsilonArcsLeaving) != 0));
     }
-    assert(RandEquivalent(fst2, *fst, 5, 0.01, kaldi::Rand(), 10));    
+    assert(RandEquivalent(fst2, *fst, 5, 0.01, kaldi::Rand(), 10));
     delete fst;
   }
 }
 
-} // end namespace fst
+}  // end namespace fst
 
 int main() {
   using namespace fst;

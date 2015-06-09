@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_GMM_INDIRECT_DIFF_DIAG_GMM_H_
 #define KALDI_GMM_INDIRECT_DIFF_DIAG_GMM_H_ 1
 
@@ -40,16 +39,15 @@ namespace kaldi {
 // of the ML update, you will do a "rescaling" update as in the function
 // DoRescalingUpdate().
 //
-// CAUTION: for fMPE (as opposed to fMMI), to get the right answer, you would have
+// CAUTION: for fMPE (as opposed to fMMI), to get the right answer, you would
+// have
 // to pre-scale the num and den accs by the acoustic scale (e.g. 0.1).
-void GetStatsDerivative(const AmDiagGmm &gmm,
-                        const AccumAmDiagGmm &num_accs, // for MMI, would equal ml accs.
-                        const AccumAmDiagGmm &den_accs,
-                        const AccumAmDiagGmm &ml_accs,
-                        BaseFloat min_variance,
-                        BaseFloat min_gaussian_occupancy,
-                        AccumAmDiagGmm *out_accs);
-
+void GetStatsDerivative(
+    const AmDiagGmm &gmm,
+    const AccumAmDiagGmm &num_accs,  // for MMI, would equal ml accs.
+    const AccumAmDiagGmm &den_accs, const AccumAmDiagGmm &ml_accs,
+    BaseFloat min_variance, BaseFloat min_gaussian_occupancy,
+    AccumAmDiagGmm *out_accs);
 
 // This function "DoRescalingUpdate" updates the GMMs in a special way-- it
 // first works out how the Gaussians differ from the old stats (in terms of an
@@ -59,16 +57,14 @@ void GetStatsDerivative(const AmDiagGmm &gmm,
 //
 // The idea here is that the original model may have been discriminatively
 // trained, but we may have changed the features or the domain or something
-// of that nature, and we want to update the model but preserve the discriminative
+// of that nature, and we want to update the model but preserve the
+// discriminative
 // training (viewed as an offset).
 void DoRescalingUpdate(const AccumAmDiagGmm &old_ml_accs,
                        const AccumAmDiagGmm &new_ml_accs,
-                       BaseFloat min_variance,
-                       BaseFloat min_gaussian_occupancy,
+                       BaseFloat min_variance, BaseFloat min_gaussian_occupancy,
                        AmDiagGmm *gmm);
 
-
-} // end namespace kaldi
-
+}  // end namespace kaldi
 
 #endif  // KALDI_GMM_INDIRECT_DIFF_DIAG_GMM_H_

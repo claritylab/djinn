@@ -45,11 +45,9 @@ class FullGmm;
 class FullGmmNormal {
  public:
   /// Empty constructor.
-  FullGmmNormal() { }
+  FullGmmNormal() {}
 
-  explicit FullGmmNormal(const FullGmm &gmm) {
-    CopyFromFullGmm(gmm);
-  }
+  explicit FullGmmNormal(const FullGmm &gmm) { CopyFromFullGmm(gmm); }
 
   /// Resizes arrays to this dim. Does not initialize data.
   void Resize(int32 nMix, int32 dim);
@@ -63,8 +61,8 @@ class FullGmmNormal {
   /// Generates random features from the model.
   void Rand(MatrixBase<BaseFloat> *feats);
 
-  Vector<double> weights_;              ///< weights (not log).
-  Matrix<double> means_;                ///< Means
+  Vector<double> weights_;               ///< weights (not log).
+  Matrix<double> means_;                 ///< Means
   std::vector<SpMatrix<double> > vars_;  ///< covariances
 
   KALDI_DISALLOW_COPY_AND_ASSIGN(FullGmmNormal);

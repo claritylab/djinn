@@ -21,16 +21,18 @@
 
 namespace kaldi {
 
-OnlineTimingStats::OnlineTimingStats():
-    num_utts_(0), total_audio_(0.0), total_time_taken_(0.0),
-    total_time_waited_(0.0), max_delay_(0.0) {
-}
+OnlineTimingStats::OnlineTimingStats()
+    : num_utts_(0),
+      total_audio_(0.0),
+      total_time_taken_(0.0),
+      total_time_waited_(0.0),
+      max_delay_(0.0) {}
 
-void OnlineTimingStats::Print(){
+void OnlineTimingStats::Print() {
   double real_time_factor = total_time_taken_ / total_audio_,
-      average_wait = (total_time_taken_ - total_audio_) / num_utts_,
-      idle_proportion = total_time_waited_ / total_audio_,
-      idle_percent = 100.0 * idle_proportion;
+         average_wait = (total_time_taken_ - total_audio_) / num_utts_,
+         idle_proportion = total_time_waited_ / total_audio_,
+         idle_percent = 100.0 * idle_proportion;
 
   KALDI_LOG << "Timing stats: real-time factor was " << real_time_factor
             << " (note: this cannot be less than one.)";
@@ -38,12 +40,10 @@ void OnlineTimingStats::Print(){
   KALDI_LOG << "Percentage of time spent idling was " << idle_percent;
   KALDI_LOG << "Longest delay was " << max_delay_ << " seconds for utterance "
             << '\'' << max_delay_utt_ << '\'';
-
-  
 }
 
-OnlineTimer::OnlineTimer(const std::string &utterance_id):
-    utterance_id_(utterance_id), waited_(0.0), utterance_length_(0.0) { }
+OnlineTimer::OnlineTimer(const std::string &utterance_id)
+    : utterance_id_(utterance_id), waited_(0.0), utterance_length_(0.0) {}
 
 void OnlineTimer::WaitUntil(double cur_utterance_length) {
   double elapsed = timer_.Elapsed();
@@ -55,25 +55,21 @@ void OnlineTimer::WaitUntil(double cur_utterance_length) {
   // at this point, increase "waited_".
   // (I have to think of a better way of explaining this).
   double to_wait = cur_utterance_length - (elapsed + waited_);
-  if (to_wait > 0.0)
-    waited_ += to_wait;
+  if (to_wait > 0.0) waited_ += to_wait;
 
   utterance_length_ = cur_utterance_length;
 }
 
-double OnlineTimer::Elapsed() {
-  return timer_.Elapsed() + waited_;
-}
+double OnlineTimer::Elapsed() { return timer_.Elapsed() + waited_; }
 
 void OnlineTimer::OutputStats(OnlineTimingStats *stats) {
   double processing_time = timer_.Elapsed() + waited_,
-      wait_time = processing_time - utterance_length_;
+         wait_time = processing_time - utterance_length_;
   if (wait_time < 0.0) {
     // My first though was to make this a KALDI_ERR, but perhaps
     // clocks can go backwards under some weird circumstance, so
     // let's just make it a warning.
-    KALDI_WARN << "Negative wait time " << wait_time
-               << " does not make sense.";
+    KALDI_WARN << "Negative wait time " << wait_time << " does not make sense.";
   }
 
   stats->num_utts_++;
@@ -85,6 +81,5 @@ void OnlineTimer::OutputStats(OnlineTimingStats *stats) {
     stats->max_delay_utt_ = utterance_id_;
   }
 }
-
 
 }  // namespace kaldi

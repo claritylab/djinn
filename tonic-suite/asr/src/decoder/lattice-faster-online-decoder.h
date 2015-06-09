@@ -22,7 +22,6 @@
 // see note at the top of lattice-faster-decoder.h, about how to maintain this
 // file in sync with lattice-faster-decoder.h
 
-
 #ifndef KALDI_DECODER_LATTICE_FASTER_ONLINE_DECODER_H_
 #define KALDI_DECODER_LATTICE_FASTER_ONLINE_DECODER_H_
 
@@ -38,8 +37,6 @@
 
 namespace kaldi {
 
-
-
 /** LatticeFasterOnlineDecoder is as LatticeFasterDecoder but also supports an
     efficient way to get the best path (see the function BestPathEnd()), which
     is useful in endpointing.
@@ -53,10 +50,10 @@ class LatticeFasterOnlineDecoder {
   struct BestPathIterator {
     void *tok;
     int32 frame;
-    BestPathIterator(void *t, int32 f): tok(t), frame(f) { }
+    BestPathIterator(void *t, int32 f) : tok(t), frame(f) {}
     bool Done() { return tok == NULL; }
   };
-  
+
   // instantiate this class once for each thing you have to decode.
   LatticeFasterOnlineDecoder(const fst::Fst<fst::StdArc> &fst,
                              const LatticeFasterDecoderConfig &config);
@@ -66,15 +63,12 @@ class LatticeFasterOnlineDecoder {
   LatticeFasterOnlineDecoder(const LatticeFasterDecoderConfig &config,
                              fst::Fst<fst::StdArc> *fst);
 
-
   void SetOptions(const LatticeFasterDecoderConfig &config) {
     config_ = config;
   }
 
-  const LatticeFasterDecoderConfig &GetOptions() const {
-    return config_;
-  }
-  
+  const LatticeFasterDecoderConfig &GetOptions() const { return config_; }
+
   ~LatticeFasterOnlineDecoder();
 
   /// Decodes until there are no more frames left in the "decodable" object..
@@ -83,30 +77,29 @@ class LatticeFasterOnlineDecoder {
   /// final state).
   bool Decode(DecodableInterface *decodable);
 
-
-  /// says whether a final-state was active on the last frame.  If it was not, the
+  /// says whether a final-state was active on the last frame.  If it was not,
+  /// the
   /// lattice (or traceback) will end with states that are not final-states.
   bool ReachedFinal() const {
     return FinalRelativeCost() != std::numeric_limits<BaseFloat>::infinity();
   }
 
   /// Outputs an FST corresponding to the single best path through the lattice.
-  /// This is quite efficient because it doesn't get the entire raw lattice and find
-  /// the best path through it; insterad, it uses the BestPathEnd and BestPathIterator
+  /// This is quite efficient because it doesn't get the entire raw lattice and
+  /// find
+  /// the best path through it; insterad, it uses the BestPathEnd and
+  /// BestPathIterator
   /// so it basically traces it back through the lattice.
   /// Returns true if result is nonempty (using the return status is deprecated,
   /// it will become void).  If "use_final_probs" is true AND we reached the
   /// final-state of the graph then it will include those as final-probs, else
   /// it will treat all final-probs as one.
-  bool GetBestPath(Lattice *ofst,
-                   bool use_final_probs = true) const;
+  bool GetBestPath(Lattice *ofst, bool use_final_probs = true) const;
 
-  
   /// This function does a self-test of GetBestPath().  Returns true on
   /// success; returns false and prints a warning on failure.
   bool TestGetBestPath(bool use_final_probs = true) const;
-  
-  
+
   /// This function returns an iterator that can be used to trace back
   /// the best path.  If use_final_probs == true and at least one final state
   /// survived till the end, it will use the final-probs in working out the best
@@ -117,36 +110,33 @@ class LatticeFasterOnlineDecoder {
   BestPathIterator BestPathEnd(bool use_final_probs,
                                BaseFloat *final_cost = NULL) const;
 
-
   /// This function can be used in conjunction with BestPathEnd() to trace back
   /// the best path one link at a time (e.g. this can be useful in endpoint
   /// detection).  By "link" we mean a link in the graph; not all links cross
   /// frame boundaries, but each time you see a nonzero ilabel you can interpret
   /// that as a frame.  The return value is the updated iterator.  It outputs
-  /// the ilabel and olabel, and the (graph and acoustic) weight to the "arc" pointer,
+  /// the ilabel and olabel, and the (graph and acoustic) weight to the "arc"
+  /// pointer,
   /// while leaving its "nextstate" variable unchanged.
-  BestPathIterator TraceBackBestPath(
-      BestPathIterator iter, LatticeArc *arc) const;
-  
+  BestPathIterator TraceBackBestPath(BestPathIterator iter,
+                                     LatticeArc *arc) const;
+
   /// Outputs an FST corresponding to the raw, state-level
   /// tracebacks.  Returns true if result is nonempty.
   /// If "use_final_probs" is true AND we reached the final-state
   /// of the graph then it will include those as final-probs, else
   /// it will treat all final-probs as one.
   /// The raw lattice will be topologically sorted.
-  bool GetRawLattice(Lattice *ofst,
-                     bool use_final_probs = true) const;
+  bool GetRawLattice(Lattice *ofst, bool use_final_probs = true) const;
 
   /// Behaves the same like GetRawLattice but only processes tokens whose
   /// extra_cost is smaller than the best-cost plus the specified beam.
   /// It is only worthwhile to call this function if beam is less than
   /// the lattice_beam specified in the config; otherwise, it would
   /// return essentially the same thing as GetRawLattice, but more slowly.
-  bool GetRawLatticePruned(Lattice *ofst,
-                           bool use_final_probs,
+  bool GetRawLatticePruned(Lattice *ofst, bool use_final_probs,
                            BaseFloat beam) const;
 
-  
   /// InitDecoding initializes the decoding, and should only be used if you
   /// intend to call AdvanceDecoding().  If you call Decode(), you don't need
   /// to call this.  You can call InitDecoding if you have already decoded an
@@ -190,19 +180,22 @@ class LatticeFasterOnlineDecoder {
   // or sometimes on the current frame (for input-epsilon links).
   struct Token;
   struct ForwardLink {
-    Token *next_tok; // the next token [or NULL if represents final-state]
-    Label ilabel; // ilabel on link.
-    Label olabel; // olabel on link.
-    BaseFloat graph_cost; // graph cost of traversing link (contains LM, etc.)
-    BaseFloat acoustic_cost; // acoustic cost (pre-scaled) of traversing link
-    ForwardLink *next; // next in singly-linked list of forward links from a
-                       // token.
+    Token *next_tok;       // the next token [or NULL if represents final-state]
+    Label ilabel;          // ilabel on link.
+    Label olabel;          // olabel on link.
+    BaseFloat graph_cost;  // graph cost of traversing link (contains LM, etc.)
+    BaseFloat acoustic_cost;  // acoustic cost (pre-scaled) of traversing link
+    ForwardLink *next;  // next in singly-linked list of forward links from a
+                        // token.
     inline ForwardLink(Token *next_tok, Label ilabel, Label olabel,
                        BaseFloat graph_cost, BaseFloat acoustic_cost,
-                       ForwardLink *next):
-        next_tok(next_tok), ilabel(ilabel), olabel(olabel),
-        graph_cost(graph_cost), acoustic_cost(acoustic_cost),
-        next(next) { }
+                       ForwardLink *next)
+        : next_tok(next_tok),
+          ilabel(ilabel),
+          olabel(olabel),
+          graph_cost(graph_cost),
+          acoustic_cost(acoustic_cost),
+          next(next) {}
   };
 
   // Token is what's resident in a particular state at a particular time.
@@ -210,28 +203,32 @@ class LatticeFasterOnlineDecoder {
   // When first created, a Token just has the (total) cost.    We add forward
   // links from it when we process the next frame.
   struct Token {
-    BaseFloat tot_cost; // would equal weight.Value()... cost up to this point.
-    BaseFloat extra_cost; // >= 0.  After calling PruneForwardLinks, this equals
+    BaseFloat tot_cost;  // would equal weight.Value()... cost up to this point.
+    BaseFloat
+        extra_cost;  // >= 0.  After calling PruneForwardLinks, this equals
     // the minimum difference between the cost of the best path, and the cost of
     // this is on, and the cost of the absolute best path, under the assumption
     // that any of the currently active states at the decoding front may
     // eventually succeed (e.g. if you were to take the currently active states
     // one by one and compute this difference, and then take the minimum).
 
-    ForwardLink *links; // Head of singly linked list of ForwardLinks
+    ForwardLink *links;  // Head of singly linked list of ForwardLinks
 
-    Token *next; // Next in list of tokens for this frame.
+    Token *next;  // Next in list of tokens for this frame.
 
-    Token *backpointer; // best preceding Token (could be on this frame or a
-                        // previous frame).  This is only required for an
-                        // efficient GetBestPath function, it plays no part in
-                        // the lattice generation (the "links" list is what
-                        // stores the forward links, for that).
+    Token *backpointer;  // best preceding Token (could be on this frame or a
+                         // previous frame).  This is only required for an
+                         // efficient GetBestPath function, it plays no part in
+                         // the lattice generation (the "links" list is what
+                         // stores the forward links, for that).
 
     inline Token(BaseFloat tot_cost, BaseFloat extra_cost, ForwardLink *links,
-                 Token *next, Token *backpointer):
-        tot_cost(tot_cost), extra_cost(extra_cost), links(links), next(next),
-        backpointer(backpointer) { }
+                 Token *next, Token *backpointer)
+        : tot_cost(tot_cost),
+          extra_cost(extra_cost),
+          links(links),
+          next(next),
+          backpointer(backpointer) {}
     inline void DeleteForwardLinks() {
       ForwardLink *l = links, *m;
       while (l != NULL) {
@@ -249,11 +246,11 @@ class LatticeFasterOnlineDecoder {
     Token *toks;
     bool must_prune_forward_links;
     bool must_prune_tokens;
-    TokenList(): toks(NULL), must_prune_forward_links(true),
-                 must_prune_tokens(true) { }
+    TokenList()
+        : toks(NULL), must_prune_forward_links(true), must_prune_tokens(true) {}
   };
 
-  typedef HashList<StateId, Token*>::Elem Elem;
+  typedef HashList<StateId, Token *>::Elem Elem;
 
   void PossiblyResizeHash(size_t num_toks);
 
@@ -279,8 +276,7 @@ class LatticeFasterOnlineDecoder {
   // extra_costs_changed is set to true if extra_cost was changed for any token
   // links_pruned is set to true if any link in any token was pruned
   void PruneForwardLinks(int32 frame_plus_one, bool *extra_costs_changed,
-                         bool *links_pruned,
-                         BaseFloat delta);
+                         bool *links_pruned, BaseFloat delta);
 
   // This function computes the final-costs for tokens active on the final
   // frame.  It outputs to final-costs, if non-NULL, a map from the Token*
@@ -298,7 +294,7 @@ class LatticeFasterOnlineDecoder {
   // forward-cost[t] if there were no final-probs active on the final frame.
   // You cannot call this after FinalizeDecoding() has been called; in that
   // case you should get the answer from class-member variables.
-  void ComputeFinalCosts(unordered_map<Token*, BaseFloat> *final_costs,
+  void ComputeFinalCosts(unordered_map<Token *, BaseFloat> *final_costs,
                          BaseFloat *final_relative_cost,
                          BaseFloat *final_best_cost) const;
 
@@ -313,7 +309,6 @@ class LatticeFasterOnlineDecoder {
   // It's called by PruneActiveTokens if any forward links have been pruned
   void PruneTokensForFrame(int32 frame_plus_one);
 
-
   // Go backwards through still-alive tokens, pruning them if the
   // forward+backward cost is more than lat_beam away from the best path.  It's
   // possible to prove that this is "correct" in the sense that we won't lose
@@ -327,7 +322,8 @@ class LatticeFasterOnlineDecoder {
   BaseFloat GetCutoff(Elem *list_head, size_t *tok_count,
                       BaseFloat *adaptive_beam, Elem **best_elem);
 
-  /// Processes emitting arcs for one frame.  Propagates from prev_toks_ to cur_toks_.
+  /// Processes emitting arcs for one frame.  Propagates from prev_toks_ to
+  /// cur_toks_.
   void ProcessEmitting(DecodableInterface *decodable);
 
   /// Processes nonemitting (epsilon) arcs for one frame.
@@ -343,9 +339,9 @@ class LatticeFasterOnlineDecoder {
   // That is, the emitting probs of frame t are accounted for in tokens at
   // toks_[t+1].  The zeroth frame is for nonemitting transition at the start of
   // the graph.
-  HashList<StateId, Token*> toks_;
+  HashList<StateId, Token *> toks_;
 
-  std::vector<TokenList> active_toks_; // Lists of tokens, indexed by
+  std::vector<TokenList> active_toks_;  // Lists of tokens, indexed by
   // frame (members of TokenList are toks, must_prune_forward_links,
   // must_prune_tokens).
   std::vector<StateId> queue_;  // temp variable used in ProcessNonemitting,
@@ -353,11 +349,11 @@ class LatticeFasterOnlineDecoder {
   // make it class member to avoid internal new/delete.
   const fst::Fst<fst::StdArc> &fst_;
   bool delete_fst_;
-  std::vector<BaseFloat> cost_offsets_; // This contains, for each
+  std::vector<BaseFloat> cost_offsets_;  // This contains, for each
   // frame, an offset that was added to the acoustic likelihoods on that
   // frame in order to keep everything in a nice dynamic range.
   LatticeFasterDecoderConfig config_;
-  int32 num_toks_; // current total #toks allocated...
+  int32 num_toks_;  // current total #toks allocated...
   bool warned_;
 
   /// decoding_finalized_ is true if someone called FinalizeDecoding().  [note,
@@ -370,7 +366,7 @@ class LatticeFasterOnlineDecoder {
   bool decoding_finalized_;
   /// For the meaning of the next 3 variables, see the comment for
   /// decoding_finalized_ above., and ComputeFinalCosts().
-  unordered_map<Token*, BaseFloat> final_costs_;
+  unordered_map<Token *, BaseFloat> final_costs_;
   BaseFloat final_relative_cost_;
   BaseFloat final_best_cost_;
 
@@ -394,14 +390,11 @@ class LatticeFasterOnlineDecoder {
   // which the caller should pass over; it just happens to be more efficient for
   // the algorithm to output a list that contains NULLs.
   static void TopSortTokens(Token *tok_list,
-                            std::vector<Token*> *topsorted_list);
+                            std::vector<Token *> *topsorted_list);
 
   void ClearActiveTokens();
-
 };
 
-
-
-} // end namespace kaldi.
+}  // end namespace kaldi.
 
 #endif

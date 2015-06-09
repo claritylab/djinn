@@ -25,7 +25,6 @@
 #include "fstext/fstext-utils.h"
 #include "fstext/context-fst.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -37,7 +36,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Make H transducer from transition-ids to context-dependent phones, \n"
         " without self-loops [use add-self-loops to add them]\n"
-        "Usage:   make-h-transducer ilabel-info-file tree-file transition-gmm/acoustic-model [H-fst-out]\n"
+        "Usage:   make-h-transducer ilabel-info-file tree-file "
+        "transition-gmm/acoustic-model [H-fst-out]\n"
         "e.g.: \n"
         " make-h-transducer ilabel_info  1.tree 1.mdl > H.fst\n";
     ParseOptions po(usage);
@@ -45,7 +45,9 @@ int main(int argc, char *argv[]) {
     HTransducerConfig hcfg;
     std::string disambig_out_filename;
     hcfg.Register(&po);
-    po.Register("disambig-syms-out", &disambig_out_filename, "List of disambiguation symbols on input of H [to be output from this program]");
+    po.Register("disambig-syms-out", &disambig_out_filename,
+                "List of disambiguation symbols on input of H [to be output "
+                "from this program]");
 
     po.Read(argc, argv);
 
@@ -77,31 +79,26 @@ int main(int argc, char *argv[]) {
     std::vector<int32> disambig_syms_out;
 
     // The work gets done here.
-    fst::VectorFst<fst::StdArc> *H = GetHTransducer (ilabel_info,
-                                                     ctx_dep,
-                                                     trans_model,
-                                                     hcfg,
-                                                     &disambig_syms_out);
+    fst::VectorFst<fst::StdArc> *H = GetHTransducer(
+        ilabel_info, ctx_dep, trans_model, hcfg, &disambig_syms_out);
 
     if (disambig_out_filename != "") {  // if option specified..
-      if (disambig_out_filename == "-")
-        disambig_out_filename = "";
-      if (! WriteIntegerVectorSimple(disambig_out_filename, disambig_syms_out))
+      if (disambig_out_filename == "-") disambig_out_filename = "";
+      if (!WriteIntegerVectorSimple(disambig_out_filename, disambig_syms_out))
         KALDI_ERR << "Could not write disambiguation symbols to "
-                   << (disambig_out_filename == "" ?
-                       "standard output" : disambig_out_filename);
+                  << (disambig_out_filename == "" ? "standard output"
+                                                  : disambig_out_filename);
     }
 
-    if (! H->Write(fst_out_filename) )
+    if (!H->Write(fst_out_filename))
       KALDI_ERR << "make-h-transducer: error writing FST to "
-                 << (fst_out_filename == "" ?
-                     "standard output" : fst_out_filename);
+                << (fst_out_filename == "" ? "standard output"
+                                           : fst_out_filename);
 
     delete H;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

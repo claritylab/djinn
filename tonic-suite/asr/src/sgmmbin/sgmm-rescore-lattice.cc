@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         " e.g.: sgmm-rescore-lattice 1.mdl ark:1.lats scp:trn.scp ark:2.lats\n";
 
     kaldi::BaseFloat old_acoustic_scale = 0.0;
-    bool speedup = false;    
+    bool speedup = false;
     BaseFloat log_prune = 5.0;
     std::string gselect_rspecifier, spkvecs_rspecifier, utt2spk_rspecifier;
     SgmmGselectConfig sgmm_opts;
@@ -53,7 +53,8 @@ int main(int argc, char *argv[]) {
                 "Add the current acoustic scores with some scale.");
     po.Register("log-prune", &log_prune,
                 "Pruning beam used to reduce number of exp() evaluations.");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors (rspecifier)");
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
     po.Register("gselect", &gselect_rspecifier,
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
                 "saves times when there is only one pdf-id on a single frame "
                 "by only sometimes (randomly) computing the probabilities, and "
                 "then scaling them up to preserve corpus-level diagnostics.");
-    
+
     sgmm_opts.Register(&po);
 
     po.Read(argc, argv);
@@ -73,10 +74,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_filename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        lats_wspecifier = po.GetArg(4);
+    std::string model_filename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                lats_wspecifier = po.GetArg(4);
 
     AmSgmm am_sgmm;
     TransitionModel trans_model;
@@ -125,9 +125,9 @@ int main(int argc, char *argv[]) {
         }
       }  // else spk_vars is "empty"
 
-      bool have_gselect  = !gselect_rspecifier.empty()
-          && gselect_reader.HasKey(utt)
-          && gselect_reader.Value(utt).size() == feats.NumRows();
+      bool have_gselect = !gselect_rspecifier.empty() &&
+                          gselect_reader.HasKey(utt) &&
+                          gselect_reader.Value(utt).size() == feats.NumRows();
       if (!gselect_rspecifier.empty() && !have_gselect)
         KALDI_WARN << "No Gaussian-selection info available for utterance "
                    << utt << " (or wrong size)";
@@ -135,30 +135,29 @@ int main(int argc, char *argv[]) {
       const std::vector<std::vector<int32> > *gselect =
           (have_gselect ? &gselect_reader.Value(utt) : &empty_gselect);
 
-      DecodableAmSgmm sgmm_decodable(sgmm_opts, am_sgmm, spk_vars,
-                                     trans_model, feats, *gselect,
-                                     log_prune);
+      DecodableAmSgmm sgmm_decodable(sgmm_opts, am_sgmm, spk_vars, trans_model,
+                                     feats, *gselect, log_prune);
 
       if (!speedup) {
         if (kaldi::RescoreCompactLattice(&sgmm_decodable, &clat)) {
           compact_lattice_writer.Write(utt, clat);
           num_done++;
-        } else num_err++;
+        } else
+          num_err++;
       } else {
-        BaseFloat speedup_factor = 100.0; 
+        BaseFloat speedup_factor = 100.0;
         if (kaldi::RescoreCompactLatticeSpeedup(trans_model, speedup_factor,
-                                                &sgmm_decodable,
-                                                &clat)) {
+                                                &sgmm_decodable, &clat)) {
           compact_lattice_writer.Write(utt, clat);
           num_done++;
-        } else num_err++;
-      }        
+        } else
+          num_err++;
+      }
     }
 
-    KALDI_LOG << "Done " << num_done << " lattices, errors on "
-              << num_err;
+    KALDI_LOG << "Done " << num_done << " lattices, errors on " << num_err;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

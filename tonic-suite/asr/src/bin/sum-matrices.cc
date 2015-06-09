@@ -20,7 +20,6 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   typedef kaldi::int32 int32;
@@ -47,19 +46,17 @@ int main(int argc, char *argv[]) {
     for (int32 i = 2; i <= po.NumArgs(); i++) {
       bool binary_in;
       Input ki(po.GetArg(i), &binary_in);
-      mat.Read(ki.Stream(), binary_in, true); // true == add.
+      mat.Read(ki.Stream(), binary_in, true);  // true == add.
       // This will crash if dimensions do not match.
     }
 
     Output ko(po.GetArg(1), binary);
     mat.Write(ko.Stream(), binary);
 
-    KALDI_LOG << "Summed " << (po.NumArgs()-1) << " matrices "
+    KALDI_LOG << "Summed " << (po.NumArgs() - 1) << " matrices "
               << " of dimension " << mat.NumRows() << " by " << mat.NumCols();
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

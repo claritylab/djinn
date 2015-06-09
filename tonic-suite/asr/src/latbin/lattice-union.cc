@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -48,8 +47,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string lats_rspecifier1 = po.GetArg(1),
-        lats_rspecifier2 = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
+                lats_rspecifier2 = po.GetArg(2), lats_wspecifier = po.GetArg(3);
 
     SequentialLatticeReader lattice_reader1(lats_rspecifier1);
     RandomAccessLatticeReader lattice_reader2(lats_rspecifier2);
@@ -87,7 +85,7 @@ int main(int argc, char *argv[]) {
               << n_no_lat << " cases.";
     KALDI_LOG << "Done " << n_done << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

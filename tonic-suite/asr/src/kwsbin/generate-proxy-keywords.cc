@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-utils.h"
@@ -39,13 +38,13 @@ bool PrintProxyFstPath(const VectorFst<StdArc> &proxy,
     return true;
   }
 
-  for (ArcIterator<StdFst> aiter(proxy, cur_state);
-       !aiter.Done(); aiter.Next()) {
+  for (ArcIterator<StdFst> aiter(proxy, cur_state); !aiter.Done();
+       aiter.Next()) {
     const StdArc &arc = aiter.Value();
     StdArc::Weight temp_weight = Times(arc.weight, cur_weight);
     cur_path.push_back(arc.ilabel);
-    PrintProxyFstPath(proxy, path, weight,
-                      arc.nextstate, cur_path, temp_weight);
+    PrintProxyFstPath(proxy, path, weight, arc.nextstate, cur_path,
+                      temp_weight);
     cur_path.pop_back();
   }
 
@@ -84,15 +83,20 @@ int main(int argc, char *argv[]) {
     int32 proxy_nbest = 100;
     double phone_beam = 5;
     double proxy_beam = 5;
-    po.Register("phone-nbest", &phone_nbest, "Prune KxL2xE transducer to only "
+    po.Register("phone-nbest", &phone_nbest,
+                "Prune KxL2xE transducer to only "
                 "contain top n phone sequences, -1 means all sequences.");
-    po.Register("proxy-nbest", &proxy_nbest, "Prune KxL2xExL1' transducer to "
+    po.Register("proxy-nbest", &proxy_nbest,
+                "Prune KxL2xExL1' transducer to "
                 "only contain top n proxy keywords, -1 means all proxies.");
-    po.Register("phone-beam", &phone_beam, "Prune KxL2xE transducer to the "
+    po.Register("phone-beam", &phone_beam,
+                "Prune KxL2xE transducer to the "
                 "given beam, -1 means no prune.");
-    po.Register("proxy-beam", &proxy_beam, "Prune KxL2xExL1' transducer to the "
+    po.Register("proxy-beam", &proxy_beam,
+                "Prune KxL2xExL1' transducer to the "
                 "given beam, -1 means no prune.");
-    po.Register("max-states", &max_states, "Prune kxL2xExL1' transducer to the "
+    po.Register("max-states", &max_states,
+                "Prune kxL2xExL1' transducer to the "
                 "given number of states, 0 means no prune.");
 
     po.Read(argc, argv);
@@ -110,7 +114,7 @@ int main(int argc, char *argv[]) {
       KALDI_ERR << "--phone-beam must either be -1 or non-negative.";
       exit(1);
     }
-    if (proxy_beam != -1 && proxy_beam <=0) {
+    if (proxy_beam != -1 && proxy_beam <= 0) {
       KALDI_ERR << "--proxy-beam must either be -1 or non-negative.";
       exit(1);
     }
@@ -120,11 +124,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string L2xE_filename = po.GetArg(1),
-        L1_filename = po.GetArg(2),
-        keyword_rspecifier = po.GetArg(3),
-        proxy_wspecifier = po.GetArg(4),
-        kwlist_wspecifier = (po.NumArgs() == 5) ? po.GetArg(5) : "";
+    std::string L2xE_filename = po.GetArg(1), L1_filename = po.GetArg(2),
+                keyword_rspecifier = po.GetArg(3),
+                proxy_wspecifier = po.GetArg(4),
+                kwlist_wspecifier = (po.NumArgs() == 5) ? po.GetArg(5) : "";
 
     VectorFst<StdArc> *L2xE = ReadFstKaldi(L2xE_filename);
     VectorFst<StdArc> *L1 = ReadFstKaldi(L1_filename);
@@ -161,16 +164,15 @@ int main(int argc, char *argv[]) {
         KALDI_VLOG(1) << "ShortestPath(KxL2xE, " << phone_nbest << ")";
         RmEpsilon(&tmp_proxy);
         ShortestPath(tmp_proxy, &proxy, phone_nbest, true, true);
-        tmp_proxy.DeleteStates();   // Not needed for now.
+        tmp_proxy.DeleteStates();  // Not needed for now.
         KALDI_VLOG(1) << "Determinize(KxL2xE)";
         Determinize(proxy, &tmp_proxy);
-        proxy.DeleteStates();       // Not needed for now.
+        proxy.DeleteStates();  // Not needed for now.
       }
       KALDI_VLOG(1) << "ArcSort(KxL2xE, OLabel)";
       proxy = tmp_proxy;
-      tmp_proxy.DeleteStates();     // Not needed for now.
+      tmp_proxy.DeleteStates();  // Not needed for now.
       ArcSort(&proxy, OLabelCompare<StdArc>());
-
 
       // Processing KxL2xExL1'.
       RmEpsilon(&proxy);
@@ -202,10 +204,10 @@ int main(int argc, char *argv[]) {
       if (proxy_nbest > 0) {
         KALDI_VLOG(1) << "ShortestPath(KxL2xExL1', " << proxy_nbest << ")";
         proxy = tmp_proxy;
-        tmp_proxy.DeleteStates(); // Not needed for now.
+        tmp_proxy.DeleteStates();  // Not needed for now.
         RmEpsilon(&proxy);
         ShortestPath(proxy, &tmp_proxy, proxy_nbest, true, true);
-        proxy.DeleteStates();     // Not needed for now.
+        proxy.DeleteStates();  // Not needed for now.
       }
       KALDI_VLOG(1) << "RmEpsilon(KxL2xExL1')";
       RmEpsilon(&tmp_proxy);
@@ -245,8 +247,8 @@ int main(int argc, char *argv[]) {
     delete L1;
     delete L2xE;
     KALDI_LOG << "Done " << n_done << " keywords";
-    return (n_done != 0 ? 0 : 1);    
-  } catch(const std::exception &e) {
+    return (n_done != 0 ? 0 : 1);
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

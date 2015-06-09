@@ -23,7 +23,6 @@
 #include "nnet2/combine-nnet-a.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -32,31 +31,32 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int64 int64;
 
     const char *usage =
-        "This program average (or sums, if --sum=true) the parameters over a number of neural nets.\n"
+        "This program average (or sums, if --sum=true) the parameters over a "
+        "number of neural nets.\n"
         "\n"
-        "Usage:  nnet-am-average [options] <model1> <model2> ... <modelN> <model-out>\n"
+        "Usage:  nnet-am-average [options] <model1> <model2> ... <modelN> "
+        "<model-out>\n"
         "\n"
         "e.g.:\n"
         " nnet-am-average 1.1.nnet 1.2.nnet 1.3.nnet 2.nnet\n";
-    
+
     bool binary_write = true;
     bool sum = false;
-    
+
     ParseOptions po(usage);
     po.Register("sum", &sum, "If true, sums instead of averages.");
     po.Register("binary", &binary_write, "Write output in binary mode");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() < 2) {
       po.PrintUsage();
       exit(1);
     }
-    
-    std::string
-        nnet1_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(po.NumArgs());
-    
+
+    std::string nnet1_rxfilename = po.GetArg(1),
+                nnet_wxfilename = po.GetArg(po.NumArgs());
+
     TransitionModel trans_model;
     AmNnet am_nnet1;
     {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     BaseFloat scale = (sum ? 1.0 : 1.0 / num_inputs);
 
     am_nnet1.GetNnet().Scale(scale);
-    
+
     for (int32 i = 2; i <= num_inputs; i++) {
       bool binary_read;
       Input ki(po.GetArg(i), &binary_read);
@@ -79,19 +79,18 @@ int main(int argc, char *argv[]) {
       am_nnet.Read(ki.Stream(), binary_read);
       am_nnet1.GetNnet().AddNnet(scale, am_nnet.GetNnet());
     }
-    
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_nnet1.Write(ko.Stream(), binary_write);
     }
-    
+
     KALDI_LOG << "Averaged parameters of " << num_inputs
               << " neural nets, and wrote to " << nnet_wxfilename;
-    return 0; // it will throw an exception if there are any problems.
-  } catch(const std::exception &e) {
+    return 0;  // it will throw an exception if there are any problems.
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-

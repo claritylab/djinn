@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
         "Usage:  gmm-info [options] <gmm>\n"
         "e.g.:\n"
         " gmm-info 1.dubm\n";
-    
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1) {
@@ -51,10 +51,8 @@ int main(int argc, char *argv[]) {
     std::cout << "number of gaussians " << gmm.NumGauss() << '\n';
     std::cout << "feature dimension " << gmm.Dim() << '\n';
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

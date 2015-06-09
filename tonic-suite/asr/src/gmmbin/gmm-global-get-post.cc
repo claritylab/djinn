@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/diag-gmm.h"
@@ -37,14 +36,17 @@ int main(int argc, char *argv[]) {
         " For each frame, gives a list of the n best Gaussian indices,\n"
         " sorted from best to worst.\n"
         "Usage: \n"
-        " gmm-global-get-post [options] <model-in> <feature-rspecifier> <post-wspecifier>\n"
-        "e.g.: gmm-global-get-post --n=20 1.gmm \"ark:feature-command |\" \"ark,t:|gzip -c >post.1.gz\"\n";
-    
+        " gmm-global-get-post [options] <model-in> <feature-rspecifier> "
+        "<post-wspecifier>\n"
+        "e.g.: gmm-global-get-post --n=20 1.gmm \"ark:feature-command |\" "
+        "\"ark,t:|gzip -c >post.1.gz\"\n";
+
     ParseOptions po(usage);
     int32 num_post = 50;
     BaseFloat min_post = 0.0;
     po.Register("n", &num_post, "Number of Gaussians to keep per frame\n");
-    po.Register("min-post", &min_post, "Minimum posterior we will output "
+    po.Register("min-post", &min_post,
+                "Minimum posterior we will output "
                 "before pruning and renormalizing (e.g. 0.01)");
     po.Read(argc, argv);
 
@@ -54,8 +56,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_wspecifier = po.GetArg(3);
+                feature_rspecifier = po.GetArg(2),
+                post_wspecifier = po.GetArg(3);
 
     DiagGmm gmm;
     ReadKaldiObject(model_filename, &gmm);
@@ -67,13 +69,13 @@ int main(int argc, char *argv[]) {
                  << "only has " << num_gauss << ", returning this many. ";
       num_post = num_gauss;
     }
-    
+
     double tot_like = 0.0;
     kaldi::int64 tot_t = 0;
-    
+
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     PosteriorWriter post_writer(post_wspecifier);
-    
+
     int32 num_done = 0, num_err = 0;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string utt = feature_reader.Key();
@@ -85,24 +87,23 @@ int main(int argc, char *argv[]) {
         continue;
       }
       if (feats.NumCols() != gmm.Dim()) {
-        KALDI_WARN << "Dimension mismatch for utterance " << utt
-                   << ": got " << feats.NumCols() << ", expected " << gmm.Dim();
+        KALDI_WARN << "Dimension mismatch for utterance " << utt << ": got "
+                   << feats.NumCols() << ", expected " << gmm.Dim();
         num_err++;
         continue;
       }
       vector<vector<int32> > gselect(T);
-      
+
       Matrix<BaseFloat> loglikes;
-      
+
       gmm.LogLikelihoods(feats, &loglikes);
 
       Posterior post(T);
 
       double log_like_this_file = 0.0;
       for (int32 t = 0; t < T; t++) {
-        log_like_this_file +=
-            VectorToPosteriorEntry(loglikes.Row(t), num_post,
-                                   min_post, &(post[t]));
+        log_like_this_file += VectorToPosteriorEntry(loglikes.Row(t), num_post,
+                                                     min_post, &(post[t]));
       }
       KALDI_VLOG(1) << "Processed utterance " << utt << ", average likelihood "
                     << (log_like_this_file / T) << " over " << T << " frames";
@@ -115,14 +116,14 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Done " << num_done << " files, " << num_err
               << " with errors, average UBM log-likelihood is "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
-    
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
+
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

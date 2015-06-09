@@ -30,7 +30,6 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 /// This function is similar to "DoBackprop" in nnet-update.h
 /// This function computes the objective function and either updates the model
 /// or computes parameter gradients.  It returns the cross-entropy objective
@@ -39,50 +38,37 @@ namespace nnet2 {
 /// It is mostly a wrapper for
 /// a class NnetUpdater that's defined in nnet-update.cc, but we
 /// don't want to expose that complexity at this level.
-/// Note: this function 
+/// Note: this function
 /// If &nnet == nnet_to_update, it assumes we're doing SGD and does
 /// something like Hogwild; otherwise it assumes we're computing a
 /// gradient and it sums up the gradients.
 /// The return value is the total log-prob summed over the #frames. It also
 /// outputs the #frames into "num_frames".
-double DoBackpropParallel(const Nnet &nnet,
-                          int32 minibatch_size,
+double DoBackpropParallel(const Nnet &nnet, int32 minibatch_size,
                           SequentialNnetExampleReader *example_reader,
-                          double *tot_weight,
-                          Nnet *nnet_to_update);
-
+                          double *tot_weight, Nnet *nnet_to_update);
 
 /// This version of DoBackpropParallel takes a vector of examples, and will
-/// typically be used to compute the exact gradient. 
-double DoBackpropParallel(const Nnet &nnet,
-                          int32 minibatch_size,
+/// typically be used to compute the exact gradient.
+double DoBackpropParallel(const Nnet &nnet, int32 minibatch_size,
                           int32 num_threads,
                           const std::vector<NnetExample> &examples,
-                          double *num_frames,
-                          Nnet *nnet_to_update);
-
-
+                          double *num_frames, Nnet *nnet_to_update);
 
 /// This is basically to clarify the fact that DoBackpropParallel will
 /// also work with nnet_to_update == NULL, and will compute the objf.
 /// Both versions of the function will support it, but this
 /// version (that takes a vector) is currently the only one we need
 /// to do this with.
-inline double ComputeNnetObjfParallel(
-    const Nnet &nnet,
-    int32 minibatch_size,
-    int32 num_threads,
-    const std::vector<NnetExample> &examples,
-    double *num_frames) {
-  return DoBackpropParallel(nnet, minibatch_size, num_threads,
-                            examples, num_frames, NULL);
+inline double ComputeNnetObjfParallel(const Nnet &nnet, int32 minibatch_size,
+                                      int32 num_threads,
+                                      const std::vector<NnetExample> &examples,
+                                      double *num_frames) {
+  return DoBackpropParallel(nnet, minibatch_size, num_threads, examples,
+                            num_frames, NULL);
 }
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-
-
-
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_NNET_UPDATE_PARALLEL_H_
+#endif  // KALDI_NNET2_NNET_UPDATE_PARALLEL_H_

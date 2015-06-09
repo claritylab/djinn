@@ -22,7 +22,6 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 /* See the header for what we're doing.
    The pattern we're looking for is AffineComponent followed by
    a NonlinearComponent of type SigmoidComponent or TanhComponent.
@@ -30,26 +29,32 @@ namespace nnet2 {
 
 void FixNnet(const NnetFixConfig &config, Nnet *nnet) {
   for (int32 c = 0; c + 1 < nnet->NumComponents(); c++) {
-    AffineComponent *ac = dynamic_cast<AffineComponent*>(
-        &(nnet->GetComponent(c)));
-    NonlinearComponent *nc = dynamic_cast<NonlinearComponent*>(
-        &(nnet->GetComponent(c + 1)));
+    AffineComponent *ac =
+        dynamic_cast<AffineComponent *>(&(nnet->GetComponent(c)));
+    NonlinearComponent *nc =
+        dynamic_cast<NonlinearComponent *>(&(nnet->GetComponent(c + 1)));
     if (ac == NULL || nc == NULL) continue;
     // We only want to process this if it's of type SigmoidComponent
     // or TanhComponent.
-    BaseFloat max_deriv; // The maximum derivative of this nonlinearity.
+    BaseFloat max_deriv;  // The maximum derivative of this nonlinearity.
     bool is_relu = false;
     {
-      SigmoidComponent *sc = dynamic_cast<SigmoidComponent*>(nc);
-      TanhComponent *tc = dynamic_cast<TanhComponent*>(nc);
-      RectifiedLinearComponent *rc = dynamic_cast<RectifiedLinearComponent*>(nc);
-      if (sc != NULL) max_deriv = 0.25;
-      else if (tc != NULL) max_deriv = 1.0;
-      else if (rc != NULL) { max_deriv = 1.0; is_relu = true; }
-      else continue; // E.g. SoftmaxComponent; we don't handle this.
+      SigmoidComponent *sc = dynamic_cast<SigmoidComponent *>(nc);
+      TanhComponent *tc = dynamic_cast<TanhComponent *>(nc);
+      RectifiedLinearComponent *rc =
+          dynamic_cast<RectifiedLinearComponent *>(nc);
+      if (sc != NULL)
+        max_deriv = 0.25;
+      else if (tc != NULL)
+        max_deriv = 1.0;
+      else if (rc != NULL) {
+        max_deriv = 1.0;
+        is_relu = true;
+      } else
+        continue;  // E.g. SoftmaxComponent; we don't handle this.
     }
     double count = nc->Count();
-    Vector<double> deriv_sum (nc->DerivSum());
+    Vector<double> deriv_sum(nc->DerivSum());
     if (count == 0.0 || deriv_sum.Dim() == 0) {
       KALDI_WARN << "Cannot fix neural net because no statistics are stored.";
       continue;
@@ -61,26 +66,28 @@ void FixNnet(const NnetFixConfig &config, Nnet *nnet) {
       // deriv ratio is the ratio of the computed average derivative to the
       // maximum derivative of that nonlinear function.
       BaseFloat deriv_ratio = deriv_sum(d) / (count * max_deriv);
-      KALDI_ASSERT(deriv_ratio >= 0.0 && deriv_ratio < 1.01); // Or there is an
-                                                              // error in the
+      KALDI_ASSERT(deriv_ratio >= 0.0 && deriv_ratio < 1.01);  // Or there is an
+                                                               // error in the
       // math.
-      if (deriv_ratio < config.min_average_deriv) { // derivative is too small, meaning
+      if (deriv_ratio <
+          config.min_average_deriv) {  // derivative is too small, meaning
         // we've gone off into the "flat part" of the sigmoid.
         if (is_relu) {
           bias_params(d) += config.relu_bias_change;
         } else {
-          BaseFloat parameter_factor = std::min(config.min_average_deriv /
-                                                deriv_ratio,
-                                                config.parameter_factor);
-          // we need to reduce the parameters, so multiply by 1/parameter factor.
+          BaseFloat parameter_factor = std::min(
+              config.min_average_deriv / deriv_ratio, config.parameter_factor);
+          // we need to reduce the parameters, so multiply by 1/parameter
+          // factor.
           bias_params(d) *= 1.0 / parameter_factor;
           linear_params.Row(d).Scale(1.0 / parameter_factor);
         }
         num_reduced++;
-      } else if (deriv_ratio > config.max_average_deriv && !is_relu) { // derivative is too large,
+      } else if (deriv_ratio > config.max_average_deriv &&
+                 !is_relu) {  // derivative is too large,
         // meaning we're only in the linear part of the sigmoid, in the middle.
-        BaseFloat parameter_factor = std::min(deriv_ratio / config.max_average_deriv,
-                                              config.parameter_factor);
+        BaseFloat parameter_factor = std::min(
+            deriv_ratio / config.max_average_deriv, config.parameter_factor);
         // we need to increase the factors, so multiply by parameter_factor.
         bias_params(d) *= parameter_factor;
         linear_params.Row(d).Scale(parameter_factor);
@@ -98,7 +105,6 @@ void FixNnet(const NnetFixConfig &config, Nnet *nnet) {
     ac->SetParams(bias_params, linear_params);
   }
 }
-  
-  
-} // namespace nnet2
-} // namespace kaldi
+
+}  // namespace nnet2
+}  // namespace kaldi

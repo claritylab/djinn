@@ -25,8 +25,8 @@
 #include "fstext/fstext-lib.h"
 #include "decoder/training-graph-compiler.h"
 
-
-/** @brief Write equally spaced alignments of utterances (to get training started).
+/** @brief Write equally spaced alignments of utterances (to get training
+ * started).
 */
 int main(int argc, char *argv[]) {
   try {
@@ -36,14 +36,20 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
 
-    const char *usage =  "Write equally spaced alignments of utterances (to get training started)\n"
-        "Usage:  align-equal <tree-in> <model-in> <lexicon-fst-in> <features-rspecifier> <transcriptions-rspecifier> <alignments-wspecifier>\n"
+    const char *usage =
+        "Write equally spaced alignments of utterances (to get training "
+        "started)\n"
+        "Usage:  align-equal <tree-in> <model-in> <lexicon-fst-in> "
+        "<features-rspecifier> <transcriptions-rspecifier> "
+        "<alignments-wspecifier>\n"
         "e.g.: \n"
-        " align-equal 1.tree 1.mdl lex.fst scp:train.scp ark:train.tra ark:equal.ali\n";
+        " align-equal 1.tree 1.mdl lex.fst scp:train.scp ark:train.tra "
+        "ark:equal.ali\n";
 
     ParseOptions po(usage);
     std::string disambig_rxfilename;
-    po.Register("read-disambig-syms", &disambig_rxfilename, "File containing "
+    po.Register("read-disambig-syms", &disambig_rxfilename,
+                "File containing "
                 "list of disambiguation symbols in phone symbol table");
     po.Read(argc, argv);
 
@@ -68,22 +74,20 @@ int main(int argc, char *argv[]) {
     // need VectorFst because we will change it by adding subseq symbol.
     VectorFst<StdArc> *lex_fst = fst::ReadFstKaldi(lex_in_filename);
 
-    TrainingGraphCompilerOptions gc_opts(1.0, true);  // true -> Dan style graph.
+    TrainingGraphCompilerOptions gc_opts(1.0,
+                                         true);  // true -> Dan style graph.
 
     std::vector<int32> disambig_syms;
     if (disambig_rxfilename != "")
       if (!ReadIntegerVectorSimple(disambig_rxfilename, &disambig_syms))
-        KALDI_ERR << "fstcomposecontext: Could not read disambiguation symbols from "
-                  << disambig_rxfilename;
-    
-    TrainingGraphCompiler gc(trans_model,
-                             ctx_dep,
-                             lex_fst,
-                             disambig_syms,
+        KALDI_ERR
+            << "fstcomposecontext: Could not read disambiguation symbols from "
+            << disambig_rxfilename;
+
+    TrainingGraphCompiler gc(trans_model, ctx_dep, lex_fst, disambig_syms,
                              gc_opts);
 
     lex_fst = NULL;  // we gave ownership to gc.
-
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
 
@@ -104,15 +108,17 @@ int main(int argc, char *argv[]) {
         }
         VectorFst<StdArc> decode_fst;
         if (!gc.CompileGraphFromText(transcript, &decode_fst)) {
-          KALDI_WARN << "Problem creating decoding graph for utterance "
-                     << key <<" [serious error]";
+          KALDI_WARN << "Problem creating decoding graph for utterance " << key
+                     << " [serious error]";
           other_error++;
           continue;
         }
         VectorFst<StdArc> path;
-        int32 rand_seed = StringHasher()(key); // StringHasher() produces new anonymous
-        // object of type StringHasher; we then call operator () on it, with "key".
-        if (EqualAlign(decode_fst, num_frames, rand_seed, &path) ) {
+        int32 rand_seed =
+            StringHasher()(key);  // StringHasher() produces new anonymous
+        // object of type StringHasher; we then call operator () on it, with
+        // "key".
+        if (EqualAlign(decode_fst, num_frames, rand_seed, &path)) {
           std::vector<int32> aligned_seq, words;
           StdArc::Weight w;
           GetLinearSymbolSequence(path, &aligned_seq, &words, &w);
@@ -136,12 +142,12 @@ int main(int argc, char *argv[]) {
                  << " lacked transcripts, " << other_error
                  << " had other errors.";
     }
-    if (done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

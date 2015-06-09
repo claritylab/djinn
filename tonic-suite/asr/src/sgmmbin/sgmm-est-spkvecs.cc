@@ -1,6 +1,7 @@
 // sgmmbin/sgmm-est-spkvecs.cc
 
-// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns
+// Hopkins University (Author: Daniel Povey)
 //                2014  Guoguo Chen
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -37,7 +38,7 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
                             const TransitionModel &trans_model,
                             const AmSgmm &am_sgmm,
                             const SgmmGselectConfig &gselect_opts,
-                            const vector< vector<int32> > &gselect,
+                            const vector<vector<int32> > &gselect,
                             const SgmmPerSpkDerivedVars &spk_vars,
                             MleSgmmSpeakerAccs *spk_stats) {
   kaldi::SgmmPerFrameDerivedVars per_frame_vars;
@@ -50,11 +51,13 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
       this_gselect = gselect[i];
     else
       am_sgmm.GaussianSelection(gselect_opts, feats.Row(i), &this_gselect);
-    am_sgmm.ComputePerFrameVars(feats.Row(i), this_gselect, spk_vars, 0.0, &per_frame_vars);
+    am_sgmm.ComputePerFrameVars(feats.Row(i), this_gselect, spk_vars, 0.0,
+                                &per_frame_vars);
 
     for (size_t j = 0; j < pdf_post[i].size(); j++) {
       int32 pdf_id = pdf_post[i][j].first;
-      spk_stats->Accumulate(am_sgmm, per_frame_vars, pdf_id, pdf_post[i][j].second);
+      spk_stats->Accumulate(am_sgmm, per_frame_vars, pdf_id,
+                            pdf_post[i][j].second);
     }
   }
 }
@@ -80,13 +83,14 @@ int main(int argc, char *argv[]) {
 
     gselect_opts.Register(&po);
     po.Register("gselect", &gselect_rspecifier,
-        "File to read precomputed per-frame Gaussian indices from.");
+                "File to read precomputed per-frame Gaussian indices from.");
     po.Register("spk2utt", &spk2utt_rspecifier,
-        "File to read speaker to utterance-list map from.");
+                "File to read speaker to utterance-list map from.");
     po.Register("spkvec-min-count", &min_count,
-        "Minimum count needed to estimate speaker vectors");
+                "Minimum count needed to estimate speaker vectors");
     po.Register("rand-prune", &rand_prune, "Pruning threshold for posteriors");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors to use during aligment (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors to use during aligment (rspecifier)");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -94,10 +98,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        vecs_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), vecs_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm am_sgmm;
@@ -160,16 +162,18 @@ int main(int argc, char *argv[]) {
           }
           bool has_gselect = false;
           if (gselect_reader.IsOpen()) {
-            has_gselect = gselect_reader.HasKey(utt)
-                          && gselect_reader.Value(utt).size() == feats.NumRows();
+            has_gselect = gselect_reader.HasKey(utt) &&
+                          gselect_reader.Value(utt).size() == feats.NumRows();
             if (!has_gselect)
-              KALDI_WARN << "No Gaussian-selection info available for utterance "
-                         << utt << " (or wrong size)";
+              KALDI_WARN
+                  << "No Gaussian-selection info available for utterance "
+                  << utt << " (or wrong size)";
           }
           const std::vector<std::vector<int32> > *gselect =
               (has_gselect ? &gselect_reader.Value(utt) : &empty_gselect);
 
-          AccumulateForUtterance(feats, post, trans_model, am_sgmm, gselect_opts, *gselect, spk_vars, &spk_stats);
+          AccumulateForUtterance(feats, post, trans_model, am_sgmm,
+                                 gselect_opts, *gselect, spk_vars, &spk_stats);
           num_done++;
         }  // end looping over all utterances of the current speaker
 
@@ -180,18 +184,18 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(min_count, &spk_vec, &impr, &spk_tot_t);
           vecs_writer.Write(spk, spk_vec);
         }
-        KALDI_LOG << "For speaker " << spk << ", auxf-impr from speaker vector is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+        KALDI_LOG << "For speaker " << spk
+                  << ", auxf-impr from speaker vector is " << (impr / spk_tot_t)
+                  << ", over " << spk_tot_t << " frames.";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!post_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_no_post++;
           continue;
         }
@@ -209,8 +213,8 @@ int main(int argc, char *argv[]) {
         const Posterior &post = post_reader.Value(utt);
 
         if (static_cast<int32>(post.size()) != feats.NumRows()) {
-          KALDI_WARN << "Posterior has wrong size " << (post.size())
-              << " vs. " << (feats.NumRows());
+          KALDI_WARN << "Posterior has wrong size " << (post.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -219,8 +223,8 @@ int main(int argc, char *argv[]) {
         spk_stats.Clear();
         bool has_gselect = false;
         if (gselect_reader.IsOpen()) {
-          has_gselect = gselect_reader.HasKey(utt)
-                        && gselect_reader.Value(utt).size() == feats.NumRows();
+          has_gselect = gselect_reader.HasKey(utt) &&
+                        gselect_reader.Value(utt).size() == feats.NumRows();
           if (!has_gselect)
             KALDI_WARN << "No Gaussian-selection info available for utterance "
                        << utt << " (or wrong size)";
@@ -228,7 +232,8 @@ int main(int argc, char *argv[]) {
         const std::vector<std::vector<int32> > *gselect =
             (has_gselect ? &gselect_reader.Value(utt) : &empty_gselect);
 
-        AccumulateForUtterance(feats, post, trans_model, am_sgmm, gselect_opts, *gselect, spk_vars, &spk_stats);
+        AccumulateForUtterance(feats, post, trans_model, am_sgmm, gselect_opts,
+                               *gselect, spk_vars, &spk_stats);
 
         BaseFloat impr, utt_tot_t;
         {  // Compute the spk_vec and write it out.
@@ -237,21 +242,21 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(min_count, &spk_vec, &impr, &utt_tot_t);
           vecs_writer.Write(utt, spk_vec);
         }
-        KALDI_LOG << "For utterance " << utt << ", auxf-impr from speaker vectors is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+        KALDI_LOG << "For utterance " << utt
+                  << ", auxf-impr from speaker vectors is "
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_impr += impr;
         tot_t += utt_tot_t;
       }
     }
 
-    KALDI_LOG << "Overall auxf impr per frame is "
-              << (tot_impr / tot_t) << " over " << tot_t << " frames.";
+    KALDI_LOG << "Overall auxf impr per frame is " << (tot_impr / tot_t)
+              << " over " << tot_t << " frames.";
     KALDI_LOG << "Done " << num_done << " files, " << num_no_post
               << " with no posts, " << num_other_error << " with other errors.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

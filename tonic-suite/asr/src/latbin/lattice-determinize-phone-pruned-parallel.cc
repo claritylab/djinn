@@ -30,28 +30,31 @@ namespace kaldi {
 class DeterminizeLatticeTask {
  public:
   // Initializer takes ownership of "lat".
-  DeterminizeLatticeTask(
-      const TransitionModel &trans_model,
-      fst::DeterminizeLatticePhonePrunedOptions &opts,
-      std::string key,
-      BaseFloat acoustic_scale,
-      BaseFloat beam,
-      Lattice *lat,
-      CompactLatticeWriter *clat_writer,
-      int32 *num_warn):
-      trans_model_(&trans_model), opts_(opts), key_(key),
-      acoustic_scale_(acoustic_scale), beam_(beam),
-      lat_(lat), clat_writer_(clat_writer), num_warn_(num_warn) { }
+  DeterminizeLatticeTask(const TransitionModel &trans_model,
+                         fst::DeterminizeLatticePhonePrunedOptions &opts,
+                         std::string key, BaseFloat acoustic_scale,
+                         BaseFloat beam, Lattice *lat,
+                         CompactLatticeWriter *clat_writer, int32 *num_warn)
+      : trans_model_(&trans_model),
+        opts_(opts),
+        key_(key),
+        acoustic_scale_(acoustic_scale),
+        beam_(beam),
+        lat_(lat),
+        clat_writer_(clat_writer),
+        num_warn_(num_warn) {}
 
-  void operator () () {
+  void operator()() {
     // We apply the acoustic scale before determinization and will undo it
     // afterward, since it can affect the result.
     fst::ScaleLattice(fst::AcousticLatticeScale(acoustic_scale_), lat_);
 
-    if (!DeterminizeLatticePhonePrunedWrapper(
-            *trans_model_, lat_, beam_, &det_clat_, opts_)) {
-      KALDI_WARN << "For key " << key_ << ", determinization did not succeed"
-          "(partial output will be pruned tighter than the specified beam.)";
+    if (!DeterminizeLatticePhonePrunedWrapper(*trans_model_, lat_, beam_,
+                                              &det_clat_, opts_)) {
+      KALDI_WARN
+          << "For key " << key_
+          << ", determinization did not succeed"
+             "(partial output will be pruned tighter than the specified beam.)";
       (*num_warn_)++;
     }
 
@@ -59,7 +62,7 @@ class DeterminizeLatticeTask {
     lat_ = NULL;
 
     // Invert the original acoustic scaling
-    fst::ScaleLattice(fst::AcousticLatticeScale(1.0/acoustic_scale_),
+    fst::ScaleLattice(fst::AcousticLatticeScale(1.0 / acoustic_scale_),
                       &det_clat_);
   }
 
@@ -68,6 +71,7 @@ class DeterminizeLatticeTask {
                   << " for key " << key_;
     clat_writer_->Write(key_, det_clat_);
   }
+
  private:
   const TransitionModel *trans_model_;
   const fst::DeterminizeLatticePhonePrunedOptions &opts_;
@@ -81,16 +85,15 @@ class DeterminizeLatticeTask {
   CompactLattice det_clat_;
   CompactLatticeWriter *clat_writer_;
   int32 *num_warn_;
-
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     typedef kaldi::int32 int32;
-    
+
     const char *usage =
         "Determinize lattices, keeping only the best path (sequence of\n"
         "acoustic states) for each input-symbol sequence. This is a version\n"
@@ -105,7 +108,7 @@ int main(int argc, char *argv[]) {
         "                 <model> <lattice-rspecifier> <lattice-wspecifier>\n"
         " e.g.: lattice-determinize-phone-pruned-parallel \\\n"
         "           --acoustic-scale=0.1 final.mdl ark:in.lats ark:det.lats\n";
-    
+
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 1.0;
     BaseFloat beam = 10.0;
@@ -113,10 +116,12 @@ int main(int argc, char *argv[]) {
     TaskSequencerConfig sequencer_opts;
     fst::DeterminizeLatticePhonePrunedOptions determinize_opts;
     determinize_opts.max_mem = 50000000;
-    
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic"
+
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic"
                 " likelihoods.");
-    po.Register("beam", &beam, "Pruning beam [applied after acoustic scaling].");
+    po.Register("beam", &beam,
+                "Pruning beam [applied after acoustic scaling].");
     determinize_opts.Register(&po);
     sequencer_opts.Register(&po);
     po.Read(argc, argv);
@@ -126,9 +131,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
 
     TransitionModel trans_model;
     ReadKaldiObject(model_rxfilename, &trans_model);
@@ -136,7 +140,7 @@ int main(int argc, char *argv[]) {
     // Reads as regular lattice-- this is the form the determinization code
     // accepts.
     SequentialLatticeReader lat_reader(lats_rspecifier);
-    
+
     // Writes as compact lattice.
     CompactLatticeWriter compact_lat_writer(lats_wspecifier);
 
@@ -156,8 +160,8 @@ int main(int argc, char *argv[]) {
       KALDI_VLOG(2) << "Processing lattice " << key;
 
       DeterminizeLatticeTask *task = new DeterminizeLatticeTask(
-          trans_model, determinize_opts, key, acoustic_scale, beam,
-          lat, &compact_lat_writer, &n_warn);
+          trans_model, determinize_opts, key, acoustic_scale, beam, lat,
+          &compact_lat_writer, &n_warn);
       sequencer.Run(task);
 
       n_done++;
@@ -167,7 +171,7 @@ int main(int argc, char *argv[]) {
               << "earlier than specified by the beam on " << n_warn << " of "
               << "these.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

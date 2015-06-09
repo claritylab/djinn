@@ -32,7 +32,6 @@
 
 /* Important that this file does not depend on any other kaldi headers. */
 
-
 namespace kaldi {
 
 /// \addtogroup error_group
@@ -64,7 +63,8 @@ class KaldiWarnMessage {
  public:
   inline std::ostream &stream() { return ss; }
   KaldiWarnMessage(const char *func, const char *file, int32 line);
-  ~KaldiWarnMessage()  { fprintf(stderr, "%s\n", ss.str().c_str()); }
+  ~KaldiWarnMessage() { fprintf(stderr, "%s\n", ss.str().c_str()); }
+
  private:
   std::ostringstream ss;
 };
@@ -75,6 +75,7 @@ class KaldiLogMessage {
   inline std::ostream &stream() { return ss; }
   KaldiLogMessage(const char *func, const char *file, int32 line);
   ~KaldiLogMessage() { fprintf(stderr, "%s\n", ss.str().c_str()); }
+
  private:
   std::ostringstream ss;
 };
@@ -86,10 +87,10 @@ class KaldiVlogMessage {
                    int32 verbose_level);
   inline std::ostream &stream() { return ss; }
   ~KaldiVlogMessage() { fprintf(stderr, "%s\n", ss.str().c_str()); }
+
  private:
   std::ostringstream ss;
 };
-
 
 // class KaldiErrorMessage is invoked from the KALDI_ERROR macro.
 // The destructor throws an exception.
@@ -101,8 +102,6 @@ class KaldiErrorMessage {
  private:
   std::ostringstream ss;
 };
-
-
 
 #ifdef _MSC_VER
 #define __func__ __FUNCTION__
@@ -117,26 +116,30 @@ class KaldiErrorMessage {
 // also see KALDI_COMPILE_TIME_ASSERT, defined in base/kaldi-utils.h,
 // and KALDI_ASSERT_IS_INTEGER_TYPE and KALDI_ASSERT_IS_FLOATING_TYPE,
 // also defined there.
-#ifdef KALDI_PARANOID // some more expensive asserts only checked if this defined
+#ifdef KALDI_PARANOID  // some more expensive asserts only checked if this
+                       // defined
 #define KALDI_PARANOID_ASSERT(cond) \
   if (!(cond)) kaldi::KaldiAssertFailure_(__func__, __FILE__, __LINE__, #cond);
 #else
 #define KALDI_PARANOID_ASSERT(cond)
 #endif
 
-#define KALDI_ERR kaldi::KaldiErrorMessage(__func__, __FILE__, __LINE__).stream() 
-#define KALDI_WARN kaldi::KaldiWarnMessage(__func__, __FILE__, __LINE__).stream() 
+#define KALDI_ERR \
+  kaldi::KaldiErrorMessage(__func__, __FILE__, __LINE__).stream()
+#define KALDI_WARN \
+  kaldi::KaldiWarnMessage(__func__, __FILE__, __LINE__).stream()
 #define KALDI_LOG kaldi::KaldiLogMessage(__func__, __FILE__, __LINE__).stream()
 
-#define KALDI_VLOG(v) if (v <= kaldi::g_kaldi_verbose_level)     \
-           kaldi::KaldiVlogMessage(__func__, __FILE__, __LINE__, v).stream()
+#define KALDI_VLOG(v)                    \
+  if (v <= kaldi::g_kaldi_verbose_level) \
+  kaldi::KaldiVlogMessage(__func__, __FILE__, __LINE__, v).stream()
 
 inline bool IsKaldiError(const std::string &str) {
-  return(!strncmp(str.c_str(), "ERROR ", 6));
+  return (!strncmp(str.c_str(), "ERROR ", 6));
 }
 
-void KaldiAssertFailure_(const char *func, const char *file,
-                         int32 line, const char *cond_str);
+void KaldiAssertFailure_(const char *func, const char *file, int32 line,
+                         const char *cond_str);
 
 /// @} end "addtogroup error_group"
 

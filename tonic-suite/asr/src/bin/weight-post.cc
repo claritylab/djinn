@@ -17,23 +17,23 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/posterior.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
-    typedef kaldi::int32 int32;  
+    typedef kaldi::int32 int32;
 
     const char *usage =
-        "Takes archives (typically per-utterance) of posteriors and per-frame weights,\n"
+        "Takes archives (typically per-utterance) of posteriors and per-frame "
+        "weights,\n"
         "and weights the posteriors by the per-frame weights\n"
         "\n"
-        "Usage: weight-post <post-rspecifier> <weights-rspecifier> <post-wspecifier>\n";
-        
+        "Usage: weight-post <post-rspecifier> <weights-rspecifier> "
+        "<post-wspecifier>\n";
+
     ParseOptions po(usage);
     po.Read(argc, argv);
 
@@ -41,20 +41,20 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-      
+
     std::string post_rspecifier = po.GetArg(1),
-        weights_rspecifier = po.GetArg(2),
-        post_wspecifier = po.GetArg(3);
+                weights_rspecifier = po.GetArg(2),
+                post_wspecifier = po.GetArg(3);
 
     SequentialPosteriorReader posterior_reader(post_rspecifier);
     RandomAccessBaseFloatVectorReader weights_reader(weights_rspecifier);
-    PosteriorWriter post_writer(post_wspecifier); 
-    
+    PosteriorWriter post_writer(post_wspecifier);
+
     int32 num_done = 0, num_err = 0;
-    
+
     for (; !posterior_reader.Done(); posterior_reader.Next()) {
       std::string key = posterior_reader.Key();
-      Posterior post  = posterior_reader.Value();
+      Posterior post = posterior_reader.Value();
       if (!weights_reader.HasKey(key)) {
         KALDI_WARN << "No weights for utterance " << key;
         num_err++;
@@ -62,9 +62,8 @@ int main(int argc, char *argv[]) {
       }
       const Vector<BaseFloat> &weights = weights_reader.Value(key);
       if (weights.Dim() != static_cast<int32>(post.size())) {
-        KALDI_WARN << "Weights for utterance " << key
-                   << " have wrong size, " << weights.Dim()
-                   << " vs. " << post.size();
+        KALDI_WARN << "Weights for utterance " << key << " have wrong size, "
+                   << weights.Dim() << " vs. " << post.size();
         num_err++;
         continue;
       }
@@ -78,9 +77,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Scaled " << num_done << " posteriors; errors on " << num_err;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

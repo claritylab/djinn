@@ -17,13 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "ivector/ivector-extractor.h"
 #include "thread/kaldi-task-sequence.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -35,41 +33,40 @@ int main(int argc, char *argv[]) {
         "Usage:  ivector-normalize-length [options] <ivector-rspecifier> "
         "<ivector-wspecifier>\n"
         "e.g.: \n"
-        " ivector-normalize-length ark:ivectors.ark ark:normalized_ivectors.ark\n";
-    
+        " ivector-normalize-length ark:ivectors.ark "
+        "ark:normalized_ivectors.ark\n";
+
     ParseOptions po(usage);
     bool normalize = true;
 
     po.Register("normalize", &normalize,
                 "Set this to false to disable normalization");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string ivector_rspecifier = po.GetArg(1),
-        ivector_wspecifier = po.GetArg(2);
-
+                ivector_wspecifier = po.GetArg(2);
 
     int32 num_done = 0;
-    
+
     double tot_ratio = 0.0, tot_ratio2 = 0.0;
 
     SequentialBaseFloatVectorReader ivector_reader(ivector_rspecifier);
     BaseFloatVectorWriter ivector_writer(ivector_wspecifier);
 
-    
     for (; !ivector_reader.Done(); ivector_reader.Next()) {
       std::string key = ivector_reader.Key();
       Vector<BaseFloat> ivector = ivector_reader.Value();
       BaseFloat norm = ivector.Norm(2.0);
-      BaseFloat ratio = norm / sqrt(ivector.Dim()); // how much larger it is
-                                                    // than it would be, in
-                                                    // expectation, if normally
-                                                    // distributed.
+      BaseFloat ratio = norm / sqrt(ivector.Dim());  // how much larger it is
+                                                     // than it would be, in
+                                                     // expectation, if normally
+                                                     // distributed.
       KALDI_VLOG(2) << "Ratio for key " << key << " is " << ratio;
       if (ratio == 0.0) {
         KALDI_WARN << "Zero iVector";
@@ -85,12 +82,13 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Processed " << num_done << " iVectors.";
     if (num_done != 0) {
       BaseFloat avg_ratio = tot_ratio / num_done,
-          ratio_stddev = sqrt(tot_ratio2 / num_done - avg_ratio * avg_ratio);
+                ratio_stddev =
+                    sqrt(tot_ratio2 / num_done - avg_ratio * avg_ratio);
       KALDI_LOG << "Average ratio of iVector to expected length was "
                 << avg_ratio << ", standard deviation was " << ratio_stddev;
-    }      
+    }
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

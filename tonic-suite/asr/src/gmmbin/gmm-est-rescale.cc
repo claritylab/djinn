@@ -33,22 +33,23 @@ int main(int argc, char *argv[]) {
         "  the difference between the model and the features, to keep\n"
         "  the effect of any prior discriminative training).  Used in fMPE.\n"
         "  Does not update the transitions or weights.\n"
-        "Usage: gmm-est-rescale [options] <model-in> <old-stats-in> <new-stats-in> <model-out>\n"
+        "Usage: gmm-est-rescale [options] <model-in> <old-stats-in> "
+        "<new-stats-in> <model-out>\n"
         "e.g.: gmm-est-rescale 1.mdl old.acc new.acc 2.mdl\n";
-    
+
     bool binary_write = true;
-    MleDiagGmmOptions opts; // Not passed to command-line-- just a mechanism to
+    MleDiagGmmOptions opts;  // Not passed to command-line-- just a mechanism to
     // ensure our options have the same default values as those ones.
     BaseFloat min_variance = opts.min_variance;
     BaseFloat min_gaussian_occupancy = opts.min_gaussian_occupancy;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("min-variance", &min_variance,
                 "Variance floor (absolute variance).");
     po.Register("min-gaussian-occupancy", &min_gaussian_occupancy,
                 "Minimum occupancy to update a Gaussian.");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -57,9 +58,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_rxfilename = po.GetArg(1),
-        old_stats_rxfilename = po.GetArg(2),
-        new_stats_rxfilename = po.GetArg(3),
-        model_wxfilename = po.GetArg(4);
+                old_stats_rxfilename = po.GetArg(2),
+                new_stats_rxfilename = po.GetArg(3),
+                model_wxfilename = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -86,10 +87,9 @@ int main(int argc, char *argv[]) {
       new_gmm_accs.Read(ki.Stream(), binary, true);
     }
 
-    DoRescalingUpdate(old_gmm_accs, new_gmm_accs,
-                      min_variance, min_gaussian_occupancy,
-                      &am_gmm);
-    
+    DoRescalingUpdate(old_gmm_accs, new_gmm_accs, min_variance,
+                      min_gaussian_occupancy, &am_gmm);
+
     {
       Output ko(model_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -98,10 +98,8 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Rescaled model and wrote to " << model_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

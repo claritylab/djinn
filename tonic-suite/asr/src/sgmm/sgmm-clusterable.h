@@ -38,25 +38,25 @@ namespace kaldi {
 /// mixture per state!] are directly estimated using ML, instead of being
 /// computed from v_j and w_i as in the actual SGMM.
 
-class SgmmClusterable: public Clusterable {
+class SgmmClusterable : public Clusterable {
  public:
   SgmmClusterable(const AmSgmm &sgmm,
-                  const std::vector< SpMatrix<double> > &H): // H can be empty vector
-      // at initialization.  Used to cache something from the model.
-      sgmm_(sgmm),
-      H_(H),
-      gamma_(sgmm.NumGauss()),
-      y_(sgmm.PhoneSpaceDim()) { }
+                  const std::vector<SpMatrix<double> > &H)
+      :  // H can be empty vector
+        // at initialization.  Used to cache something from the model.
+        sgmm_(sgmm),
+        H_(H),
+        gamma_(sgmm.NumGauss()),
+        y_(sgmm.PhoneSpaceDim()) {}
   virtual std::string Type() const { return "sgmm"; }
 
   /// compare with the Accumulate function of MleAmSgmmAccs
   /// Note: the pdf-index j, relating to the original SGMM
   /// in sgmm_, is only needed to select the right vector to
   /// compute Gaussian-level alignments with.
-  void Accumulate(const SgmmPerFrameDerivedVars &frame_vars,
-                  int32 j, 
+  void Accumulate(const SgmmPerFrameDerivedVars &frame_vars, int32 j,
                   BaseFloat weight);
-  
+
   virtual BaseFloat Objf() const;
   virtual void SetZero();
   virtual void Add(const Clusterable &other_in);
@@ -68,45 +68,49 @@ class SgmmClusterable: public Clusterable {
   virtual Clusterable *ReadNew(std::istream &is, bool binary) const;
   virtual ~SgmmClusterable() {}
 
-  const Vector<double> &gamma () const { return gamma_; }
+  const Vector<double> &gamma() const { return gamma_; }
   const Vector<double> &y() const { return y_; }
+
  private:
-  void ComputeH(); // Compute the quantity my_H_, from gamma_ and H_.
-  
+  void ComputeH();  // Compute the quantity my_H_, from gamma_ and H_.
+
   const AmSgmm &sgmm_;  // Reference to the SGMM object, needed to compute
   // objective functions.
-  const std::vector< SpMatrix<double> > &H_; // Reference to a vector of SpMatrix which
-  // should have been computed from the model using ComputeH().  Needed for Objf() function.
-  Vector<double> gamma_; // Occupation counts for each Gaussian index.  Comparable
+  const std::vector<SpMatrix<double> > &
+      H_;  // Reference to a vector of SpMatrix which
+  // should have been computed from the model using ComputeH().  Needed for
+  // Objf() function.
+  Vector<double>
+      gamma_;  // Occupation counts for each Gaussian index.  Comparable
   // to the gamma_{jmi} statistics in the SGMM paper.
-  Vector<double> y_; // Statistics comparable to the y_{jm} statistics in the SGMM
+  Vector<double>
+      y_;  // Statistics comparable to the y_{jm} statistics in the SGMM
   // paper.
 
-  SpMatrix<double> my_H_; // This quantity is a weighted sum over the H quantities,
+  SpMatrix<double>
+      my_H_;  // This quantity is a weighted sum over the H quantities,
   // weighted by gamma_(i).  It's only nonempty if the H_ matrix is nonempty.
   // This quantity is never written to disk; it is to be viewed as a kind of
   // cache, present only for purposes of fast objective-function computation.
 };
 
-
 /// Comparable to AccumulateTreeStats, but this version
 /// accumulates stats of type SgmmClusterable.  Returns
 /// true on success.
-bool AccumulateSgmmTreeStats(const TransitionModel &trans_model,
-                             const AmSgmm &am_sgmm,
-                             const std::vector<SpMatrix<double> > &H, // this is a ref. to temp.
-                             // storage needed in the clusterable class... can be empty
-                             // during accumulation as it doesn't call Objf().
-                             int N, // context window size.
-                             int P, // central position.
-                             const std::vector<int32> &ci_phones, // must be sorted
-                             const std::vector<int32> &alignment,
-                             const std::vector<std::vector<int32> > &gselect,
-                             const SgmmPerSpkDerivedVars &per_spk_vars,
-                             const Matrix<BaseFloat> &features,
-                             std::map<EventType, SgmmClusterable*> *stats);
+bool AccumulateSgmmTreeStats(
+    const TransitionModel &trans_model, const AmSgmm &am_sgmm,
+    const std::vector<SpMatrix<double> > &H,  // this is a ref. to temp.
+    // storage needed in the clusterable class... can be empty
+    // during accumulation as it doesn't call Objf().
+    int N,                                // context window size.
+    int P,                                // central position.
+    const std::vector<int32> &ci_phones,  // must be sorted
+    const std::vector<int32> &alignment,
+    const std::vector<std::vector<int32> > &gselect,
+    const SgmmPerSpkDerivedVars &per_spk_vars,
+    const Matrix<BaseFloat> &features,
+    std::map<EventType, SgmmClusterable *> *stats);
 
-
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #endif  // KALDI_SGMM_SGMM_CLUSTERABLE_H_

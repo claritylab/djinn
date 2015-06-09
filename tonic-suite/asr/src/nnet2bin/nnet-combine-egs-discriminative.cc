@@ -35,25 +35,30 @@ int main(int argc, char *argv[]) {
         "be less than --max-length.  This can help to improve efficiency\n"
         "(--max-length corresponds to minibatch size)\n"
         "\n"
-        "Usage:  nnet-combine-egs-discriminative [options] <egs-rspecifier> <egs-wspecifier>\n"
+        "Usage:  nnet-combine-egs-discriminative [options] <egs-rspecifier> "
+        "<egs-wspecifier>\n"
         "\n"
         "e.g.\n"
-        "nnet-combine-egs-discriminative --max-length=512 ark:temp.1.degs ark:1.degs\n";
-        
+        "nnet-combine-egs-discriminative --max-length=512 ark:temp.1.degs "
+        "ark:1.degs\n";
+
     int32 max_length = 512;
     int32 hard_max_length = 2048;
     int32 batch_size = 250;
     ParseOptions po(usage);
-    po.Register("max-length", &max_length, "Maximum length of example that we "
+    po.Register("max-length", &max_length,
+                "Maximum length of example that we "
                 "will create when combining");
-    po.Register("batch-size", &batch_size, "Size of batch used when combinging "
+    po.Register("batch-size", &batch_size,
+                "Size of batch used when combinging "
                 "examples");
-    po.Register("hard-max-length", &hard_max_length, "Length of example beyond "
+    po.Register("hard-max-length", &hard_max_length,
+                "Length of example beyond "
                 "which we will discard (very long examples may cause out of "
                 "memory errors)");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
@@ -61,14 +66,13 @@ int main(int argc, char *argv[]) {
 
     KALDI_ASSERT(hard_max_length >= max_length);
     KALDI_ASSERT(batch_size >= 1);
-    
+
     std::string examples_rspecifier = po.GetArg(1),
-        examples_wspecifier = po.GetArg(2);
+                examples_wspecifier = po.GetArg(2);
 
     SequentialDiscriminativeNnetExampleReader example_reader(
         examples_rspecifier);
-    DiscriminativeNnetExampleWriter example_writer(
-        examples_wspecifier);
+    DiscriminativeNnetExampleWriter example_writer(examples_wspecifier);
 
     int64 num_read = 0, num_written = 0, num_discarded = 0;
 
@@ -101,15 +105,14 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    
-    KALDI_LOG << "Read " << num_read << " discriminative neural-network training"
+
+    KALDI_LOG << "Read " << num_read
+              << " discriminative neural-network training"
               << " examples, wrote " << num_written << ", discarded "
               << num_discarded;
     return (num_written == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

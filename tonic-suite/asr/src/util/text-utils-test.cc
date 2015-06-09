@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/text-utils.h"
 
@@ -34,7 +33,6 @@ char GetRandDelim() {
   else
     return ws_delim[Rand() % 4];
 }
-
 
 void TestSplitStringToVector() {
   // srand((unsigned int)time(NULL));
@@ -53,24 +51,24 @@ void TestSplitStringToVector() {
     std::vector<std::string> str_vec;
     int sz = Rand() % 73;
     std::string full;
-    for (int i = 0; i < sz-1; i++) {
-      full.push_back( (Rand() % 7 == 0)? GetRandDelim() : GetRandChar());
+    for (int i = 0; i < sz - 1; i++) {
+      full.push_back((Rand() % 7 == 0) ? GetRandDelim() : GetRandChar());
     }
     std::string delim;
     delim.push_back(GetRandDelim());
-    bool omit_empty_strings = (Rand() %2 == 0)? true : false;
+    bool omit_empty_strings = (Rand() % 2 == 0) ? true : false;
     SplitStringToVector(full, delim.c_str(), omit_empty_strings, &str_vec);
     std::string new_full;
     for (size_t i = 0; i < str_vec.size(); i++) {
       if (omit_empty_strings) KALDI_ASSERT(str_vec[i] != "");
       new_full.append(str_vec[i]);
-      if (i < str_vec.size() -1) new_full.append(delim);
+      if (i < str_vec.size() - 1) new_full.append(delim);
     }
     std::string new_full2;
     JoinVectorToString(str_vec, delim.c_str(), omit_empty_strings, &new_full2);
     if (omit_empty_strings) {  // sequences of delimiters cannot be matched
       size_t start = full.find_first_not_of(delim),
-          end = full.find_last_not_of(delim);
+             end = full.find_last_not_of(delim);
       if (start == std::string::npos) {  // only delimiters
         KALDI_ASSERT(end == std::string::npos);
       } else {
@@ -96,17 +94,18 @@ void TestSplitStringToVector() {
 void TestSplitStringToIntegers() {
   {
     std::vector<int32> v;
-    KALDI_ASSERT(SplitStringToIntegers("-1:2:4", ":", false, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToIntegers("-1:2:4", ":", false, &v) == true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
     KALDI_ASSERT(SplitStringToIntegers("-1:2:4:", ":", false, &v) == false);
-    KALDI_ASSERT(SplitStringToIntegers(":-1::2:4:", ":", true, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
-    KALDI_ASSERT(SplitStringToIntegers("-1\n2\t4", " \n\t\r", false, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
-    KALDI_ASSERT(SplitStringToIntegers(" ", " \n\t\r", true, &v) == true
-           && v.size() == 0);
-    KALDI_ASSERT(SplitStringToIntegers("", " \n\t\r", false, &v) == true
-           && v.size() == 0);
+    KALDI_ASSERT(SplitStringToIntegers(":-1::2:4:", ":", true, &v) == true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToIntegers("-1\n2\t4", " \n\t\r", false, &v) ==
+                     true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToIntegers(" ", " \n\t\r", true, &v) == true &&
+                 v.size() == 0);
+    KALDI_ASSERT(SplitStringToIntegers("", " \n\t\r", false, &v) == true &&
+                 v.size() == 0);
   }
 
   {
@@ -116,22 +115,21 @@ void TestSplitStringToIntegers() {
   }
 }
 
-
-
 void TestSplitStringToFloats() {
   {
     std::vector<float> v;
-    KALDI_ASSERT(SplitStringToFloats("-1:2.5:4", ":", false, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2.5 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToFloats("-1:2.5:4", ":", false, &v) == true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2.5 && v[2] == 4);
     KALDI_ASSERT(SplitStringToFloats("-1:2.5:4:", ":", false, &v) == false);
-    KALDI_ASSERT(SplitStringToFloats(":-1::2:4:", ":", true, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
-    KALDI_ASSERT(SplitStringToFloats("-1\n2.5\t4", " \n\t\r", false, &v) == true
-           && v.size() == 3 && v[0] == -1 && v[1] == 2.5 && v[2] == 4);
-    KALDI_ASSERT(SplitStringToFloats(" ", " \n\t\r", true, &v) == true
-           && v.size() == 0);
-    KALDI_ASSERT(SplitStringToFloats("", " \n\t\r", false, &v) == true
-           && v.size() == 0);
+    KALDI_ASSERT(SplitStringToFloats(":-1::2:4:", ":", true, &v) == true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToFloats("-1\n2.5\t4", " \n\t\r", false, &v) ==
+                     true &&
+                 v.size() == 3 && v[0] == -1 && v[1] == 2.5 && v[2] == 4);
+    KALDI_ASSERT(SplitStringToFloats(" ", " \n\t\r", true, &v) == true &&
+                 v.size() == 0);
+    KALDI_ASSERT(SplitStringToFloats("", " \n\t\r", false, &v) == true &&
+                 v.size() == 0);
   }
 
   {
@@ -155,11 +153,11 @@ void TestConvertStringToInteger() {
 
   uint64 k;
   KALDI_ASSERT(ConvertStringToInteger("12345", &k) && k == 12345);
-  KALDI_ASSERT(!ConvertStringToInteger("-12345", &k));  // unsigned, cannot convert.
-
+  KALDI_ASSERT(
+      !ConvertStringToInteger("-12345", &k));  // unsigned, cannot convert.
 }
 
-template<class Real>
+template <class Real>
 void TestConvertStringToReal() {
   Real d;
   KALDI_ASSERT(ConvertStringToReal("1", &d) && d == 1.0);
@@ -168,10 +166,9 @@ void TestConvertStringToReal() {
   KALDI_ASSERT(ConvertStringToReal(" -1 ", &d) && d == -1.0);
   KALDI_ASSERT(!ConvertStringToReal("-1 x", &d));
   KALDI_ASSERT(!ConvertStringToReal("-1f", &d));
-  KALDI_ASSERT(ConvertStringToReal("12345.2", &d) && fabs(d-12345.2) < 1.0);
-  KALDI_ASSERT(ConvertStringToReal("1.0e+08", &d) && fabs(d-1.0e+08) < 100.0);
+  KALDI_ASSERT(ConvertStringToReal("12345.2", &d) && fabs(d - 12345.2) < 1.0);
+  KALDI_ASSERT(ConvertStringToReal("1.0e+08", &d) && fabs(d - 1.0e+08) < 100.0);
 }
-
 
 std::string TrimTmp(std::string s) {
   Trim(&s);
@@ -185,8 +182,7 @@ void TestTrim() {
   KALDI_ASSERT(TrimTmp("X\n") == "X");
   KALDI_ASSERT(TrimTmp("X\n\t") == "X");
   KALDI_ASSERT(TrimTmp("\n\tX") == "X");
-} // end namespace kaldi
-
+}  // end namespace kaldi
 
 void TestSplitStringOnFirstSpace() {
   std::string a, b;
@@ -216,9 +212,10 @@ void TestIsToken() {
   KALDI_ASSERT(!IsToken("ab "));
   KALDI_ASSERT(!IsToken(" ab"));
   KALDI_ASSERT(!IsToken("a b"));
-  KALDI_ASSERT(IsToken("\231")); // typical non-ASCII printable character, something with
+  KALDI_ASSERT(IsToken(
+      "\231"));  // typical non-ASCII printable character, something with
   // an accent.
-  KALDI_ASSERT(!IsToken("\377")); // character 255, which is a form of space.
+  KALDI_ASSERT(!IsToken("\377"));  // character 255, which is a form of space.
   KALDI_ASSERT(IsToken("a-b,c,d=ef"));
   KALDI_ASSERT(!IsToken("a\nb"));
   KALDI_ASSERT(!IsToken("a\tb"));
@@ -234,7 +231,7 @@ void TestIsLine() {
   KALDI_ASSERT(!IsLine(" a b"));
 }
 
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;
@@ -250,6 +247,3 @@ int main() {
   TestIsLine();
   std::cout << "Test OK\n";
 }
-
-
-

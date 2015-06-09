@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "transform/lda-estimate.h"
@@ -28,7 +27,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Estimate LDA transform using stats obtained with acc-lda.\n"
-        "Usage:  est-lda [options] <lda-matrix-out> <lda-acc-1> <lda-acc-2> ...\n";
+        "Usage:  est-lda [options] <lda-matrix-out> <lda-acc-1> <lda-acc-2> "
+        "...\n";
 
     bool binary = true;
     std::string full_matrix_wxfilename;
@@ -63,10 +63,8 @@ int main(int argc, char *argv[]) {
       full_lda_mat.Write(ko.Stream(), binary);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

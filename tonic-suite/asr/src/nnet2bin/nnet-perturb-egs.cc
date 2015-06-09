@@ -26,8 +26,7 @@ namespace kaldi {
 namespace nnet2 {
 
 void PerturbTrainingExample(const TpMatrix<BaseFloat> &cholesky,
-                            BaseFloat noise_factor,
-                            NnetExample *eg) {
+                            BaseFloat noise_factor, NnetExample *eg) {
   Matrix<BaseFloat> input_frames(eg->input_frames);
   int32 dim = input_frames.NumRows() * input_frames.NumCols();
   if (dim != cholesky.NumRows()) {
@@ -42,11 +41,8 @@ void PerturbTrainingExample(const TpMatrix<BaseFloat> &cholesky,
   input_frames.CopyRowsFromVec(vec);
   eg->input_frames.CopyFromMat(input_frames);
 }
-
 }
 }
-
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -56,44 +52,47 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int64 int64;
 
     const char *usage =
-        "Copy examples, perturbing them by adding a specified amount (--noise-factor)\n"
-        "times the within-class covariance of the examples. the Cholesky factor of\n"
+        "Copy examples, perturbing them by adding a specified amount "
+        "(--noise-factor)\n"
+        "times the within-class covariance of the examples. the Cholesky "
+        "factor of\n"
         "the examples (obtained from the --write-cholesky option of\n"
         "nnet-get-feature-transform) must be supplied.\n"
         "\n"
-        "Usage:  nnet-perturb-egs [options] <cholesky> <egs-rspecifier> <egs-wspecifier>\n"
+        "Usage:  nnet-perturb-egs [options] <cholesky> <egs-rspecifier> "
+        "<egs-wspecifier>\n"
         "\n"
-        "nnet-perturb-egs --noise-factor=0.2 exp/nnet5/cholesky.tpmat ark:- ark:-\n";
-    
-        
+        "nnet-perturb-egs --noise-factor=0.2 exp/nnet5/cholesky.tpmat ark:- "
+        "ark:-\n";
+
     BaseFloat noise_factor = 0.1;
     int32 srand_seed = 0;
-    
+
     ParseOptions po(usage);
-    po.Register("noise-factor", &noise_factor, "Factor to multiply noise generated "
+    po.Register("noise-factor", &noise_factor,
+                "Factor to multiply noise generated "
                 "from within-class variance by before adding to egs");
     po.Register("srand", &srand_seed, "Seed for random number generator ");
-    
+
     po.Read(argc, argv);
 
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string cholesky_rxfilename = po.GetArg(1),
-        examples_rspecifier = po.GetArg(2),
-        examples_wspecifier = po.GetArg(3);
+                examples_rspecifier = po.GetArg(2),
+                examples_wspecifier = po.GetArg(3);
 
     TpMatrix<BaseFloat> cholesky;
     ReadKaldiObject(cholesky_rxfilename, &cholesky);
-    
+
     SequentialNnetExampleReader example_reader(examples_rspecifier);
     NnetExampleWriter example_writer(examples_wspecifier);
-    
-    
+
     int64 num_done = 0;
     for (; !example_reader.Done(); example_reader.Next(), num_done++) {
       std::string key = example_reader.Key();
@@ -101,14 +100,13 @@ int main(int argc, char *argv[]) {
       PerturbTrainingExample(cholesky, noise_factor, &eg);
       example_writer.Write(key, eg);
     }
-    
-    KALDI_LOG << "Perturbed " << num_done << " neural-network training examples "
+
+    KALDI_LOG << "Perturbed " << num_done
+              << " neural-network training examples "
               << "with noise factor " << noise_factor;
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

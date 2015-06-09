@@ -19,30 +19,30 @@ namespace kaldi {
 
 /*
  * INITIALIZERS
- */ 
-template<typename Real>
+ */
+template <typename Real>
 static void InitRand(SpMatrix<Real> *M) {
   do {
     for (MatrixIndexT i = 0; i < M->NumRows(); i++) {
-      for (MatrixIndexT j = 0; j <= i; j++ ) {
-    (*M)(i,j) = RandGauss();
+      for (MatrixIndexT j = 0; j <= i; j++) {
+        (*M)(i, j) = RandGauss();
       }
     }
   } while (M->NumRows() != 0 && M->Cond() > 100);
 }
 
-template<typename Real>
+template <typename Real>
 static void InitRand(VectorBase<Real> *v) {
   for (MatrixIndexT i = 0; i < v->Dim(); i++) {
     (*v)(i) = RandGauss();
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestSetZeroAboveDiag() {
   for (MatrixIndexT i = 1; i < 10; i++) {
     MatrixIndexT dim = 10 * i;
-    Matrix<Real> A(dim,dim);
+    Matrix<Real> A(dim, dim);
     A.SetRandn();
     CuMatrix<Real> B(A);
 
@@ -50,25 +50,23 @@ static void UnitTestSetZeroAboveDiag() {
 
     Real sum = 0.0;
     for (MatrixIndexT i = 0; i < dim; i++) {
-      for (MatrixIndexT j = i + 1; j < dim; j++)
-        sum += A(i,j);
+      for (MatrixIndexT j = i + 1; j < dim; j++) sum += A(i, j);
     }
-        
+
     KALDI_LOG << "the upper diaganoal sum for A is : " << sum;
     B.CopyToMat(&A);
     sum = 0.0;
     for (MatrixIndexT i = 0; i < dim; i++) {
-      for (MatrixIndexT j = i + 1; j < dim; j++)
-        sum += A(i,j);
+      for (MatrixIndexT j = i + 1; j < dim; j++) sum += A(i, j);
     }
     KALDI_LOG << "the upper diaganoal sum for B is : " << sum;
   }
 }
 
-
-template<typename Real> static void UnitTestCholesky() {
+template <typename Real>
+static void UnitTestCholesky() {
   for (MatrixIndexT iter = 0; iter < 3; iter++) {
-    MatrixIndexT dim = 300 + Rand() %  200;
+    MatrixIndexT dim = 300 + Rand() % 200;
     // set dimension
     // computing the matrix for cholesky input
     // CuMatrix is cuda matrix class while Matrix is cpu matrix class
@@ -83,22 +81,23 @@ template<typename Real> static void UnitTestCholesky() {
     // copy the matrix to cudamatrix object
     A.CopyFromMat(B);
     A.CopyToMat(&B);
-    //KALDI_LOG << B;
+    // KALDI_LOG << B;
     // doing cholesky
     A.Cholesky();
 
-    Matrix<Real> D(dim,dim);
+    Matrix<Real> D(dim, dim);
     A.CopyToMat(&D);
-    
-    //KALDI_LOG << "D is: " << D;
-    Matrix<Real> E(dim,dim);
+
+    // KALDI_LOG << "D is: " << D;
+    Matrix<Real> E(dim, dim);
     E.AddMatMat(1.0, D, kNoTrans, D, kTrans, 0.0);
     // check if the D'D is equal to B or not!
     AssertEqual(B, E);
   }
 }
 
-template<typename Real> static void UnitTestTrace() {
+template <typename Real>
+static void UnitTestTrace() {
   for (MatrixIndexT iter = 1; iter < 18; iter++) {
     MatrixIndexT dim = iter;
     KALDI_LOG << "dim is : " << iter;
@@ -130,109 +129,110 @@ template<typename Real> static void UnitTestTrace() {
   */
 }
 
-template<typename Real> static void UnitInvert() {
-  //MatrixIndexT dim = 15 + Rand() %  40;;
+template <typename Real>
+static void UnitInvert() {
+  // MatrixIndexT dim = 15 + Rand() %  40;;
   MatrixIndexT dim = 8;
-  CuMatrix<Real> A(dim,dim);
-  Matrix<Real> B(dim,dim);
+  CuMatrix<Real> A(dim, dim);
+  Matrix<Real> B(dim, dim);
   Vector<Real> C(dim);
   for (MatrixIndexT i = 0; i < dim; i++) {
-    B(i,i) = 1;
+    B(i, i) = 1;
     C(i) = i + 1;
   }
-  B.AddVecVec(1.0,C,C);
-  CuMatrix<Real> tmp(dim,dim);
+  B.AddVecVec(1.0, C, C);
+  CuMatrix<Real> tmp(dim, dim);
   A.CopyFromMat(B);
-  //A.Cholesky();
+  // A.Cholesky();
   A.CopyToMat(&B);
   KALDI_LOG << "B is : ";
   KALDI_LOG << B;
   A.SymInvertPosDef();
-  Matrix<Real> D(dim,dim);
+  Matrix<Real> D(dim, dim);
   A.CopyToMat(&D);
   KALDI_LOG << "D is : ";
   KALDI_LOG << D;
-  Matrix<Real> X(dim,dim);
-  X.AddMatMat(1,B,kNoTrans,D,kNoTrans,0);
+  Matrix<Real> X(dim, dim);
+  X.AddMatMat(1, B, kNoTrans, D, kNoTrans, 0);
   KALDI_LOG << X;
-  //for (MatrixIndexT i = 0; i < dim; i++) {
+  // for (MatrixIndexT i = 0; i < dim; i++) {
   //  for (MatrixIndexT j = i+1; j < dim; j++)
   //    D(i,j) = 0;
   //}
-  //Matrix<Real> E(dim,dim);
-  //E.AddMatMat(1,D,kNoTrans,D,kTrans,0);
-  //AssertEqual(B,E);
+  // Matrix<Real> E(dim,dim);
+  // E.AddMatMat(1,D,kNoTrans,D,kTrans,0);
+  // AssertEqual(B,E);
 }
 
-template<typename Real> static void UnitTestInvert() {
+template <typename Real>
+static void UnitTestInvert() {
   for (MatrixIndexT iter = 0; iter < 3; iter++) {
     MatrixIndexT dim = 500 + Rand() % 400;
-    
+
     KALDI_LOG << "dim is : ";
     KALDI_LOG << dim;
-    CuMatrix<Real> A(dim,dim);
-    Matrix<Real> B(dim,dim);
+    CuMatrix<Real> A(dim, dim);
+    Matrix<Real> B(dim, dim);
     Vector<Real> C(dim);
     for (MatrixIndexT i = 0; i < dim; i++) {
-      B(i,i) = 1;
-      C(i) = (i/(1.0*dim)) + 1;
+      B(i, i) = 1;
+      C(i) = (i / (1.0 * dim)) + 1;
     }
     Matrix<Real> Identity(B);
     B.AddVecVec(1.0, C, C);
     // Now we have a positive-definite B (inversion would
-    // fail if it were not positive definite). 
+    // fail if it were not positive definite).
 
     A.CopyFromMat(B);
-    
+
     A.SymInvertPosDef();
-    Matrix<Real> D(dim,dim);
+    Matrix<Real> D(dim, dim);
     A.CopyToMat(&D);
-    
-    Matrix<Real> X(dim,dim);
+
+    Matrix<Real> X(dim, dim);
     X.AddMatMat(1.0, B, kNoTrans, D, kNoTrans, 0.0);
     // KALDI_LOG << "X is (should be identity): " << X;
     AssertEqual(Identity, X, (sizeof(Real) == 4 ? 0.1 : 0.001));
   }
 }
 
-template<typename Real> static void UnitTestConstructor() {
+template <typename Real>
+static void UnitTestConstructor() {
   MatrixIndexT dim = 8;
-  CuMatrix<Real> A(dim,dim);
-  Matrix<Real> B(dim,dim);
+  CuMatrix<Real> A(dim, dim);
+  Matrix<Real> B(dim, dim);
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <=i; j++)
-      B(i,j) = i+j;
-    for (MatrixIndexT j = i+1; j < dim; j++)
-      B(i,j) = i+j+4;
+    for (MatrixIndexT j = 0; j <= i; j++) B(i, j) = i + j;
+    for (MatrixIndexT j = i + 1; j < dim; j++) B(i, j) = i + j + 4;
   }
   KALDI_LOG << "A is : ";
   KALDI_LOG << B;
   A.CopyFromMat(B);
-  //CuSpMatrix<Real> C(dim);
-  //C.CopyFromMat(A,kTakeLower);
+  // CuSpMatrix<Real> C(dim);
+  // C.CopyFromMat(A,kTakeLower);
   CuSpMatrix<Real> C(A, kTakeLower);
   SpMatrix<Real> D(dim);
   C.CopyToSp(&D);
   KALDI_LOG << "C is : ";
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <= i; j++)
-      std::cout << D(i,j) << " ";
+    for (MatrixIndexT j = 0; j <= i; j++) std::cout << D(i, j) << " ";
     std::cout << '\n';
-  }  
+  }
 }
 
-template<typename Real> static void UnitTestCopySp() {
-  // Checking that the various versions of copying                                 
-  // matrix to SpMatrix work the same in the symmetric case.                         
-  for (MatrixIndexT iter = 0;iter < 5;iter++) {
-    int32 dim = 5 + Rand() %  10;
+template <typename Real>
+static void UnitTestCopySp() {
+  // Checking that the various versions of copying
+  // matrix to SpMatrix work the same in the symmetric case.
+  for (MatrixIndexT iter = 0; iter < 5; iter++) {
+    int32 dim = 5 + Rand() % 10;
     SpMatrix<Real> A(dim), B(dim);
     A.SetRandn();
     Matrix<Real> C(A);
-    //CuMatrix<Real> D(C);
-    
+    // CuMatrix<Real> D(C);
+
     {
-      CuMatrix<Real> D2(dim,dim);
+      CuMatrix<Real> D2(dim, dim);
       D2.CopyFromMat(C);
       KALDI_LOG << "D2 is " << D2;
       CuSpMatrix<Real> E(D2.NumRows(), kUndefined);
@@ -240,14 +240,14 @@ template<typename Real> static void UnitTestCopySp() {
       E.CopyFromMat(D2, kTakeLower);
       KALDI_LOG << "D2 is " << D2;
     }
-    
-    CuMatrix<Real> D(dim,dim);
+
+    CuMatrix<Real> D(dim, dim);
     D.CopyFromMat(C);
-    KALDI_LOG << "D stride is : " << D.Stride() <<'\n';
-    
-    CuSpMatrix<Real> E(D,kTakeLower);
-    ///CuSpMatrix<Real> E(dim);
-    //E.CopyFromMat(D,kTakeLower);
+    KALDI_LOG << "D stride is : " << D.Stride() << '\n';
+
+    CuSpMatrix<Real> E(D, kTakeLower);
+    /// CuSpMatrix<Real> E(dim);
+    // E.CopyFromMat(D,kTakeLower);
     /*
     KALDI_LOG << D.NumRows();
     //E.CopyFromMat(D, kTakeMean);
@@ -268,61 +268,57 @@ template<typename Real> static void UnitTestCopySp() {
     CuSpMatrix<Real> G(D, kTakeUpper);
     G.CopyToMat(&B);
     AssertEqual(A, B);
-    */  
+    */
   }
-  
 }
 
-template<typename Real> static void UnitTestCopyFromMat() {
+template <typename Real>
+static void UnitTestCopyFromMat() {
   MatrixIndexT dim = 8;
-  CuMatrix<Real> A(dim,dim);
-  Matrix<Real> B(dim,dim);
+  CuMatrix<Real> A(dim, dim);
+  Matrix<Real> B(dim, dim);
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <=i; j++)
-      B(i,j) = i+j;
-    for (MatrixIndexT j = i+1; j < dim; j++)
-      B(i,j) = i+j+4;
+    for (MatrixIndexT j = 0; j <= i; j++) B(i, j) = i + j;
+    for (MatrixIndexT j = i + 1; j < dim; j++) B(i, j) = i + j + 4;
   }
   KALDI_LOG << "A is : ";
   KALDI_LOG << B;
   A.CopyFromMat(B);
   CuSpMatrix<Real> C(dim);
-  C.CopyFromMat(A,kTakeLower);
+  C.CopyFromMat(A, kTakeLower);
   SpMatrix<Real> D(dim);
   C.CopyToSp(&D);
   KALDI_LOG << "C is : ";
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <= i; j++)
-      std::cout << D(i,j) << " ";
+    for (MatrixIndexT j = 0; j <= i; j++) std::cout << D(i, j) << " ";
     std::cout << '\n';
   }
-  C.CopyFromMat(A,kTakeUpper);
+  C.CopyFromMat(A, kTakeUpper);
   C.CopyToSp(&D);
   KALDI_LOG << "C is : ";
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <= i; j++)
-      std::cout << D(i,j) << " ";
+    for (MatrixIndexT j = 0; j <= i; j++) std::cout << D(i, j) << " ";
     std::cout << '\n';
   }
-  
-  C.CopyFromMat(A,kTakeMean);
+
+  C.CopyFromMat(A, kTakeMean);
   C.CopyToSp(&D);
   KALDI_LOG << "C is : ";
   for (MatrixIndexT i = 0; i < dim; i++) {
-    for (MatrixIndexT j = 0; j <= i; j++)
-      std::cout << D(i,j) << " ";
+    for (MatrixIndexT j = 0; j <= i; j++) std::cout << D(i, j) << " ";
     std::cout << '\n';
   }
-  
-  //KALDI_LOG << D;
+
+  // KALDI_LOG << D;
 }
 
-template<typename Real> static void UnitTestMatrix() {
-  //operator()
+template <typename Real>
+static void UnitTestMatrix() {
+  // operator()
   for (MatrixIndexT iter = 0; iter < 2; iter++) {
     int32 dim1 = 6 + Rand() % 10;
     int32 dim2 = 8 + Rand() % 10;
-    Matrix<Real> A(dim1,dim2);
+    Matrix<Real> A(dim1, dim2);
     A.SetRandn();
     CuMatrix<Real> B(A);
     KALDI_ASSERT(A(3, 4) == B(3, 4));
@@ -337,8 +333,8 @@ template<typename Real> static void UnitTestMatrix() {
     if (Rand() % 2 == 0)
       As(3, 4) = Bs(3, 4);
     else
-      As(3, 4) = (const_cast<const CuSpMatrix<Real>&>(Bs))(3, 4);
-    
+      As(3, 4) = (const_cast<const CuSpMatrix<Real> &>(Bs))(3, 4);
+
     KALDI_ASSERT(As(3, 4) == Bs(3, 4));
 
     Vector<Real> v(dim1);
@@ -349,22 +345,23 @@ template<typename Real> static void UnitTestMatrix() {
     KALDI_ASSERT(w(2) == v(2));
   }
 
-  //SetRandn
+  // SetRandn
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
     int32 dim1 = 15 + Rand() % 10;
-    int32 dim2 = dim1;//10 + Rand() % 14;
-    //KALDI_LOG << "dimension is " << dim1
+    int32 dim2 = dim1;  // 10 + Rand() % 14;
+    // KALDI_LOG << "dimension is " << dim1
     //          << " " << dim2 << '\n';
-    CuMatrix<Real> A(dim1,dim2);
+    CuMatrix<Real> A(dim1, dim2);
     A.SetRandn();
-    Matrix<Real> A1(dim1,dim2);
+    Matrix<Real> A1(dim1, dim2);
     A.CopyToMat(&A1);
-    //KALDI_LOG << "gpu sum is: " << A.Sum();
-    //KALDI_LOG << "cpu sum is: " << A1.Sum();
+    // KALDI_LOG << "gpu sum is: " << A.Sum();
+    // KALDI_LOG << "cpu sum is: " << A1.Sum();
   }
 }
 
-template<typename Real> static void UnitTestMulTp() {
+template <typename Real>
+static void UnitTestMulTp() {
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
     int32 dim = 1 + Rand() % 30;
     Vector<Real> v(dim);
@@ -373,19 +370,20 @@ template<typename Real> static void UnitTestMulTp() {
     M.SetRandn();
     CuVector<Real> cv(v);
     CuTpMatrix<Real> cM(M);
-    
+
     Vector<Real> v2(dim);
     cv.CopyToVec(&v2);
     AssertEqual(v, v2);
-    v.MulTp(M, iter % 2 == 0 ? kTrans:kNoTrans);
-    cv.MulTp(cM, iter % 2 == 0 ? kTrans:kNoTrans);
+    v.MulTp(M, iter % 2 == 0 ? kTrans : kNoTrans);
+    cv.MulTp(cM, iter % 2 == 0 ? kTrans : kNoTrans);
     cv.CopyToVec(&v2);
     // KALDI_LOG << "v is " << v << ", v2 is " << v2;
     AssertEqual(v, v2);
   }
 }
 
-template<typename Real> static void UnitTestVector() {
+template <typename Real>
+static void UnitTestVector() {
   // Scale
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
     int32 dim = 24 + Rand() % 10;
@@ -397,12 +395,12 @@ template<typename Real> static void UnitTestVector() {
     B.Scale(r);
     B.CopyToVec(&C);
     A.Scale(r);
-    //KALDI_LOG << A;
-    //KALDI_LOG << (A.Scale(r));
-    //KALDI_LOG << C;
+    // KALDI_LOG << A;
+    // KALDI_LOG << (A.Scale(r));
+    // KALDI_LOG << C;
     AssertEqual(A, C);
   }
-  
+
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
     int32 dim = 15 + Rand() % 10;
     CuVector<Real> A(dim);
@@ -417,7 +415,7 @@ template<typename Real> static void UnitTestVector() {
     A1.MulElements(B1);
     Vector<Real> A2(dim);
     A.CopyToVec(&A2);
-    AssertEqual(A1,A2);
+    AssertEqual(A1, A2);
   }
   /*
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
@@ -442,7 +440,7 @@ template<typename Real> static void UnitTestVector() {
     Vector<Real> A1(dim);
     A.CopyToVec(&A1);
     KALDI_LOG << "cpu min is : " << A1.Min();
-    KALDI_LOG << "gpu min is : " << A.Min();    
+    KALDI_LOG << "gpu min is : " << A.Min();
   }
 
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
@@ -467,7 +465,7 @@ template<typename Real> static void UnitTestVector() {
     A.CopyToVec(&D);
     AssertEqual(D,A1);
   }
-  
+
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
     int32 dim1 = 15 + Rand() % 10;
     int32 dim2 = 10 + Rand() % 10;
@@ -523,7 +521,7 @@ template<typename Real> static void UnitTestVector() {
     Real dot = VecVec(A,B);
     KALDI_LOG << "dot product in gpu: " << dot;
     dot = VecVec(A1,B1);
-    KALDI_LOG << "dot product in cpu: " << dot;    
+    KALDI_LOG << "dot product in cpu: " << dot;
   }
 
   for (MatrixIndexT iter = 0; iter < 10; iter++) {
@@ -539,7 +537,7 @@ template<typename Real> static void UnitTestVector() {
   */
 }
 
-template<typename Real>
+template <typename Real>
 static void CuMatrixUnitTest() {
   UnitTestTrace<Real>();
   UnitTestCholesky<Real>();
@@ -553,7 +551,7 @@ static void CuMatrixUnitTest() {
   UnitTestMatrix<Real>();
   UnitTestSetZeroAboveDiag<Real>();
 }
-} //namespace
+}  // namespace
 
 int main() {
   using namespace kaldi;
@@ -580,7 +578,7 @@ int main() {
 #if HAVE_CUDA == 1
   kaldi::CuDevice::Instantiate().PrintProfile();
 #endif
-  
+
   KALDI_LOG << "Tests succeeded.";
   return 0;
 }

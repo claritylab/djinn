@@ -22,7 +22,6 @@
 #include "feat/feature-functions.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -33,7 +32,8 @@ int main(int argc, char *argv[]) {
     DeltaFeaturesOptions opts;
     int32 truncate = 0;
     ParseOptions po(usage);
-    po.Register("truncate", &truncate, "If nonzero, first truncate features to this dimension.");
+    po.Register("truncate", &truncate,
+                "If nonzero, first truncate features to this dimension.");
     opts.Register(&po);
 
     po.Read(argc, argv);
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feat_reader(rspecifier);
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
-      const Matrix<BaseFloat> &feats  = feat_reader.Value();
+      const Matrix<BaseFloat> &feats = feat_reader.Value();
 
       if (feats.NumRows() == 0) {
         KALDI_WARN << "Empty feature matrix for key " << key;
@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> new_feats;
       if (truncate != 0) {
         if (truncate > feats.NumCols())
-          KALDI_ERR << "Cannot truncate features as dimension " << feats.NumCols()
+          KALDI_ERR << "Cannot truncate features as dimension "
+                    << feats.NumCols()
                     << " is smaller than truncation dimension.";
         SubMatrix<BaseFloat> feats_sub(feats, 0, feats.NumRows(), 0, truncate);
         ComputeDeltas(opts, feats_sub, &new_feats);
@@ -68,10 +69,8 @@ int main(int argc, char *argv[]) {
       feat_writer.Write(key, new_feats);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

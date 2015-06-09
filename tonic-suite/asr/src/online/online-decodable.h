@@ -29,8 +29,6 @@
 
 namespace kaldi {
 
-
-
 // A decodable, taking input from an OnlineFeatureInput object on-demand
 class OnlineDecodableDiagGmmScaled : public DecodableInterface {
  public:
@@ -39,23 +37,22 @@ class OnlineDecodableDiagGmmScaled : public DecodableInterface {
                                const BaseFloat scale,
                                OnlineFeatureMatrix *input_feats);
 
-  
   /// Returns the log likelihood, which will be negated in the decoder.
   virtual BaseFloat LogLikelihood(int32 frame, int32 index);
-  
+
   virtual bool IsLastFrame(int32 frame) const;
-  
+
   /// Indices are one-based!  This is for compatibility with OpenFst.
   virtual int32 NumIndices() const { return trans_model_.NumTransitionIds(); }
 
  private:
   void CacheFrame(int32 frame);
-  
+
   OnlineFeatureMatrix *features_;
   const AmDiagGmm &ac_model_;
   BaseFloat ac_scale_;
   const TransitionModel &trans_model_;
-  const int32 feat_dim_; // dimensionality of the input features
+  const int32 feat_dim_;  // dimensionality of the input features
   Vector<BaseFloat> cur_feats_;
   int32 cur_frame_;
   std::vector<std::pair<int32, BaseFloat> > cache_;
@@ -63,6 +60,6 @@ class OnlineDecodableDiagGmmScaled : public DecodableInterface {
   KALDI_DISALLOW_COPY_AND_ASSIGN(OnlineDecodableDiagGmmScaled);
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
-#endif // KALDI_ONLINE_ONLINE_DECODABLE_H_
+#endif  // KALDI_ONLINE_ONLINE_DECODABLE_H_

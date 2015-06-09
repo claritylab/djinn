@@ -26,11 +26,9 @@ using std::vector;
 
 namespace kaldi {
 
-FmllrRawAccs::FmllrRawAccs(int32 raw_dim,
-                           int32 model_dim,
-                           const Matrix<BaseFloat> &full_transform):
-    raw_dim_(raw_dim),
-    model_dim_(model_dim) {
+FmllrRawAccs::FmllrRawAccs(int32 raw_dim, int32 model_dim,
+                           const Matrix<BaseFloat> &full_transform)
+    : raw_dim_(raw_dim), model_dim_(model_dim) {
   if (full_transform.NumCols() != full_transform.NumRows() &&
       full_transform.NumCols() != full_transform.NumRows() + 1) {
     KALDI_ERR << "Expecting full LDA+MLLT transform to be square or d by d+1 "
@@ -44,8 +42,8 @@ FmllrRawAccs::FmllrRawAccs(int32 raw_dim,
   transform_offset_.Resize(full_dim);
   if (full_transform_.NumCols() == full_dim + 1)
     transform_offset_.CopyColFromMat(full_transform_, full_dim);
-  
-  int32 full_dim2 = ((full_dim+1)*(full_dim+2))/2;
+
+  int32 full_dim2 = ((full_dim + 1) * (full_dim + 2)) / 2;
   count_ = 0.0;
 
   temp_.Resize(full_dim + 1);
@@ -58,7 +56,6 @@ FmllrRawAccs::FmllrRawAccs(int32 raw_dim,
   single_frame_stats_.a.Resize(model_dim);
   single_frame_stats_.b.Resize(model_dim);
 }
-
 
 bool FmllrRawAccs::DataHasChanged(const VectorBase<BaseFloat> &data) const {
   KALDI_ASSERT(data.Dim() == FullDim());
@@ -103,7 +100,6 @@ void FmllrRawAccs::InitSingleFrameStats(const VectorBase<BaseFloat> &data) {
   stats.b.SetZero();
 }
 
-
 BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
                                          const VectorBase<BaseFloat> &data,
                                          BaseFloat weight) {
@@ -133,10 +129,10 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
   // (assume zero-mean, unit-variance Gaussian; the LDA should have any offset
   // required to ensure this).
   if (full_dim > model_dim) {
-    SubVector<BaseFloat> rejected_data(stats.transformed_data,
-                                       model_dim, full_dim - model_dim);
-    log_like += -0.5 * (VecVec(rejected_data, rejected_data)
-                        + (full_dim - model_dim) * M_LOG_2PI);
+    SubVector<BaseFloat> rejected_data(stats.transformed_data, model_dim,
+                                       full_dim - model_dim);
+    log_like += -0.5 * (VecVec(rejected_data, rejected_data) +
+                        (full_dim - model_dim) * M_LOG_2PI);
   }
   return log_like;
 }
@@ -144,7 +140,8 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
 /*
   // Extended comment here.
   //
-  // Let x_t(i) be the fully processed feature, dimension i (with fMLLR transform
+  // Let x_t(i) be the fully processed feature, dimension i (with fMLLR
+  transform
   //  and LDA transform), but *without* any offset term from the LDA, which
   //  it's more convenient to view as an offset in the model.
   //
@@ -157,20 +154,22 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
   //       m rows, each of length m+1, of the fMLLR transform.
   //    Let n be the number of frames we splice together each time.
   //    Let s_t be the spliced-together features on time t, with a one appended;
-  //       it will have n blocks each of size m, followed by a 1.  (dim is n*m + 1).
-  //     
+  //       it will have n blocks each of size m, followed by a 1.  (dim is n*m +
+  1).
+  //
   // x(i) [note, this is the feature without any LDA offset], is bilinear in the
   //      transform matrix and the features, so:
   //
   // x(i) = l^T M_i s_t, where s_t is the spliced features on time t,
   //          with a 1 appended
-  //   [we need to compute M_i but we know the function is bilinear so it exists].
+  //   [we need to compute M_i but we know the function is bilinear so it
+  exists].
   //
   // The auxf can be written as:
-  // F = sum_i sum_t  a_{ti} x(i) - 0.5  b_{ti} x(i)^2 
+  // F = sum_i sum_t  a_{ti} x(i) - 0.5  b_{ti} x(i)^2
   //   = sum_i sum_t  a_{ti} x(i) - 0.5  b_{ti} x(i)^2
   //   = sum_i sum_t  a_{ti} (l^T M_i s_t)  -  0.5 b_{ti} (l^T M_i s_t )^2
-  //   = sum_i l^T M_i q_i  +  l^T M_i S_i M_i^T l 
+  //   = sum_i l^T M_i q_i  +  l^T M_i S_i M_i^T l
   //  where
   //     q_i = sum_t a_{ti} s_t, and
   //     S_i = sum_t b_{ti} s_t s_t^T
@@ -182,36 +181,43 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
   //    [The Q we actually store as stats will use a modified form of d that
   //     has a 1 for all dimensions past the model dim, to avoid redundancy;
   //     we'll reconstruct the true Q from this later on.]
-  //     
+  //
   //
   // What is M_i?  Working it out is a little tedious.
   //  Note: each M_i (from i = 0 ... full_dim) is of
   //    dimension (raw_dim*(raw_dim+1)) by full_dim + 1
-  // 
+  //
   // We want to express x(i) [we forget the subscript "t" sometimes],
   // as a bilinear function of l and s_t.
   //    We have x(i) = l^T M_i s.
   //
-  // The (j,k)'th component of M_i is the term in x(i) that corresponds to the j'th
+  // The (j,k)'th component of M_i is the term in x(i) that corresponds to the
+  j'th
   // component of l and the k'th of s.
 
-  // Before defining M_i, let us define N_i, where l^t N_i s will equal the spliced and
-  // transformed pre-LDA features of dimension i.  the N's have the same dimensions as the
+  // Before defining M_i, let us define N_i, where l^t N_i s will equal the
+  spliced and
+  // transformed pre-LDA features of dimension i.  the N's have the same
+  dimensions as the
   // M's.
   //
-  // We'll first define the j,k'th component of N_i, as this is easier; we'll then define the M_i
+  // We'll first define the j,k'th component of N_i, as this is easier; we'll
+  then define the M_i
   // as combinations of N_i.
   //
   // For a given i, j and k, the value of n_{i,j,k} will be as follows:
   //   We first decompose index j into j1, j2 (both functions of
   //    the original index j), where
-  //    j1 corresponds to the row-index of the fMLLR transform, j2 to the col-index.
-  //   We next decompose i into i1, i2, where i1 corresponds to the splicing number
+  //    j1 corresponds to the row-index of the fMLLR transform, j2 to the
+  col-index.
+  //   We next decompose i into i1, i2, where i1 corresponds to the splicing
+  number
   //   (0...n-1), and i2 corresponds to the cepstral index.
   //
   //   If (j1 != i2) then n_{ijk} == 0.
   //
-  //   Elsif k corresponds to the last element [i.e. k == m * n], then this m_{ijk} corresponds
+  //   Elsif k corresponds to the last element [i.e. k == m * n], then this
+  m_{ijk} corresponds
   //   to the effect of the j'th component of l for zero input, so:
   //     If j2 == m (i.e. this the offset term in the fMLLR matrix), then
   //       n_{ijk} = 1.0,
@@ -220,7 +226,8 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
   //     Fi
   //
   //   Else:
-  //     Decompose k into k1, k2, where k1 = 0.. n-1 is the splicing index, and k2 = 0...m-1 is
+  //     Decompose k into k1, k2, where k1 = 0.. n-1 is the splicing index, and
+  k2 = 0...m-1 is
   //      the cepstral index.
   //     If k1 != i1 then
   //       n_{ijk} = 0.0
@@ -230,34 +237,36 @@ BaseFloat FmllrRawAccs::AccumulateForGmm(const DiagGmm &gmm,
   //       n_{ijk} = 1.0
   //     fi
   //    Endif
-  //    Now,  M_i will be defined as sum_i T_{ij} N_j, where T_{ij} are the elements of the
-  //     LDA+MLLT transform (but excluding any linear offset, which gets accounted for by
+  //    Now,  M_i will be defined as sum_i T_{ij} N_j, where T_{ij} are the
+  elements of the
+  //     LDA+MLLT transform (but excluding any linear offset, which gets
+  accounted for by
   //     c_i, above).
   //
   //  Now suppose we want to express the auxiliary function in a simpler form
-  //  as l^T v - 0.5 l^T W l, where v and W are the "simple" linear and quadratic stats,
+  //  as l^T v - 0.5 l^T W l, where v and W are the "simple" linear and
+  quadratic stats,
   //  we can do so with:
-  //     v = \sum_i M_i q_i   
+  //     v = \sum_i M_i q_i
   //  and
   //     W = \sum_i M_i S_i M_i^T
   //
   */
 
 void FmllrRawAccs::AccumulateFromPosteriors(
-    const DiagGmm &diag_gmm,
-    const VectorBase<BaseFloat> &data,
+    const DiagGmm &diag_gmm, const VectorBase<BaseFloat> &data,
     const VectorBase<BaseFloat> &posterior) {
   // The user may call this function directly, even though we also
   // call it from AccumulateForGmm(), so check again:
-  if (DataHasChanged(data)) { 
+  if (DataHasChanged(data)) {
     CommitSingleFrameStats();
     InitSingleFrameStats(data);
   }
-  
-  int32  model_dim = ModelDim();
+
+  int32 model_dim = ModelDim();
 
   SingleFrameStats &stats = single_frame_stats_;
-  
+
   // The quantities a and b describe the diagonal auxiliary function
   // for each of the retained dimensions in the transformed space--
   // in the format F = \sum_d alpha(d) x(d)  -0.5 beta(d) x(d)^2,
@@ -266,10 +275,10 @@ void FmllrRawAccs::AccumulateFromPosteriors(
   // account any offset in the LDA.  Note that it's a reference.
   //
   Vector<double> a(model_dim), b(model_dim);
-  
+
   int32 num_comp = diag_gmm.NumGauss();
-  
-  double count = 0.0; // data-count contribution from this frame.
+
+  double count = 0.0;  // data-count contribution from this frame.
 
   // Note: we could do this using matrix-matrix operations instead of
   // row by row.  In the end it won't really matter as this is not
@@ -283,7 +292,8 @@ void FmllrRawAccs::AccumulateFromPosteriors(
     }
   }
   // Correct "a" for any offset term in the LDA transform-- we view it as
-  // the opposite offset in the model [note: we'll handle the rejected dimensions
+  // the opposite offset in the model [note: we'll handle the rejected
+  // dimensions
   // in update time.]  Here, multiplying the element of "b" (which is the
   // weighted inv-vars) by transform_offset_, and subtracting the result from
   // a, is like subtracting the transform-offset from the original means
@@ -295,15 +305,12 @@ void FmllrRawAccs::AccumulateFromPosteriors(
   stats.count += count;
 }
 
-
 void FmllrRawAccs::Update(const FmllrRawOptions &opts,
                           MatrixBase<BaseFloat> *raw_fmllr_mat,
-                          BaseFloat *objf_impr,
-                          BaseFloat *count) {
+                          BaseFloat *objf_impr, BaseFloat *count) {
   // First commit any pending stats from the last frame.
-  if (single_frame_stats_.count != 0.0)
-    CommitSingleFrameStats();
-  
+  if (single_frame_stats_.count != 0.0) CommitSingleFrameStats();
+
   if (this->count_ < opts.min_count) {
     KALDI_WARN << "Not updating (raw) fMLLR since count " << this->count_
                << " is less than min count " << opts.min_count;
@@ -314,20 +321,20 @@ void FmllrRawAccs::Update(const FmllrRawOptions &opts,
   KALDI_ASSERT(raw_fmllr_mat->NumRows() == RawDim() &&
                raw_fmllr_mat->NumCols() == RawDim() + 1 &&
                !raw_fmllr_mat->IsZero());
-  Matrix<double> fmllr_mat(*raw_fmllr_mat); // temporary, double-precision version
-                                            // of matrix.
+  Matrix<double> fmllr_mat(
+      *raw_fmllr_mat);  // temporary, double-precision version
+                        // of matrix.
 
-
-  Matrix<double> linear_stats; // like K in diagonal update.
-  std::vector<SpMatrix<double> > diag_stats; // like G in diagonal update.
-                                             // Note: we will invert these.
-  std::vector<std::vector<Matrix<double> > > off_diag_stats; // these will
+  Matrix<double> linear_stats;                // like K in diagonal update.
+  std::vector<SpMatrix<double> > diag_stats;  // like G in diagonal update.
+                                              // Note: we will invert these.
+  std::vector<std::vector<Matrix<double> > > off_diag_stats;  // these will
   // contribute to the linear term.
 
   Vector<double> simple_linear_stats;
   SpMatrix<double> simple_quadratic_stats;
   ConvertToSimpleStats(&simple_linear_stats, &simple_quadratic_stats);
-  
+
   ConvertToPerRowStats(simple_linear_stats, simple_quadratic_stats,
                        &linear_stats, &diag_stats, &off_diag_stats);
 
@@ -340,14 +347,14 @@ void FmllrRawAccs::Update(const FmllrRawOptions &opts,
                << "[min-count too small?  Bad data?], not updating.";
     return;
   }
-  
+
   int32 raw_dim = RawDim(), splice_width = SpliceWidth();
-  
-  double effective_beta = count_ * splice_width; // We "count" the determinant
+
+  double effective_beta = count_ * splice_width;  // We "count" the determinant
   // splice_width times in the objective function.
 
-  double auxf_orig = GetAuxf(simple_linear_stats, simple_quadratic_stats,
-                             fmllr_mat);
+  double auxf_orig =
+      GetAuxf(simple_linear_stats, simple_quadratic_stats, fmllr_mat);
   for (int32 iter = 0; iter < opts.num_iters; iter++) {
     for (int32 row = 0; row < raw_dim; row++) {
       SubVector<double> this_row(fmllr_mat, row);
@@ -366,29 +373,25 @@ void FmllrRawAccs::Update(const FmllrRawOptions &opts,
           }
         }
       }
-      FmllrInnerUpdate(diag_stats[row],
-                       this_linear,
-                       effective_beta,
-                       row,
+      FmllrInnerUpdate(diag_stats[row], this_linear, effective_beta, row,
                        &fmllr_mat);
     }
     if (GetVerboseLevel() >= 2) {
       double cur_auxf = GetAuxf(simple_linear_stats, simple_quadratic_stats,
-                                 fmllr_mat),
-          auxf_change = cur_auxf - auxf_orig;
+                                fmllr_mat),
+             auxf_change = cur_auxf - auxf_orig;
       KALDI_VLOG(2) << "Updating raw fMLLR: objf improvement per frame was "
-                    << (auxf_change / this->count_) << " over "
-                    << this->count_ << " frames, by the " << iter
-                    << "'th iteration";
+                    << (auxf_change / this->count_) << " over " << this->count_
+                    << " frames, by the " << iter << "'th iteration";
     }
   }
-  double auxf_final = GetAuxf(simple_linear_stats, simple_quadratic_stats,
-                              fmllr_mat),
-      auxf_change = auxf_final - auxf_orig;
+  double auxf_final =
+             GetAuxf(simple_linear_stats, simple_quadratic_stats, fmllr_mat),
+         auxf_change = auxf_final - auxf_orig;
   *count = this->count_;
   KALDI_VLOG(1) << "Updating raw fMLLR: objf improvement per frame was "
-                << (auxf_change / this->count_) << " over "
-                << this->count_ << " frames.";
+                << (auxf_change / this->count_) << " over " << this->count_
+                << " frames.";
   if (auxf_final > auxf_orig) {
     *objf_impr = auxf_change;
     *count = this->count_;
@@ -411,10 +414,9 @@ void FmllrRawAccs::SetZero() {
 // greatly speeded up but I don't think it's the limiting factor.
 void FmllrRawAccs::ComputeM(std::vector<Matrix<double> > *M) const {
   int32 full_dim = FullDim(), raw_dim = RawDim(),
-      raw_dim2 = raw_dim * (raw_dim + 1);
+        raw_dim2 = raw_dim * (raw_dim + 1);
   M->resize(full_dim);
-  for (int32 i = 0; i < full_dim; i++)
-    (*M)[i].Resize(raw_dim2, full_dim + 1);  
+  for (int32 i = 0; i < full_dim; i++) (*M)[i].Resize(raw_dim2, full_dim + 1);
 
   // the N's are simpler matrices from which we'll interpolate the M's.
   // In this loop we imagine w are computing the vector of N's, but
@@ -432,7 +434,7 @@ void FmllrRawAccs::ComputeM(std::vector<Matrix<double> > *M) const {
         if (j1 != i2) {
           n_ijk = 0.0;
         } else if (k == full_dim) {
-          if (j2 == raw_dim) // offset term in fMLLR matrix.
+          if (j2 == raw_dim)  // offset term in fMLLR matrix.
             n_ijk = 1.0;
           else
             n_ijk = 0.0;
@@ -459,8 +461,8 @@ void FmllrRawAccs::ConvertToSimpleStats(
   ComputeM(&M);
 
   int32 full_dim = FullDim(), raw_dim = RawDim(), model_dim = ModelDim(),
-      raw_dim2 = raw_dim * (raw_dim + 1),
-      full_dim2 = ((full_dim+1)*(full_dim+2))/2;
+        raw_dim2 = raw_dim * (raw_dim + 1),
+        full_dim2 = ((full_dim + 1) * (full_dim + 2)) / 2;
   simple_linear_stats->Resize(raw_dim2);
   simple_quadratic_stats->Resize(raw_dim2);
   for (int32 i = 0; i < full_dim; i++) {
@@ -471,14 +473,16 @@ void FmllrRawAccs::ConvertToSimpleStats(
       q_i.CopyFromVec(Q_.Row(i));
       S_i_vec.CopyFromVec(S_.Row(i));
     } else {
-      q_i.CopyFromVec(Q_.Row(model_dim)); // The last row contains stats proportional
+      q_i.CopyFromVec(
+          Q_.Row(model_dim));  // The last row contains stats proportional
       // to "count", which we need to modify to be correct.
-      q_i.Scale(-transform_offset_(i)); // These stats are zero (corresponding to
+      q_i.Scale(
+          -transform_offset_(i));  // These stats are zero (corresponding to
       // a zero-mean model) if there is no offset in the LDA transform.  Note:
       // the two statements above are the equivalent, for the rejected dims,
       // of the statement "a.AddVecVec(-1.0, b, offset);" for the kept ones.
-      // 
-      S_i_vec.CopyFromVec(S_.Row(model_dim)); // these are correct, and
+      //
+      S_i_vec.CopyFromVec(S_.Row(model_dim));  // these are correct, and
       // all the same (corresponds to unit variance).
     }
     // The equation v = \sum_i M_i q_i:
@@ -493,10 +497,8 @@ void FmllrRawAccs::ConvertToSimpleStats(
 void FmllrRawAccs::ConvertToPerRowStats(
     const Vector<double> &simple_linear_stats,
     const SpMatrix<double> &simple_quadratic_stats_sp,
-    Matrix<double> *linear_stats,
-    std::vector<SpMatrix<double> > *diag_stats,
+    Matrix<double> *linear_stats, std::vector<SpMatrix<double> > *diag_stats,
     std::vector<std::vector<Matrix<double> > > *off_diag_stats) const {
-
   // get it as a Matrix, which makes it easier to extract sub-parts.
   Matrix<double> simple_quadratic_stats(simple_quadratic_stats_sp);
 
@@ -508,18 +510,16 @@ void FmllrRawAccs::ConvertToPerRowStats(
   // Set *diag_stats
   int32 rd1 = RawDim() + 1;
   for (int32 i = 0; i < RawDim(); i++) {
-    SubMatrix<double> this_diag(simple_quadratic_stats,
-                                i * rd1, rd1,
-                                i * rd1, rd1);
+    SubMatrix<double> this_diag(simple_quadratic_stats, i * rd1, rd1, i * rd1,
+                                rd1);
     (*diag_stats)[i].Resize(RawDim() + 1);
     (*diag_stats)[i].CopyFromMat(this_diag, kTakeMean);
-  }    
-  
+  }
+
   for (int32 i = 0; i < RawDim(); i++) {
     (*off_diag_stats)[i].resize(i);
     for (int32 j = 0; j < i; j++) {
-      SubMatrix<double> this_off_diag(simple_quadratic_stats,
-                                      i * rd1, rd1,
+      SubMatrix<double> this_off_diag(simple_quadratic_stats, i * rd1, rd1,
                                       j * rd1, rd1);
       (*off_diag_stats)[i][j] = this_off_diag;
     }
@@ -533,14 +533,11 @@ double FmllrRawAccs::GetAuxf(const Vector<double> &simple_linear_stats,
   int32 raw_dim = RawDim(), spice_width = SpliceWidth();
   Vector<double> fmllr_vec(raw_dim * (raw_dim + 1));
   fmllr_vec.CopyRowsFromMat(fmllr_mat);
-  SubMatrix<double> square_part(fmllr_mat, 0, raw_dim,
-                                0, raw_dim);
+  SubMatrix<double> square_part(fmllr_mat, 0, raw_dim, 0, raw_dim);
   double logdet = square_part.LogDet();
   return VecVec(fmllr_vec, simple_linear_stats) -
-      0.5 * VecSpVec(fmllr_vec, simple_quadratic_stats, fmllr_vec) +
-      logdet * spice_width * count_;
+         0.5 * VecSpVec(fmllr_vec, simple_quadratic_stats, fmllr_vec) +
+         logdet * spice_width * count_;
 }
 
-
-
-} // namespace kaldi
+}  // namespace kaldi

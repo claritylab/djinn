@@ -39,8 +39,10 @@ const char *g_program_name = NULL;
 // GetProgramName returns the program name (without the path) followed by a
 // colon, e.g. "gmm-align:".  Otherwise it returns the empty string "".
 const char *GetProgramName() {
-  if (g_program_name == NULL) return "";
-  else return g_program_name;
+  if (g_program_name == NULL)
+    return "";
+  else
+    return g_program_name;
 }
 
 // Given a filename like "/a/b/c/d/e/f.cc",  GetShortFileName
@@ -48,18 +50,17 @@ const char *GetProgramName() {
 // the filename separator.
 const char *GetShortFileName(const char *filename) {
   const char *last_slash = strrchr(filename, '/');
-  if (!last_slash) { return filename; }
-  else {
-    while (last_slash > filename && last_slash[-1] != '/')
-      last_slash--;
+  if (!last_slash) {
+    return filename;
+  } else {
+    while (last_slash > filename && last_slash[-1] != '/') last_slash--;
     return last_slash;
   }
 }
 
-
 #if defined(HAVE_CXXABI_H) && defined(HAVE_EXECINFO_H)
 // The function name looks like a macro: it's a macro if we don't have ccxxabi.h
-inline void KALDI_APPEND_POSSIBLY_DEMANGLED_STRING(std::string &ans,  
+inline void KALDI_APPEND_POSSIBLY_DEMANGLED_STRING(std::string &ans,
                                                    const char *to_append) {
   // at input the string "to_append" looks like:
   //   ./kaldi-error-test(_ZN5kaldi13UnitTestErrorEv+0xb) [0x804965d]
@@ -73,7 +74,8 @@ inline void KALDI_APPEND_POSSIBLY_DEMANGLED_STRING(std::string &ans,
     ans += to_append;
     return;
   }
-  std::string stripped(paren+1, plus-(paren+1));  // the bit between ( and +.
+  std::string stripped(paren + 1,
+                       plus - (paren + 1));  // the bit between ( and +.
 
   char *demangled_name = abi::__cxa_demangle(stripped.c_str(), 0, 0, &status);
 
@@ -105,12 +107,12 @@ std::string KaldiGetStackTrace() {
       ans += "\n";
     }
   } else {  // print out first+last (e.g.) 5.
-    for (size_t i = 0; i < KALDI_MAX_TRACE_PRINT/2; i++) {
+    for (size_t i = 0; i < KALDI_MAX_TRACE_PRINT / 2; i++) {
       KALDI_APPEND_POSSIBLY_DEMANGLED_STRING(ans, strings[i]);
       ans += "\n";
     }
     ans += ".\n.\n.\n";
-    for (size_t i = size - KALDI_MAX_TRACE_PRINT/2; i < size; i++) {
+    for (size_t i = size - KALDI_MAX_TRACE_PRINT / 2; i < size; i++) {
       KALDI_APPEND_POSSIBLY_DEMANGLED_STRING(ans, strings[i]);
       ans += "\n";
     }
@@ -119,18 +121,17 @@ std::string KaldiGetStackTrace() {
   }
   free(strings);  // it's all in one big malloc()ed block.
 
-
 #ifdef HAVE_CXXABI_H  // demangle the name, if possible.
-#endif  // HAVE_CXXABI_H
+#endif                // HAVE_CXXABI_H
   return ans;
 }
 #endif
 
-void KaldiAssertFailure_(const char *func, const char *file,
-                         int32 line, const char *cond_str) {
+void KaldiAssertFailure_(const char *func, const char *file, int32 line,
+                         const char *cond_str) {
   std::cerr << "KALDI_ASSERT: at " << GetProgramName() << func << ':'
-            << GetShortFileName(file)
-            << ':' << line << ", failed: " << cond_str << '\n';
+            << GetShortFileName(file) << ':' << line << ", failed: " << cond_str
+            << '\n';
 #ifdef HAVE_EXECINFO_H
   std::cerr << "Stack trace is:\n" << KaldiGetStackTrace();
 #endif
@@ -138,20 +139,17 @@ void KaldiAssertFailure_(const char *func, const char *file,
   abort();  // Will later throw instead if needed.
 }
 
-
 KaldiWarnMessage::KaldiWarnMessage(const char *func, const char *file,
                                    int32 line) {
-  this->stream() << "WARNING (" << GetProgramName() << func << "():"
-                 << GetShortFileName(file) << ':' << line << ") ";
+  this->stream() << "WARNING (" << GetProgramName() << func
+                 << "():" << GetShortFileName(file) << ':' << line << ") ";
 }
-
 
 KaldiLogMessage::KaldiLogMessage(const char *func, const char *file,
                                  int32 line) {
-  this->stream() << "LOG (" << GetProgramName() << func << "():"
-                 << GetShortFileName(file) << ':' << line << ") ";
+  this->stream() << "LOG (" << GetProgramName() << func
+                 << "():" << GetShortFileName(file) << ':' << line << ") ";
 }
-
 
 KaldiVlogMessage::KaldiVlogMessage(const char *func, const char *file,
                                    int32 line, int32 verbose) {
@@ -161,8 +159,8 @@ KaldiVlogMessage::KaldiVlogMessage(const char *func, const char *file,
 
 KaldiErrorMessage::KaldiErrorMessage(const char *func, const char *file,
                                      int32 line) {
-  this->stream() << "ERROR (" << GetProgramName() << func << "():"
-                 << GetShortFileName(file) << ':' << line << ") ";
+  this->stream() << "ERROR (" << GetProgramName() << func
+                 << "():" << GetShortFileName(file) << ':' << line << ") ";
 }
 
 KaldiErrorMessage::~KaldiErrorMessage() {
@@ -177,7 +175,7 @@ KaldiErrorMessage::~KaldiErrorMessage() {
     throw std::runtime_error(ss.str());
 #endif
   } else {
-    abort(); // This may be temporary...
+    abort();  // This may be temporary...
   }
 }
 

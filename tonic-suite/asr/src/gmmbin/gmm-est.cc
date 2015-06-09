@@ -47,19 +47,26 @@ int main(int argc, char *argv[]) {
 
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("mix-up", &mixup, "Increase number of mixture components to "
+    po.Register("mix-up", &mixup,
+                "Increase number of mixture components to "
                 "this overall target.");
-    po.Register("min-count", &min_count,
-                "Minimum per-Gaussian count enforced while mixing up and down.");
-    po.Register("mix-down", &mixdown, "If nonzero, merge mixture components to this "
+    po.Register(
+        "min-count", &min_count,
+        "Minimum per-Gaussian count enforced while mixing up and down.");
+    po.Register("mix-down", &mixdown,
+                "If nonzero, merge mixture components to this "
                 "target.");
-    po.Register("power", &power, "If mixing up, power to allocate Gaussians to"
+    po.Register("power", &power,
+                "If mixing up, power to allocate Gaussians to"
                 " states.");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters to "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters to "
                 "update: subset of mvwt.");
-    po.Register("perturb-factor", &perturb_factor, "While mixing up, perturb "
+    po.Register("perturb-factor", &perturb_factor,
+                "While mixing up, perturb "
                 "means by standard deviation times this factor.");
-    po.Register("write-occs", &occs_out_filename, "File to write pdf "
+    po.Register("write-occs", &occs_out_filename,
+                "File to write pdf "
                 "occupation counts to.");
     tcfg.Register(&po);
     gmm_opts.Register(&po);
@@ -71,12 +78,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    kaldi::GmmFlagsType update_flags =
-        StringToGmmFlags(update_flags_str);
+    kaldi::GmmFlagsType update_flags = StringToGmmFlags(update_flags_str);
 
-    std::string model_in_filename = po.GetArg(1),
-        stats_filename = po.GetArg(2),
-        model_out_filename = po.GetArg(3);
+    std::string model_in_filename = po.GetArg(1), stats_filename = po.GetArg(2),
+                model_out_filename = po.GetArg(3);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -93,28 +98,28 @@ int main(int argc, char *argv[]) {
       bool binary;
       Input ki(stats_filename, &binary);
       transition_accs.Read(ki.Stream(), binary);
-      gmm_accs.Read(ki.Stream(), binary, true);  // true == add; doesn't matter here.
+      gmm_accs.Read(ki.Stream(), binary,
+                    true);  // true == add; doesn't matter here.
     }
 
     if (update_flags & kGmmTransitions) {  // Update transition model.
       BaseFloat objf_impr, count;
       trans_model.MleUpdate(transition_accs, tcfg, &objf_impr, &count);
-      KALDI_LOG << "Transition model update: Overall " << (objf_impr/count)
+      KALDI_LOG << "Transition model update: Overall " << (objf_impr / count)
                 << " log-like improvement per frame over " << (count)
                 << " frames.";
     }
 
     {  // Update GMMs.
       BaseFloat objf_impr, count;
-      BaseFloat tot_like = gmm_accs.TotLogLike(),
-          tot_t = gmm_accs.TotCount();
-      MleAmDiagGmmUpdate(gmm_opts, gmm_accs, update_flags, &am_gmm,
-                         &objf_impr, &count);
-      KALDI_LOG << "GMM update: Overall " << (objf_impr/count)
-                << " objective function improvement per frame over "
-                <<  count <<  " frames";
+      BaseFloat tot_like = gmm_accs.TotLogLike(), tot_t = gmm_accs.TotCount();
+      MleAmDiagGmmUpdate(gmm_opts, gmm_accs, update_flags, &am_gmm, &objf_impr,
+                         &count);
+      KALDI_LOG << "GMM update: Overall " << (objf_impr / count)
+                << " objective function improvement per frame over " << count
+                << " frames";
       KALDI_LOG << "GMM update: Overall avg like per frame = "
-                << (tot_like/tot_t) << " over " << tot_t << " frames.";
+                << (tot_like / tot_t) << " over " << tot_t << " frames.";
     }
 
     if (mixup != 0 || mixdown != 0 || !occs_out_filename.empty()) {
@@ -128,8 +133,7 @@ int main(int argc, char *argv[]) {
         am_gmm.MergeByCount(pdf_occs, mixdown, power, min_count);
 
       if (mixup != 0)
-        am_gmm.SplitByCount(pdf_occs, mixup, perturb_factor,
-                            power, min_count);
+        am_gmm.SplitByCount(pdf_occs, mixup, perturb_factor, power, min_count);
 
       if (!occs_out_filename.empty()) {
         bool binary = false;
@@ -145,10 +149,8 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Written model to " << model_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

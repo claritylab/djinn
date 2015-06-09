@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "hmm/transition-model.h"
 #include "hmm/hmm-utils.h"
@@ -30,7 +29,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Display alignments in human-readable form\n"
-        "Usage:  show-alignments  [options] <phone-syms> <model> <alignments-rspecifier>\n"
+        "Usage:  show-alignments  [options] <phone-syms> <model> "
+        "<alignments-rspecifier>\n"
         "e.g.: \n"
         " show-alignments phones.txt 1.mdl ark:1.ali\n"
         "See also: ali-to-phones\n";
@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string phones_symtab_filename = po.GetArg(1),
-        model_filename = po.GetArg(2),
-        alignments_rspecifier = po.GetArg(3);
+                model_filename = po.GetArg(2),
+                alignments_rspecifier = po.GetArg(3);
 
     TransitionModel trans_model;
     ReadKaldiObject(model_filename, &trans_model);
@@ -55,9 +55,9 @@ int main(int argc, char *argv[]) {
       std::ifstream is(phones_symtab_filename.c_str());
       phones_symtab = fst::SymbolTable::ReadText(is, phones_symtab_filename);
       if (!phones_symtab || phones_symtab->NumSymbols() == 0)
-        KALDI_ERR << "Error opening symbol table file "<<phones_symtab_filename;
+        KALDI_ERR << "Error opening symbol table file "
+                  << phones_symtab_filename;
     }
-
 
     SequentialInt32VectorReader reader(alignments_rspecifier);
 
@@ -74,29 +74,25 @@ int main(int argc, char *argv[]) {
       for (size_t i = 0; i < split.size(); i++) {
         std::ostringstream ss;
         ss << "[ ";
-        for (size_t j = 0; j < split[i].size(); j++)
-          ss << split[i][j] << " ";
+        for (size_t j = 0; j < split[i].size(); j++) ss << split[i][j] << " ";
         ss << "] ";
         split_str[i] = ss.str();
 
         int32 tid = split[i][0],
-            tstate = trans_model.TransitionIdToTransitionState(tid),
-            phone = trans_model.TransitionStateToPhone(tstate);
-        split_str_phones[i] =
-            phones_symtab->Find(phone) + " ";
+              tstate = trans_model.TransitionIdToTransitionState(tid),
+              phone = trans_model.TransitionStateToPhone(tstate);
+        split_str_phones[i] = phones_symtab->Find(phone) + " ";
         std::string space;
-        int len = abs(static_cast<int>(split_str[i].size())-
+        int len = abs(static_cast<int>(split_str[i].size()) -
                       static_cast<int>(split_str_phones[i].size()));
-        for (int j = 0; j < len; j++)
-          space += " ";
+        for (int j = 0; j < len; j++) space += " ";
         if (split_str[i].size() < split_str_phones[i].size())
           split_str[i] += space;
         else
           split_str_phones[i] += space;
       }
       std::cout << key << "  ";
-      for (size_t i = 0; i < split_str.size(); i++)
-        std::cout << split_str[i];
+      for (size_t i = 0; i < split_str.size(); i++) std::cout << split_str[i];
       std::cout << '\n';
       std::cout << key << "  ";
       for (size_t i = 0; i < split_str_phones.size(); i++)
@@ -106,10 +102,8 @@ int main(int argc, char *argv[]) {
     }
     delete phones_symtab;
     phones_symtab = NULL;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

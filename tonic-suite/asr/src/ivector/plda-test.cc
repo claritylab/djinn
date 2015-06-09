@@ -17,7 +17,6 @@
 
 #include "ivector/plda.h"
 
-
 namespace kaldi {
 
 void UnitTestPldaEstimation(int32 dim) {
@@ -26,13 +25,13 @@ void UnitTestPldaEstimation(int32 dim) {
   between_proj.SetRandn();
   Matrix<double> within_proj(dim, dim);
   within_proj.SetRandn();
-  
+
   Vector<double> global_mean(dim);
   global_mean.SetRandn();
   global_mean.Scale(10.0);
-  
+
   PldaStats stats;
-  
+
   for (int32 n = 0; n < num_classes; n++) {
     int32 num_egs = 1 + Rand() % 30;
     Vector<double> rand_vec(dim);
@@ -43,17 +42,13 @@ void UnitTestPldaEstimation(int32 dim) {
     Matrix<double> rand_mat(num_egs, dim);
     rand_mat.SetRandn();
     Matrix<double> offset_mat(num_egs, dim);
-    offset_mat.AddMatMat(1.0, rand_mat, kNoTrans, within_proj,
-                         kTrans, 0.0);
+    offset_mat.AddMatMat(1.0, rand_mat, kNoTrans, within_proj, kTrans, 0.0);
     offset_mat.AddVecToRows(1.0, class_mean);
 
     double weight = 1.0 + (0.1 * (Rand() % 30));
-    stats.AddSamples(weight,
-                     offset_mat);
+    stats.AddSamples(weight, offset_mat);
   }
 
-  
-  
   SpMatrix<double> between_var(dim), within_var(dim);
   between_var.AddMat2(1.0, between_proj, kNoTrans, 0.0);
   within_var.AddMat2(1.0, within_proj, kNoTrans, 0.0);
@@ -81,11 +76,8 @@ void UnitTestPldaEstimation(int32 dim) {
     KALDI_LOG << "Diagonal of between-class variance in normalized space "
               << "should be: " << s;
   }
-  
 }
-
 }
-
 
 /*
   This test is really just making sure that the PLDA estimation does not
@@ -100,8 +92,7 @@ void UnitTestPldaEstimation(int32 dim) {
 int main() {
   using namespace kaldi;
   SetVerboseLevel(3);
-  for (int i = 0; i < 5; i++)
-    UnitTestPldaEstimation(i + 1);
+  for (int i = 0; i < 5; i++) UnitTestPldaEstimation(i + 1);
 
   // UnitTestPldaEstimation(400);
   UnitTestPldaEstimation(80);

@@ -31,17 +31,19 @@
 
 #include <stdio.h>
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
-        "Save features as Sphinx files:\n" 
-        "Each utterance will be stored as a unique Sphinx file in a specified directory.\n"
-        "The Sphinx filename will correspond to the utterance-id (key) in the input table, with the specified extension.\n"
+        "Save features as Sphinx files:\n"
+        "Each utterance will be stored as a unique Sphinx file in a specified "
+        "directory.\n"
+        "The Sphinx filename will correspond to the utterance-id (key) in the "
+        "input table, with the specified extension.\n"
         "Usage: copy-feats-to-sphinx [options] in-rspecifier\n"
-        "Example: copy-feats-to-sphinx --output-dir=/tmp/sphinx-features --output-ext=fea  scp:feats.scp\n";
+        "Example: copy-feats-to-sphinx --output-dir=/tmp/sphinx-features "
+        "--output-ext=fea  scp:feats.scp\n";
 
     ParseOptions po(usage);
     std::string dir_out = "./";
@@ -60,18 +62,18 @@ int main(int argc, char *argv[]) {
     std::string rspecifier = po.GetArg(1);
 
     // check or create output dir:
-    const char * c = dir_out.c_str();
-   if ( access( c, 0 ) != 0 ){
+    const char *c = dir_out.c_str();
+    if (access(c, 0) != 0) {
 #if defined(_MSC_VER)
-    if (_mkdir(c) != 0)
+      if (_mkdir(c) != 0)
 #else
-    if (mkdir(c, S_IRWXU|S_IRGRP|S_IXGRP) != 0)
+      if (mkdir(c, S_IRWXU | S_IRGRP | S_IXGRP) != 0)
 #endif
-       KALDI_ERR << "Could not create output directory: " << dir_out;
+        KALDI_ERR << "Could not create output directory: " << dir_out;
     }
-    
+
     // write to the sphinx files
-    int32 num_frames, dim, num_done=0;
+    int32 num_frames, dim, num_done = 0;
     SequentialBaseFloatMatrixReader feats_reader(rspecifier);
     for (; !feats_reader.Done(); feats_reader.Next()) {
       std::string utt = feats_reader.Key();
@@ -80,16 +82,18 @@ int main(int argc, char *argv[]) {
 
       Matrix<BaseFloat> output(num_frames, dim, kUndefined);
       std::stringstream ss;
-      ss << dir_out << "/" << utt << "." << ext_out; 
-      output.Range(0, num_frames, 0, dim).CopyFromMat(feats.Range(0, num_frames, 0, dim));    
-      std::ofstream os(ss.str().c_str(), std::ios::out|std::ios::binary);
+      ss << dir_out << "/" << utt << "." << ext_out;
+      output.Range(0, num_frames, 0, dim)
+          .CopyFromMat(feats.Range(0, num_frames, 0, dim));
+      std::ofstream os(ss.str().c_str(), std::ios::out | std::ios::binary);
       WriteSphinx(os, output);
-      num_done++;    
+      num_done++;
     }
-    KALDI_LOG << num_done << " Sphinx feature files generated in the direcory: " << dir_out;
+    KALDI_LOG << num_done
+              << " Sphinx feature files generated in the direcory: " << dir_out;
     return (num_done != 0 ? 0 : 1);
 
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

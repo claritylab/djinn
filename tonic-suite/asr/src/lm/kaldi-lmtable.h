@@ -47,11 +47,11 @@ using std::tr1::unordered_map;
 #include "util/stl-utils.h"
 
 #ifdef _MSC_VER
-#  define STRTOF(cur_cstr, end_cstr) static_cast<float>(strtod(cur_cstr, end_cstr));
+#define STRTOF(cur_cstr, end_cstr) \
+  static_cast<float>(strtod(cur_cstr, end_cstr));
 #else
-#  define STRTOF(cur_cstr, end_cstr) strtof(cur_cstr, end_cstr);
+#define STRTOF(cur_cstr, end_cstr) strtof(cur_cstr, end_cstr);
 #endif
-
 
 namespace kaldi {
 /// @addtogroup LanguageModel
@@ -65,62 +65,51 @@ namespace kaldi {
   * does not require an external library.
 */
 
-
 /// @brief Helper methods to convert toolkit internal representations into FST.
 class LmFstConverter {
   typedef fst::StdArc::Weight LmWeight;
   typedef fst::StdArc::StateId StateId;
-  
+
   typedef unordered_map<StateId, StateId> BkStateMap;
   typedef unordered_map<std::string, StateId, StringHasher> HistStateMap;
 
  public:
-
   LmFstConverter() : use_natural_log_(true) {}
 
   ~LmFstConverter() {}
 
   void UseNaturalLog(bool use_natural) { use_natural_log_ = use_natural; }
 
-  void AddArcsForNgramProb(int ilev,
-                           int maxlev,
-                           float prob,
-                           float bow,
-                           std::vector<string> &ngs,
-                           fst::StdVectorFst *fst,
-                           const string startSent,
-                           const string endSent);
+  void AddArcsForNgramProb(int ilev, int maxlev, float prob, float bow,
+                           std::vector<string> &ngs, fst::StdVectorFst *fst,
+                           const string startSent, const string endSent);
 
   float ConvertArpaLogProbToWeight(float lp) {
-    if ( use_natural_log_ ) {
+    if (use_natural_log_) {
       // convert from arpa base 10 log to natural base, then to cost
-      return -2.302585*lp;
+      return -2.302585 * lp;
     } else {
       // keep original base but convert to cost
       return -lp;
     }
   }
 
-  bool IsFinal(fst::StdVectorFst *pfst,
-               StateId s) {
-    return(pfst->Final(s) != fst::StdArc::Weight::Zero());
+  bool IsFinal(fst::StdVectorFst *pfst, StateId s) {
+    return (pfst->Final(s) != fst::StdArc::Weight::Zero());
   }
 
   void ConnectUnusedStates(fst::StdVectorFst *pfst);
 
  private:
-  StateId AddStateFromSymb(const std::vector<string> &ngramString,
-                            int kstart,
-                            int kend,
-                            fst::StdVectorFst *pfst,
-                            bool &newlyAdded);
+  StateId AddStateFromSymb(const std::vector<string> &ngramString, int kstart,
+                           int kend, fst::StdVectorFst *pfst, bool &newlyAdded);
 
   StateId FindState(const std::string str) {
     HistStateMap::const_iterator it = histState_.find(str);
-     if (it == histState_.end()) {
-       return -1;
-     }
-     return it->second;
+    if (it == histState_.end()) {
+      return -1;
+    }
+    return it->second;
   }
 
   bool use_natural_log_;
@@ -138,13 +127,14 @@ class LmFstConverter {
 class LmTable {
  public:
   LmTable() { conv_ = new LmFstConverter; }
-  ~LmTable() { if (conv_) delete conv_; }
+  ~LmTable() {
+    if (conv_) delete conv_;
+  }
 
-  bool ReadFstFromLmFile(std::istream &istrm,
-                         fst::StdVectorFst *pfst,
-                         bool useNaturalLog,
-                         const string startSent,
+  bool ReadFstFromLmFile(std::istream &istrm, fst::StdVectorFst *pfst,
+                         bool useNaturalLog, const string startSent,
                          const string endSent);
+
  private:
   LmFstConverter *conv_;
 };
@@ -159,28 +149,24 @@ class LmTable {
 class LmTable : public lmtable {
  public:
   LmTable() { conv_ = new LmFstConverter; }
-  ~LmTable() { if (conv_) delete conv_; }
+  ~LmTable() {
+    if (conv_) delete conv_;
+  }
 
   /// in this implementation, needed functions come from parent class, e.g.
   ///   table_entry_pos_t wdprune(float *thr, int aflag = 0);
   ///   void load(std::istream& inp, ...);
-  bool ReadFstFromLmFile(std::istream &istrm,
-                       fst::StdVectorFst *pfst,
-                        bool useNaturalOpt,
-                       const string startSent,
-                       const string endSent);
- private:
+  bool ReadFstFromLmFile(std::istream &istrm, fst::StdVectorFst *pfst,
+                         bool useNaturalOpt, const string startSent,
+                         const string endSent);
 
+ private:
   /// Method specific to the IRSTLM implementation.
-  void DumpStart(ngram ng,
-                 fst::StdVectorFst *pfst,
-                 const string startSent,
+  void DumpStart(ngram ng, fst::StdVectorFst *pfst, const string startSent,
                  const string endSent);
   /// Method specific to the IRSTLM implementation.
-  void DumpContinue(ngram ng,
-                    int ilev, int elev,
-                    table_entry_pos_t ipos, table_entry_pos_t epos,
-                    fst::StdVectorFst *pfst,
+  void DumpContinue(ngram ng, int ilev, int elev, table_entry_pos_t ipos,
+                    table_entry_pos_t epos, fst::StdVectorFst *pfst,
                     const string startSent, const string endSent);
 
   LmFstConverter *conv_;
@@ -189,6 +175,5 @@ class LmTable : public lmtable {
 #endif
 /// @} end of "LanguageModel"
 }  // end namespace kaldi
-
 
 #endif  // KALDI_LM_KALDI_LMTABLE_H_

@@ -27,10 +27,8 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 // Computes one-sided K-L divergence from p to q.
-BaseFloat KlDivergence(const Vector<BaseFloat> &p,
-                       const Vector<BaseFloat> &q) {
+BaseFloat KlDivergence(const Vector<BaseFloat> &p, const Vector<BaseFloat> &q) {
   BaseFloat sum_p = p.Sum(), sum_q = q.Sum();
   if (fabs(sum_p - 1.0) > 0.01 || fabs(sum_q - 1.0) > 0.01) {
     KALDI_WARN << "KlDivergence: vectors are not close to being normalized "
@@ -57,16 +55,15 @@ void PrintPriorDiagnostics(const Vector<BaseFloat> &old_priors,
     int32 max_index;
     diff_prior.Max(&max_index);
     KALDI_LOG << "Adjusting priors: largest absolute difference was for "
-              << "pdf " << max_index << ", " << old_priors(max_index)
-              << " -> " << new_priors(max_index);
+              << "pdf " << max_index << ", " << old_priors(max_index) << " -> "
+              << new_priors(max_index);
     KALDI_LOG << "Adjusting priors: K-L divergence from old to new is "
               << KlDivergence(old_priors, new_priors);
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -75,39 +72,47 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Set the priors of the neural net to the computed posterios from the net,\n"
-        "on typical data (e.g. training data). This is correct under more general\n"
-        "circumstances than using the priors of the class labels in the training data\n"
+        "Set the priors of the neural net to the computed posterios from the "
+        "net,\n"
+        "on typical data (e.g. training data). This is correct under more "
+        "general\n"
+        "circumstances than using the priors of the class labels in the "
+        "training data\n"
         "\n"
-        "Typical usage of this program will involve computation of an average pdf-level\n"
-        "posterior with nnet-compute or nnet-compute-from-egs, piped into nnet-sum-rows\n"
+        "Typical usage of this program will involve computation of an average "
+        "pdf-level\n"
+        "posterior with nnet-compute or nnet-compute-from-egs, piped into "
+        "nnet-sum-rows\n"
         "and then vector-sum, to compute the average posterior\n"
         "\n"
-        "Usage: nnet-adjust-priors [options] <nnet-in> <summed-posterior-vector-in> <nnet-out>\n"
+        "Usage: nnet-adjust-priors [options] <nnet-in> "
+        "<summed-posterior-vector-in> <nnet-out>\n"
         "e.g.:\n"
         " nnet-adjust-priors final.mdl prior.vec final.mdl\n";
-    
+
     bool binary_write = true;
-    BaseFloat prior_floor = 1.0e-15; // Have a very low prior floor, since this method
-                                     // isn't likely to have a problem with very improbable
-                                     // classes.
-    
+    BaseFloat prior_floor =
+        1.0e-15;  // Have a very low prior floor, since this method
+                  // isn't likely to have a problem with very improbable
+                  // classes.
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("prior-floor", &prior_floor, "When setting priors, floor for "
+    po.Register("prior-floor", &prior_floor,
+                "When setting priors, floor for "
                 "priors (only used to avoid generating NaNs upon inversion)");
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string nnet_rxfilename = po.GetArg(1),
-        posterior_vec_rxfilename = po.GetArg(2),
-        nnet_wxfilename = po.GetArg(3);
-    
+                posterior_vec_rxfilename = po.GetArg(2),
+                nnet_wxfilename = po.GetArg(3);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -116,20 +121,19 @@ int main(int argc, char *argv[]) {
       trans_model.Read(ki.Stream(), binary_read);
       am_nnet.Read(ki.Stream(), binary_read);
     }
-    
 
     Vector<BaseFloat> posterior_vec;
     ReadKaldiObject(posterior_vec_rxfilename, &posterior_vec);
 
     KALDI_ASSERT(posterior_vec.Sum() > 0.0);
-    posterior_vec.Scale(1.0 / posterior_vec.Sum()); // Renormalize
-    
+    posterior_vec.Scale(1.0 / posterior_vec.Sum());  // Renormalize
+
     Vector<BaseFloat> old_priors(am_nnet.Priors());
 
     PrintPriorDiagnostics(old_priors, posterior_vec);
-    
+
     am_nnet.SetPriors(posterior_vec);
-        
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -138,7 +142,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Modified priors of neural network model and wrote it to "
               << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

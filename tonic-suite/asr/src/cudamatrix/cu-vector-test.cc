@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -31,23 +30,23 @@
 #include "cudamatrix/cu-sp-matrix.h"
 #include "cudamatrix/cu-math.h"
 
-
 namespace kaldi {
 
 /*
  * INITIALIZERS
  */
 
-
 /*
  * Unit tests
  */
 
-template<class Real>
+template <class Real>
 static void UnitTestCuVectorIO() {
   for (int32 i = 0; i < 10; i++) {
     int32 dimM = Rand() % 255;
-    if (i % 5 == 0) { dimM = 0; }
+    if (i % 5 == 0) {
+      dimM = 0;
+    }
     CuVector<Real> vec(dimM);
     vec.SetRandn();
     std::ostringstream os;
@@ -61,8 +60,7 @@ static void UnitTestCuVectorIO() {
   }
 }
 
-
-template<typename Real, typename OtherReal> 
+template <typename Real, typename OtherReal>
 static void UnitTestCuVectorCopyFromVec() {
   for (int32 i = 1; i < 10; i++) {
     MatrixIndexT dim = 10 * i;
@@ -80,24 +78,21 @@ static void UnitTestCuVectorCopyFromVec() {
   }
 }
 
-template<typename Real> 
+template <typename Real>
 static void UnitTestCuSubVector() {
-  for (int32 iter = 0 ; iter < 10; iter++) {
-    int32 M1 = 1 + rand () % 10, M2 = 1 + Rand() % 1, M3 = 1 + Rand() % 10, M = M1 + M2 + M3,
-        m = Rand() % M2;
+  for (int32 iter = 0; iter < 10; iter++) {
+    int32 M1 = 1 + rand() % 10, M2 = 1 + Rand() % 1, M3 = 1 + Rand() % 10,
+          M = M1 + M2 + M3, m = Rand() % M2;
     CuVector<Real> vec(M);
     vec.SetRandn();
-    CuSubVector<Real> subvec1(vec, M1, M2),
-        subvec2 = vec.Range(M1, M2);
+    CuSubVector<Real> subvec1(vec, M1, M2), subvec2 = vec.Range(M1, M2);
     Real f1 = vec(M1 + m), f2 = subvec1(m), f3 = subvec2(m);
     KALDI_ASSERT(f1 == f2);
     KALDI_ASSERT(f2 == f3);
   }
 }
 
-
-
-template<typename Real> 
+template <typename Real>
 static void UnitTestCuVectorMulTp() {
   for (int32 i = 1; i < 10; i++) {
     MatrixIndexT dim = 10 * i;
@@ -105,7 +100,7 @@ static void UnitTestCuVectorMulTp() {
     A.SetRandn();
     TpMatrix<Real> B(dim);
     B.SetRandn();
-    
+
     CuVector<Real> C(A);
     CuTpMatrix<Real> D(B);
 
@@ -117,7 +112,7 @@ static void UnitTestCuVectorMulTp() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuVectorAddTp() {
   for (int32 i = 1; i < 10; i++) {
     MatrixIndexT dim = 10 * i;
@@ -127,10 +122,10 @@ static void UnitTestCuVectorAddTp() {
     B.SetRandn();
     Vector<Real> C(dim);
     C.SetRandn();
-    
+
     CuVector<Real> D(A);
     CuTpMatrix<Real> E(B);
-    CuVector<Real> F(C); 
+    CuVector<Real> F(C);
 
     A.AddTpVec(1.0, B, kNoTrans, C, 1.0);
     D.AddTpVec(1.0, E, kNoTrans, F, 1.0);
@@ -140,18 +135,19 @@ static void UnitTestCuVectorAddTp() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestVecVec() {
+template <typename Real>
+void CuVectorUnitTestVecVec() {
   int32 M = 10 % Rand() % 100;
   CuVector<Real> vec1(M), vec2(M);
   vec1.SetRandn();
   vec2.SetRandn();
   Real prod = 0.0;
-  for (int32 i = 0; i < M; i++)
-    prod += vec1(i) * vec2(i);
+  for (int32 i = 0; i < M; i++) prod += vec1(i) * vec2(i);
   AssertEqual(prod, VecVec(vec1, vec2));
 }
 
-template<typename Real> void CuVectorUnitTestAddVec() {
+template <typename Real>
+void CuVectorUnitTestAddVec() {
   int32 M = 10 % Rand() % 100;
   CuVector<Real> vec1(M);
   CuVector<Real> vec2(M);
@@ -160,12 +156,13 @@ template<typename Real> void CuVectorUnitTestAddVec() {
   CuVector<Real> vec1_orig(vec1);
   BaseFloat alpha = 0.43243;
   vec1.AddVec(alpha, vec2);
-  
+
   for (int32 i = 0; i < M; i++)
     AssertEqual(vec1_orig(i) + alpha * vec2(i), vec1(i));
 }
 
-template<typename Real> void CuVectorUnitTestAddVecCross() {
+template <typename Real>
+void CuVectorUnitTestAddVecCross() {
   for (int32 i = 0; i < 4; i++) {
     int32 M = 10 % Rand() % 100;
     CuVector<float> vec1(M);
@@ -177,7 +174,7 @@ template<typename Real> void CuVectorUnitTestAddVecCross() {
       CuVector<Real> vec1_orig(vec1);
       Real alpha = 0.43243;
       vec1.AddVec(alpha, vec2);
-  
+
       for (int32 i = 0; i < M; i++)
         AssertEqual(vec1_orig(i) + alpha * vec2(i), vec1(i));
     } else {
@@ -190,7 +187,8 @@ template<typename Real> void CuVectorUnitTestAddVecCross() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestAddVecExtra() {
+template <typename Real>
+void CuVectorUnitTestAddVecExtra() {
   int32 M = 10 % Rand() % 100;
   CuVector<Real> vec1(M), vec2(M);
   vec1.SetRandn();
@@ -198,13 +196,13 @@ template<typename Real> void CuVectorUnitTestAddVecExtra() {
   CuVector<Real> vec1_orig(vec1);
   BaseFloat alpha = 0.43243, beta = 1.4321;
   vec1.AddVec(alpha, vec2, beta);
-  
+
   for (int32 i = 0; i < M; i++)
     AssertEqual(beta * vec1_orig(i) + alpha * vec2(i), vec1(i));
 }
 
-
-template<typename Real> void CuVectorUnitTestAddRowSumMat() {
+template <typename Real>
+void CuVectorUnitTestAddRowSumMat() {
   int32 M = 10 + Rand() % 280, N = 10 + Rand() % 20;
   BaseFloat alpha = 10.0143432, beta = 43.4321;
   CuMatrix<Real> mat(N, M);
@@ -219,7 +217,8 @@ template<typename Real> void CuVectorUnitTestAddRowSumMat() {
   AssertEqual(vec2, vec3);
 }
 
-template<typename Real> void CuVectorUnitTestAddColSumMat() {
+template <typename Real>
+void CuVectorUnitTestAddColSumMat() {
   int32 M = 10 + Rand() % 280, N = 10 + Rand() % 20;
   BaseFloat alpha = 10.0143432, beta = 43.4321;
   CuMatrix<Real> mat(M, N);
@@ -234,8 +233,8 @@ template<typename Real> void CuVectorUnitTestAddColSumMat() {
   AssertEqual(vec2, vec3);
 }
 
-
-template<typename Real> void CuVectorUnitTestApproxEqual() {
+template <typename Real>
+void CuVectorUnitTestApproxEqual() {
   int32 M = 10 + Rand() % 100;
   CuVector<Real> vec1(M), vec2(M);
   vec1.SetRandn();
@@ -253,7 +252,8 @@ template<typename Real> void CuVectorUnitTestApproxEqual() {
   }
 }
 
-template<typename Real> static void UnitTestCuVectorReplaceValue() {
+template <typename Real>
+static void UnitTestCuVectorReplaceValue() {
   for (int32 i = 0; i < 5; i++) {
     int32 dim = 100 + Rand() % 200;
     Real orig = 0.1 * (Rand() % 100), changed = 0.1 * (Rand() % 50);
@@ -268,7 +268,8 @@ template<typename Real> static void UnitTestCuVectorReplaceValue() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestInvertElements() {
+template <typename Real>
+void CuVectorUnitTestInvertElements() {
   // Also tests MulElements();
   int32 M = 256 + Rand() % 100;
   CuVector<Real> vec1(M);
@@ -282,18 +283,20 @@ template<typename Real> void CuVectorUnitTestInvertElements() {
   AssertEqual(prod, static_cast<Real>(M));
 }
 
-template<typename Real> void CuVectorUnitTestSum() {
-  for (int32 i =1; i < 10; i++) {
+template <typename Real>
+void CuVectorUnitTestSum() {
+  for (int32 i = 1; i < 10; i++) {
     MatrixIndexT dim = 2048 * i + 100 % Rand();
     CuVector<Real> A(dim), ones(dim);
     A.SetRandn();
     ones.Set(1.0);
-    
+
     AssertEqual(VecVec(A, ones), A.Sum());
   }
 }
 
-template<typename Real> void CuVectorUnitTestScale() {
+template <typename Real>
+void CuVectorUnitTestScale() {
   for (int32 i = 0; i < 4; i++) {
     int32 dim = 100 + 400 % Rand();
     CuVector<Real> cu_vec(dim);
@@ -307,20 +310,21 @@ template<typename Real> void CuVectorUnitTestScale() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestCopyFromMat() {
+template <typename Real>
+void CuVectorUnitTestCopyFromMat() {
   int32 M = 100 + Rand() % 255, N = 100 + Rand() % 255;
   CuMatrix<Real> cu_matrix(M, N);
   cu_matrix.SetRandn();
-  for(int32 i = 0; i < N; i++) {
+  for (int32 i = 0; i < N; i++) {
     CuVector<Real> vector(M);
     vector.CopyColFromMat(cu_matrix, i);
-    for(int32 j = 0; j < M; j++) {
-      KALDI_ASSERT(vector(j)==cu_matrix(j, i));
+    for (int32 j = 0; j < M; j++) {
+      KALDI_ASSERT(vector(j) == cu_matrix(j, i));
     }
   }
   Matrix<Real> matrix(cu_matrix), matrix2(M, N);
   CuMatrix<Real> matrix3(M, N);
-  
+
   CuVector<Real> vector(M * N), vector2(M * N);
   vector.CopyRowsFromMat(cu_matrix);
   vector2.CopyRowsFromMat(matrix);
@@ -328,20 +332,20 @@ template<typename Real> void CuVectorUnitTestCopyFromMat() {
   matrix3.CopyRowsFromVec(Vector<Real>(vector2));
   Vector<Real> vector3(M * N);
   vector3.CopyRowsFromMat(cu_matrix);
-                                         
-  
-  for(int32 j = 0; j < M*N; j++) {
-    if (Rand() % 500 == 0) { // random small subset (it was slow)
-      KALDI_ASSERT(vector(j) == cu_matrix(j/N, j%N));
-      KALDI_ASSERT(vector2(j) == cu_matrix(j/N, j%N));
-      KALDI_ASSERT(vector2(j) == matrix2(j/N, j%N));
-      KALDI_ASSERT(vector3(j) == matrix2(j/N, j%N));
-      KALDI_ASSERT(vector3(j) == matrix3(j/N, j%N));
+
+  for (int32 j = 0; j < M * N; j++) {
+    if (Rand() % 500 == 0) {  // random small subset (it was slow)
+      KALDI_ASSERT(vector(j) == cu_matrix(j / N, j % N));
+      KALDI_ASSERT(vector2(j) == cu_matrix(j / N, j % N));
+      KALDI_ASSERT(vector2(j) == matrix2(j / N, j % N));
+      KALDI_ASSERT(vector3(j) == matrix2(j / N, j % N));
+      KALDI_ASSERT(vector3(j) == matrix3(j / N, j % N));
     }
   }
 }
 
-template<typename Real> void CuVectorUnitTestCopyDiagFromPacked() {
+template <typename Real>
+void CuVectorUnitTestCopyDiagFromPacked() {
   for (int32 i = 0; i < 5; i++) {
     int32 N = 100 + Rand() % 255;
     CuSpMatrix<Real> S(N);
@@ -356,7 +360,8 @@ template<typename Real> void CuVectorUnitTestCopyDiagFromPacked() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestCopyCross() {
+template <typename Real>
+void CuVectorUnitTestCopyCross() {
   for (int32 i = 0; i < 10; i++) {
     int32 M = 100 + Rand() % 255;
     if (Rand() % 3 == 0) M = 0;
@@ -370,7 +375,8 @@ template<typename Real> void CuVectorUnitTestCopyCross() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestCopyCross2() {
+template <typename Real>
+void CuVectorUnitTestCopyCross2() {
   for (int32 i = 0; i < 10; i++) {
     int32 M = 100 + Rand() % 255;
     if (Rand() % 3 == 0) M = 0;
@@ -384,7 +390,8 @@ template<typename Real> void CuVectorUnitTestCopyCross2() {
   }
 }
 
-template<typename Real> void CuVectorUnitTestCopyDiagFromMat() {
+template <typename Real>
+void CuVectorUnitTestCopyDiagFromMat() {
   for (int32 i = 0; i < 5; i++) {
     int32 M = 100 + Rand() % 255, N = M + Rand() % 2;
     Matrix<Real> matrix(M, N);
@@ -403,8 +410,8 @@ template<typename Real> void CuVectorUnitTestCopyDiagFromMat() {
   }
 }
 
-
-template<typename Real> void CuVectorUnitTestNorm() {
+template <typename Real>
+void CuVectorUnitTestNorm() {
   int32 dim = 2;
   CuVector<Real> cu_vector(dim);
   cu_vector(0) = 1.0;
@@ -412,9 +419,9 @@ template<typename Real> void CuVectorUnitTestNorm() {
   KALDI_ASSERT(ApproxEqual(cu_vector.Norm(1.0), 3.0));
   KALDI_ASSERT(ApproxEqual(cu_vector.Norm(2.0), sqrt(5.0)));
 }
-               
 
-template<typename Real> void CuVectorUnitTestMin() {
+template <typename Real>
+void CuVectorUnitTestMin() {
   for (int32 p = 0; p < 5; p++) {
     int32 dim = 100 + Rand() % 500;
     CuVector<Real> cu_vector(dim);
@@ -425,8 +432,8 @@ template<typename Real> void CuVectorUnitTestMin() {
   }
 }
 
-
-template<typename Real> void CuVectorUnitTestMax() {
+template <typename Real>
+void CuVectorUnitTestMax() {
   for (int32 p = 0; p < 5; p++) {
     int32 dim = 100 + Rand() % 500;
     CuVector<Real> cu_vector(dim);
@@ -437,11 +444,11 @@ template<typename Real> void CuVectorUnitTestMax() {
   }
 }
 
-
-template<typename Real> void CuVectorUnitTestApplySoftMax() {
+template <typename Real>
+void CuVectorUnitTestApplySoftMax() {
   for (int32 i = 0; i < 10; i++) {
     int32 dim = 100 + Rand() % 300;
-    //int32 dim = 1024;
+    // int32 dim = 1024;
     CuVector<Real> cu_vector(dim);
     cu_vector.SetRandn();
     Vector<Real> vector(cu_vector);
@@ -449,44 +456,45 @@ template<typename Real> void CuVectorUnitTestApplySoftMax() {
     cu_vector.ApplySoftMax();
     vector.ApplySoftMax();
     CuVector<Real> cu_vector2(vector);
-    //std::cout<<cu_vector <<"\n"<<cu_vector2<<std::endl;
+    // std::cout<<cu_vector <<"\n"<<cu_vector2<<std::endl;
     AssertEqual(cu_vector, cu_vector2);
   }
 }
 
-template<typename Real> void CuVectorUnitTestApplyExp() {
+template <typename Real>
+void CuVectorUnitTestApplyExp() {
   int32 dim = 100;
   CuVector<Real> vector(dim);
   vector.SetRandn();
   CuVector<Real> vector2(vector);
 
   vector.ApplyExp();
-  for(int32 j = 0; j < dim; j++) {
-    //std::cout<<"diff is "<<exp(vector2(j))-vector(j)<<std::endl;;
-    KALDI_ASSERT(std::abs(exp(vector2(j))-vector(j)) < 0.000001 )
+  for (int32 j = 0; j < dim; j++) {
+    // std::cout<<"diff is "<<exp(vector2(j))-vector(j)<<std::endl;;
+    KALDI_ASSERT(std::abs(exp(vector2(j)) - vector(j)) < 0.000001)
   }
-
 }
 
-template<typename Real> void CuVectorUnitTestApplyLog() {
+template <typename Real>
+void CuVectorUnitTestApplyLog() {
   int32 dim = 100;
   CuVector<Real> vector(dim);
   vector.SetRandn();
-  for(int32 j = 0; j < dim; j++) {
-    if(vector(j) <= 0.0)
-      vector(j) = 1.0 - vector(j);
+  for (int32 j = 0; j < dim; j++) {
+    if (vector(j) <= 0.0) vector(j) = 1.0 - vector(j);
   }
 
   CuVector<Real> vector2(vector);
 
   vector.ApplyLog();
-  for(int32 j = 0; j < dim; j++) {
-    //std::cout<<"diff is "<<exp(vector2(j))-vector(j)<<std::endl;;
-    KALDI_ASSERT(std::abs(log(vector2(j))-vector(j)) < 0.000001 )
+  for (int32 j = 0; j < dim; j++) {
+    // std::cout<<"diff is "<<exp(vector2(j))-vector(j)<<std::endl;;
+    KALDI_ASSERT(std::abs(log(vector2(j)) - vector(j)) < 0.000001)
   }
 }
 
-template<typename Real> void CuVectorUnitTestApplyFloor() {
+template <typename Real>
+void CuVectorUnitTestApplyFloor() {
   for (int32 l = 0; l < 10; l++) {
     int32 dim = 100 + Rand() % 700;
     CuVector<Real> cu_vector(dim);
@@ -496,18 +504,19 @@ template<typename Real> void CuVectorUnitTestApplyFloor() {
     BaseFloat floor = 0.33 * (-5 + Rand() % 10);
     int32 i = cu_vector.ApplyFloor(floor);
     int32 j = vector.ApplyFloor(floor);
-  
+
     CuVector<Real> cu2(vector);
 
     AssertEqual(cu2, cu_vector);
     if (i != j) {
       KALDI_WARN << "ApplyFloor return code broken...";
     }
-    KALDI_ASSERT(i==j);
+    KALDI_ASSERT(i == j);
   }
 }
 
-template<typename Real> void CuVectorUnitTestApplyPow() {
+template <typename Real>
+void CuVectorUnitTestApplyPow() {
   for (int32 l = 0; l < 10; l++) {
     int32 dim = 100 + Rand() % 700;
 
@@ -519,14 +528,15 @@ template<typename Real> void CuVectorUnitTestApplyPow() {
     BaseFloat pow = -2 + (Rand() % 5);
     cu_vector.ApplyPow(pow);
     vector.ApplyPow(pow);
-  
+
     CuVector<Real> cu2(vector);
 
     AssertEqual(cu2, cu_vector);
   }
 }
 
-template<typename Real> void CuVectorUnitTestAddVecVec() {
+template <typename Real>
+void CuVectorUnitTestAddVecVec() {
   int32 dim = 100;
   CuVector<Real> cu_vector(dim);
   cu_vector.SetRandn();
@@ -535,19 +545,20 @@ template<typename Real> void CuVectorUnitTestAddVecVec() {
   Real beta = Rand();
   Real alpha = Rand();
   Vector<Real> v(dim), r(dim);
-  v.SetRandn(); r.SetRandn();
+  v.SetRandn();
+  r.SetRandn();
   CuVector<Real> cuV(v), cuR(r);
-
 
   cu_vector.AddVecVec(alpha, cuR, cuV, beta);
   vector.AddVecVec(alpha, r, v, beta);
 
   CuVector<Real> cu2(vector);
-  std::cout<<cu2(0)<<' '<<cu_vector(0)<<std::endl;
+  std::cout << cu2(0) << ' ' << cu_vector(0) << std::endl;
   AssertEqual(cu2, cu_vector);
 }
 
-template<typename Real> void CuVectorUnitTestAddDiagMat2() {
+template <typename Real>
+void CuVectorUnitTestAddDiagMat2() {
   for (int p = 0; p < 4; p++) {
     int32 M = 230 + Rand() % 100, N = 230 + Rand() % 100;
     BaseFloat alpha = 0.2 + Rand() % 3, beta = 0.3 + Rand() % 2;
@@ -558,7 +569,7 @@ template<typename Real> void CuVectorUnitTestAddDiagMat2() {
     cu_mat_orig.SetRandn();
     MatrixTransposeType trans = (p % 2 == 0 ? kNoTrans : kTrans);
     CuMatrix<Real> cu_mat(cu_mat_orig, trans);
-    
+
     Vector<Real> vector(cu_vector);
     Matrix<Real> mat(cu_mat);
 
@@ -570,25 +581,24 @@ template<typename Real> void CuVectorUnitTestAddDiagMat2() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void CuVectorUnitTestAddDiagMatMat() {
   for (MatrixIndexT iter = 0; iter < 4; iter++) {
     BaseFloat alpha = 0.432 + Rand() % 5, beta = 0.043 + Rand() % 2;
-    MatrixIndexT dimM = 10 + Rand() % 300,
-                 dimN = 5 + Rand() % 300;
+    MatrixIndexT dimM = 10 + Rand() % 300, dimN = 5 + Rand() % 300;
     CuVector<Real> v(dimM);
     CuMatrix<Real> M_orig(dimM, dimN), N_orig(dimN, dimM);
     M_orig.SetRandn();
     N_orig.SetRandn();
     MatrixTransposeType transM = (iter % 2 == 0 ? kNoTrans : kTrans);
-    MatrixTransposeType transN = ((iter/2) % 2 == 0 ? kNoTrans : kTrans);
+    MatrixTransposeType transN = ((iter / 2) % 2 == 0 ? kNoTrans : kTrans);
     CuMatrix<Real> M(M_orig, transM), N(N_orig, transN);
-    
+
     v.SetRandn();
     CuVector<Real> w(v);
 
     w.AddDiagMatMat(alpha, M, transM, N, transN, beta);
-    
+
     {
       CuVector<Real> w2(v);
       CuMatrix<Real> MN(dimM, dimM);
@@ -602,9 +612,8 @@ static void CuVectorUnitTestAddDiagMatMat() {
   }
 }
 
-
-
-template<typename Real> void CuVectorUnitTestAddMatVec() {
+template <typename Real>
+void CuVectorUnitTestAddMatVec() {
   for (int32 i = 0; i < 10; i++) {
     int32 M = 10 + Rand() % 500, N = 10 + Rand() % 400;
 
@@ -623,17 +632,16 @@ template<typename Real> void CuVectorUnitTestAddMatVec() {
     Matrix<Real> mat(mat_cu);
 
     BaseFloat alpha = 0.5 * (Rand() % 10), beta = 0.5 * (Rand() % 10);
-    dst_cu.AddMatVec(alpha, mat_cu, transpose ? kTrans : kNoTrans,
-                     src_cu, beta);
-    dst.AddMatVec(alpha, mat, transpose ? kTrans : kNoTrans,
-                  src, beta);
+    dst_cu.AddMatVec(alpha, mat_cu, transpose ? kTrans : kNoTrans, src_cu,
+                     beta);
+    dst.AddMatVec(alpha, mat, transpose ? kTrans : kNoTrans, src, beta);
     Vector<Real> dst2(dst_cu);
     AssertEqual(dst, dst2);
   }
 }
 
-
-template<typename Real> void CuVectorUnitTestAddSpVec() {
+template <typename Real>
+void CuVectorUnitTestAddSpVec() {
   for (int32 i = 0; i < 5; i++) {
     int32 M = 100 + Rand() % 256;
 
@@ -648,7 +656,7 @@ template<typename Real> void CuVectorUnitTestAddSpVec() {
     CuSpMatrix<Real> mat_cu(M);
     mat_cu.SetRandn();
     SpMatrix<Real> mat(mat_cu);
-    
+
     BaseFloat alpha = 0.5 * (Rand() % 5), beta = 0.5 * (Rand() % 5);
     dst_cu.AddSpVec(alpha, mat_cu, src_cu, beta);
     dst.AddSpVec(alpha, mat, src, beta);
@@ -657,14 +665,13 @@ template<typename Real> void CuVectorUnitTestAddSpVec() {
   }
 }
 
-
-
-template<typename Real> void CuVectorUnitTest() {
+template <typename Real>
+void CuVectorUnitTest() {
   UnitTestCuVectorCopyFromVec<Real, float>();
 #if HAVE_CUDA == 1
   if (CuDevice::Instantiate().DoublePrecisionSupported())
 #endif
-  UnitTestCuVectorCopyFromVec<Real, double>();
+    UnitTestCuVectorCopyFromVec<Real, double>();
   UnitTestCuVectorIO<Real>();
   CuVectorUnitTestVecVec<Real>();
   CuVectorUnitTestAddVec<Real>();
@@ -687,8 +694,8 @@ template<typename Real> void CuVectorUnitTest() {
   CuVectorUnitTestCopyDiagFromPacked<Real>();
   CuVectorUnitTestCopyDiagFromMat<Real>();
   CuVectorUnitTestCopyCross<Real>();
-  CuVectorUnitTestCopyCross2<Real>();  
-  CuVectorUnitTestNorm<Real>();  
+  CuVectorUnitTestCopyCross2<Real>();
+  CuVectorUnitTestNorm<Real>();
   CuVectorUnitTestApplyExp<Real>();
   CuVectorUnitTestApplyLog<Real>();
   CuVectorUnitTestApplyFloor<Real>();
@@ -700,20 +707,18 @@ template<typename Real> void CuVectorUnitTest() {
   CuVectorUnitTestAddDiagMatMat<Real>();
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
-  //Select the GPU
+  // Select the GPU
   using namespace kaldi;
   const char *usage = "Usage: cu-vector-test [options]";
 
   ParseOptions po(usage);
-  std::string use_gpu = "yes";    
+  std::string use_gpu = "yes";
   po.Register("use-gpu", &use_gpu, "yes|no|optional");
   po.Read(argc, argv);
-  
+
   if (po.NumArgs() != 0) {
     po.PrintUsage();
     exit(1);
@@ -722,11 +727,10 @@ int main(int argc, char *argv[]) {
   for (int32 loop = 0; loop < 2; loop++) {
 #if HAVE_CUDA == 1
     if (loop == 0)
-      CuDevice::Instantiate().SelectGpuId("no"); // -1 means no GPU
+      CuDevice::Instantiate().SelectGpuId("no");  // -1 means no GPU
     else
       CuDevice::Instantiate().SelectGpuId(use_gpu);
 #endif
-
 
     kaldi::CuVectorUnitTest<float>();
 #if HAVE_CUDA == 1

@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/diag-gmm.h"
@@ -34,11 +33,12 @@ int main(int argc, char *argv[]) {
         "See also gmm-gselect, fgmm-gselect\n"
         "Usage: \n"
         " copy-gselect [options] <gselect-rspecifier> <gselect-wspecifier>\n";
-    
+
     ParseOptions po(usage);
     int32 num_gselect = 0;
     std::string likelihood_wspecifier;
-    po.Register("n", &num_gselect, "Number of Gaussians to keep per frame (if nonzero)\n");
+    po.Register("n", &num_gselect,
+                "Number of Gaussians to keep per frame (if nonzero)\n");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -48,20 +48,20 @@ int main(int argc, char *argv[]) {
     KALDI_ASSERT(num_gselect >= 0);
 
     std::string gselect_rspecifier = po.GetArg(1),
-        gselect_wspecifier = po.GetArg(2);
+                gselect_wspecifier = po.GetArg(2);
 
     SequentialInt32VectorVectorReader gselect_reader(gselect_rspecifier);
     Int32VectorVectorWriter gselect_writer(gselect_wspecifier);
     int32 num_done = 0;
     for (; !gselect_reader.Done(); gselect_reader.Next()) {
       std::string utt = gselect_reader.Key();
-      if (num_gselect == 0) { // keep original size.
+      if (num_gselect == 0) {  // keep original size.
         gselect_writer.Write(utt, gselect_reader.Value());
       } else {
         vector<vector<int32> > gselect(gselect_reader.Value());
         for (size_t i = 0; i < gselect.size(); i++)
           if (static_cast<int32>(gselect[i].size()) > num_gselect)
-            gselect[i].resize(num_gselect); // keep 1st n elements.
+            gselect[i].resize(num_gselect);  // keep 1st n elements.
         gselect_writer.Write(utt, gselect);
       }
       num_done++;
@@ -71,12 +71,12 @@ int main(int argc, char *argv[]) {
     else
       KALDI_LOG << "Copied " << num_done << " gselect objects, "
                 << " limiting sizes to " << num_gselect;
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

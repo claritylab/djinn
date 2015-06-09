@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/model-common.h"
@@ -25,14 +24,14 @@
 #include "gmm/diag-gmm.h"
 #include "gmm/mle-full-gmm.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
         "Accumulate stats for training a diagonal-covariance GMM.\n"
-        "Usage:  gmm-global-acc-stats [options] <model-in> <feature-rspecifier> "
+        "Usage:  gmm-global-acc-stats [options] <model-in> "
+        "<feature-rspecifier> "
         "<stats-out>\n"
         "e.g.: gmm-global-acc-stats 1.mdl scp:train.scp 1.acc\n";
 
@@ -41,11 +40,14 @@ int main(int argc, char *argv[]) {
     std::string update_flags_str = "mvw";
     std::string gselect_rspecifier, weights_rspecifier;
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters will be "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters will be "
                 "updated: subset of mvw.");
-    po.Register("gselect", &gselect_rspecifier, "rspecifier for gselect objects "
+    po.Register("gselect", &gselect_rspecifier,
+                "rspecifier for gselect objects "
                 "to limit the #Gaussians accessed on each frame.");
-    po.Register("weights", &weights_rspecifier, "rspecifier for a vector of floats "
+    po.Register("weights", &weights_rspecifier,
+                "rspecifier for a vector of floats "
                 "for each utterance, that's a per-frame weight.");
     po.Read(argc, argv);
 
@@ -55,8 +57,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        accs_wxfilename = po.GetArg(3);
+                feature_rspecifier = po.GetArg(2),
+                accs_wxfilename = po.GetArg(3);
 
     DiagGmm gmm;
     {
@@ -67,7 +69,7 @@ int main(int argc, char *argv[]) {
 
     AccumDiagGmm gmm_accs;
     gmm_accs.Resize(gmm, StringToGmmFlags(update_flags_str));
-    
+
     double tot_like = 0.0, tot_weight = 0.0;
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
@@ -80,10 +82,11 @@ int main(int argc, char *argv[]) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
       int32 file_frames = mat.NumRows();
       BaseFloat file_like = 0.0,
-          file_weight = 0.0; // total of weights of frames (will each be 1 unless
+                file_weight =
+                    0.0;  // total of weights of frames (will each be 1 unless
       // --weights option supplied.
       Vector<BaseFloat> weights;
-      if (weights_rspecifier != "") { // We have per-frame weighting.
+      if (weights_rspecifier != "") {  // We have per-frame weighting.
         if (!weights_reader.HasKey(key)) {
           KALDI_WARN << "No per-frame weights available for utterance " << key;
           num_err++;
@@ -97,7 +100,7 @@ int main(int argc, char *argv[]) {
           continue;
         }
       }
-      
+
       if (gselect_rspecifier != "") {
         if (!gselect_reader.HasKey(key)) {
           KALDI_WARN << "No gselect information for utterance " << key;
@@ -113,7 +116,7 @@ int main(int argc, char *argv[]) {
           num_err++;
           continue;
         }
-        
+
         for (int32 i = 0; i < file_frames; i++) {
           BaseFloat weight = (weights.Dim() != 0) ? weights(i) : 1.0;
           if (weight == 0.0) continue;
@@ -129,32 +132,32 @@ int main(int argc, char *argv[]) {
           for (int32 j = 0; j < loglikes.Dim(); j++)
             gmm_accs.AccumulateForComponent(data, this_gselect[j], loglikes(j));
         }
-      } else { // no gselect..
+      } else {  // no gselect..
         for (int32 i = 0; i < file_frames; i++) {
           BaseFloat weight = (weights.Dim() != 0) ? weights(i) : 1.0;
           if (weight == 0.0) continue;
           file_weight += weight;
-          file_like += weight *
-              gmm_accs.AccumulateFromDiag(gmm, mat.Row(i), weight);
+          file_like +=
+              weight * gmm_accs.AccumulateFromDiag(gmm, mat.Row(i), weight);
         }
       }
-      KALDI_VLOG(2) << "File '" << key << "': Average likelihood = "
-                    << (file_like/file_weight) << " over "
-                    << file_weight <<" frames.";
+      KALDI_VLOG(2) << "File '" << key
+                    << "': Average likelihood = " << (file_like / file_weight)
+                    << " over " << file_weight << " frames.";
       tot_like += file_like;
       tot_weight += file_weight;
       num_done++;
     }
-    KALDI_LOG << "Done " << num_done << " files; "
-              << num_err << " with errors.";
+    KALDI_LOG << "Done " << num_done << " files; " << num_err
+              << " with errors.";
     KALDI_LOG << "Overall likelihood per "
-              << "frame = " << (tot_like/tot_weight) << " over " << tot_weight
+              << "frame = " << (tot_like / tot_weight) << " over " << tot_weight
               << " (weighted) frames.";
 
     WriteKaldiObject(gmm_accs, accs_wxfilename, binary);
     KALDI_LOG << "Written accs to " << accs_wxfilename;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

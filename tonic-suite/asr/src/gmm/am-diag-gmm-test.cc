@@ -66,7 +66,7 @@ void TestAmDiagGmmIO(const AmDiagGmm &am_gmm) {
     loglike2 += am_gmm2->LogLikelihood(i, feat);
   kaldi::AssertEqual(loglike, loglike2, 1e-4);
   delete am_gmm2;
-  
+
   unlink("tmpf");
   unlink("tmpfb");
 }
@@ -75,7 +75,7 @@ void TestSplitStates(const AmDiagGmm &am_gmm) {
   int32 target_comp = 2 * am_gmm.NumGauss();
   kaldi::Vector<BaseFloat> occs(am_gmm.NumPdfs());
   for (int32 i = 0; i < occs.Dim(); i++)
-    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform()+1) * 4;
+    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform() + 1) * 4;
   AmDiagGmm *am_gmm1 = new AmDiagGmm();
   am_gmm1->CopyFromAmDiagGmm(am_gmm);
   am_gmm1->SplitByCount(occs, target_comp, 0.01, 0.2, 0.0);
@@ -94,10 +94,10 @@ void TestSplitStates(const AmDiagGmm &am_gmm) {
 
 void TestClustering(const AmDiagGmm &am_gmm) {
   int32 target_comp = am_gmm.NumGauss() / 5,
-      interm_comp = am_gmm.NumGauss() / 2;
+        interm_comp = am_gmm.NumGauss() / 2;
   kaldi::Vector<BaseFloat> occs(am_gmm.NumPdfs());
   for (int32 i = 0; i < occs.Dim(); i++)
-    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform()+1) * 4;
+    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform() + 1) * 4;
 
   kaldi::UbmClusteringOptions ubm_opts(target_comp, 0.2, interm_comp, 0.01, 30);
   kaldi::DiagGmm ubm;
@@ -105,7 +105,7 @@ void TestClustering(const AmDiagGmm &am_gmm) {
 }
 
 void UnitTestAmDiagGmm() {
-  int32 dim = 1 + kaldi::RandInt(0, 9),  // random dimension of the gmm
+  int32 dim = 1 + kaldi::RandInt(0, 9),     // random dimension of the gmm
       num_pdfs = 5 + kaldi::RandInt(0, 9);  // random number of states
 
   AmDiagGmm am_gmm;
@@ -122,8 +122,7 @@ void UnitTestAmDiagGmm() {
 }
 
 int main() {
-  for (int i = 0; i < 10; i++)
-    UnitTestAmDiagGmm();
+  for (int i = 0; i < 10; i++) UnitTestAmDiagGmm();
   std::cout << "Test OK.\n";
   return 0;
 }

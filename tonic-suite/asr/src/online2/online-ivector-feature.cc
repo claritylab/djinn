@@ -40,8 +40,9 @@ void OnlineIvectorExtractionInfo::Init(
     use_most_recent_ivector = true;
   }
   max_remembered_frames = config.max_remembered_frames;
-  
-  std::string note = "(note: this may be needed "
+
+  std::string note =
+      "(note: this may be needed "
       "in the file supplied to --ivector-extractor-config)";
   if (config.lda_mat_rxfilename == "")
     KALDI_ERR << "--lda-matrix option must be set " << note;
@@ -64,13 +65,12 @@ void OnlineIvectorExtractionInfo::Init(
   this->Check();
 }
 
-
 void OnlineIvectorExtractionInfo::Check() const {
   KALDI_ASSERT(global_cmvn_stats.NumRows() == 2);
   int32 base_feat_dim = global_cmvn_stats.NumCols() - 1,
-      num_splice = splice_opts.left_context + 1 + splice_opts.right_context,
-      spliced_input_dim = base_feat_dim * num_splice;
-  
+        num_splice = splice_opts.left_context + 1 + splice_opts.right_context,
+        spliced_input_dim = base_feat_dim * num_splice;
+
   KALDI_ASSERT(lda_mat.NumCols() == spliced_input_dim ||
                lda_mat.NumCols() == spliced_input_dim + 1);
   KALDI_ASSERT(lda_mat.NumRows() == diag_ubm.Dim());
@@ -84,15 +84,18 @@ void OnlineIvectorExtractionInfo::Check() const {
 }
 
 // The class constructed in this way should never be used.
-OnlineIvectorExtractionInfo::OnlineIvectorExtractionInfo():
-    ivector_period(0), num_gselect(0), min_post(0.0), posterior_scale(0.0),
-    use_most_recent_ivector(true), greedy_ivector_extractor(false),
-    max_remembered_frames(0) { }
+OnlineIvectorExtractionInfo::OnlineIvectorExtractionInfo()
+    : ivector_period(0),
+      num_gselect(0),
+      min_post(0.0),
+      posterior_scale(0.0),
+      use_most_recent_ivector(true),
+      greedy_ivector_extractor(false),
+      max_remembered_frames(0) {}
 
 OnlineIvectorExtractorAdaptationState::OnlineIvectorExtractorAdaptationState(
-    const OnlineIvectorExtractorAdaptationState &other):
-    cmvn_state(other.cmvn_state), ivector_stats(other.ivector_stats) { }
-
+    const OnlineIvectorExtractorAdaptationState &other)
+    : cmvn_state(other.cmvn_state), ivector_stats(other.ivector_stats) {}
 
 void OnlineIvectorExtractorAdaptationState::LimitFrames(
     BaseFloat max_remembered_frames, BaseFloat posterior_scale) {
@@ -109,14 +112,11 @@ void OnlineIvectorExtractorAdaptationState::LimitFrames(
   BaseFloat max_remembered_frames_scaled =
       max_remembered_frames * posterior_scale;
   if (ivector_stats.Count() > max_remembered_frames_scaled) {
-    ivector_stats.Scale(max_remembered_frames_scaled /
-                        ivector_stats.Count());
-  }  
+    ivector_stats.Scale(max_remembered_frames_scaled / ivector_stats.Count());
+  }
 }
 
-int32 OnlineIvectorFeature::Dim() const {
-  return info_.extractor.IvectorDim();
-}
+int32 OnlineIvectorFeature::Dim() const { return info_.extractor.IvectorDim(); }
 
 bool OnlineIvectorFeature::IsLastFrame(int32 frame) const {
   // Note: it might be more logical to return, say, lda_->IsLastFrame()
@@ -136,11 +136,11 @@ void OnlineIvectorFeature::UpdateStatsUntilFrame(int32 frame) {
   KALDI_ASSERT(frame >= 0 && frame < this->NumFramesReady());
 
   int32 feat_dim = lda_normalized_->Dim(),
-      ivector_period = info_.ivector_period;
+        ivector_period = info_.ivector_period;
 
   int32 num_cg_iters = 15;  // I don't believe this is very important, so it's
                             // not configurable from the command line for now.
-  
+
   Vector<BaseFloat> feat(feat_dim),  // features given to iVector extractor
       log_likes(info_.diag_ubm.NumGauss());
 
@@ -154,27 +154,27 @@ void OnlineIvectorFeature::UpdateStatsUntilFrame(int32 frame) {
                                                info_.min_post, &posterior);
     for (size_t i = 0; i < posterior.size(); i++)
       posterior[i].second *= info_.posterior_scale;
-    lda_->GetFrame(t, &feat); // get feature without CMN.
+    lda_->GetFrame(t, &feat);  // get feature without CMN.
     ivector_stats_.AccStats(info_.extractor, feat, posterior);
-    
+
     if ((!info_.use_most_recent_ivector && t % ivector_period == 0) ||
         (info_.use_most_recent_ivector && t == frame)) {
       ivector_stats_.GetIvector(num_cg_iters, &current_ivector_);
       if (!info_.use_most_recent_ivector) {  // need to cache iVectors.
         int32 ivec_index = t / ivector_period;
-        KALDI_ASSERT(ivec_index == static_cast<int32>(ivectors_history_.size()));
+        KALDI_ASSERT(ivec_index ==
+                     static_cast<int32>(ivectors_history_.size()));
         ivectors_history_.push_back(new Vector<BaseFloat>(current_ivector_));
       }
     }
   }
 }
 
-void OnlineIvectorFeature::GetFrame(int32 frame,
-                                    VectorBase<BaseFloat> *feat) {
-  UpdateStatsUntilFrame(info_.greedy_ivector_extractor ?
-                        lda_->NumFramesReady() - 1 : frame);
+void OnlineIvectorFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
+  UpdateStatsUntilFrame(
+      info_.greedy_ivector_extractor ? lda_->NumFramesReady() - 1 : frame);
   KALDI_ASSERT(feat->Dim() == this->Dim());
-  
+
   if (info_.use_most_recent_ivector) {
     KALDI_VLOG(5) << "due to --use-most-recent-ivector=true, using iVector "
                   << "from frame " << num_frames_stats_ << " for frame "
@@ -188,7 +188,7 @@ void OnlineIvectorFeature::GetFrame(int32 frame,
   } else {
     int32 i = frame / info_.ivector_period;  // rounds down.
     // if the following fails, UpdateStatsUntilFrame would have a bug.
-    KALDI_ASSERT(static_cast<size_t>(i) <  ivectors_history_.size());
+    KALDI_ASSERT(static_cast<size_t>(i) < ivectors_history_.size());
     feat->CopyFromVec(*(ivectors_history_[i]));
     (*feat)(0) -= info_.extractor.PriorOffset();
   }
@@ -200,13 +200,11 @@ void OnlineIvectorFeature::PrintDiagnostics() const {
   } else {
     KALDI_VLOG(3) << "UBM log-likelihood was "
                   << (tot_ubm_loglike_ / num_frames_stats_)
-                  << " per frame, over " << num_frames_stats_
-                  << " frames.";
+                  << " per frame, over " << num_frames_stats_ << " frames.";
     KALDI_VLOG(3) << "By the end of the utterance, objf change/frame "
                   << "from estimating iVector (vs. default) was "
                   << ivector_stats_.ObjfChange(current_ivector_)
-                  << " and iVector length was "
-                  << current_ivector_.Norm(2.0);
+                  << " and iVector length was " << current_ivector_.Norm(2.0);
   }
 }
 
@@ -228,20 +226,20 @@ void OnlineIvectorFeature::GetAdaptationState(
   // Note: the following call will work even if cmvn_->NumFramesReady() == 0; in
   // that case it will return the unmodified adaptation state that cmvn_ was
   // initialized with.
-  cmvn_->GetState(cmvn_->NumFramesReady() - 1,
-                  &(adaptation_state->cmvn_state));
+  cmvn_->GetState(cmvn_->NumFramesReady() - 1, &(adaptation_state->cmvn_state));
   adaptation_state->ivector_stats = ivector_stats_;
   adaptation_state->LimitFrames(info_.max_remembered_frames,
                                 info_.posterior_scale);
 }
 
-
 OnlineIvectorFeature::OnlineIvectorFeature(
     const OnlineIvectorExtractionInfo &info,
-    OnlineFeatureInterface *base_feature):
-    info_(info), base_(base_feature),
-    ivector_stats_(info_.extractor.IvectorDim(), info_.extractor.PriorOffset()),
-    num_frames_stats_(0) {
+    OnlineFeatureInterface *base_feature)
+    : info_(info),
+      base_(base_feature),
+      ivector_stats_(info_.extractor.IvectorDim(),
+                     info_.extractor.PriorOffset()),
+      num_frames_stats_(0) {
   info.Check();
   KALDI_ASSERT(base_feature != NULL);
   splice_ = new OnlineSpliceFrames(info_.splice_opts, base_);
@@ -257,7 +255,7 @@ OnlineIvectorFeature::OnlineIvectorFeature(
 
   // Set the iVector to its default value, [ prior_offset, 0, 0, ... ].
   current_ivector_.Resize(info_.extractor.IvectorDim());
-  current_ivector_(0) = info_.extractor.PriorOffset(); 
+  current_ivector_(0) = info_.extractor.PriorOffset();
 }
 
 void OnlineIvectorFeature::SetAdaptationState(
@@ -271,13 +269,14 @@ void OnlineIvectorFeature::SetAdaptationState(
 }
 
 BaseFloat OnlineIvectorFeature::UbmLogLikePerFrame() const {
-  if (num_frames_stats_ == 0) return 0;
-  else return tot_ubm_loglike_ / num_frames_stats_;
+  if (num_frames_stats_ == 0)
+    return 0;
+  else
+    return tot_ubm_loglike_ / num_frames_stats_;
 }
 
 BaseFloat OnlineIvectorFeature::ObjfImprPerFrame() const {
   return ivector_stats_.ObjfChange(current_ivector_);
 }
-
 
 }  // namespace kaldi

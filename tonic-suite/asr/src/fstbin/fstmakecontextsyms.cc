@@ -23,18 +23,20 @@
 #include "fstext/fstext-utils.h"
 #include "fstext/context-fst.h"
 
-
 /*
     Test for this and makecontextfst:
     mkdir -p ~/tmpdir
     pushd ~/tmpdir
     (echo "<eps> 0"; echo "a 1"; echo "b 2" ) > phones.txt
     ( echo 3; echo 4 ) > disambig.list
-    fstmakecontextfst --disambig-syms=disambig.list phones.txt 5 ilabels.sym > C.fst
-    fstmakecontextsyms --disambig-syms=disambig.list phones.txt ilabels.sym > context_syms.txt
+    fstmakecontextfst --disambig-syms=disambig.list phones.txt 5 ilabels.sym >
+   C.fst
+    fstmakecontextsyms --disambig-syms=disambig.list phones.txt ilabels.sym >
+   context_syms.txt
     cp phones.txt phones_disambig.txt;
      ( echo "#0 3"; echo "#1 4"; echo "$ 5" ) >> phones_disambig.txt
-    fstrandgen C.fst | fstprint --isymbols=context_syms.txt --osymbols=phones_disambig.txt
+    fstrandgen C.fst | fstprint --isymbols=context_syms.txt
+   --osymbols=phones_disambig.txt
 
     Example output:
     0   1   <eps>   a
@@ -43,21 +45,22 @@
     3
 */
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     using namespace fst;
     typedef fst::StdArc::Label Label;
-    const char *usage =  "Create input symbols for CLG\n"
-        "Usage: fstmakecontextsyms phones-symtab ilabels_input_file [output-symtab.txt]\n"
-        "E.g.:  fstmakecontextsyms  phones.txt ilabels.sym > context_symbols.txt\n";
+    const char *usage =
+        "Create input symbols for CLG\n"
+        "Usage: fstmakecontextsyms phones-symtab ilabels_input_file "
+        "[output-symtab.txt]\n"
+        "E.g.:  fstmakecontextsyms  phones.txt ilabels.sym > "
+        "context_symbols.txt\n";
 
     ParseOptions po(usage);
 
-    std::string disambig_list_file = "",
-        phone_separator = "/",
-        disambig_prefix = "#";
+    std::string disambig_list_file = "", phone_separator = "/",
+                disambig_prefix = "#";
 
     po.Register("phone-separator", &phone_separator,
                 "Separator for phones in phone-in-context symbols.");
@@ -72,43 +75,41 @@ int main(int argc, char *argv[]) {
     }
 
     std::string phones_symtab_filename = po.GetArg(1),
-        ilabel_info_filename = po.GetArg(2),
-        clg_symtab_filename = po.GetOptArg(3);
+                ilabel_info_filename = po.GetArg(2),
+                clg_symtab_filename = po.GetOptArg(3);
 
     std::vector<std::vector<kaldi::int32> > ilabel_info;
     {
       bool binary;
       Input ki(ilabel_info_filename, &binary);
-      ReadILabelInfo(ki.Stream(),
-                     binary, &ilabel_info);
+      ReadILabelInfo(ki.Stream(), binary, &ilabel_info);
     }
 
     fst::SymbolTable *phones_symtab = NULL;
     {  // read phone symbol table.
       std::ifstream is(phones_symtab_filename.c_str());
       phones_symtab = fst::SymbolTable::ReadText(is, phones_symtab_filename);
-      if (!phones_symtab) KALDI_ERR << "Could not read phones symbol-table file "<<phones_symtab_filename;
+      if (!phones_symtab)
+        KALDI_ERR << "Could not read phones symbol-table file "
+                  << phones_symtab_filename;
     }
 
-    fst::SymbolTable *clg_symtab =
-        CreateILabelInfoSymbolTable(ilabel_info,
-                                    *phones_symtab,
-                                    phone_separator,
-                                    disambig_prefix);
+    fst::SymbolTable *clg_symtab = CreateILabelInfoSymbolTable(
+        ilabel_info, *phones_symtab, phone_separator, disambig_prefix);
 
     if (clg_symtab_filename == "") {
       if (!clg_symtab->WriteText(std::cout))
         KALDI_ERR << "Cannot write symbol table to standard output.";
     } else {
       if (!clg_symtab->WriteText(clg_symtab_filename))
-        KALDI_ERR << "Cannot open symbol table file "<<clg_symtab_filename<<" for writing.";
+        KALDI_ERR << "Cannot open symbol table file " << clg_symtab_filename
+                  << " for writing.";
     }
     delete clg_symtab;
     delete phones_symtab;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

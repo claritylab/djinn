@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_SGMM2_FMLLR_SGMM2_H_
 #define KALDI_SGMM2_FMLLR_SGMM2_H_
 
@@ -39,7 +38,7 @@ namespace kaldi {
  */
 struct Sgmm2FmllrConfig {
   int32 fmllr_iters;  ///< Number of iterations in FMLLR estimation.
-  int32 step_iters;  ///< Iterations to find optimal FMLLR step size.
+  int32 step_iters;   ///< Iterations to find optimal FMLLR step size.
   /// Minimum occupancy count to estimate FMLLR using basis matrices.
   BaseFloat fmllr_min_count_basis;
   /// Minimum occupancy count to estimate FMLLR without basis matrices.
@@ -68,22 +67,28 @@ struct Sgmm2FmllrConfig {
 
 inline void Sgmm2FmllrConfig::Register(OptionsItf *po) {
   std::string module = "Sgmm2FmllrConfig: ";
-  po->Register("fmllr-iters", &fmllr_iters, module+
-               "Number of iterations in FMLLR estimation.");
-  po->Register("fmllr-step-iters", &step_iters, module+
-               "Number of iterations to find optimal FMLLR step size.");
-  po->Register("fmllr-min-count-bases", &fmllr_min_count_basis, module+
-               "Minimum occupancy count to estimate FMLLR using basis matrices.");
-  po->Register("fmllr-min-count", &fmllr_min_count, module+
-               "Minimum occupancy count to estimate FMLLR (without bases).");
-  po->Register("fmllr-min-count-full", &fmllr_min_count_full, module+
-      "Minimum occupancy count to stop using basis matrices for FMLLR.");
-  po->Register("fmllr-num-bases", &num_fmllr_bases, module+
-               "Number of FMLLR basis matrices.");
-  po->Register("fmllr-bases-occ-scale", &bases_occ_scale, module+
-               "Scale per-speaker count to determine number of CMLLR bases.");
+  po->Register("fmllr-iters", &fmllr_iters,
+               module + "Number of iterations in FMLLR estimation.");
+  po->Register(
+      "fmllr-step-iters", &step_iters,
+      module + "Number of iterations to find optimal FMLLR step size.");
+  po->Register(
+      "fmllr-min-count-bases", &fmllr_min_count_basis,
+      module +
+          "Minimum occupancy count to estimate FMLLR using basis matrices.");
+  po->Register(
+      "fmllr-min-count", &fmllr_min_count,
+      module + "Minimum occupancy count to estimate FMLLR (without bases).");
+  po->Register(
+      "fmllr-min-count-full", &fmllr_min_count_full,
+      module +
+          "Minimum occupancy count to stop using basis matrices for FMLLR.");
+  po->Register("fmllr-num-bases", &num_fmllr_bases,
+               module + "Number of FMLLR basis matrices.");
+  po->Register(
+      "fmllr-bases-occ-scale", &bases_occ_scale,
+      module + "Scale per-speaker count to determine number of CMLLR bases.");
 }
-
 
 /** \class Sgmm2FmllrGlobalParams
  *  Global adaptation parameters.
@@ -106,11 +111,11 @@ class Sgmm2FmllrGlobalParams {
   /// Diagonal of mean-scatter matrix. Dim is [D]
   Vector<BaseFloat> mean_scatter_;
   /// \tilde{W}_b.  [b][d][d], dim is [B][D][D+1].
-  std::vector< Matrix<BaseFloat> > fmllr_bases_;
+  std::vector<Matrix<BaseFloat> > fmllr_bases_;
 };
 
 inline void Sgmm2FmllrGlobalParams::Init(const AmSgmm2 &sgmm,
-                                        const Vector<BaseFloat> &state_occs) {
+                                         const Vector<BaseFloat> &state_occs) {
   sgmm.ComputeFmllrPreXform(state_occs, &pre_xform_, &inv_xform_,
                             &mean_scatter_);
 }
@@ -135,11 +140,9 @@ class FmllrSgmm2Accs {
   /// The 'data' argument is not FMLLR-transformed and is needed in addition
   /// to the the 'frame_vars' since the latter only contains a copy of the
   /// transformed feature vector.
-  BaseFloat Accumulate(const AmSgmm2 &sgmm,                       
-                       const VectorBase<BaseFloat> &data,
+  BaseFloat Accumulate(const AmSgmm2 &sgmm, const VectorBase<BaseFloat> &data,
                        const Sgmm2PerFrameDerivedVars &frame_vars,
-                       int32 state_index,
-                       BaseFloat weight,
+                       int32 state_index, BaseFloat weight,
                        Sgmm2PerSpkDerivedVars *spk);
 
   void AccumulateFromPosteriors(const AmSgmm2 &sgmm,
@@ -162,8 +165,7 @@ class FmllrSgmm2Accs {
   /// pre-transforms in fmllr_globals. Expects the transform matrix out_xform
   /// to be initialized to the correct size. Returns true if the transform was
   /// updated (i.e. had enough counts).
-  bool Update(const AmSgmm2 &model,
-              const Sgmm2FmllrGlobalParams &fmllr_globals,
+  bool Update(const AmSgmm2 &model, const Sgmm2FmllrGlobalParams &fmllr_globals,
               const Sgmm2FmllrConfig &opts, Matrix<BaseFloat> *out_xform,
               BaseFloat *frame_count, BaseFloat *auxf_improv) const;
 
@@ -173,7 +175,7 @@ class FmllrSgmm2Accs {
 
  private:
   AffineXformStats stats_;  ///< Accumulated stats
-  int32 dim_;  ///< Dimension of feature vectors
+  int32 dim_;               ///< Dimension of feature vectors
 
   // Cannot have copy constructor and assigment operator
   KALDI_DISALLOW_COPY_AND_ASSIGN(FmllrSgmm2Accs);
@@ -184,9 +186,9 @@ class FmllrSgmm2Accs {
 /// The actual number of bases may be less than 'num_fmllr_bases' depending
 /// on the feature dimension and number of eigenvalues greater than 'min_eig'.
 void EstimateSgmm2FmllrSubspace(const SpMatrix<double> &fmllr_grad_scatter,
-                               int32 num_fmllr_bases, int32 feat_dim,
-                               Sgmm2FmllrGlobalParams *fmllr_globals,
-                               double min_eig = 0.0);
+                                int32 num_fmllr_bases, int32 feat_dim,
+                                Sgmm2FmllrGlobalParams *fmllr_globals,
+                                double min_eig = 0.0);
 
 }  // namespace kaldi
 

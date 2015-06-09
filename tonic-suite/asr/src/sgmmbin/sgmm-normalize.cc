@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
@@ -29,13 +28,17 @@ int main(int argc, char *argv[]) {
     using namespace kaldi;
     typedef kaldi::int32 int32;
     const char *usage =
-        "Renormalize SGMM so that within certain subsets of UBM Gaussians (typically \n"
-        "corresponding to gender), probabilities sum to one; write it out, including\n"
+        "Renormalize SGMM so that within certain subsets of UBM Gaussians "
+        "(typically \n"
+        "corresponding to gender), probabilities sum to one; write it out, "
+        "including\n"
         "normalizers."
-        "Note: gaussians-rspecifier will normally be \"ark:foo\" where foo looks like\n"
+        "Note: gaussians-rspecifier will normally be \"ark:foo\" where foo "
+        "looks like\n"
         "  m  0 1 2 3 4 5\n"
         "  f  6 7 8 9 10\n"
-        "Usage: sgmm-normalize [options] <model-in> <gaussians-rspecifier> <model-out>\n";
+        "Usage: sgmm-normalize [options] <model-in> <gaussians-rspecifier> "
+        "<model-out>\n";
 
     bool binary_write = true;
 
@@ -48,8 +51,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     std::string model_in_filename = po.GetArg(1),
-        gaussians_rspecifier = po.GetArg(2),
-        model_out_filename = po.GetArg(3);
+                gaussians_rspecifier = po.GetArg(2),
+                model_out_filename = po.GetArg(3);
 
     AmSgmm am_sgmm;
     TransitionModel trans_model;
@@ -62,24 +65,21 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::vector<int32> > norm_sets;
     SequentialInt32VectorReader vec_reader(gaussians_rspecifier);
-    for (;!vec_reader.Done(); vec_reader.Next()) 
+    for (; !vec_reader.Done(); vec_reader.Next())
       norm_sets.push_back(vec_reader.Value());
 
     am_sgmm.ComputeNormalizersNormalized(norm_sets);
-    
+
     {
       Output ko(model_out_filename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_sgmm.Write(ko.Stream(), binary_write, kSgmmWriteAll);
     }
-    
-    
+
     KALDI_LOG << "Written model to " << model_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

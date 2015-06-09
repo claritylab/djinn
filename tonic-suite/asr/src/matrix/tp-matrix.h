@@ -4,7 +4,6 @@
 //                      Saarland University;  Yanmin Qian;   Haihua Xu
 //                2013  Johns Hopkins Universith (author: Daniel Povey)
 
-
 // See ../../COPYING for clarification regarding multiple authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,35 +21,36 @@
 #ifndef KALDI_MATRIX_TP_MATRIX_H_
 #define KALDI_MATRIX_TP_MATRIX_H_
 
-
 #include "matrix/packed-matrix.h"
 
 namespace kaldi {
 /// \addtogroup matrix_group
 /// @{
 
-template<typename Real> class TpMatrix;
+template <typename Real>
+class TpMatrix;
 
 /// @brief Packed symetric matrix class
-template<typename Real>
+template <typename Real>
 class TpMatrix : public PackedMatrix<Real> {
   friend class CuTpMatrix<float>;
   friend class CuTpMatrix<double>;
+
  public:
   TpMatrix() : PackedMatrix<Real>() {}
   explicit TpMatrix(MatrixIndexT r, MatrixResizeType resize_type = kSetZero)
       : PackedMatrix<Real>(r, resize_type) {}
-  TpMatrix(const TpMatrix<Real>& orig) : PackedMatrix<Real>(orig) {}
+  TpMatrix(const TpMatrix<Real> &orig) : PackedMatrix<Real>(orig) {}
 
   /// Copy constructor from CUDA TpMatrix
   /// This is defined in ../cudamatrix/cu-tp-matrix.cc
   explicit TpMatrix(const CuTpMatrix<Real> &cu);
-  
-  
-  template<typename OtherReal> explicit TpMatrix(const TpMatrix<OtherReal>& orig)
+
+  template <typename OtherReal>
+  explicit TpMatrix(const TpMatrix<OtherReal> &orig)
       : PackedMatrix<Real>(orig) {}
-  
-  Real operator() (MatrixIndexT r, MatrixIndexT c) const {
+
+  Real operator()(MatrixIndexT r, MatrixIndexT c) const {
     if (static_cast<UnsignedMatrixIndexT>(c) >
         static_cast<UnsignedMatrixIndexT>(r)) {
       KALDI_ASSERT(static_cast<UnsignedMatrixIndexT>(c) <
@@ -60,23 +60,23 @@ class TpMatrix : public PackedMatrix<Real> {
     KALDI_ASSERT(static_cast<UnsignedMatrixIndexT>(r) <
                  static_cast<UnsignedMatrixIndexT>(this->num_rows_));
     // c<=r now so don't have to check c.
-    return *(this->data_ + (r*(r+1)) / 2 + c);
+    return *(this->data_ + (r * (r + 1)) / 2 + c);
     // Duplicating code from PackedMatrix.h
   }
 
-  Real &operator() (MatrixIndexT r, MatrixIndexT c) {
+  Real &operator()(MatrixIndexT r, MatrixIndexT c) {
     KALDI_ASSERT(static_cast<UnsignedMatrixIndexT>(r) <
                  static_cast<UnsignedMatrixIndexT>(this->num_rows_));
     KALDI_ASSERT(static_cast<UnsignedMatrixIndexT>(c) <=
-                 static_cast<UnsignedMatrixIndexT>(r) &&
+                     static_cast<UnsignedMatrixIndexT>(r) &&
                  "you cannot access the upper triangle of TpMatrix using "
                  "a non-const matrix object.");
-    return *(this->data_ + (r*(r+1)) / 2 + c);
+    return *(this->data_ + (r * (r + 1)) / 2 + c);
     // Duplicating code from PackedMatrix.h
   }
   // Note: Cholesky may throw std::runtime_error
-  void Cholesky(const SpMatrix<Real>& orig);
-  
+  void Cholesky(const SpMatrix<Real> &orig);
+
   void Invert();
 
   // Inverts in double precision.
@@ -99,13 +99,14 @@ class TpMatrix : public PackedMatrix<Real> {
 
   /// This is implemented in ../cudamatrix/cu-tp-matrix.cc
   void CopyFromMat(const CuTpMatrix<Real> &other);
-  
+
   /// CopyFromTp copies another triangular matrix into this one.
   void CopyFromTp(const TpMatrix<Real> &other) {
     PackedMatrix<Real>::CopyFromPacked(other);
   }
 
-  template<typename OtherReal> void CopyFromTp(const TpMatrix<OtherReal> &other) {
+  template <typename OtherReal>
+  void CopyFromTp(const TpMatrix<OtherReal> &other) {
     PackedMatrix<Real>::CopyFromPacked(other);
   }
 
@@ -114,7 +115,7 @@ class TpMatrix : public PackedMatrix<Real> {
     this->AddPacked(alpha, M);
   }
 
-  using PackedMatrix<Real>::operator =;
+  using PackedMatrix<Real>::operator=;
   using PackedMatrix<Real>::Scale;
 
   void Resize(MatrixIndexT nRows, MatrixResizeType resize_type = kSetZero) {
@@ -126,6 +127,4 @@ class TpMatrix : public PackedMatrix<Real> {
 
 }  // namespace kaldi
 
-
 #endif
-

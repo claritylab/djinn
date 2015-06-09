@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/parse-options.h"
@@ -44,7 +43,8 @@ int main(int argc, char *argv[]) {
 
     BaseFloat delta = kDelta;
     ParseOptions po(usage);
-    po.Register("delta", &delta, "Delta cost: after pushing, all states will "
+    po.Register("delta", &delta,
+                "Delta cost: after pushing, all states will "
                 "have a total weight that differs from the average by no more "
                 "than this.");
     po.Read(argc, argv);
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string fst_in_filename = po.GetOptArg(1),
-        fst_out_filename = po.GetOptArg(2);
+                fst_out_filename = po.GetOptArg(2);
 
     VectorFst<StdArc> *fst = ReadFstKaldi(fst_in_filename);
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     WriteFstKaldi(*fst, fst_out_filename);
     delete fst;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

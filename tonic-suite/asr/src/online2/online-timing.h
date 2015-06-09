@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ONLINE2_ONLINE_TIMING_H_
 #define KALDI_ONLINE2_ONLINE_TIMING_H_
 
@@ -32,7 +31,6 @@ namespace kaldi {
 /// @addtogroup  onlinedecoding OnlineDecoding
 /// @{
 
-
 class OnlineTimer;
 
 /// class OnlineTimingStats stores statistics from timing of online decoding,
@@ -42,18 +40,17 @@ class OnlineTimingStats {
  public:
   OnlineTimingStats();
   void Print();
+
  protected:
   friend class OnlineTimer;
   int32 num_utts_;
   // all times are in seconds.
-  double total_audio_; // total time of audio.
+  double total_audio_;  // total time of audio.
   double total_time_taken_;
-  double total_time_waited_; // total time in wait() state.
-  double max_delay_; // maximum delay at utterance end.
+  double total_time_waited_;  // total time in wait() state.
+  double max_delay_;          // maximum delay at utterance end.
   std::string max_delay_utt_;
 };
-
-
 
 /// class OnlineTimer is used to test real-time decoding algorithms and evaluate
 /// how long the decoding of a particular utterance would take.  The 'obvious'
@@ -62,7 +59,8 @@ class OnlineTimingStats {
 /// available in a real-time application-- e.g. say we need to process a chunk
 /// that ends half a second into the utterance, we would sleep until half a
 /// second had elapsed since the start of the utterance.  In this code we
-/// don't actually sleep; we simulate the effect of sleeping by just incrementing
+/// don't actually sleep; we simulate the effect of sleeping by just
+/// incrementing
 /// a variable that says how long we would have slept; and we add this to
 /// wall-clock times obtained from Timer::Elapsed().
 /// The usage of this class will be something like as follows:
@@ -82,7 +80,7 @@ class OnlineTimingStats {
 class OnlineTimer {
  public:
   OnlineTimer(const std::string &utterance_id);
-  
+
   /// The call to WaitUntil(t) simulates the effect of waiting
   /// until t seconds after this object was initialized.
   void WaitUntil(double cur_utterance_length);
@@ -94,7 +92,7 @@ class OnlineTimer {
   /// Returns the simulated time elapsed in seconds since the timer was started;
   /// this equals waited_ plus the real time elapsed.
   double Elapsed();
-  
+
  private:
   std::string utterance_id_;
   Timer timer_;
@@ -103,10 +101,7 @@ class OnlineTimer {
   double utterance_length_;
 };
 
-
 /// @} End of "addtogroup onlinedecoding"
 }  // namespace kaldi
-
-
 
 #endif  // KALDI_ONLINE2_ONLINE_TIMING_

@@ -25,7 +25,6 @@
 #include "fstext/fstext-lib.h"
 #include "decoder/training-graph-compiler.h"
 
-
 /** @brief Write an equally spaced alignment (for getting training started).
 */
 int main(int argc, char *argv[]) {
@@ -36,8 +35,10 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
 
-    const char *usage =  "Write an equally spaced alignment (for getting training started)"
-        "Usage:  align-equal-compiled <graphs-rspecifier> <features-rspecifier> <alignments-wspecifier>\n"
+    const char *usage =
+        "Write an equally spaced alignment (for getting training started)"
+        "Usage:  align-equal-compiled <graphs-rspecifier> "
+        "<features-rspecifier> <alignments-wspecifier>\n"
         "e.g.: \n"
         " align-equal-compiled 1.mdl 1.fsts scp:train.scp ark:equal.ali\n";
 
@@ -51,11 +52,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        fst_rspecifier = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        alignment_wspecifier = po.GetArg(3);
-
+    std::string fst_rspecifier = po.GetArg(1),
+                feature_rspecifier = po.GetArg(2),
+                alignment_wspecifier = po.GetArg(3);
 
     SequentialTableReader<fst::VectorFstHolder> fst_reader(fst_rspecifier);
     RandomAccessBaseFloatMatrixReader feature_reader(feature_rspecifier);
@@ -87,9 +86,11 @@ int main(int argc, char *argv[]) {
         }
 
         VectorFst<StdArc> path;
-        int32 rand_seed = StringHasher()(key); // StringHasher() produces new anonymous
-        // object of type StringHasher; we then call operator () on it, with "key".
-        if (EqualAlign(decode_fst, features.NumRows(), rand_seed, &path) ) {
+        int32 rand_seed =
+            StringHasher()(key);  // StringHasher() produces new anonymous
+        // object of type StringHasher; we then call operator () on it, with
+        // "key".
+        if (EqualAlign(decode_fst, features.NumRows(), rand_seed, &path)) {
           std::vector<int32> aligned_seq, words;
           StdArc::Weight w;
           GetLinearSymbolSequence(path, &aligned_seq, &words, &w);
@@ -107,15 +108,14 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Success: done " << done << " utterances.";
     } else {
       KALDI_WARN << "Computed " << done << " alignments; " << no_feat
-                 << " lacked features, " << error
-                 << " had other errors.";
+                 << " lacked features, " << error << " had other errors.";
     }
-    if (done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

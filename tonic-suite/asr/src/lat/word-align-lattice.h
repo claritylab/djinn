@@ -1,6 +1,7 @@
 // lat/word-align-lattice.h
 
-// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author:
+// Daniel Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -30,11 +31,10 @@
 
 namespace kaldi {
 
-
 struct WordBoundaryInfoOpts {
   // Note: use of this structure
   // is deprecated, see WordBoundaryInfoNewOpts.
-  
+
   // Note: this structure (and the code in word-align-lattice.{h,cc}
   // makes stronger assumptions than the rest of the Kaldi toolkit:
   // that is, it assumes you have word-position-dependent phones,
@@ -54,74 +54,89 @@ struct WordBoundaryInfoOpts {
   bool reorder;
   bool silence_may_be_word_internal;
   bool silence_has_olabels;
-  
-  WordBoundaryInfoOpts(): silence_label(0), partial_word_label(0),
-                          reorder(true), silence_may_be_word_internal(false),
-                          silence_has_olabels(false) { }
-  
+
+  WordBoundaryInfoOpts()
+      : silence_label(0),
+        partial_word_label(0),
+        reorder(true),
+        silence_may_be_word_internal(false),
+        silence_has_olabels(false) {}
+
   void Register(OptionsItf *po) {
-    po->Register("wbegin-phones", &wbegin_phones, "Colon-separated list of "
+    po->Register("wbegin-phones", &wbegin_phones,
+                 "Colon-separated list of "
                  "numeric ids of phones that begin a word");
-    po->Register("wend-phones", &wend_phones, "Colon-separated list of "
+    po->Register("wend-phones", &wend_phones,
+                 "Colon-separated list of "
                  "numeric ids of phones that end a word");
-    po->Register("winternal-phones", &winternal_phones, "Colon-separated list "
+    po->Register("winternal-phones", &winternal_phones,
+                 "Colon-separated list "
                  "of numeric ids of phones that are internal to a word");
-    po->Register("wbegin-and-end-phones", &wbegin_and_end_phones, "Colon-separated "
+    po->Register("wbegin-and-end-phones", &wbegin_and_end_phones,
+                 "Colon-separated "
                  "list of numeric ids of phones that are used for "
                  "single-phone words.");
-    po->Register("silence-phones", &silence_phones, "Colon-separated list of "
+    po->Register("silence-phones", &silence_phones,
+                 "Colon-separated list of "
                  "numeric ids of phones that are used for silence (and other "
                  "non-word events such as noise)");
-    po->Register("silence-label", &silence_label, "Numeric id of word symbol "
+    po->Register("silence-label", &silence_label,
+                 "Numeric id of word symbol "
                  "that is to be used for silence arcs in the word-aligned "
                  "lattice (zero is OK)");
-    po->Register("partial-word-label", &partial_word_label, "Numeric id of "
+    po->Register("partial-word-label", &partial_word_label,
+                 "Numeric id of "
                  "word symbol that is to be used for arcs in the word-aligned "
                  "lattice corresponding to partial words at the end of "
                  "\"forced-out\" utterances (zero is OK)");
-    po->Register("reorder", &reorder, "True if the lattices were generated "
+    po->Register("reorder", &reorder,
+                 "True if the lattices were generated "
                  "from graphs that had the --reorder option true, relating to "
                  "reordering self-loops (typically true)");
     po->Register("silence-may-be-word-internal", &silence_may_be_word_internal,
-                 "If true, silence may appear inside words' prons (but not at begin/end!)\n");
-    po->Register("silence-has-olabels", &silence_has_olabels, 
-                 "If true, silence phones have output labels in the lattice, just\n"
-                 "like regular words.  [This means you can't have un-labeled silences]");
+                 "If true, silence may appear inside words' prons (but not at "
+                 "begin/end!)\n");
+    po->Register(
+        "silence-has-olabels", &silence_has_olabels,
+        "If true, silence phones have output labels in the lattice, just\n"
+        "like regular words.  [This means you can't have un-labeled silences]");
   }
 };
-
 
 // This structure is to be used for newer code, from s5 scripts on.
 struct WordBoundaryInfoNewOpts {
   int32 silence_label;
   int32 partial_word_label;
   bool reorder;
-  
-  WordBoundaryInfoNewOpts(): silence_label(0), partial_word_label(0),
-                             reorder(true) { }
-  
+
+  WordBoundaryInfoNewOpts()
+      : silence_label(0), partial_word_label(0), reorder(true) {}
+
   void Register(OptionsItf *po) {
-    po->Register("silence-label", &silence_label, "Numeric id of word symbol "
+    po->Register("silence-label", &silence_label,
+                 "Numeric id of word symbol "
                  "that is to be used for silence arcs in the word-aligned "
                  "lattice (zero is OK)");
-    po->Register("partial-word-label", &partial_word_label, "Numeric id of "
+    po->Register("partial-word-label", &partial_word_label,
+                 "Numeric id of "
                  "word symbol that is to be used for arcs in the word-aligned "
                  "lattice corresponding to partial words at the end of "
                  "\"forced-out\" utterances (zero is OK)");
-    po->Register("reorder", &reorder, "True if the lattices were generated "
+    po->Register("reorder", &reorder,
+                 "True if the lattices were generated "
                  "from graphs that had the --reorder option true, relating to "
                  "reordering self-loops (typically true)");
   }
 };
 
-
 struct WordBoundaryInfo {
   // This initializer will be deleted eventually.
-  WordBoundaryInfo(const WordBoundaryInfoOpts &opts); // Initialize from
+  WordBoundaryInfo(const WordBoundaryInfoOpts &opts);  // Initialize from
   // options class.  Note: this throws.  Don't try to catch this error
   // and continue; catching errors thrown from initializers is dangerous.
   // Note: the following vectors are initialized from the corresponding
-  // options strings in the options class, but if silence_may_be_word_internal=true
+  // options strings in the options class, but if
+  // silence_may_be_word_internal=true
   // or silence_has_olabels=true, we modify them as needed to make
   // silence phones behave in this way.
 
@@ -138,7 +153,8 @@ struct WordBoundaryInfo {
     kWordEndPhone,
     kWordBeginAndEndPhone,
     kWordInternalPhone,
-    kNonWordPhone // non-word phones are typically silence phones; but the point
+    kNonWordPhone  // non-word phones are typically silence phones; but the
+                   // point
     // is that there is
     // no word label associated with them in the lattice.  If a silence phone
     // had a word label with it, we'd have to call it kWordBeginAndEndPhone.
@@ -146,21 +162,21 @@ struct WordBoundaryInfo {
   PhoneType TypeOfPhone(int32 p) const {
     if ((p < 0 || p > phone_to_type.size()))
       KALDI_ERR << "Phone " << p << " was not specified in "
-          "word-boundary file (or options)";
+                                    "word-boundary file (or options)";
     return phone_to_type[p];
   }
-  
+
   std::vector<PhoneType> phone_to_type;
 
-  int32 silence_label; // The integer label we give to silence words.
+  int32 silence_label;  // The integer label we give to silence words.
   // (May be zero).
-  int32 partial_word_label; // The label we give to partially
+  int32 partial_word_label;  // The label we give to partially
   // formed words that we might get at the end of the utterance
   // if the lattice was "forced out" (no end state was reached).
 
-  bool reorder; // True if the "reordering" of self-loops versus
-  // forward-transition was done during graph creation (will
-  // normally be true.
+  bool reorder;  // True if the "reordering" of self-loops versus
+                 // forward-transition was done during graph creation (will
+                 // normally be true.
 
  private:
   // This is to be removed eventually, when we all move to s5 scripts.
@@ -187,13 +203,9 @@ struct WordBoundaryInfo {
 /// of the output will be greater than max_states, it will
 /// abort the computation, return false and produce an empty
 /// lattice out.
-bool WordAlignLattice(const CompactLattice &lat,
-                      const TransitionModel &tmodel,
-                      const WordBoundaryInfo &info,
-                      int32 max_states,
+bool WordAlignLattice(const CompactLattice &lat, const TransitionModel &tmodel,
+                      const WordBoundaryInfo &info, int32 max_states,
                       CompactLattice *lat_out);
-
-
 
 /// This function is designed to crash if something went wrong with the
 /// word-alignment of the lattice.  It verifies
@@ -206,5 +218,5 @@ void TestWordAlignedLattice(const CompactLattice &lat,
                             const WordBoundaryInfo &info,
                             const CompactLattice &aligned_lat);
 
-} // end namespace kaldi
+}  // end namespace kaldi
 #endif

@@ -22,13 +22,13 @@
 #include "feat/feature-spectrogram.h"
 #include "feat/wave-reader.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     const char *usage =
         "Create spectrogram feature files.\n"
-        "Usage:  compute-spectrogram-feats [options...] <wav-rspecifier> <feats-wspecifier>\n";
+        "Usage:  compute-spectrogram-feats [options...] <wav-rspecifier> "
+        "<feats-wspecifier>\n";
 
     // construct all the global objects
     ParseOptions po(usage);
@@ -42,10 +42,16 @@ int main(int argc, char *argv[]) {
     // Register the option struct
     spec_opts.Register(&po);
     // Register the options
-    po.Register("output-format", &output_format, "Format of the output files [kaldi, htk]");
-    po.Register("subtract-mean", &subtract_mean, "Subtract mean of each feature file [CMS]; not recommended to do it this way. ");
-    po.Register("channel", &channel, "Channel to extract (-1 -> expect mono, 0 -> left, 1 -> right)");
-    po.Register("min-duration", &min_duration, "Minimum duration of segments to process (in seconds).");
+    po.Register("output-format", &output_format,
+                "Format of the output files [kaldi, htk]");
+    po.Register("subtract-mean", &subtract_mean,
+                "Subtract mean of each feature file [CMS]; not recommended to "
+                "do it this way. ");
+    po.Register(
+        "channel", &channel,
+        "Channel to extract (-1 -> expect mono, 0 -> left, 1 -> right)");
+    po.Register("min-duration", &min_duration,
+                "Minimum duration of segments to process (in seconds).");
 
     // OPTION PARSING ..........................................................
     //
@@ -98,12 +104,12 @@ int main(int argc, char *argv[]) {
           this_chan = 0;
           if (num_chan != 1)
             KALDI_WARN << "Channel not specified but you have data with "
-                       << num_chan  << " channels; defaulting to zero";
+                       << num_chan << " channels; defaulting to zero";
         } else {
           if (this_chan >= num_chan) {
-            KALDI_WARN << "File with id " << utt << " has "
-                       << num_chan << " channels but you specified channel "
-                       << channel << ", producing no output.";
+            KALDI_WARN << "File with id " << utt << " has " << num_chan
+                       << " channels but you specified channel " << channel
+                       << ", producing no output.";
             continue;
           }
         }
@@ -120,8 +126,7 @@ int main(int argc, char *argv[]) {
       try {
         spec.Compute(waveform, &features, NULL);
       } catch (...) {
-        KALDI_WARN << "Failed to compute features for utterance "
-                   << utt;
+        KALDI_WARN << "Failed to compute features for utterance " << utt;
         continue;
       }
       if (subtract_mean) {
@@ -139,15 +144,13 @@ int main(int argc, char *argv[]) {
         p.first.CopyFromMat(features);
         int32 frame_shift = spec_opts.frame_opts.frame_shift_ms * 10000;
         HtkHeader header = {
-          features.NumRows(),
-          frame_shift,
-          static_cast<int16>(sizeof(float)*features.NumCols()),
-          007 | 020000
-        };
+            features.NumRows(), frame_shift,
+            static_cast<int16>(sizeof(float) * features.NumCols()),
+            007 | 020000};
         p.second = header;
         htk_writer.Write(utt, p);
       }
-      if(num_utts % 10 == 0)
+      if (num_utts % 10 == 0)
         KALDI_LOG << "Processed " << num_utts << " utterances";
       KALDI_VLOG(2) << "Processed features for key " << utt;
       num_success++;
@@ -155,10 +158,9 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << " Done " << num_success << " out of " << num_utts
               << " utterances.";
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
   return 0;
 }
-

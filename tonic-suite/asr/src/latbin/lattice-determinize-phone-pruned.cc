@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     typedef kaldi::int32 int32;
-    
+
     const char *usage =
         "Determinize lattices, keeping only the best path (sequence of\n"
         "acoustic states) for each input-symbol sequence. This version does\n"
@@ -41,16 +41,18 @@ int main(int argc, char *argv[]) {
         "                  <lattice-rspecifier> <lattice-wspecifier>\n"
         " e.g.: lattice-determinize-phone-pruned --acoustic-scale=0.1 \\\n"
         "                            final.mdl ark:in.lats ark:det.lats\n";
-    
+
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 1.0;
     BaseFloat beam = 10.0;
     fst::DeterminizeLatticePhonePrunedOptions opts;
     opts.max_mem = 50000000;
-    
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic"
+
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic"
                 " likelihoods.");
-    po.Register("beam", &beam, "Pruning beam [applied after acoustic scaling].");
+    po.Register("beam", &beam,
+                "Pruning beam [applied after acoustic scaling].");
     opts.Register(&po);
     po.Read(argc, argv);
 
@@ -59,9 +61,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
 
     TransitionModel trans_model;
     ReadKaldiObject(model_rxfilename, &trans_model);
@@ -69,9 +70,9 @@ int main(int argc, char *argv[]) {
     // Reads as regular lattice-- this is the form the determinization code
     // accepts.
     SequentialLatticeReader lat_reader(lats_rspecifier);
-    
+
     // Writes as compact lattice.
-    CompactLatticeWriter compact_lat_writer(lats_wspecifier); 
+    CompactLatticeWriter compact_lat_writer(lats_wspecifier);
 
     int32 n_done = 0, n_warn = 0;
 
@@ -88,14 +89,16 @@ int main(int argc, char *argv[]) {
       fst::ScaleLattice(fst::AcousticLatticeScale(acoustic_scale), &lat);
 
       CompactLattice det_clat;
-      if (!DeterminizeLatticePhonePrunedWrapper(
-              trans_model, &lat, beam, &det_clat, opts)) {
+      if (!DeterminizeLatticePhonePrunedWrapper(trans_model, &lat, beam,
+                                                &det_clat, opts)) {
         KALDI_WARN << "For key " << key << ", determinization did not succeed"
-            "(partial output will be pruned tighter than the specified beam.)";
+                                           "(partial output will be pruned "
+                                           "tighter than the specified beam.)";
         n_warn++;
       }
 
-      fst::ScaleLattice(fst::AcousticLatticeScale(1.0/acoustic_scale), &det_clat);
+      fst::ScaleLattice(fst::AcousticLatticeScale(1.0 / acoustic_scale),
+                        &det_clat);
       compact_lat_writer.Write(key, det_clat);
       n_done++;
     }
@@ -104,7 +107,7 @@ int main(int argc, char *argv[]) {
               << "earlier than specified by the beam on " << n_warn << " of "
               << "these.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

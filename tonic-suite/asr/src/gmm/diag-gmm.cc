@@ -36,8 +36,9 @@
 namespace kaldi {
 
 // Constructor that allows us to merge GMMs.
-DiagGmm::DiagGmm(const std::vector<std::pair<BaseFloat, const DiagGmm*> > &gmms)
-  : valid_gconsts_(false) {
+DiagGmm::DiagGmm(
+    const std::vector<std::pair<BaseFloat, const DiagGmm *> > &gmms)
+    : valid_gconsts_(false) {
   if (gmms.empty()) {
     return;  // GMM will be empty.
   } else {
@@ -61,21 +62,17 @@ DiagGmm::DiagGmm(const std::vector<std::pair<BaseFloat, const DiagGmm*> > &gmms)
   }
 }
 
-
-
 void DiagGmm::Resize(int32 nmix, int32 dim) {
   KALDI_ASSERT(nmix > 0 && dim > 0);
   if (gconsts_.Dim() != nmix) gconsts_.Resize(nmix);
   if (weights_.Dim() != nmix) weights_.Resize(nmix);
-  if (inv_vars_.NumRows() != nmix ||
-      inv_vars_.NumCols() != dim) {
+  if (inv_vars_.NumRows() != nmix || inv_vars_.NumCols() != dim) {
     inv_vars_.Resize(nmix, dim);
     inv_vars_.Set(1.0);
     // must be initialized to unit for case of calling SetMeans while having
     // covars/invcovars that are not set yet (i.e. zero)
   }
-  if (means_invvars_.NumRows() != nmix ||
-      means_invvars_.NumCols() != dim)
+  if (means_invvars_.NumRows() != nmix || means_invvars_.NumCols() != dim)
     means_invvars_.Resize(nmix, dim);
   valid_gconsts_ = false;
 }
@@ -118,15 +115,15 @@ int32 DiagGmm::ComputeGconsts() {
   int32 num_bad = 0;
 
   // Resize if Gaussians have been removed during Update()
-  if (num_mix != static_cast<int32>(gconsts_.Dim()))
-    gconsts_.Resize(num_mix);
+  if (num_mix != static_cast<int32>(gconsts_.Dim())) gconsts_.Resize(num_mix);
 
   for (int32 mix = 0; mix < num_mix; mix++) {
     KALDI_ASSERT(weights_(mix) >= 0);  // Cannot have negative weights.
     BaseFloat gc = log(weights_(mix)) + offset;  // May be -inf if weights == 0
     for (int32 d = 0; d < dim; d++) {
-      gc += 0.5 * log(inv_vars_(mix, d)) - 0.5 * means_invvars_(mix, d)
-        * means_invvars_(mix, d) / inv_vars_(mix, d);
+      gc += 0.5 * log(inv_vars_(mix, d)) -
+            0.5 * means_invvars_(mix, d) * means_invvars_(mix, d) /
+                inv_vars_(mix, d);
     }
     // Change sign for logdet because var is inverted. Also, note that
     // mean_invvars(mix, d)*mean_invvars(mix, d)/inv_vars(mix, d) is the
@@ -135,7 +132,7 @@ int32 DiagGmm::ComputeGconsts() {
     // So gc is the likelihood at zero feature value.
 
     if (KALDI_ISNAN(gc)) {  // negative infinity is OK but NaN is not acceptable
-      KALDI_ERR << "At component "  << mix
+      KALDI_ERR << "At component " << mix
                 << ", not a number in gconst computation";
     }
     if (KALDI_ISINF(gc)) {
@@ -154,8 +151,8 @@ int32 DiagGmm::ComputeGconsts() {
 void DiagGmm::Split(int32 target_components, float perturb_factor,
                     std::vector<int32> *history) {
   if (target_components < NumGauss() || NumGauss() == 0) {
-    KALDI_ERR << "Cannot split from "  << NumGauss() << " to "
-              << target_components  << " components";
+    KALDI_ERR << "Cannot split from " << NumGauss() << " to "
+              << target_components << " components";
   }
   if (target_components == NumGauss()) {
     KALDI_WARN << "Already have the target # of Gaussians. Doing nothing.";
@@ -169,8 +166,8 @@ void DiagGmm::Split(int32 target_components, float perturb_factor,
   weights_.Resize(target_components);
   weights_.Range(0, current_components).CopyFromVec(tmp->weights_);
   means_invvars_.Resize(target_components, dim);
-  means_invvars_.Range(0, current_components, 0, dim).CopyFromMat(
-      tmp->means_invvars_);
+  means_invvars_.Range(0, current_components, 0, dim)
+      .CopyFromMat(tmp->means_invvars_);
   inv_vars_.Resize(target_components, dim);
   inv_vars_.Range(0, current_components, 0, dim).CopyFromMat(tmp->inv_vars_);
   gconsts_.Resize(target_components);
@@ -189,8 +186,7 @@ void DiagGmm::Split(int32 target_components, float perturb_factor,
     }
 
     // remember what component was split
-    if (history != NULL)
-      history->push_back(max_idx);
+    if (history != NULL) history->push_back(max_idx);
 
     weights_(max_idx) /= 2;
     weights_(current_components) = weights_(max_idx);
@@ -202,8 +198,8 @@ void DiagGmm::Split(int32 target_components, float perturb_factor,
       // of an inverse standard variance. [dan]
     }
     inv_vars_.Row(current_components).CopyFromVec(inv_vars_.Row(max_idx));
-    means_invvars_.Row(current_components).CopyFromVec(means_invvars_.Row(
-        max_idx));
+    means_invvars_.Row(current_components)
+        .CopyFromVec(means_invvars_.Row(max_idx));
     means_invvars_.Row(current_components).AddVec(perturb_factor, rand_vec);
     means_invvars_.Row(max_idx).AddVec(-perturb_factor, rand_vec);
     current_components++;
@@ -211,10 +207,8 @@ void DiagGmm::Split(int32 target_components, float perturb_factor,
   ComputeGconsts();
 }
 
-
 void DiagGmm::Perturb(float perturb_factor) {
-  int32 num_comps = NumGauss(),
-      dim = Dim();
+  int32 num_comps = NumGauss(), dim = Dim();
   Matrix<BaseFloat> rand_mat(num_comps, dim);
   for (int32 i = 0; i < num_comps; i++) {
     for (int32 d = 0; d < dim; d++) {
@@ -227,9 +221,7 @@ void DiagGmm::Perturb(float perturb_factor) {
   ComputeGconsts();
 }
 
-
-void DiagGmm::MergeKmeans(int32 target_components,
-                          ClusterKMeansOptions cfg) {
+void DiagGmm::MergeKmeans(int32 target_components, ClusterKMeansOptions cfg) {
   if (target_components <= 0 || NumGauss() < target_components) {
     KALDI_ERR << "Invalid argument for target number of Gaussians (="
               << target_components << "), #Gauss = " << NumGauss();
@@ -240,26 +232,25 @@ void DiagGmm::MergeKmeans(int32 target_components,
     return;  // Nothing to do.
   }
   double min_var = 1.0e-10;
-  std::vector<Clusterable*> clusterable_vec;
+  std::vector<Clusterable *> clusterable_vec;
   for (int32 g = 0; g < NumGauss(); g++) {
     if (weights_(g) == 0) {
       KALDI_WARN << "Not using zero-weight Gaussians in clustering.";
       continue;
     }
-    Vector<BaseFloat> x_stats(Dim()),
-        x2_stats(Dim());
+    Vector<BaseFloat> x_stats(Dim()), x2_stats(Dim());
     BaseFloat count = weights_(g);
 
-    SubVector<BaseFloat> inv_var(inv_vars_, g),
-        mean_invvar(means_invvars_, g);
-    x_stats.AddVecDivVec(1.0, mean_invvar, inv_var, count);  // x_stats is now mean.
+    SubVector<BaseFloat> inv_var(inv_vars_, g), mean_invvar(means_invvars_, g);
+    x_stats.AddVecDivVec(1.0, mean_invvar, inv_var,
+                         count);  // x_stats is now mean.
     x2_stats.CopyFromVec(inv_var);
-    x2_stats.InvertElements();  // x2_stats is now var.
+    x2_stats.InvertElements();       // x2_stats is now var.
     x2_stats.AddVec2(1.0, x_stats);  // x2_stats is now var + mean^2
-    x_stats.Scale(count);  // x_stats is now scaled by count.
-    x2_stats.Scale(count);  // x2_stats is now scaled by count.
-    clusterable_vec.push_back(new GaussClusterable(x_stats, x2_stats, min_var,
-                                                   count));
+    x_stats.Scale(count);            // x_stats is now scaled by count.
+    x2_stats.Scale(count);           // x2_stats is now scaled by count.
+    clusterable_vec.push_back(
+        new GaussClusterable(x_stats, x2_stats, min_var, count));
   }
   if (clusterable_vec.size() <= target_components) {
     KALDI_WARN << "Not doing clustering phase since lost too many Gaussians "
@@ -268,13 +259,11 @@ void DiagGmm::MergeKmeans(int32 target_components,
     DeletePointers(&clusterable_vec);
     return;
   } else {
-    std::vector<Clusterable*> clusters;
-    ClusterKMeans(clusterable_vec,
-                  target_components,
-                  &clusters, NULL, cfg);
+    std::vector<Clusterable *> clusters;
+    ClusterKMeans(clusterable_vec, target_components, &clusters, NULL, cfg);
     Resize(clusters.size(), Dim());
     for (int32 g = 0; g < static_cast<int32>(clusters.size()); g++) {
-      GaussClusterable *gc = static_cast<GaussClusterable*>(clusters[g]);
+      GaussClusterable *gc = static_cast<GaussClusterable *>(clusters[g]);
       weights_(g) = gc->count();
       SubVector<BaseFloat> inv_var(inv_vars_, g),
           mean_invvar(means_invvars_, g);
@@ -282,9 +271,11 @@ void DiagGmm::MergeKmeans(int32 target_components,
       inv_var.Scale(1.0 / gc->count());  // inv_var is now the var + mean^2
       mean_invvar.CopyFromVec(gc->x_stats());
       mean_invvar.Scale(1.0 / gc->count());  // mean_invvar is now the mean.
-      inv_var.AddVec2(-1.0, mean_invvar);  // subtract mean^2; inv_var is now the var
-      inv_var.InvertElements();  // inv_var is now the inverse var.
-      mean_invvar.MulElements(inv_var);  // mean_invvar is now mean * inverse var.
+      inv_var.AddVec2(-1.0,
+                      mean_invvar);  // subtract mean^2; inv_var is now the var
+      inv_var.InvertElements();      // inv_var is now the inverse var.
+      mean_invvar.MulElements(
+          inv_var);  // mean_invvar is now mean * inverse var.
     }
     ComputeGconsts();
     DeletePointers(&clusterable_vec);
@@ -344,7 +335,7 @@ void DiagGmm::Merge(int32 target_components, std::vector<int32> *history) {
   // If more than 1 merged component is required, use the hierarchical
   // clustering of components that lead to the smallest decrease in likelihood.
   std::vector<bool> discarded_component(num_comp);
-  Vector<BaseFloat> logdet(num_comp);   // logdet for each component
+  Vector<BaseFloat> logdet(num_comp);  // logdet for each component
   for (int32 i = 0; i < num_comp; i++) {
     discarded_component[i] = false;
     for (int32 d = 0; d < dim; d++) {
@@ -370,10 +361,10 @@ void DiagGmm::Merge(int32 target_components, std::vector<int32> *history) {
   for (int32 i = 0; i < num_comp; i++) {
     for (int32 j = 0; j < i; j++) {
       BaseFloat w1 = weights_(i), w2 = weights_(j), w_sum = w1 + w2;
-      BaseFloat merged_logdet = merged_components_logdet(w1, w2,
-        means.Row(i), means.Row(j), vars.Row(i), vars.Row(j));
-      delta_like(i, j) = w_sum * merged_logdet
-        - w1 * logdet(i) - w2 * logdet(j);
+      BaseFloat merged_logdet = merged_components_logdet(
+          w1, w2, means.Row(i), means.Row(j), vars.Row(i), vars.Row(j));
+      delta_like(i, j) =
+          w_sum * merged_logdet - w1 * logdet(i) - w2 * logdet(j);
     }
   }
 
@@ -408,11 +399,11 @@ void DiagGmm::Merge(int32 target_components, std::vector<int32> *history) {
     BaseFloat w1 = weights_(max_i), w2 = weights_(max_j);
     BaseFloat w_sum = w1 + w2;
     // merge means
-    means.Row(max_i).AddVec(w2/w1, means.Row(max_j));
-    means.Row(max_i).Scale(w1/w_sum);
+    means.Row(max_i).AddVec(w2 / w1, means.Row(max_j));
+    means.Row(max_i).Scale(w1 / w_sum);
     // merge vars
-    vars.Row(max_i).AddVec(w2/w1, vars.Row(max_j));
-    vars.Row(max_i).Scale(w1/w_sum);
+    vars.Row(max_i).AddVec(w2 / w1, vars.Row(max_j));
+    vars.Row(max_i).Scale(w1 / w_sum);
     // merge weights
     weights_(max_i) = w_sum;
 
@@ -441,13 +432,11 @@ void DiagGmm::Merge(int32 target_components, std::vector<int32> *history) {
     // Update delta_like for merged component
     for (int32 j = 0; j < num_comp; j++) {
       if ((j == max_i) || (discarded_component[j])) continue;
-      BaseFloat w1 = weights_(max_i),
-                w2 = weights_(j),
-                w_sum = w1 + w2;
-      BaseFloat merged_logdet = merged_components_logdet(w1, w2,
-          means.Row(max_i), means.Row(j), vars.Row(max_i), vars.Row(j));
-      delta_like(max_i, j) = w_sum * merged_logdet - w1 * logdet(max_i)
-          - w2 * logdet(j);
+      BaseFloat w1 = weights_(max_i), w2 = weights_(j), w_sum = w1 + w2;
+      BaseFloat merged_logdet = merged_components_logdet(
+          w1, w2, means.Row(max_i), means.Row(j), vars.Row(max_i), vars.Row(j));
+      delta_like(max_i, j) =
+          w_sum * merged_logdet - w1 * logdet(max_i) - w2 * logdet(j);
       // doesn't respect lower triangular indeces,
       // relies on implicitly performed swap of coordinates if necessary
     }
@@ -468,23 +457,21 @@ void DiagGmm::Merge(int32 target_components, std::vector<int32> *history) {
   ComputeGconsts();
 }
 
-BaseFloat DiagGmm::merged_components_logdet(BaseFloat w1, BaseFloat w2,
-                                            const VectorBase<BaseFloat> &f1,
-                                            const VectorBase<BaseFloat> &f2,
-                                            const VectorBase<BaseFloat> &s1,
-                                            const VectorBase<BaseFloat> &s2)
-                                            const {
+BaseFloat DiagGmm::merged_components_logdet(
+    BaseFloat w1, BaseFloat w2, const VectorBase<BaseFloat> &f1,
+    const VectorBase<BaseFloat> &f2, const VectorBase<BaseFloat> &s1,
+    const VectorBase<BaseFloat> &s2) const {
   int32 dim = f1.Dim();
   Vector<BaseFloat> tmp_mean(dim);
   Vector<BaseFloat> tmp_var(dim);
 
   BaseFloat w_sum = w1 + w2;
   tmp_mean.CopyFromVec(f1);
-  tmp_mean.AddVec(w2/w1, f2);
-  tmp_mean.Scale(w1/w_sum);
+  tmp_mean.AddVec(w2 / w1, f2);
+  tmp_mean.Scale(w1 / w_sum);
   tmp_var.CopyFromVec(s1);
-  tmp_var.AddVec(w2/w1, s2);
-  tmp_var.Scale(w1/w_sum);
+  tmp_var.AddVec(w2 / w1, s2);
+  tmp_var.Scale(w1 / w_sum);
   tmp_var.AddVec2(-1.0, tmp_mean);
   BaseFloat merged_logdet = 0.0;
   for (int32 d = 0; d < dim; d++) {
@@ -500,7 +487,7 @@ BaseFloat DiagGmm::ComponentLogLikelihood(const VectorBase<BaseFloat> &data,
     KALDI_ERR << "Must call ComputeGconsts() before computing likelihood";
   if (static_cast<int32>(data.Dim()) != Dim()) {
     KALDI_ERR << "DiagGmm::ComponentLogLikelihood, dimension "
-        << "mismatch " << (data.Dim()) << " vs. "<< (Dim());
+              << "mismatch " << (data.Dim()) << " vs. " << (Dim());
   }
   BaseFloat loglike;
   Vector<BaseFloat> data_sq(data);
@@ -531,7 +518,7 @@ void DiagGmm::LogLikelihoods(const VectorBase<BaseFloat> &data,
   loglikes->CopyFromVec(gconsts_);
   if (data.Dim() != Dim()) {
     KALDI_ERR << "DiagGmm::ComponentLogLikelihood, dimension "
-              << "mismatch " << data.Dim() << " vs. "<< Dim();
+              << "mismatch " << data.Dim() << " vs. " << Dim();
   }
   Vector<BaseFloat> data_sq(data);
   data_sq.ApplyPow(2.0);
@@ -542,7 +529,6 @@ void DiagGmm::LogLikelihoods(const VectorBase<BaseFloat> &data,
   loglikes->AddMatVec(-0.5, inv_vars_, kNoTrans, data_sq, 1.0);
 }
 
-
 void DiagGmm::LogLikelihoods(const MatrixBase<BaseFloat> &data,
                              Matrix<BaseFloat> *loglikes) const {
   KALDI_ASSERT(data.NumRows() != 0);
@@ -550,7 +536,7 @@ void DiagGmm::LogLikelihoods(const MatrixBase<BaseFloat> &data,
   loglikes->CopyRowsFromVec(gconsts_);
   if (data.NumCols() != Dim()) {
     KALDI_ERR << "DiagGmm::ComponentLogLikelihood, dimension "
-              << "mismatch " << data.NumCols() << " vs. "<< Dim();
+              << "mismatch " << data.NumCols() << " vs. " << Dim();
   }
   Matrix<BaseFloat> data_sq(data);
   data_sq.ApplyPow(2.0);
@@ -560,8 +546,6 @@ void DiagGmm::LogLikelihoods(const MatrixBase<BaseFloat> &data,
   // loglikes += -0.5 * inv(vars) * data_sq.
   loglikes->AddMatMat(-0.5, data_sq, kNoTrans, inv_vars_, kTrans, 1.0);
 }
-
-
 
 void DiagGmm::LogLikelihoodsPreselect(const VectorBase<BaseFloat> &data,
                                       const std::vector<int32> &indices,
@@ -575,27 +559,26 @@ void DiagGmm::LogLikelihoodsPreselect(const VectorBase<BaseFloat> &data,
   if (indices.back() + 1 - indices.front() == num_indices) {
     // A special (but common) case when the indices form a contiguous range.
     int32 start_idx = indices.front();
-    loglikes->CopyFromVec(SubVector<BaseFloat>(gconsts_, start_idx, num_indices));
+    loglikes->CopyFromVec(
+        SubVector<BaseFloat>(gconsts_, start_idx, num_indices));
     // loglikes +=  means * inv(vars) * data.
-    SubMatrix<BaseFloat> means_invvars_sub(means_invvars_, start_idx, num_indices,
-                                           0, Dim());
+    SubMatrix<BaseFloat> means_invvars_sub(means_invvars_, start_idx,
+                                           num_indices, 0, Dim());
     loglikes->AddMatVec(1.0, means_invvars_sub, kNoTrans, data, 1.0);
-    SubMatrix<BaseFloat> inv_vars_sub(inv_vars_, start_idx, num_indices,
-                                      0, Dim());
+    SubMatrix<BaseFloat> inv_vars_sub(inv_vars_, start_idx, num_indices, 0,
+                                      Dim());
     // loglikes += -0.5 * inv(vars) * data_sq.
     loglikes->AddMatVec(-0.5, inv_vars_sub, kNoTrans, data_sq, 1.0);
   } else {
     for (int32 i = 0; i < num_indices; i++) {
       int32 idx = indices[i];  // The Gaussian index.
-      BaseFloat this_loglike =
-          gconsts_(idx) + VecVec(means_invvars_.Row(idx), data)
-          - 0.5*VecVec(inv_vars_.Row(idx), data_sq);
+      BaseFloat this_loglike = gconsts_(idx) +
+                               VecVec(means_invvars_.Row(idx), data) -
+                               0.5 * VecVec(inv_vars_.Row(idx), data_sq);
       (*loglikes)(i) = this_loglike;
     }
   }
 }
-
-
 
 // Gets likelihood of data given this. Also provides per-Gaussian posteriors.
 BaseFloat DiagGmm::ComponentPosteriors(const VectorBase<BaseFloat> &data,
@@ -608,8 +591,7 @@ BaseFloat DiagGmm::ComponentPosteriors(const VectorBase<BaseFloat> &data,
   BaseFloat log_sum = loglikes.ApplySoftMax();
   if (KALDI_ISNAN(log_sum) || KALDI_ISINF(log_sum))
     KALDI_ERR << "Invalid answer (overflow or invalid variances/features?)";
-  if (posterior->Dim() != loglikes.Dim())
-    posterior->Resize(loglikes.Dim());
+  if (posterior->Dim() != loglikes.Dim()) posterior->Resize(loglikes.Dim());
   posterior->CopyFromVec(loglikes);
   return log_sum;
 }
@@ -624,7 +606,7 @@ void DiagGmm::RemoveComponent(int32 gauss, bool renorm_weights) {
   inv_vars_.RemoveRow(gauss);
   BaseFloat sum_weights = weights_.Sum();
   if (renorm_weights) {
-    weights_.Scale(1.0/sum_weights);
+    weights_.Scale(1.0 / sum_weights);
     valid_gconsts_ = false;
   }
 }
@@ -637,8 +619,7 @@ void DiagGmm::RemoveComponents(const std::vector<int32> &gauss_in,
   // If efficiency is later an issue, will code this specially (unlikely).
   for (size_t i = 0; i < gauss.size(); i++) {
     RemoveComponent(gauss[i], renorm_weights);
-    for (size_t j = i + 1; j < gauss.size(); j++)
-      gauss[j]--;
+    for (size_t j = i + 1; j < gauss.size(); j++) gauss[j]--;
   }
 }
 
@@ -692,8 +673,7 @@ void DiagGmm::Interpolate(BaseFloat rho, const FullGmm &source,
     for (int32 i = 0; i < NumGauss(); i++) {
       us.vars_.Scale(1. - rho);
       Vector<double> diag(Dim());
-      for (int32 j = 0; j < Dim(); j++)
-        diag(j) = them.vars_[i](j, j);
+      for (int32 j = 0; j < Dim(); j++) diag(j) = them.vars_[i](j, j);
       us.vars_.Row(i).AddVec(rho, diag);
     }
   }
@@ -719,14 +699,13 @@ void DiagGmm::Write(std::ostream &out_stream, bool binary) const {
   if (!binary) out_stream << "\n";
 }
 
-std::ostream & operator <<(std::ostream & os,
-                           const kaldi::DiagGmm &gmm) {
+std::ostream &operator<<(std::ostream &os, const kaldi::DiagGmm &gmm) {
   gmm.Write(os, false);
   return os;
 }
 
 void DiagGmm::Read(std::istream &is, bool binary) {
-//  ExpectToken(is, binary, "<DiagGMMBegin>");
+  //  ExpectToken(is, binary, "<DiagGMMBegin>");
   std::string token;
   ReadToken(is, binary, &token);
   // <DiagGMMBegin> is for compatibility. Will be deleted later
@@ -746,7 +725,7 @@ void DiagGmm::Read(std::istream &is, bool binary) {
   means_invvars_.Read(is, binary);
   ExpectToken(is, binary, "<INV_VARS>");
   inv_vars_.Read(is, binary);
-//  ExpectToken(is, binary, "<DiagGMMEnd>");
+  //  ExpectToken(is, binary, "<DiagGMMEnd>");
   ReadToken(is, binary, &token);
   // <DiagGMMEnd> is for compatibility. Will be deleted later
   if (token != "<DiagGMMEnd>" && token != "</DiagGMM>")
@@ -755,11 +734,10 @@ void DiagGmm::Read(std::istream &is, bool binary) {
   ComputeGconsts();  // safer option than trusting the read gconsts
 }
 
-std::istream & operator >>(std::istream &is, kaldi::DiagGmm &gmm) {
+std::istream &operator>>(std::istream &is, kaldi::DiagGmm &gmm) {
   gmm.Read(is, false);  // false == non-binary.
   return is;
 }
-
 
 /// Get gaussian selection information for one frame.
 BaseFloat DiagGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
@@ -774,8 +752,8 @@ BaseFloat DiagGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   if (num_gselect < num_gauss) {
     Vector<BaseFloat> loglikes_copy(loglikes);
     BaseFloat *ptr = loglikes_copy.Data();
-    std::nth_element(ptr, ptr+num_gauss-num_gselect, ptr+num_gauss);
-    thresh = ptr[num_gauss-num_gselect];
+    std::nth_element(ptr, ptr + num_gauss - num_gselect, ptr + num_gauss);
+    thresh = ptr[num_gauss - num_gselect];
   } else {
     thresh = -std::numeric_limits<BaseFloat>::infinity();
   }
@@ -788,8 +766,7 @@ BaseFloat DiagGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   }
   std::sort(pairs.begin(), pairs.end(),
             std::greater<std::pair<BaseFloat, int32> >());
-  for (int32 j = 0;
-       j < num_gselect && j < static_cast<int32>(pairs.size());
+  for (int32 j = 0; j < num_gselect && j < static_cast<int32>(pairs.size());
        j++) {
     output->push_back(pairs[j].second);
     tot_loglike = LogAdd(tot_loglike, pairs[j].first);
@@ -798,14 +775,14 @@ BaseFloat DiagGmm::GaussianSelection(const VectorBase<BaseFloat> &data,
   return tot_loglike;
 }
 
-BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
-                                     int32 num_gselect,
-                                     std::vector<std::vector<int32> > *output) const {
+BaseFloat DiagGmm::GaussianSelection(
+    const MatrixBase<BaseFloat> &data, int32 num_gselect,
+    std::vector<std::vector<int32> > *output) const {
   double ans = 0.0;
   int32 num_frames = data.NumRows(), num_gauss = NumGauss();
 
-  int32 max_mem = 10000000; // Don't devote more than 10Mb to loglikes_mat;
-                            // break up the utterance if needed.
+  int32 max_mem = 10000000;  // Don't devote more than 10Mb to loglikes_mat;
+                             // break up the utterance if needed.
   int32 mem_needed = num_frames * num_gauss * sizeof(BaseFloat);
   if (mem_needed > max_mem) {
     // Break into parts and recurse, we don't want to consume too
@@ -818,9 +795,9 @@ BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
     output->resize(num_frames);
     for (int32 p = 0; p < num_parts; p++) {
       int32 start_frame = p * part_frames,
-          this_num_frames = std::min(num_frames - start_frame, part_frames);
-      SubMatrix<BaseFloat> data_part(data, start_frame, this_num_frames,
-                                     0, data.NumCols());
+            this_num_frames = std::min(num_frames - start_frame, part_frames);
+      SubMatrix<BaseFloat> data_part(data, start_frame, this_num_frames, 0,
+                                     data.NumCols());
       tot_ans += GaussianSelection(data_part, num_gselect, &part_output);
       for (int32 t = 0; t < this_num_frames; t++)
         (*output)[start_frame + t].swap(part_output[t]);
@@ -828,11 +805,11 @@ BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
     KALDI_ASSERT(!output->back().empty());
     return tot_ans;
   }
-  
+
   KALDI_ASSERT(num_frames != 0);
   Matrix<BaseFloat> loglikes_mat(num_frames, num_gauss, kUndefined);
   this->LogLikelihoods(data, &loglikes_mat);
-  
+
   output->clear();
   output->resize(num_frames);
 
@@ -843,8 +820,8 @@ BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
     if (num_gselect < num_gauss) {
       Vector<BaseFloat> loglikes_copy(loglikes);
       BaseFloat *ptr = loglikes_copy.Data();
-      std::nth_element(ptr, ptr+num_gauss-num_gselect, ptr+num_gauss);
-      thresh = ptr[num_gauss-num_gselect];
+      std::nth_element(ptr, ptr + num_gauss - num_gselect, ptr + num_gauss);
+      thresh = ptr[num_gauss - num_gselect];
     } else {
       thresh = -std::numeric_limits<BaseFloat>::infinity();
     }
@@ -858,8 +835,7 @@ BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
     std::sort(pairs.begin(), pairs.end(),
               std::greater<std::pair<BaseFloat, int32> >());
     std::vector<int32> &this_output = (*output)[i];
-    for (int32 j = 0;
-         j < num_gselect && j < static_cast<int32>(pairs.size());
+    for (int32 j = 0; j < num_gselect && j < static_cast<int32>(pairs.size());
          j++) {
       this_output.push_back(pairs[j].second);
       tot_loglike = LogAdd(tot_loglike, pairs[j].first);
@@ -870,30 +846,26 @@ BaseFloat DiagGmm::GaussianSelection(const MatrixBase<BaseFloat> &data,
   return ans;
 }
 
-
-
 BaseFloat DiagGmm::GaussianSelectionPreselect(
-    const VectorBase<BaseFloat> &data,
-    const std::vector<int32> &preselect,
-    int32 num_gselect,
-    std::vector<int32> *output) const {
+    const VectorBase<BaseFloat> &data, const std::vector<int32> &preselect,
+    int32 num_gselect, std::vector<int32> *output) const {
   static bool warned_size = false;
   int32 preselect_sz = preselect.size();
   int32 this_num_gselect = std::min(num_gselect, preselect_sz);
   if (preselect_sz <= num_gselect && !warned_size) {
     warned_size = true;
     KALDI_WARN << "Preselect size is less or equal to than final size, "
-               << "doing nothing: " << preselect_sz << " < " <<  num_gselect
+               << "doing nothing: " << preselect_sz << " < " << num_gselect
                << " [won't warn again]";
   }
   Vector<BaseFloat> loglikes(preselect_sz);
   LogLikelihoodsPreselect(data, preselect, &loglikes);
-  
+
   Vector<BaseFloat> loglikes_copy(loglikes);
   BaseFloat *ptr = loglikes_copy.Data();
-  std::nth_element(ptr, ptr+preselect_sz-this_num_gselect,
-                   ptr+preselect_sz);
-  BaseFloat thresh = ptr[preselect_sz-this_num_gselect];
+  std::nth_element(ptr, ptr + preselect_sz - this_num_gselect,
+                   ptr + preselect_sz);
+  BaseFloat thresh = ptr[preselect_sz - this_num_gselect];
 
   BaseFloat tot_loglike = -std::numeric_limits<BaseFloat>::infinity();
   // we want the output sorted from best likelihood to worse
@@ -906,8 +878,7 @@ BaseFloat DiagGmm::GaussianSelectionPreselect(
             std::greater<std::pair<BaseFloat, int32> >());
   output->clear();
   for (int32 j = 0;
-       j < this_num_gselect && j < static_cast<int32>(pairs.size());
-       j++) {
+       j < this_num_gselect && j < static_cast<int32>(pairs.size()); j++) {
     output->push_back(pairs[j].second);
     tot_loglike = LogAdd(tot_loglike, pairs[j].first);
   }
@@ -932,24 +903,23 @@ void DiagGmm::Generate(VectorBase<BaseFloat> *output) {
     KALDI_ASSERT(i < static_cast<int32>(weights_.Dim()));
   }
   // now i is the index of the Gaussian we chose.
-  SubVector<BaseFloat> inv_var(inv_vars_, i),
-      mean_invvar(means_invvars_, i);
+  SubVector<BaseFloat> inv_var(inv_vars_, i), mean_invvar(means_invvars_, i);
   for (int32 d = 0; d < inv_var.Dim(); d++) {
     BaseFloat stddev = 1.0 / sqrt(inv_var(d)),
-        mean = mean_invvar(d) / inv_var(d);
+              mean = mean_invvar(d) / inv_var(d);
     (*output)(d) = mean + RandGauss() * stddev;
   }
 }
 
-DiagGmm::DiagGmm(const GaussClusterable &gc,
-                 BaseFloat var_floor): valid_gconsts_(false) {
-  Vector<BaseFloat> x (gc.x_stats());
-  Vector<BaseFloat> x2 (gc.x2_stats());
-  BaseFloat count =  gc.count();
+DiagGmm::DiagGmm(const GaussClusterable &gc, BaseFloat var_floor)
+    : valid_gconsts_(false) {
+  Vector<BaseFloat> x(gc.x_stats());
+  Vector<BaseFloat> x2(gc.x2_stats());
+  BaseFloat count = gc.count();
   KALDI_ASSERT(count > 0.0);
   this->Resize(1, x.Dim());
-  x.Scale(1.0/count);
-  x2.Scale(1.0/count);
+  x.Scale(1.0 / count);
+  x2.Scale(1.0 / count);
   x2.AddVec2(-1.0, x);  // subtract mean^2.
   x2.ApplyFloor(var_floor);
   x2.InvertElements();  // get inv-var.

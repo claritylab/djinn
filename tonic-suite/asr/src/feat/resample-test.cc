@@ -18,29 +18,27 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "feat/resample.h"
 
 using namespace kaldi;
 
 class TestFunction {
  public:
-  explicit TestFunction(double frequency):
-      frequency_(frequency),
-      sin_magnitude_(RandGauss()),
-      cos_magnitude_(RandGauss()) { }
+  explicit TestFunction(double frequency)
+      : frequency_(frequency),
+        sin_magnitude_(RandGauss()),
+        cos_magnitude_(RandGauss()) {}
 
-  double operator() (double t) const {
+  double operator()(double t) const {
     double omega_t = t * M_2PI * frequency_;
-    return sin_magnitude_ * sin(omega_t)
-        + cos_magnitude_ * cos(omega_t);
+    return sin_magnitude_ * sin(omega_t) + cos_magnitude_ * cos(omega_t);
   }
+
  private:
   double frequency_;
   double sin_magnitude_;
   double cos_magnitude_;
 };
-
 
 void UnitTestArbitraryResample() {
   BaseFloat samp_freq = 1000.0 * (1.0 + RandUniform());
@@ -58,7 +56,6 @@ void UnitTestArbitraryResample() {
   int32 num_resamp = 50 + rand() % 100;  // Resample at around 100 points,
                                          // anywhere in the signal.
 
-
   Vector<BaseFloat> resample_points(num_resamp);
   for (int32 i = 0; i < num_resamp; i++) {
     // the if-statement is to make some of the resample_points
@@ -70,13 +67,11 @@ void UnitTestArbitraryResample() {
       resample_points(i) = RandUniform() * time_interval;
   }
 
-
-
   BaseFloat window_width = num_zeros / (2.0 * lowpass_freq);
   // the resampling should be quite accurate if we are further
   // than filter_width away from the edges.
   BaseFloat min_t = 0.0 + window_width,
-      max_t = time_interval - (1.0 / samp_freq) - window_width;
+            max_t = time_interval - (1.0 / samp_freq) - window_width;
 
   // window_freq gives us a rough idea of the frequency spread
   // that the windowing function gives us; we want the test frequency
@@ -84,18 +79,17 @@ void UnitTestArbitraryResample() {
   // (note: the real width of the window from side to side
   // is 2.0 * window_width)
   BaseFloat window_freq = 1.0 / (2.0 * window_width),
-      freq_margin = 2.0 * window_freq;
+            freq_margin = 2.0 * window_freq;
 
   // Choose a test-signal frequency that's lower than
   // lowpass_freq - freq_margin.
   BaseFloat test_signal_freq =
-    (lowpass_freq - freq_margin) * (1.0 / (1.0 + RandUniform()));
+      (lowpass_freq - freq_margin) * (1.0 / (1.0 + RandUniform()));
 
   KALDI_ASSERT(test_signal_freq > 0.0);
 
   ArbitraryResample resampler(num_samp, samp_freq, lowpass_freq,
                               resample_points, num_zeros);
-
 
   TestFunction test_func(test_signal_freq);
 
@@ -107,27 +101,22 @@ void UnitTestArbitraryResample() {
   }
   Matrix<BaseFloat> resampled_values(1, num_resamp);
 
-
   if (rand() % 2 == 0) {
-    resampler.Resample(sample_values,
-                       &resampled_values);
+    resampler.Resample(sample_values, &resampled_values);
   } else {
     SubVector<BaseFloat> out(resampled_values, 0);
-    resampler.Resample(sample_values.Row(0),
-                       &out);
+    resampler.Resample(sample_values.Row(0), &out);
   }
 
-
   for (int32 i = 0; i < num_resamp; i++) {
-    BaseFloat t = resample_points(i),
-        x1 = test_func(t),
-        x2 = resampled_values(0, i),
-        error = fabs(x1 - x2);
+    BaseFloat t = resample_points(i), x1 = test_func(t),
+              x2 = resampled_values(0, i), error = fabs(x1 - x2);
     if (i % 10 == 0) {
       KALDI_VLOG(1) << "Error is " << error << ", t = " << t
-                << ", samp_freq = " << samp_freq << ", lowpass_freq = "
-                << lowpass_freq << ", test_freq = " << test_signal_freq
-                << ", num-zeros is " << num_zeros;
+                    << ", samp_freq = " << samp_freq
+                    << ", lowpass_freq = " << lowpass_freq
+                    << ", test_freq = " << test_signal_freq << ", num-zeros is "
+                    << num_zeros;
     }
     if (t > min_t && t < max_t) {
       if (num_zeros == 3) {
@@ -141,14 +130,13 @@ void UnitTestArbitraryResample() {
   }
 }
 
-
 void UnitTestLinearResample() {
   // this test makes sure that LinearResample gives identical results to
   // ArbitraryResample when set up the same way, even if the signal is broken up
   // into many pieces.
 
   int32 samp_freq = 1000.0 * (1.0 + RandUniform()),
-      resamp_freq = 1000.0 * (1.0 + RandUniform());
+        resamp_freq = 1000.0 * (1.0 + RandUniform());
   // note: these are both integers!
   int32 num_samp = 256 + static_cast<int32>((RandUniform() * 256));
 
@@ -157,7 +145,7 @@ void UnitTestLinearResample() {
   // Choose a lowpass frequency that's lower than 95% of the Nyquist of both
   // of the frequencies..
   BaseFloat lowpass_freq =
-    std::min(samp_freq, resamp_freq) * 0.95 * 0.5 / (1.0 + RandUniform());
+      std::min(samp_freq, resamp_freq) * 0.95 * 0.5 / (1.0 + RandUniform());
 
   // Number of zeros of the sinc function that the window extends out to.
   int32 num_zeros = 3 + rand() % 10;
@@ -169,13 +157,11 @@ void UnitTestLinearResample() {
   for (int32 i = 0; i < num_resamp; i++)
     resample_points(i) = i / static_cast<BaseFloat>(resamp_freq);
 
-
   Vector<BaseFloat> test_signal(num_samp);
   test_signal.SetRandn();
 
   ArbitraryResample resampler(num_samp, samp_freq, lowpass_freq,
                               resample_points, num_zeros);
-
 
   // test with a one-row matrix equal to the test signal.
   Matrix<BaseFloat> sample_values(1, num_samp);
@@ -183,11 +169,10 @@ void UnitTestLinearResample() {
 
   Matrix<BaseFloat> resampled_values(1, num_resamp);
 
-  resampler.Resample(sample_values,
-                     &resampled_values);
+  resampler.Resample(sample_values, &resampled_values);
 
-  LinearResample linear_resampler(samp_freq, resamp_freq,
-                                  lowpass_freq, num_zeros);
+  LinearResample linear_resampler(samp_freq, resamp_freq, lowpass_freq,
+                                  num_zeros);
 
   Vector<BaseFloat> resampled_vec;
 
@@ -213,7 +198,7 @@ void UnitTestLinearResample() {
     int32 old_output_dim = resampled_vec2.Dim();
     resampled_vec2.Resize(old_output_dim + out_piece.Dim(), kCopyData);
     resampled_vec2.Range(old_output_dim, out_piece.Dim())
-                  .CopyFromVec(out_piece);
+        .CopyFromVec(out_piece);
     input_dim_seen += piece_size;
   }
 
@@ -224,18 +209,14 @@ void UnitTestLinearResample() {
   }
 }
 
-
-
 int main() {
   try {
-    for (int32 x = 0; x < 50; x++)
-      UnitTestLinearResample();
-    for (int32 x = 0; x < 50; x++)
-      UnitTestArbitraryResample();
+    for (int32 x = 0; x < 50; x++) UnitTestLinearResample();
+    for (int32 x = 0; x < 50; x++) UnitTestArbitraryResample();
 
     KALDI_LOG << "Tests succeeded.\n";
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     KALDI_ERR << e.what();
     return 1;
   }

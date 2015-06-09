@@ -60,8 +60,8 @@ double GpsrObjective(const SpMatrix<double> &H, const Vector<double> &c,
 /// This calculates the gradient: \f$ c + B z, \f$
 /// where z is formed by stacking u and v, and B = [H -H; -H H].
 void GpsrGradient(const SpMatrix<double> &H, const Vector<double> &c,
-                     const Vector<double> &u, const Vector<double> &v,
-                     Vector<double> *grad_u, Vector<double> *grad_v) {
+                  const Vector<double> &u, const Vector<double> &v,
+                  Vector<double> *grad_u, Vector<double> *grad_v) {
   KALDI_ASSERT(u.Dim() == v.Dim() && u.Dim() > 0);
   KALDI_ASSERT(u.Dim() == grad_u->Dim() && v.Dim() == grad_v->Dim());
   KALDI_ASSERT(c.Dim() == 2 * u.Dim());
@@ -93,8 +93,9 @@ double GpsrBasicAlpha(const SpMatrix<double> &H, const Vector<double> &u,
                       const Vector<double> &grad_v) {
   KALDI_ASSERT(H.NumRows() == grad_u.Dim() && grad_u.Dim() == grad_v.Dim() &&
                grad_u.Dim() > 0);
-  KALDI_VLOG(2) << "grad_u dim = " << grad_u.Dim() << ", grad_v dim = "
-                << grad_v.Dim() << ", H rows = " << H.NumRows();
+  KALDI_VLOG(2) << "grad_u dim = " << grad_u.Dim()
+                << ", grad_v dim = " << grad_v.Dim()
+                << ", H rows = " << H.NumRows();
   MatrixIndexT dim = grad_u.Dim();
 
   // Find the projection of the gradient on the nonnegative orthant, or, more
@@ -102,8 +103,8 @@ double GpsrBasicAlpha(const SpMatrix<double> &H, const Vector<double> &u,
   Vector<double> proj_grad_u(dim);
   Vector<double> proj_grad_v(dim);
   for (MatrixIndexT i = 0; i < dim; i++) {
-    proj_grad_u(i) = (u(i) > 0 || grad_u(i) < 0)? grad_u(i) : 0;
-    proj_grad_v(i) = (v(i) > 0 || grad_v(i) < 0)? grad_v(i) : 0;
+    proj_grad_u(i) = (u(i) > 0 || grad_u(i) < 0) ? grad_u(i) : 0;
+    proj_grad_v(i) = (v(i) > 0 || grad_v(i) < 0) ? grad_v(i) : 0;
   }
 
   // The numerator: g^T g = g_u^T g_u + g_v^T g_v
@@ -135,15 +136,16 @@ void GpsrCalcLinearCoeff(double tau, const Vector<double> &g,
 double Debias(const GpsrConfig &opts, const SpMatrix<double> &H,
               const Vector<double> &g, Vector<double> *x) {
   KALDI_ASSERT(H.NumRows() == g.Dim() && g.Dim() == x->Dim() && x->Dim() != 0);
-//  KALDI_ASSERT(H.IsPosDef() &&
-//               "Must have positive definite matrix for conjugate gradient.");
+  //  KALDI_ASSERT(H.IsPosDef() &&
+  //               "Must have positive definite matrix for conjugate
+  //               gradient.");
   MatrixIndexT dim = x->Dim();
 
   Vector<double> x_bias(*x);
   Vector<double> nonzero_indices(dim);
   // Initialize the index of non-zero elements in x
   for (MatrixIndexT i = 0; i < dim; i++)
-    nonzero_indices(i) = (x_bias(i) == 0)? 0.0 : 1.0;
+    nonzero_indices(i) = (x_bias(i) == 0) ? 0.0 : 1.0;
 
   Vector<double> residual(dim);
   Vector<double> conj_direction(dim);
@@ -189,7 +191,7 @@ double Debias(const GpsrConfig &opts, const SpMatrix<double> &H,
   return resid_prod;
 }
 
-template<>
+template <>
 double GpsrBasic(const GpsrConfig &opts, const SpMatrix<double> &H,
                  const Vector<double> &g, Vector<double> *x,
                  const char *debug_str) {
@@ -213,7 +215,7 @@ double GpsrBasic(const GpsrConfig &opts, const SpMatrix<double> &H,
   }
 
   double tau = opts.gpsr_tau;  // May be modified later.
-  Vector<double> c(2*dim);
+  Vector<double> c(2 * dim);
   GpsrCalcLinearCoeff(tau, g, &c);
 
   double objf_ori = GpsrObjective(H, c, u, v);  // the obj. function at start
@@ -251,15 +253,16 @@ double GpsrBasic(const GpsrConfig &opts, const SpMatrix<double> &H,
       delta_u.AddVec(-1.0, u);
       delta_v.AddVec(-1.0, v);
 
-      double delta_objf_apx = opts.gpsr_mu * (VecVec(grad_u, delta_u) +
-                                              VecVec(grad_v, delta_v));
+      double delta_objf_apx =
+          opts.gpsr_mu * (VecVec(grad_u, delta_u) + VecVec(grad_v, delta_v));
       objf_new = GpsrObjective(H, c, u_new, v_new);
       double delta_objf_real = objf_new - objf_old;
 
       KALDI_VLOG(2) << "GPSR for " << debug_str << ": iter " << iter
                     << "; tau = " << tau << ";\t objf = " << objf_new
-                    << ";\t alpha = " << alpha << ";\t delta_apx = "
-                    << delta_objf_apx << ";\t delta_real = " << delta_objf_real;
+                    << ";\t alpha = " << alpha
+                    << ";\t delta_apx = " << delta_objf_apx
+                    << ";\t delta_real = " << delta_objf_real;
 
       if (delta_objf_real < delta_objf_apx + DBL_EPSILON)
         break;
@@ -282,8 +285,7 @@ double GpsrBasic(const GpsrConfig &opts, const SpMatrix<double> &H,
 
     num_zeros = 0;
     for (MatrixIndexT i = 0; i < dim; i++)
-      if ((*x)(i) == 0)
-        num_zeros++;
+      if ((*x)(i) == 0) num_zeros++;
 
     // ad hoc way to modify tau, if the solution is too sparse
     if ((num_zeros / static_cast<double>(dim)) > opts.max_sparsity) {
@@ -325,7 +327,7 @@ double GpsrBasic(const GpsrConfig &opts, const SpMatrix<double> &H,
   return objf_new - objf_ori;
 }
 
-template<>
+template <>
 float GpsrBasic(const GpsrConfig &opts, const SpMatrix<float> &H,
                 const Vector<float> &g, Vector<float> *x,
                 const char *debug_str) {
@@ -338,7 +340,7 @@ float GpsrBasic(const GpsrConfig &opts, const SpMatrix<float> &H,
   return ans;
 }
 
-template<>
+template <>
 double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
               const Vector<double> &g, Vector<double> *x,
               const char *debug_str) {
@@ -362,7 +364,7 @@ double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
   }
 
   double tau = opts.gpsr_tau;  // May be modified later.
-  Vector<double> c(2*dim);
+  Vector<double> c(2 * dim);
   GpsrCalcLinearCoeff(tau, g, &c);
 
   double objf_ori = GpsrObjective(H, c, u, v);  // the obj. function at start
@@ -400,22 +402,21 @@ double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
     H_delta_x.AddSpVec(1.0, H, delta_x, 0.0);
     double dx_H_dx = VecVec(delta_x, H_delta_x);
 
-    double lambda = -(VecVec(delta_u, grad_u) + VecVec(delta_v, grad_v))
-                / (dx_H_dx + DBL_EPSILON);  // step length
-    if (lambda < 0)
-      KALDI_WARN << "lambda is less than zero";
+    double lambda = -(VecVec(delta_u, grad_u) + VecVec(delta_v, grad_v)) /
+                    (dx_H_dx + DBL_EPSILON);  // step length
+    if (lambda < 0) KALDI_WARN << "lambda is less than zero";
     if (lambda > 1.0) lambda = 1.0;
 
-    //update alpha
-    alpha = (VecVec(delta_u, delta_u) + VecVec(delta_v, delta_v))
-                / (dx_H_dx + DBL_EPSILON);
+    // update alpha
+    alpha = (VecVec(delta_u, delta_u) + VecVec(delta_v, delta_v)) /
+            (dx_H_dx + DBL_EPSILON);
     if (dx_H_dx <= 0) {
       KALDI_WARN << "nonpositive curvature detected";
       alpha = opts.alpha_max;
-    }
-    else if (alpha < opts.alpha_min)
+    } else if (alpha < opts.alpha_min)
       alpha = opts.alpha_min;
-    else if (alpha > opts.alpha_max) alpha = opts.alpha_max;
+    else if (alpha > opts.alpha_max)
+      alpha = opts.alpha_max;
 
     u_new.CopyFromVec(delta_u);
     u_new.Scale(lambda);
@@ -428,8 +429,8 @@ double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
     double delta_objf = objf_old - objf_new;
     KALDI_VLOG(2) << "GPSR for " << debug_str << ": iter " << iter
                   << "; tau = " << tau << ";\t objf = " << objf_new
-                  << ";\t alpha = " << alpha << ";\t delta_real = "
-                  << delta_objf;
+                  << ";\t alpha = " << alpha
+                  << ";\t delta_real = " << delta_objf;
 
     u.CopyFromVec(u_new);
     v.CopyFromVec(v_new);
@@ -438,8 +439,7 @@ double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
 
     num_zeros = 0;
     for (MatrixIndexT i = 0; i < dim; i++)
-      if ((*x)(i) == 0)
-        num_zeros++;
+      if ((*x)(i) == 0) num_zeros++;
 
     // ad hoc way to modify tau, if the solution is too sparse
     if ((num_zeros / static_cast<double>(dim)) > opts.max_sparsity) {
@@ -479,10 +479,9 @@ double GpsrBB(const GpsrConfig &opts, const SpMatrix<double> &H,
   return objf_new - objf_ori;
 }
 
-template<>
+template <>
 float GpsrBB(const GpsrConfig &opts, const SpMatrix<float> &H,
-             const Vector<float> &g, Vector<float> *x,
-             const char *debug_str) {
+             const Vector<float> &g, Vector<float> *x, const char *debug_str) {
   KALDI_ASSERT(H.NumRows() == g.Dim() && g.Dim() == x->Dim() && x->Dim() != 0);
   SpMatrix<double> Hd(H);
   Vector<double> gd(g);
@@ -493,4 +492,3 @@ float GpsrBB(const GpsrConfig &opts, const SpMatrix<float> &H,
 }
 
 }  // namespace kaldi
-

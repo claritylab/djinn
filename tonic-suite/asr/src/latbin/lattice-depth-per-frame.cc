@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -34,15 +33,16 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
     typedef StdArc::StateId StateId;
-    
+
     const char *usage =
         "For each lattice, compute a vector of length (num-frames) saying how\n"
         "may arcs cross each frame.  See also lattice-depth\n"
-        "Usage: lattice-depth-per-frame <lattice-rspecifier> <depth-wspecifier>\n"
+        "Usage: lattice-depth-per-frame <lattice-rspecifier> "
+        "<depth-wspecifier>\n"
         "E.g.: lattice-depth-per-frame ark:- ark,t:-\n";
 
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     std::string depth_wspecifier = po.GetOptArg(2);
     Int32VectorWriter lats_depth_writer(depth_wspecifier);
-    
+
     int64 num_done = 0;
 
     for (; !clat_reader.Done(); clat_reader.Next()) {
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
       std::string key = clat_reader.Key();
 
       TopSortCompactLatticeIfNeeded(&clat);
-      
+
       std::vector<int32> depth_per_frame;
       CompactLatticeDepthPerFrame(clat, &depth_per_frame);
 
@@ -72,8 +72,10 @@ int main(int argc, char *argv[]) {
       num_done++;
     }
     KALDI_LOG << "Done " << num_done << " lattices.";
-    if (num_done != 0) return 0;
-    else return 1;
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
   } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;

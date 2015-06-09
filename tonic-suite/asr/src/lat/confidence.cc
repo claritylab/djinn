@@ -23,8 +23,7 @@
 
 namespace kaldi {
 
-BaseFloat SentenceLevelConfidence(const CompactLattice &clat,
-                                  int32 *num_paths,
+BaseFloat SentenceLevelConfidence(const CompactLattice &clat, int32 *num_paths,
                                   std::vector<int32> *best_sentence,
                                   std::vector<int32> *second_best_sentence) {
   /* It may seem strange that the first thing we do is to convert the
@@ -39,7 +38,7 @@ BaseFloat SentenceLevelConfidence(const CompactLattice &clat,
   */
   Lattice lat;
   ConvertLattice(clat, &lat);
-  
+
   std::vector<Lattice> lats;
   NbestAsFsts(lat, 2, &lats);
   int32 n = lats.size();
@@ -50,25 +49,23 @@ BaseFloat SentenceLevelConfidence(const CompactLattice &clat,
 
   LatticeWeight weight1, weight2;
   if (n >= 1)
-    fst::GetLinearSymbolSequence<LatticeArc,int32>(lats[0], NULL,
-                                                   best_sentence,
-                                                   &weight1);
+    fst::GetLinearSymbolSequence<LatticeArc, int32>(lats[0], NULL,
+                                                    best_sentence, &weight1);
   if (n >= 2)
-    fst::GetLinearSymbolSequence<LatticeArc,int32>(lats[1], NULL,
-                                                   second_best_sentence,
-                                                   &weight2);
+    fst::GetLinearSymbolSequence<LatticeArc, int32>(
+        lats[1], NULL, second_best_sentence, &weight2);
 
   if (n == 0) {
-    return 0; // this seems most appropriate because it will be interpreted as
-              // zero confidence, and something definitely went wrong for this
-              // to happen.
+    return 0;  // this seems most appropriate because it will be interpreted as
+               // zero confidence, and something definitely went wrong for this
+               // to happen.
   } else if (n == 1) {
     // If there is only one sentence in the lattice, we interpret this as there
     // being perfect confidence
     return std::numeric_limits<BaseFloat>::infinity();
   } else {
     BaseFloat best_cost = ConvertToCost(weight1),
-        second_best_cost = ConvertToCost(weight2);
+              second_best_cost = ConvertToCost(weight2);
     BaseFloat ans = second_best_cost - best_cost;
     if (!(ans >= -0.001 * (fabs(best_cost) + fabs(second_best_cost)))) {
       // Answer should be positive.  Make sure it's at at least not
@@ -77,13 +74,10 @@ BaseFloat SentenceLevelConfidence(const CompactLattice &clat,
     }
     if (ans < 0) ans = 0;
     return ans;
-  }  
+  }
 }
 
-
-
-BaseFloat SentenceLevelConfidence(const Lattice &lat,
-                                  int32 *num_paths,
+BaseFloat SentenceLevelConfidence(const Lattice &lat, int32 *num_paths,
                                   std::vector<int32> *best_sentence,
                                   std::vector<int32> *second_best_sentence) {
   int32 max_sentence_length = LongestSentenceLength(lat);
@@ -104,14 +98,12 @@ BaseFloat SentenceLevelConfidence(const Lattice &lat,
   // return false, but this is expected because the expansion is limited
   // by "max_arcs" not "prune_beam".
   Lattice inverse_lat(lat);
-  fst::Invert(&inverse_lat); // Swap input and output symbols.
+  fst::Invert(&inverse_lat);  // Swap input and output symbols.
   DeterminizeLatticePruned(inverse_lat, prune_beam, &clat, determinize_opts);
-  
+
   // Call the version of this function that takes a CompactLattice.
-  return SentenceLevelConfidence(clat, num_paths,
-                                 best_sentence, second_best_sentence);
+  return SentenceLevelConfidence(clat, num_paths, best_sentence,
+                                 second_best_sentence);
 }
-
-
 
 }  // namespace kaldi

@@ -31,8 +31,10 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Do EBW update for MMI, MPE or MCE discriminative training.\n"
-        "Numerator stats should already be I-smoothed (e.g. use gmm-ismooth-stats)\n"
-        "Usage:  gmm-est-gaussians-ebw [options] <model-in> <stats-num-in> <stats-den-in> <model-out>\n"
+        "Numerator stats should already be I-smoothed (e.g. use "
+        "gmm-ismooth-stats)\n"
+        "Usage:  gmm-est-gaussians-ebw [options] <model-in> <stats-num-in> "
+        "<stats-den-in> <model-out>\n"
         "e.g.: gmm-est-gaussians-ebw 1.mdl num.acc den.acc 2.mdl\n";
 
     bool binary_write = false;
@@ -41,9 +43,10 @@ int main(int argc, char *argv[]) {
     EbwOptions ebw_opts;
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters to "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters to "
                 "update: e.g. m or mv (w, t ignored).");
-    
+
     ebw_opts.Register(&po);
 
     po.Read(argc, argv);
@@ -53,13 +56,12 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    kaldi::GmmFlagsType update_flags =
-        StringToGmmFlags(update_flags_str);    
+    kaldi::GmmFlagsType update_flags = StringToGmmFlags(update_flags_str);
 
     std::string model_in_filename = po.GetArg(1),
-        num_stats_filename = po.GetArg(2),
-        den_stats_filename = po.GetArg(3),
-        model_out_filename = po.GetArg(4);
+                num_stats_filename = po.GetArg(2),
+                den_stats_filename = po.GetArg(3),
+                model_out_filename = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -70,8 +72,8 @@ int main(int argc, char *argv[]) {
       am_gmm.Read(ki.Stream(), binary_read);
     }
 
-    Vector<double> num_transition_accs; // won't be used.
-    Vector<double> den_transition_accs; // won't be used.
+    Vector<double> num_transition_accs;  // won't be used.
+    Vector<double> den_transition_accs;  // won't be used.
 
     AccumAmDiagGmm num_stats;
     AccumAmDiagGmm den_stats;
@@ -79,27 +81,28 @@ int main(int argc, char *argv[]) {
       bool binary;
       Input ki(num_stats_filename, &binary);
       num_transition_accs.Read(ki.Stream(), binary);
-      num_stats.Read(ki.Stream(), binary, true);  // true == add; doesn't matter here.
+      num_stats.Read(ki.Stream(), binary,
+                     true);  // true == add; doesn't matter here.
     }
-    
+
     {
       bool binary;
       Input ki(den_stats_filename, &binary);
       num_transition_accs.Read(ki.Stream(), binary);
-      den_stats.Read(ki.Stream(), binary, true);  // true == add; doesn't matter here.
+      den_stats.Read(ki.Stream(), binary,
+                     true);  // true == add; doesn't matter here.
     }
-      
- 
+
     {  // Update GMMs.
       BaseFloat auxf_impr, count;
       int32 num_floored;
       UpdateEbwAmDiagGmm(num_stats, den_stats, update_flags, ebw_opts, &am_gmm,
-                          &auxf_impr, &count, &num_floored);
+                         &auxf_impr, &count, &num_floored);
       KALDI_LOG << "Num count " << num_stats.TotStatsCount() << ", den count "
                 << den_stats.TotStatsCount();
-      KALDI_LOG << "Overall auxf impr/frame from Gaussian update is " << (auxf_impr/count)
-                << " over " << count << " frames; floored D for "
-                << num_floored << " Gaussians.";
+      KALDI_LOG << "Overall auxf impr/frame from Gaussian update is "
+                << (auxf_impr / count) << " over " << count
+                << " frames; floored D for " << num_floored << " Gaussians.";
     }
 
     {
@@ -110,7 +113,7 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Written model to " << model_out_filename;
 
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

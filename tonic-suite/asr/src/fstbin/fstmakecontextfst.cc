@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/common-utils.h"
@@ -34,16 +33,19 @@ int main(int argc, char *argv[]) {
     using kaldi::int32;
 
     const char *usage =
-        "Constructs a context FST with a specified context-width and context-position.  Outputs\n"
-        " the context FST, and a file in Kaldi format that describes what the input labels mean.\n"
+        "Constructs a context FST with a specified context-width and "
+        "context-position.  Outputs\n"
+        " the context FST, and a file in Kaldi format that describes what the "
+        "input labels mean.\n"
         "\n"
-        "Usage:  fstmakecontextfst phones_symtab subseq_sym ilabels_output_file [out.fst]\n"
+        "Usage:  fstmakecontextfst phones_symtab subseq_sym "
+        "ilabels_output_file [out.fst]\n"
         "E.g.:   fstmakecontextfst phones.txt 42 ilabels.sym > C.fst\n";
 
     bool binary = true;  // binary output to ilabels_output_file.
     std::string disambig_rxfilename, disambig_wxfilename;
     int32 N = 3, P = 1;
-    
+
     ParseOptions po(usage);
     po.Register("read-disambig-syms", &disambig_rxfilename,
                 "List of disambiguation symbols to read");
@@ -69,14 +71,15 @@ int main(int argc, char *argv[]) {
     std::string ilabels_out_filename = po.GetArg(3);
     std::string fst_out_filename = po.GetOptArg(4);
 
-
     std::vector<kaldi::int32> phone_syms;
     {
       fst::SymbolTable *phones_symtab = NULL;
       {  // read phone symbol table.
         std::ifstream is(phones_symtab_filename.c_str());
         phones_symtab = fst::SymbolTable::ReadText(is, phones_symtab_filename);
-        if (!phones_symtab) KALDI_ERR << "Could not read phones symbol-table file "<<phones_symtab_filename;
+        if (!phones_symtab)
+          KALDI_ERR << "Could not read phones symbol-table file "
+                    << phones_symtab_filename;
       }
       GetSymbols(*phones_symtab,
                  false,  // don't include eps,
@@ -84,35 +87,32 @@ int main(int argc, char *argv[]) {
       delete phones_symtab;
     }
 
-    if ( (disambig_wxfilename != "") && (disambig_rxfilename == "") )
+    if ((disambig_wxfilename != "") && (disambig_rxfilename == ""))
       KALDI_ERR << "fstmakecontextfst: cannot specify --write-disambig-syms if "
-          "not specifying --read-disambig-syms\n";
-    
+                   "not specifying --read-disambig-syms\n";
+
     std::vector<int32> disambig_in;
     if (disambig_rxfilename != "") {
       if (!ReadIntegerVectorSimple(disambig_rxfilename, &disambig_in))
-        KALDI_ERR << "fstcomposecontext: Could not read disambiguation symbols from "
-                  << PrintableRxfilename(disambig_rxfilename);
+        KALDI_ERR
+            << "fstcomposecontext: Could not read disambiguation symbols from "
+            << PrintableRxfilename(disambig_rxfilename);
     }
 
-    if (std::binary_search(phone_syms.begin(), phone_syms.end(), subseq_sym)
-       ||std::binary_search(disambig_in.begin(), disambig_in.end(), subseq_sym))
-      KALDI_ERR << "Invalid subsequential symbol "<<(subseq_sym)<<", already a phone or disambiguation symbol.";
+    if (std::binary_search(phone_syms.begin(), phone_syms.end(), subseq_sym) ||
+        std::binary_search(disambig_in.begin(), disambig_in.end(), subseq_sym))
+      KALDI_ERR << "Invalid subsequential symbol " << (subseq_sym)
+                << ", already a phone or disambiguation symbol.";
 
-
-    ContextFst<StdArc, int32> cfst(subseq_sym,
-                                   phone_syms,
-                                   disambig_in,
-                                   N,
-                                   P);
+    ContextFst<StdArc, int32> cfst(subseq_sym, phone_syms, disambig_in, N, P);
 
     VectorFst<StdArc> vfst(cfst);  // Copy the fst to a VectorFst.
 
     WriteFstKaldi(vfst, fst_out_filename);
-    
-    const std::vector<std::vector<int32> >  &ilabels = cfst.ILabelInfo();
-    WriteILabelInfo(Output(ilabels_out_filename, binary).Stream(),
-                    binary, ilabels);
+
+    const std::vector<std::vector<int32> > &ilabels = cfst.ILabelInfo();
+    WriteILabelInfo(Output(ilabels_out_filename, binary).Stream(), binary,
+                    ilabels);
 
     if (disambig_wxfilename != "") {
       std::vector<int32> disambig_out;
@@ -120,13 +120,13 @@ int main(int argc, char *argv[]) {
         if (ilabels[i].size() == 1 && ilabels[i][0] <= 0)
           disambig_out.push_back(static_cast<int32>(i));
       if (!WriteIntegerVectorSimple(disambig_wxfilename, disambig_out))
-        KALDI_ERR << "fstcomposecontext: Could not write disambiguation symbols to "
-                  << PrintableWxfilename(disambig_wxfilename);
+        KALDI_ERR
+            << "fstcomposecontext: Could not write disambiguation symbols to "
+            << PrintableWxfilename(disambig_wxfilename);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

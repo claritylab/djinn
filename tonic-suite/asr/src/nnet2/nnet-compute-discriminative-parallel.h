@@ -30,20 +30,17 @@ namespace nnet2 {
 
 /* This header provides a multi-threaded version of the discriminative training
    code (this is for a CPU-based, instead of GPU-based, setup).
-   Note: we expect that "nnet_to_update" will be the same as "&(am_nnet.GetNnet())"
+   Note: we expect that "nnet_to_update" will be the same as
+   "&(am_nnet.GetNnet())"
 */
 
 void NnetDiscriminativeUpdateParallel(
-    const AmNnet &am_nnet,
-    const TransitionModel &tmodel,
-    const NnetDiscriminativeUpdateOptions &opts,
-    int32 num_threads,
+    const AmNnet &am_nnet, const TransitionModel &tmodel,
+    const NnetDiscriminativeUpdateOptions &opts, int32 num_threads,
     SequentialDiscriminativeNnetExampleReader *example_reader,
-    Nnet *nnet_to_update,
-    NnetDiscriminativeStats *stats);
+    Nnet *nnet_to_update, NnetDiscriminativeStats *stats);
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-} // namespace nnet2
-} // namespace kaldi
-
-#endif //  KALDI_NNET2_NNET_COMPUTE_DISCRIMINATIVE_PARALLEL_H_
+#endif  //  KALDI_NNET2_NNET_COMPUTE_DISCRIMINATIVE_PARALLEL_H_

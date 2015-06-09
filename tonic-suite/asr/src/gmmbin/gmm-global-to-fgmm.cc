@@ -21,16 +21,16 @@
 #include "gmm/full-gmm.h"
 #include "gmm/mle-full-gmm.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Convert single diagonal-covariance GMM to single full-covariance GMM.\n"
+        "Convert single diagonal-covariance GMM to single full-covariance "
+        "GMM.\n"
         "Usage: gmm-global-to-fgmm [options] 1.gmm 1.fgmm\n";
-        
+
     bool binary = true;
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
@@ -41,11 +41,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string gmm_rxfilename = po.GetArg(1),
-        fgmm_wxfilename = po.GetArg(2);
-    
+    std::string gmm_rxfilename = po.GetArg(1), fgmm_wxfilename = po.GetArg(2);
+
     DiagGmm gmm;
-    
+
     {
       bool binary_read;
       Input ki(gmm_rxfilename, &binary_read);
@@ -56,9 +55,8 @@ int main(int argc, char *argv[]) {
     fgmm.CopyFromDiagGmm(gmm);
     WriteKaldiObject(fgmm, fgmm_wxfilename, binary);
     KALDI_LOG << "Written full GMM to " << fgmm_wxfilename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-

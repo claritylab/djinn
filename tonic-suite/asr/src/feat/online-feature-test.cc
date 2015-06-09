@@ -25,31 +25,29 @@
 
 namespace kaldi {
 
-
-template<class Real> static void AssertEqual(const Matrix<Real> &A,
-                                             const Matrix<Real> &B,
-                                             float tol = 0.001) {
-  KALDI_ASSERT(A.NumRows() == B.NumRows()&&A.NumCols() == B.NumCols());
-  for (MatrixIndexT i = 0;i < A.NumRows();i++)
-    for (MatrixIndexT j = 0;j < A.NumCols();j++) {
-      KALDI_ASSERT(std::abs(A(i, j)-B(i, j)) < tol * std::max(1.0,
-        static_cast<double>(std::abs(A(i, j))+std::abs(B(i, j)))));
+template <class Real>
+static void AssertEqual(const Matrix<Real> &A, const Matrix<Real> &B,
+                        float tol = 0.001) {
+  KALDI_ASSERT(A.NumRows() == B.NumRows() && A.NumCols() == B.NumCols());
+  for (MatrixIndexT i = 0; i < A.NumRows(); i++)
+    for (MatrixIndexT j = 0; j < A.NumCols(); j++) {
+      KALDI_ASSERT(std::abs(A(i, j) - B(i, j)) <
+                   tol * std::max(1.0, static_cast<double>(std::abs(A(i, j)) +
+                                                           std::abs(B(i, j)))));
     }
 }
 
-void GetOutput(OnlineFeatureInterface *a,
-               Matrix<BaseFloat> *output) {
+void GetOutput(OnlineFeatureInterface *a, Matrix<BaseFloat> *output) {
   int32 dim = a->Dim();
   int32 frame_num = 0;
   OnlineCacheFeature cache(a);
 
-  std::vector<Vector<BaseFloat>* > cached_frames;
+  std::vector<Vector<BaseFloat> *> cached_frames;
   while (true) {
     Vector<BaseFloat> garbage(dim);
     cache.GetFrame(frame_num, &garbage);
     cached_frames.push_back(new Vector<BaseFloat>(garbage));
-    if (cache.IsLastFrame(frame_num))
-      break;
+    if (cache.IsLastFrame(frame_num)) break;
     frame_num++;
   }
 
@@ -65,9 +63,7 @@ void GetOutput(OnlineFeatureInterface *a,
 }
 
 // Only generate random length for each piece
-bool RandomSplit(int32 wav_dim,
-                 std::vector<int32> *piece_dim,
-                 int32 num_pieces,
+bool RandomSplit(int32 wav_dim, std::vector<int32> *piece_dim, int32 num_pieces,
                  int32 trials = 5) {
   piece_dim->clear();
 
@@ -81,10 +77,8 @@ bool RandomSplit(int32 wav_dim,
     }
     (*piece_dim)[num_pieces - 1] = wav_dim - dim_total;
 
-    if (dim_total > 0 && dim_total < wav_dim)
-      break;
-    if (++cnt > trials)
-      return false;
+    if (dim_total > 0 && dim_total < wav_dim) break;
+    if (++cnt > trials) return false;
   }
   return true;
 }
@@ -132,7 +126,7 @@ void TestOnlineSpliceFrames() {
   int32 dim = 2 + rand() % 5;  // dimension of features.
   int32 num_frames = 100 + rand() % 100;
   OnlineSpliceOptions opts;
-  opts.left_context  = 1 + rand() % 4;
+  opts.left_context = 1 + rand() % 4;
   opts.right_context = 1 + rand() % 4;
 
   int32 output_dim = dim * (1 + opts.left_context + opts.right_context);
@@ -148,7 +142,7 @@ void TestOnlineSpliceFrames() {
 
   Matrix<BaseFloat> output_feats2(num_frames, output_dim);
   SpliceFrames(input_feats, opts.left_context, opts.right_context,
-    &output_feats2);
+               &output_feats2);
 
   KALDI_ASSERT(output_feats1.ApproxEqual(output_feats2));
 }
@@ -188,7 +182,7 @@ void TestOnlineMfcc() {
     int32 offset_start = 0;
     for (int32 i = 0; i < num_piece; i++) {
       Vector<BaseFloat> wave_piece(
-        waveform.Range(offset_start, piece_length[i]));
+          waveform.Range(offset_start, piece_length[i]));
       online_mfcc.AcceptWaveform(wave.SampFreq(), wave_piece);
       offset_start += piece_length[i];
     }
@@ -236,7 +230,7 @@ void TestOnlinePlp() {
     int32 offset_start = 0;
     for (int32 i = 0; i < num_piece; i++) {
       Vector<BaseFloat> wave_piece(
-        waveform.Range(offset_start, piece_length[i]));
+          waveform.Range(offset_start, piece_length[i]));
       online_plp.AcceptWaveform(wave.SampFreq(), wave_piece);
       offset_start += piece_length[i];
     }
@@ -347,7 +341,7 @@ void TestOnlineAppendFeature() {
     int32 offset_start = 0;
     for (int32 i = 0; i < num_piece; i++) {
       Vector<BaseFloat> wave_piece(
-        waveform.Range(offset_start, piece_length[i]));
+          waveform.Range(offset_start, piece_length[i]));
       online_mfcc.AcceptWaveform(wave.SampFreq(), wave_piece);
       online_plp.AcceptWaveform(wave.SampFreq(), wave_piece);
       offset_start += piece_length[i];
@@ -359,22 +353,26 @@ void TestOnlineAppendFeature() {
     GetOutput(&online_mfcc_plp, &online_mfcc_plp_feats);
 
     // compare mfcc_feats & plp_features with online_mfcc_plp_feats
-    KALDI_ASSERT(mfcc_feats.NumRows() == online_mfcc_plp_feats.NumRows()
-      && plp_feats.NumRows() == online_mfcc_plp_feats.NumRows()
-      && mfcc_feats.NumCols() + plp_feats.NumCols()
-         == online_mfcc_plp_feats.NumCols());
+    KALDI_ASSERT(mfcc_feats.NumRows() == online_mfcc_plp_feats.NumRows() &&
+                 plp_feats.NumRows() == online_mfcc_plp_feats.NumRows() &&
+                 mfcc_feats.NumCols() + plp_feats.NumCols() ==
+                     online_mfcc_plp_feats.NumCols());
     for (MatrixIndexT i = 0; i < online_mfcc_plp_feats.NumRows(); i++) {
       for (MatrixIndexT j = 0; j < mfcc_feats.NumCols(); j++) {
-        KALDI_ASSERT(std::abs(mfcc_feats(i, j) - online_mfcc_plp_feats(i, j))
-          < 0.0001*std::max(1.0, static_cast<double>(std::abs(mfcc_feats(i, j))
-                                    + std::abs(online_mfcc_plp_feats(i, j)))));
+        KALDI_ASSERT(
+            std::abs(mfcc_feats(i, j) - online_mfcc_plp_feats(i, j)) <
+            0.0001 * std::max(1.0, static_cast<double>(
+                                       std::abs(mfcc_feats(i, j)) +
+                                       std::abs(online_mfcc_plp_feats(i, j)))));
       }
       for (MatrixIndexT k = 0; k < plp_feats.NumCols(); k++) {
         KALDI_ASSERT(
-          std::abs(plp_feats(i, k) -
-            online_mfcc_plp_feats(i, mfcc_feats.NumCols() + k))
-          < 0.0001*std::max(1.0, static_cast<double>(std::abs(plp_feats(i, k))
-            +std::abs(online_mfcc_plp_feats(i, mfcc_feats.NumCols() + k)))));
+            std::abs(plp_feats(i, k) -
+                     online_mfcc_plp_feats(i, mfcc_feats.NumCols() + k)) <
+            0.0001 * std::max(1.0, static_cast<double>(
+                                       std::abs(plp_feats(i, k)) +
+                                       std::abs(online_mfcc_plp_feats(
+                                           i, mfcc_feats.NumCols() + k)))));
       }
     }
   }

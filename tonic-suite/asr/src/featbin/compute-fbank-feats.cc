@@ -23,13 +23,13 @@
 #include "feat/feature-fbank.h"
 #include "feat/wave-reader.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     const char *usage =
         "Create Mel-filter bank (FBANK) feature files.\n"
-        "Usage:  compute-fbank-feats [options...] <wav-rspecifier> <feats-wspecifier>\n";
+        "Usage:  compute-fbank-feats [options...] <wav-rspecifier> "
+        "<feats-wspecifier>\n";
 
     // construct all the global objects
     ParseOptions po(usage);
@@ -46,13 +46,24 @@ int main(int argc, char *argv[]) {
     // Register the option struct
     fbank_opts.Register(&po);
     // Register the options
-    po.Register("output-format", &output_format, "Format of the output files [kaldi, htk]");
-    po.Register("subtract-mean", &subtract_mean, "Subtract mean of each feature file [CMS]; not recommended to do it this way. ");
-    po.Register("vtln-warp", &vtln_warp, "Vtln warp factor (only applicable if vtln-map not specified)");
-    po.Register("vtln-map", &vtln_map_rspecifier, "Map from utterance or speaker-id to vtln warp factor (rspecifier)");
-    po.Register("utt2spk", &utt2spk_rspecifier, "Utterance to speaker-id map (if doing VTLN and you have warps per speaker)");
-    po.Register("channel", &channel, "Channel to extract (-1 -> expect mono, 0 -> left, 1 -> right)");
-    po.Register("min-duration", &min_duration, "Minimum duration of segments to process (in seconds).");
+    po.Register("output-format", &output_format,
+                "Format of the output files [kaldi, htk]");
+    po.Register("subtract-mean", &subtract_mean,
+                "Subtract mean of each feature file [CMS]; not recommended to "
+                "do it this way. ");
+    po.Register("vtln-warp", &vtln_warp,
+                "Vtln warp factor (only applicable if vtln-map not specified)");
+    po.Register(
+        "vtln-map", &vtln_map_rspecifier,
+        "Map from utterance or speaker-id to vtln warp factor (rspecifier)");
+    po.Register("utt2spk", &utt2spk_rspecifier,
+                "Utterance to speaker-id map (if doing VTLN and you have warps "
+                "per speaker)");
+    po.Register(
+        "channel", &channel,
+        "Channel to extract (-1 -> expect mono, 0 -> left, 1 -> right)");
+    po.Register("min-duration", &min_duration,
+                "Minimum duration of segments to process (in seconds).");
 
     // OPTION PARSING ..........................................................
     //
@@ -76,11 +87,12 @@ int main(int argc, char *argv[]) {
     TableWriter<HtkMatrixHolder> htk_writer;
 
     if (utt2spk_rspecifier != "")
-      KALDI_ASSERT(vtln_map_rspecifier != "" && "the utt2spk option is only "
+      KALDI_ASSERT(vtln_map_rspecifier != "" &&
+                   "the utt2spk option is only "
                    "needed if the vtln-map option is used.");
     RandomAccessBaseFloatReaderMapped vtln_map_reader(vtln_map_rspecifier,
                                                       utt2spk_rspecifier);
-    
+
     if (output_format == "kaldi") {
       if (!kaldi_writer.Open(output_wspecifier))
         KALDI_ERR << "Could not initialize output with wspecifier "
@@ -111,12 +123,12 @@ int main(int argc, char *argv[]) {
           this_chan = 0;
           if (num_chan != 1)
             KALDI_WARN << "Channel not specified but you have data with "
-                       << num_chan  << " channels; defaulting to zero";
+                       << num_chan << " channels; defaulting to zero";
         } else {
           if (this_chan >= num_chan) {
-            KALDI_WARN << "File with id " << utt << " has "
-                       << num_chan << " channels but you specified channel "
-                       << channel << ", producing no output.";
+            KALDI_WARN << "File with id " << utt << " has " << num_chan
+                       << " channels but you specified channel " << channel
+                       << ", producing no output.";
             continue;
           }
         }
@@ -143,8 +155,7 @@ int main(int argc, char *argv[]) {
       try {
         fbank.Compute(waveform, vtln_warp_local, &features, NULL);
       } catch (...) {
-        KALDI_WARN << "Failed to compute features for utterance "
-                   << utt;
+        KALDI_WARN << "Failed to compute features for utterance " << utt;
         continue;
       }
       if (subtract_mean) {
@@ -161,11 +172,13 @@ int main(int argc, char *argv[]) {
         p.first.Resize(features.NumRows(), features.NumCols());
         p.first.CopyFromMat(features);
         HtkHeader header = {
-          features.NumRows(),
-          100000,  // 10ms shift
-          static_cast<int16>(sizeof(float)*features.NumCols()),
-          static_cast<uint16>(007 | // FBANK
-          (fbank_opts.use_energy ? 0100 : 020000)) // energy; otherwise c0
+            features.NumRows(),
+            100000,  // 10ms shift
+            static_cast<int16>(sizeof(float) * features.NumCols()),
+            static_cast<uint16>(007 |  // FBANK
+                                (fbank_opts.use_energy
+                                     ? 0100
+                                     : 020000))  // energy; otherwise c0
         };
         p.second = header;
         htk_writer.Write(utt, p);
@@ -178,10 +191,9 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << " Done " << num_success << " out of " << num_utts
               << " utterances.";
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
   return 0;
 }
-

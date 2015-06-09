@@ -30,9 +30,11 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Do MLLT update\n"
-        "Usage:  est-mllt [options] <mllt-mat-out> <stats-in1> <stats-in2> ... \n"
+        "Usage:  est-mllt [options] <mllt-mat-out> <stats-in1> <stats-in2> ... "
+        "\n"
         "e.g.: est-mllt 2.mat 1a.macc 1b.macc ... \n"
-        "Note: use compose-transforms <mllt-mat-out> <prev-mllt-mat> to combine with previous\n"
+        "Note: use compose-transforms <mllt-mat-out> <prev-mllt-mat> to "
+        "combine with previous\n"
         "  MLLT or LDA transform, if any, and\n"
         "  gmm-transform-means to apply <mllt-mat-out> to GMM means.\n";
 
@@ -64,17 +66,15 @@ int main(int argc, char *argv[]) {
     mllt_accs.Update(&mat, &objf_impr, &count);
 
     KALDI_LOG << "Overall objective function improvement for MLLT is "
-              << (objf_impr/count) << " over " << count << " frames, logdet is "
-              << mat.LogDet();
+              << (objf_impr / count) << " over " << count
+              << " frames, logdet is " << mat.LogDet();
 
     Output ko(mllt_out_filename, binary);
     mat.Write(ko.Stream(), binary);
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

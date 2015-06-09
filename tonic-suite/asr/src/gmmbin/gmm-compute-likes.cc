@@ -17,15 +17,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "fstext/fstext-lib.h"
 #include "base/timer.h"
-
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -38,7 +35,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Compute log-likelihoods from GMM-based model\n"
         "(outputs matrices of log-likelihoods indexed by (frame, pdf)\n"
-        "Usage: gmm-compute-likes [options] model-in features-rspecifier likes-wspecifier\n";
+        "Usage: gmm-compute-likes [options] model-in features-rspecifier "
+        "likes-wspecifier\n";
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -49,8 +47,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        loglikes_wspecifier = po.GetArg(3);
+                feature_rspecifier = po.GetArg(2),
+                loglikes_wspecifier = po.GetArg(3);
 
     AmDiagGmm am_gmm;
     {
@@ -67,7 +65,7 @@ int main(int argc, char *argv[]) {
     int32 num_done = 0;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string key = feature_reader.Key();
-      const Matrix<BaseFloat> &features (feature_reader.Value());
+      const Matrix<BaseFloat> &features(feature_reader.Value());
       Matrix<BaseFloat> loglikes(features.NumRows(), am_gmm.NumPdfs());
       for (int32 i = 0; i < features.NumRows(); i++) {
         for (int32 j = 0; j < am_gmm.NumPdfs(); j++) {
@@ -82,10 +80,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "gmm-compute-likes: computed likelihoods for " << num_done
               << " utterances.";
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

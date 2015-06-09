@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 
 #include "feat/feature-mfcc.h"
@@ -27,10 +26,7 @@
 
 using namespace kaldi;
 
-
-
 static void UnitTestReadWave() {
-
   std::cout << "=== UnitTestReadWave() ===\n";
 
   Vector<BaseFloat> v, v2;
@@ -47,15 +43,15 @@ static void UnitTestReadWave() {
     v.CopyFromVec(data.Row(0));
   }
 
-  std::cout << "<<<=== Reading Vector<BaseFloat> waveform, prepared by matlab\n";
-  std::ifstream input(
-    "test_data/test_matlab.ascii"
-  );
+  std::cout
+      << "<<<=== Reading Vector<BaseFloat> waveform, prepared by matlab\n";
+  std::ifstream input("test_data/test_matlab.ascii");
   KALDI_ASSERT(input.good());
   v2.Read(input, false);
   input.close();
 
-  std::cout << "<<<=== Comparing freshly read waveform to 'libsndfile' waveform\n";
+  std::cout
+      << "<<<=== Comparing freshly read waveform to 'libsndfile' waveform\n";
   KALDI_ASSERT(v.Dim() == v2.Dim());
   for (int32 i = 0; i < v.Dim(); i++) {
     KALDI_ASSERT(v(i) == v2(i));
@@ -66,10 +62,7 @@ static void UnitTestReadWave() {
   // std::cout << v;
 
   std::cout << "Test passed :)\n\n";
-
 }
-
-
 
 /**
  */
@@ -81,7 +74,7 @@ static void UnitTestSimple() {
 
   // init with noise
   for (int32 i = 0; i < v.Dim(); i++) {
-    v(i) = (abs( i * 433024253 ) % 65535) - (65535 / 2);
+    v(i) = (abs(i * 433024253) % 65535) - (65535 / 2);
   }
 
   std::cout << "<<<=== Just make sure it runs... Nothing is compared\n";
@@ -107,7 +100,6 @@ static void UnitTestSimple() {
   //   std::cout << "== Output features == \n" << m;
   std::cout << "Test passed :)\n\n";
 }
-
 
 static void UnitTestHTKCompare1() {
   std::cout << "=== UnitTestHTKCompare1() ===\n";
@@ -147,9 +139,7 @@ static void UnitTestHTKCompare1() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -158,40 +148,43 @@ static void UnitTestHTKCompare1() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.1",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.1");
 }
-
 
 static void UnitTestHTKCompare2() {
   std::cout << "=== UnitTestHTKCompare2() ===\n";
@@ -231,9 +224,7 @@ static void UnitTestHTKCompare2() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -242,40 +233,43 @@ static void UnitTestHTKCompare2() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.2",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.2");
 }
-
 
 static void UnitTestHTKCompare3() {
   std::cout << "=== UnitTestHTKCompare3() ===\n";
@@ -305,7 +299,7 @@ static void UnitTestHTKCompare3() {
   op.htk_compat = true;
   op.use_energy = true;  // Use energy.
   op.mel_opts.low_freq = 20.0;
-  //op.mel_opts.debug_mel = true;
+  // op.mel_opts.debug_mel = true;
   op.mel_opts.htk_mode = true;
 
   Mfcc mfcc(op);
@@ -316,9 +310,7 @@ static void UnitTestHTKCompare3() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -327,40 +319,43 @@ static void UnitTestHTKCompare3() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (static_cast<int32>(i_old) != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.3",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.3");
 }
-
 
 static void UnitTestHTKCompare4() {
   std::cout << "=== UnitTestHTKCompare4() ===\n";
@@ -399,9 +394,7 @@ static void UnitTestHTKCompare4() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -410,40 +403,43 @@ static void UnitTestHTKCompare4() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (static_cast<int32>(i_old) != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.4",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.4");
 }
-
 
 static void UnitTestHTKCompare5() {
   std::cout << "=== UnitTestHTKCompare5() ===\n";
@@ -476,7 +472,8 @@ static void UnitTestHTKCompare5() {
   op.mel_opts.vtln_high = 7500.0;
   op.mel_opts.htk_mode = true;
 
-  BaseFloat vtln_warp = 1.1; // our approach identical to htk for warp factor >1,
+  BaseFloat vtln_warp =
+      1.1;  // our approach identical to htk for warp factor >1,
   // differs slightly for higher mel bins if warp_factor <0.9
 
   Mfcc mfcc(op);
@@ -487,9 +484,7 @@ static void UnitTestHTKCompare5() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -498,43 +493,46 @@ static void UnitTestHTKCompare5() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (static_cast<int32>(i_old) != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.5",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.5");
 }
 
 static void UnitTestHTKCompare6() {
   std::cout << "=== UnitTestHTKCompare6() ===\n";
-
 
   std::ifstream is("test_data/test.wav");
   WaveData wave;
@@ -572,9 +570,7 @@ static void UnitTestHTKCompare6() {
 
   DeltaFeaturesOptions delta_opts;
   Matrix<BaseFloat> kaldi_features;
-  ComputeDeltas(delta_opts,
-                kaldi_raw_features,
-                &kaldi_features);
+  ComputeDeltas(delta_opts, kaldi_raw_features, &kaldi_features);
 
   // compare the results
   bool passed = true;
@@ -583,72 +579,75 @@ static void UnitTestHTKCompare6() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       if ((std::abs(b - a)) > 1.0) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (static_cast<int32>(i_old) != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    021406  // MFCC_D_A_0
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      021406  // MFCC_D_A_0
   };
   {
     std::ofstream os("tmp.test.wav.fea_kaldi.6",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fea_kaldi.6");
 }
 
 void UnitTestVtln() {
   // Test the function VtlnWarpFreq.
-  BaseFloat low_freq = 10, high_freq = 7800,
-      vtln_low_cutoff = 20, vtln_high_cutoff = 7400;
+  BaseFloat low_freq = 10, high_freq = 7800, vtln_low_cutoff = 20,
+            vtln_high_cutoff = 7400;
 
   for (size_t i = 0; i < 100; i++) {
     BaseFloat freq = 5000, warp_factor = 0.9 + RandUniform() * 0.2;
     AssertEqual(MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                             low_freq, high_freq, warp_factor,
-                             freq),
+                                       low_freq, high_freq, warp_factor, freq),
                 freq / warp_factor);
 
-    AssertEqual(MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                             low_freq, high_freq, warp_factor,
-                             low_freq),
-                low_freq);
-    AssertEqual(MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                             low_freq, high_freq, warp_factor,
-                             high_freq),
-                high_freq);
-    BaseFloat freq2 = low_freq + (high_freq-low_freq) * RandUniform(),
-        freq3 = freq2 +  (high_freq-freq2) * RandUniform();  // freq3>=freq2
-    BaseFloat w2 = MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                                low_freq, high_freq, warp_factor,
-                                freq2);
-    BaseFloat w3 = MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                                low_freq, high_freq, warp_factor,
-                                freq3);
+    AssertEqual(
+        MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff, low_freq,
+                               high_freq, warp_factor, low_freq),
+        low_freq);
+    AssertEqual(
+        MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff, low_freq,
+                               high_freq, warp_factor, high_freq),
+        high_freq);
+    BaseFloat freq2 = low_freq + (high_freq - low_freq) * RandUniform(),
+              freq3 =
+                  freq2 + (high_freq - freq2) * RandUniform();  // freq3>=freq2
+    BaseFloat w2 =
+        MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff, low_freq,
+                               high_freq, warp_factor, freq2);
+    BaseFloat w3 =
+        MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff, low_freq,
+                               high_freq, warp_factor, freq3);
     KALDI_ASSERT(w3 >= w2);  // increasing function.
     BaseFloat w3dash = MelBanks::VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                                    low_freq, high_freq, 1.0,
-                                    freq3);
+                                              low_freq, high_freq, 1.0, freq3);
     AssertEqual(w3dash, freq3);
   }
 }
@@ -669,12 +668,9 @@ static void UnitTestFeat() {
   std::cout << "Tests succeeded.\n";
 }
 
-
-
 int main() {
   try {
-    for (int i = 0; i < 5; i++)
-      UnitTestFeat();
+    for (int i = 0; i < 5; i++) UnitTestFeat();
     std::cout << "Tests succeeded.\n";
     return 0;
   } catch (const std::exception &e) {
@@ -682,5 +678,3 @@ int main() {
     return 1;
   }
 }
-
-

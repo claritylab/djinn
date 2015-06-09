@@ -17,13 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/table-matcher.h"
 #include "fstext/fstext-utils.h"
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -44,22 +42,20 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-    
-    std::string fst_rspecifier = po.GetArg(1),
-        fst_wspecifier = po.GetArg(2);
+
+    std::string fst_rspecifier = po.GetArg(1), fst_wspecifier = po.GetArg(2);
 
     SequentialTableReader<VectorFstHolder> fst_reader(fst_rspecifier);
     TableWriter<VectorFstHolder> fst_writer(fst_wspecifier);
     int32 n_done = 0;
-    
+
     for (; !fst_reader.Done(); fst_reader.Next(), n_done++)
       fst_writer.Write(fst_reader.Key(), fst_reader.Value());
 
     KALDI_LOG << "Copied " << n_done << " FSTs.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

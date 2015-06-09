@@ -17,18 +17,17 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "sgmm/sgmm-clusterable.h"
 #include "hmm/hmm-utils.h"
 
 namespace kaldi {
 
-void SgmmClusterable::Accumulate(
-    const SgmmPerFrameDerivedVars &per_frame_vars,
-    int32 j, // state index in original SGMM.
-    BaseFloat weight) {
+void SgmmClusterable::Accumulate(const SgmmPerFrameDerivedVars &per_frame_vars,
+                                 int32 j,  // state index in original SGMM.
+                                 BaseFloat weight) {
   Matrix<BaseFloat> post;
-  KALDI_ASSERT(weight >= 0.0); // Doesn't make sense to use negative weights here.
+  KALDI_ASSERT(weight >=
+               0.0);  // Doesn't make sense to use negative weights here.
   // Compute Gaussian-level posteriors.
   // Note: "post" is indexed by Gaussian-selection index.
   sgmm_.ComponentPosteriors(per_frame_vars, j, &post);
@@ -45,8 +44,7 @@ void SgmmClusterable::Accumulate(
   }
   // Invalidate my_H_, if present, since it's not efficient to
   // keep it updated during accumulation.
-  if (my_H_.NumRows() != 0) 
-    my_H_.Resize(0);
+  if (my_H_.NumRows() != 0) my_H_.Resize(0);
 }
 
 BaseFloat SgmmClusterable::Objf() const {
@@ -59,7 +57,7 @@ BaseFloat SgmmClusterable::Objf() const {
   // we were consistent.
   KALDI_ASSERT(static_cast<int32>(H_.size()) == sgmm_.NumGauss());
   if (my_H_.NumRows() == 0.0) {
-    SgmmClusterable *s = static_cast<SgmmClusterable*>(this->Copy()); // will
+    SgmmClusterable *s = static_cast<SgmmClusterable *>(this->Copy());  // will
     // set up my_H_, which we need.
     BaseFloat ans = s->Objf();
     delete s;
@@ -69,21 +67,21 @@ BaseFloat SgmmClusterable::Objf() const {
   double tot_gamma = gamma_.Sum(), tot_gamma2 = 0.0;
   if (tot_gamma == 0.0) return 0.0;
   int32 I = gamma_.Dim();
-  
+
   for (int32 i = 0; i < I; i++) {
     double gamma = gamma_(i);
-    if (gamma > 0.0) { // Note: should not be negative-- if it is, due to
+    if (gamma > 0.0) {  // Note: should not be negative-- if it is, due to
       double prob = gamma / tot_gamma;
-      if (prob > 0.0) { // Note: prob could be zero due to underflow-- this
+      if (prob > 0.0) {  // Note: prob could be zero due to underflow-- this
         // happened! [we can get tiny values due to floating-point roundoff
         // while subtracting clusterable objects].
         ans += gamma * log(gamma / tot_gamma);
-      }        
+      }
     }
     tot_gamma2 += gamma;
   }
   if (tot_gamma2 == 0.0)
-    return 0.0; // No positive elements... maybe small negative ones were from
+    return 0.0;  // No positive elements... maybe small negative ones were from
   // round off.
 
   // objf improvement is y^T H^{-1} y.
@@ -96,9 +94,8 @@ BaseFloat SgmmClusterable::Objf() const {
     C.Invert();
     for (int32 i = 0; i < C.NumRows(); i++)
       if (fabs(C(i, i)) > 100.0) {
-        KALDI_VLOG(3) << "Condion-number probably bad: element is "
-                      << C(i, i);
-        throw std::runtime_error("Bad condition number"); // back off to SVD.
+        KALDI_VLOG(3) << "Condion-number probably bad: element is " << C(i, i);
+        throw std::runtime_error("Bad condition number");  // back off to SVD.
       }
     // Note: assuming things are well preconditioned, the elements
     // C(i,i) should be of the rough magnitude 1/sqrt(count).
@@ -109,12 +106,13 @@ BaseFloat SgmmClusterable::Objf() const {
     // y^T H^{-1} y = y^T C^{-T} C^{-1} y = yC^T yC.
     yC.AddTpVec(1.0, C, kNoTrans, y_, 0.0);
     ans += 0.5 * VecVec(yC, yC);
-  } catch (...) { // Choleksy threw, or we detected bad condition.
+  } catch (...) {  // Choleksy threw, or we detected bad condition.
     // we'll do this using an SVD-based implementation that will
     // deal with non-invertible matrices.
     KALDI_VLOG(3) << "Backing off to SVD-based objective computation.";
-    Vector<double> v(y_.Dim()); // Initialized automatically to zero.
-    ans += SolveQuadraticProblem(my_H_, y_, SolverOptions(), &v); // The objective function
+    Vector<double> v(y_.Dim());  // Initialized automatically to zero.
+    ans += SolveQuadraticProblem(my_H_, y_, SolverOptions(),
+                                 &v);  // The objective function
     // change from estimating this vector.
   }
   return ans;
@@ -123,15 +121,15 @@ BaseFloat SgmmClusterable::Objf() const {
 void SgmmClusterable::SetZero() {
   gamma_.SetZero();
   y_.SetZero();
-  my_H_.SetZero(); // Should work even if empty.
+  my_H_.SetZero();  // Should work even if empty.
 }
 
 void SgmmClusterable::Add(const Clusterable &other_in) {
   const SgmmClusterable *other =
-      static_cast<const SgmmClusterable*>(&other_in);
+      static_cast<const SgmmClusterable *>(&other_in);
   gamma_.AddVec(1.0, other->gamma_);
   y_.AddVec(1.0, other->y_);
-  if (!H_.empty()) { // we need to compute my_H_.
+  if (!H_.empty()) {  // we need to compute my_H_.
     if (my_H_.NumRows() != 0 && other->my_H_.NumRows() != 0)
       my_H_.AddSp(1.0, other->my_H_);
     else {
@@ -143,7 +141,7 @@ void SgmmClusterable::Add(const Clusterable &other_in) {
 
 void SgmmClusterable::Sub(const Clusterable &other_in) {
   const SgmmClusterable *other =
-      static_cast<const SgmmClusterable*>(&other_in);
+      static_cast<const SgmmClusterable *>(&other_in);
   gamma_.AddVec(-1.0, other->gamma_);
   y_.AddVec(-1.0, other->y_);
   if (!H_.empty()) {
@@ -156,16 +154,15 @@ void SgmmClusterable::Sub(const Clusterable &other_in) {
   }
 }
 
-BaseFloat SgmmClusterable::Normalizer() const {
-  return gamma_.Sum();
-}
+BaseFloat SgmmClusterable::Normalizer() const { return gamma_.Sum(); }
 
 Clusterable *SgmmClusterable::Copy() const {
   SgmmClusterable *ans = new SgmmClusterable(sgmm_, H_);
   ans->gamma_.CopyFromVec(gamma_);
   ans->y_.CopyFromVec(y_);
   if (!H_.empty()) {
-    if (my_H_.NumRows() == 0.0) ans->ComputeH();
+    if (my_H_.NumRows() == 0.0)
+      ans->ComputeH();
     else {
       ans->my_H_.Resize(my_H_.NumRows());
       ans->my_H_.CopyFromSp(my_H_);
@@ -194,18 +191,17 @@ Clusterable *SgmmClusterable::ReadNew(std::istream &is, bool binary) const {
   return ans;
 }
 
-
-bool AccumulateSgmmTreeStats(const TransitionModel &trans_model,
-                             const AmSgmm &am_sgmm,
-                             const std::vector<SpMatrix<double> > &H,
-                             int N, // context window size.
-                             int P, // central position.
-                             const std::vector<int32> &ci_phones, // must be sorted
-                             const std::vector<int32> &alignment,
-                             const std::vector<std::vector<int32> > &gselect,
-                             const SgmmPerSpkDerivedVars &per_spk_vars,
-                             const Matrix<BaseFloat> &features,
-                             std::map<EventType, SgmmClusterable*> *stats) {
+bool AccumulateSgmmTreeStats(
+    const TransitionModel &trans_model, const AmSgmm &am_sgmm,
+    const std::vector<SpMatrix<double> > &H,
+    int N,                                // context window size.
+    int P,                                // central position.
+    const std::vector<int32> &ci_phones,  // must be sorted
+    const std::vector<int32> &alignment,
+    const std::vector<std::vector<int32> > &gselect,
+    const SgmmPerSpkDerivedVars &per_spk_vars,
+    const Matrix<BaseFloat> &features,
+    std::map<EventType, SgmmClusterable *> *stats) {
   KALDI_ASSERT(IsSortedAndUniq(ci_phones));
   std::vector<std::vector<int32> > split_alignment;
   bool ans = SplitToPhones(trans_model, alignment, &split_alignment);
@@ -215,45 +211,48 @@ bool AccumulateSgmmTreeStats(const TransitionModel &trans_model,
   }
   int t = 0;
   SgmmPerFrameDerivedVars per_frame_vars;
-  
-  KALDI_ASSERT(features.NumRows() == static_cast<int32>(alignment.size())
-               && alignment.size() == gselect.size());
+
+  KALDI_ASSERT(features.NumRows() == static_cast<int32>(alignment.size()) &&
+               alignment.size() == gselect.size());
   for (int i = -N; i < static_cast<int>(split_alignment.size()); i++) {
     // consider window starting at i, only if i+P is within
     // list of phones.
     if (i + P >= 0 && i + P < static_cast<int>(split_alignment.size())) {
-      int32 central_phone = trans_model.TransitionIdToPhone(split_alignment[i+P][0]);
-      bool is_ctx_dep = ! std::binary_search(ci_phones.begin(),
-                                             ci_phones.end(),
-                                             central_phone);
+      int32 central_phone =
+          trans_model.TransitionIdToPhone(split_alignment[i + P][0]);
+      bool is_ctx_dep = !std::binary_search(ci_phones.begin(), ci_phones.end(),
+                                            central_phone);
       EventType evec;
       for (int j = 0; j < N; j++) {
         int phone;
         if (i + j >= 0 && i + j < static_cast<int>(split_alignment.size()))
-          phone = trans_model.TransitionIdToPhone(split_alignment[i+j][0]);
+          phone = trans_model.TransitionIdToPhone(split_alignment[i + j][0]);
         else
           phone = 0;  // ContextDependency class uses 0 to mean "out of window".
-        
+
         if (is_ctx_dep || j == P)
-          evec.push_back(std::make_pair(static_cast<EventKeyType>(j), static_cast<EventValueType>(phone)));
+          evec.push_back(std::make_pair(static_cast<EventKeyType>(j),
+                                        static_cast<EventValueType>(phone)));
       }
-      for (int j = 0; j < static_cast<int>(split_alignment[i+P].size());j++) {
+      for (int j = 0; j < static_cast<int>(split_alignment[i + P].size());
+           j++) {
         // for central phone of this window...
         EventType evec_more(evec);
-        int32 pdf_id = trans_model.TransitionIdToPdf(split_alignment[i+P][j]),
-            pdf_class = trans_model.TransitionIdToPdfClass(split_alignment[i+P][j]);
+        int32 pdf_id = trans_model.TransitionIdToPdf(split_alignment[i + P][j]),
+              pdf_class =
+                  trans_model.TransitionIdToPdfClass(split_alignment[i + P][j]);
         // pdf_id represents the acoustic state in the current model.
         // pdf_class will normally by 0, 1 or 2 for a 3-state HMM.
-        
+
         std::pair<EventKeyType, EventValueType> pr(kPdfClass, pdf_class);
         evec_more.push_back(pr);
         std::sort(evec_more.begin(), evec_more.end());  // these must be sorted!
         if (stats->count(evec_more) == 0)
           (*stats)[evec_more] = new SgmmClusterable(am_sgmm, H);
 
-        am_sgmm.ComputePerFrameVars(features.Row(t), gselect[t], per_spk_vars, 0.0,
-                                    &per_frame_vars);
-        BaseFloat weight = 1.0; // weight is one, since we have alignment.
+        am_sgmm.ComputePerFrameVars(features.Row(t), gselect[t], per_spk_vars,
+                                    0.0, &per_frame_vars);
+        BaseFloat weight = 1.0;  // weight is one, since we have alignment.
         (*stats)[evec_more]->Accumulate(per_frame_vars, pdf_id, weight);
         t++;
       }
@@ -265,10 +264,11 @@ bool AccumulateSgmmTreeStats(const TransitionModel &trans_model,
 
 void SgmmClusterable::ComputeH() {
   // We're computing my_H_, as a weighted sum of H_, with gamma_ as the
-  // weights.  
-  KALDI_ASSERT(!H_.empty() && my_H_.NumRows() == 0); // Invalid to call this if H_ empty,
+  // weights.
+  KALDI_ASSERT(!H_.empty() &&
+               my_H_.NumRows() == 0);  // Invalid to call this if H_ empty,
   // or my_H_ already set up.
-  my_H_.Resize(H_[0].NumRows()); // will initialize to zero.
+  my_H_.Resize(H_[0].NumRows());  // will initialize to zero.
   KALDI_ASSERT(static_cast<int32>(H_.size()) == gamma_.Dim());
   for (int32 i = 0; i < gamma_.Dim(); i++) {
     double gamma = gamma_(i);
@@ -276,5 +276,4 @@ void SgmmClusterable::ComputeH() {
   }
 }
 
-
-} // end namespace kaldi
+}  // end namespace kaldi

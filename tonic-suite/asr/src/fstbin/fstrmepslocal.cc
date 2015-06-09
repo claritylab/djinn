@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/parse-options.h"
@@ -26,17 +25,20 @@
 #include "fstext/determinize-star.h"
 #include "fstext/fstext-utils.h"
 
-
 /*
  A test example:
- ( echo "0 1 1 0"; echo "1 2 0 2"; echo "2 0"; ) | fstcompile | fstrmepslocal | fstprint
+ ( echo "0 1 1 0"; echo "1 2 0 2"; echo "2 0"; ) | fstcompile | fstrmepslocal |
+fstprint
 # prints:
 # 0     1    1    2
 # 1
- ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal | fstprint
+ ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal |
+fstprint
 # 0
-  ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal | fstprint
-  ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal --use-log=true | fstprint
+  ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal |
+fstprint
+  ( echo "0 1 0 0"; echo "0 0"; echo "1 0" ) | fstcompile | fstrmepslocal
+--use-log=true | fstprint
 #  0    -0.693147182
 
 */
@@ -48,8 +50,10 @@ int main(int argc, char *argv[]) {
     using kaldi::int32;
 
     const char *usage =
-        "Removes some (but not all) epsilons in an algorithm that will always reduce the number of\n"
-        "arcs+states.  Option to preserves equivalence in tropical or log semiring, and\n"
+        "Removes some (but not all) epsilons in an algorithm that will always "
+        "reduce the number of\n"
+        "arcs+states.  Option to preserves equivalence in tropical or log "
+        "semiring, and\n"
         "if in tropical, stochasticit in either log or tropical.\n"
         "\n"
         "Usage:  fstrmepslocal  [in.fst [out.fst] ]\n";
@@ -69,7 +73,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string fst_in_filename = po.GetOptArg(1),
-        fst_out_filename = po.GetOptArg(2);
+                fst_out_filename = po.GetOptArg(2);
 
     VectorFst<StdArc> *fst = ReadFstKaldi(fst_in_filename);
 
@@ -92,9 +96,8 @@ int main(int argc, char *argv[]) {
     WriteFstKaldi(*fst, fst_out_filename);
     delete fst;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

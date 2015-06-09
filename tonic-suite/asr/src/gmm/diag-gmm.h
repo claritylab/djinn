@@ -38,7 +38,8 @@ namespace kaldi {
 class FullGmm;
 class DiagGmmNormal;
 
-/** \class DiagGmm Definition for Gaussian Mixture Model with diagonal covariances
+/** \class DiagGmm Definition for Gaussian Mixture Model with diagonal
+ * covariances
  */
 class DiagGmm {
   /// this makes it a little easier to modify the internals
@@ -46,9 +47,9 @@ class DiagGmm {
 
  public:
   /// Empty constructor.
-  DiagGmm() : valid_gconsts_(false) { }
+  DiagGmm() : valid_gconsts_(false) {}
 
-  explicit DiagGmm(const DiagGmm &gmm): valid_gconsts_(false) {
+  explicit DiagGmm(const DiagGmm &gmm) : valid_gconsts_(false) {
     CopyFromDiagGmm(gmm);
   }
 
@@ -58,13 +59,14 @@ class DiagGmm {
 
   /// Copies from DiagGmmNormal; does not resize.
   void CopyFromNormal(const DiagGmmNormal &diag_gmm_normal);
-  
-  DiagGmm(int32 nMix, int32 dim): valid_gconsts_(false) { Resize(nMix, dim); }
+
+  DiagGmm(int32 nMix, int32 dim) : valid_gconsts_(false) { Resize(nMix, dim); }
 
   /// Constructor that allows us to merge GMMs with weights.  Weights must sum
   /// to one, or this GMM will not be properly normalized (we don't check this).
   /// Weights must be positive (we check this).
-  explicit DiagGmm(const std::vector<std::pair<BaseFloat, const DiagGmm*> > &gmms);
+  explicit DiagGmm(
+      const std::vector<std::pair<BaseFloat, const DiagGmm *> > &gmms);
 
   /// Resizes arrays to this dim. Does not initialize data.
   void Resize(int32 nMix, int32 dim);
@@ -92,7 +94,6 @@ class DiagGmm {
   void LogLikelihoods(const MatrixBase<BaseFloat> &data,
                       Matrix<BaseFloat> *loglikes) const;
 
-  
   /// Outputs the per-component log-likelihoods of a subset of mixture
   /// components.  Note: at output, loglikes->Dim() will equal indices.size().
   /// loglikes[i] will correspond to the log-likelihood of the Gaussian
@@ -101,7 +102,7 @@ class DiagGmm {
                                const std::vector<int32> &indices,
                                Vector<BaseFloat> *loglikes) const;
 
-  /// Get gaussian selection information for one frame.  Returns og-like 
+  /// Get gaussian selection information for one frame.  Returns og-like
   /// this frame.  Output is the best "num_gselect" indices, sorted from best to
   /// worst likelihood.  If "num_gselect" > NumGauss(), sets it to NumGauss().
   BaseFloat GaussianSelection(const VectorBase<BaseFloat> &data,
@@ -114,7 +115,7 @@ class DiagGmm {
   BaseFloat GaussianSelection(const MatrixBase<BaseFloat> &data,
                               int32 num_gselect,
                               std::vector<std::vector<int32> > *output) const;
-  
+
   /// Get gaussian selection information for one frame.  Returns log-like for
   /// this frame.  Output is the best "num_gselect" indices that were
   /// preselected, sorted from best to worst likelihood.  If "num_gselect" >
@@ -122,7 +123,7 @@ class DiagGmm {
   BaseFloat GaussianSelectionPreselect(const VectorBase<BaseFloat> &data,
                                        const std::vector<int32> &preselect,
                                        int32 num_gselect,
-                                       std::vector<int32> *output) const;    
+                                       std::vector<int32> *output) const;
 
   /// Computes the posterior probabilities of all Gaussian components given
   /// a data point. Returns the log-likehood of the data given the GMM.
@@ -188,50 +189,50 @@ class DiagGmm {
   void RemoveComponents(const std::vector<int32> &gauss, bool renorm_weights);
 
   /// Mutators for both float or double
-  template<class Real>
-  void SetWeights(const VectorBase<Real> &w);    ///< Set mixure weights
+  template <class Real>
+  void SetWeights(const VectorBase<Real> &w);  ///< Set mixure weights
 
   /// Use SetMeans to update only the Gaussian means (and not variances)
-  template<class Real>
+  template <class Real>
   void SetMeans(const MatrixBase<Real> &m);
   /// Use SetInvVarsAndMeans if updating both means and (inverse) variances
-  template<class Real>
+  template <class Real>
   void SetInvVarsAndMeans(const MatrixBase<Real> &invvars,
                           const MatrixBase<Real> &means);
   /// Set the (inverse) variances and recompute means_invvars_
-  template<class Real>
+  template <class Real>
   void SetInvVars(const MatrixBase<Real> &v);
 
   /// Accessor for covariances.
-  template<class Real>
+  template <class Real>
   void GetVars(Matrix<Real> *v) const;
   /// Accessor for means.
-  template<class Real>
+  template <class Real>
   void GetMeans(Matrix<Real> *m) const;
 
   /// Mutators for single component, supports float or double
   /// Set mean for a single component - internally multiplies with inv(var)
-  template<class Real>
+  template <class Real>
   void SetComponentMean(int32 gauss, const VectorBase<Real> &in);
   /// Set inv-var for single component (recommend to do this before
   /// setting the mean, if doing both, for numerical reasons).
-  template<class Real>
+  template <class Real>
   void SetComponentInvVar(int32 gauss, const VectorBase<Real> &in);
   /// Set weight for single component.
   inline void SetComponentWeight(int32 gauss, BaseFloat weight);
 
   /// Accessor for single component mean
-  template<class Real>
+  template <class Real>
   void GetComponentMean(int32 gauss, VectorBase<Real> *out) const;
 
   /// Accessor for single component variance.
-  template<class Real>
+  template <class Real>
   void GetComponentVariance(int32 gauss, VectorBase<Real> *out) const;
 
  private:
   /// Equals log(weight) - 0.5 * (log det(var) + mean*mean*inv(var))
   Vector<BaseFloat> gconsts_;
-  bool valid_gconsts_;   ///< Recompute gconsts_ if false
+  bool valid_gconsts_;               ///< Recompute gconsts_ if false
   Vector<BaseFloat> weights_;        ///< weights (not log).
   Matrix<BaseFloat> inv_vars_;       ///< Inverted (diagonal) variances
   Matrix<BaseFloat> means_invvars_;  ///< Means times inverted variance
@@ -250,11 +251,9 @@ class DiagGmm {
 };
 
 /// ostream operator that calls DiagGMM::Write()
-std::ostream &
-operator << (std::ostream &os, const kaldi::DiagGmm &gmm);
+std::ostream &operator<<(std::ostream &os, const kaldi::DiagGmm &gmm);
 /// istream operator that calls DiagGMM::Read()
-std::istream &
-operator >> (std::istream &is, kaldi::DiagGmm &gmm);
+std::istream &operator>>(std::istream &is, kaldi::DiagGmm &gmm);
 
 }  // End namespace kaldi
 

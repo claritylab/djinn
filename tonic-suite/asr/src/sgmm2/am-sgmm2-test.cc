@@ -41,8 +41,7 @@ void TestSgmm2Init(const AmSgmm2 &sgmm) {
     feat(d) = kaldi::RandGauss();
   }
   kaldi::Sgmm2PerFrameDerivedVars frame_vars;
-  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(),
-                    sgmm.PhoneSpaceDim());
+  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(), sgmm.PhoneSpaceDim());
 
   std::vector<int32> gselect;
   sgmm.GaussianSelection(config, feat, &gselect);
@@ -80,7 +79,8 @@ void TestSgmm2Init(const AmSgmm2 &sgmm) {
     std::vector<int32> pdf2group(sgmm.NumPdfs());
     for (int32 i = 0; i < sgmm.NumPdfs(); i++) pdf2group[i] = sgmm.Pdf2Group(i);
     sgmm3->InitializeFromFullGmm(sgmm.full_ubm(), pdf2group,
-                                 sgmm.PhoneSpaceDim(), sgmm.SpkSpaceDim(), true, 0.9);
+                                 sgmm.PhoneSpaceDim(), sgmm.SpkSpaceDim(), true,
+                                 0.9);
   }
   sgmm3->ComputeNormalizers();
   sgmm3->GaussianSelection(config, feat, &gselect);
@@ -104,8 +104,7 @@ void TestSgmm2IO(const AmSgmm2 &sgmm) {
     feat(d) = kaldi::RandGauss();
   }
   kaldi::Sgmm2PerFrameDerivedVars frame_vars;
-  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(),
-                    sgmm.PhoneSpaceDim());
+  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(), sgmm.PhoneSpaceDim());
 
   std::vector<int32> gselect;
   sgmm.GaussianSelection(config, feat, &gselect);
@@ -117,7 +116,7 @@ void TestSgmm2IO(const AmSgmm2 &sgmm) {
 
   // First, non-binary write
   sgmm.Write(kaldi::Output("tmpf", false).Stream(), false,
-      kaldi::kSgmmWriteAll);
+             kaldi::kSgmmWriteAll);
 
   bool binary_in;
   AmSgmm2 *sgmm1 = new AmSgmm2();
@@ -132,7 +131,7 @@ void TestSgmm2IO(const AmSgmm2 &sgmm) {
 
   // Next, binary write
   sgmm1->Write(kaldi::Output("tmpfb", true).Stream(), true,
-      kaldi::kSgmmWriteAll);
+               kaldi::kSgmmWriteAll);
   delete sgmm1;
 
   AmSgmm2 *sgmm2 = new AmSgmm2();
@@ -154,7 +153,7 @@ void TestSgmm2Substates(const AmSgmm2 &sgmm) {
   int32 target_substates = 2 * sgmm.NumPdfs();
   kaldi::Vector<BaseFloat> occs(sgmm.NumPdfs());
   for (int32 i = 0; i < occs.Dim(); i++)
-    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform()+1);
+    occs(i) = std::fabs(kaldi::RandGauss()) * (kaldi::RandUniform() + 1);
   AmSgmm2 *sgmm1 = new AmSgmm2();
   sgmm1->CopyFromSgmm2(sgmm, false, false);
   Sgmm2SplitSubstatesConfig cfg;
@@ -177,7 +176,7 @@ void TestSgmm2Substates(const AmSgmm2 &sgmm) {
   Sgmm2PerSpkDerivedVars empty;
   Sgmm2PerFrameDerivedVars per_frame;
   sgmm.ComputePerFrameVars(feat, gselect, empty, &per_frame);
-  Sgmm2LikelihoodCache sgmm_cache(sgmm.NumGroups(), sgmm.NumPdfs());  
+  Sgmm2LikelihoodCache sgmm_cache(sgmm.NumGroups(), sgmm.NumPdfs());
   BaseFloat loglike = sgmm.LogLikelihood(per_frame, 0, &sgmm_cache, &empty);
 
   sgmm1->GaussianSelection(config, feat, &gselect);
@@ -206,9 +205,9 @@ void TestSgmm2IncreaseDim(const AmSgmm2 &sgmm) {
   std::vector<int32> gselect;
   sgmm.GaussianSelection(config, feat, &gselect);
   Sgmm2PerSpkDerivedVars empty;
-  Sgmm2PerFrameDerivedVars per_frame;  
+  Sgmm2PerFrameDerivedVars per_frame;
   sgmm.ComputePerFrameVars(feat, gselect, empty, &per_frame);
-  Sgmm2LikelihoodCache sgmm_cache(sgmm.NumGroups(), sgmm.NumPdfs());  
+  Sgmm2LikelihoodCache sgmm_cache(sgmm.NumGroups(), sgmm.NumPdfs());
   BaseFloat loglike = sgmm.LogLikelihood(per_frame, 0, &sgmm_cache, &empty);
 
   kaldi::Matrix<BaseFloat> norm_xform;
@@ -219,7 +218,6 @@ void TestSgmm2IncreaseDim(const AmSgmm2 &sgmm) {
   sgmm1->IncreasePhoneSpaceDim(target_phn_dim, norm_xform);
   sgmm1->ComputeNormalizers();
   sgmm1->Check(true);
-
 
   sgmm1->GaussianSelection(config, feat, &gselect);
   sgmm1->ComputePerFrameVars(feat, gselect, empty, &per_frame);
@@ -259,7 +257,7 @@ void TestSgmm2PreXform(const AmSgmm2 &sgmm) {
 }
 
 void UnitTestSgmm2() {
-  size_t dim = 1 + kaldi::RandInt(0, 9);  // random dimension of the gmm
+  size_t dim = 1 + kaldi::RandInt(0, 9);       // random dimension of the gmm
   size_t num_comp = 1 + kaldi::RandInt(0, 9);  // random number of mixtures
   kaldi::FullGmm full_gmm;
   ut::InitRandFullGmm(dim, num_comp, &full_gmm);
@@ -268,7 +266,7 @@ void UnitTestSgmm2() {
   pdf2group.push_back(0);
   AmSgmm2 sgmm;
   kaldi::Sgmm2GselectConfig config;
-  sgmm.InitializeFromFullGmm(full_gmm, pdf2group, dim+1, 0, true, 0.9);
+  sgmm.InitializeFromFullGmm(full_gmm, pdf2group, dim + 1, 0, true, 0.9);
   sgmm.ComputeNormalizers();
   TestSgmm2Init(sgmm);
   TestSgmm2IO(sgmm);
@@ -278,8 +276,7 @@ void UnitTestSgmm2() {
 }
 
 int main() {
-  for (int i = 0; i < 10; i++)
-    UnitTestSgmm2();
+  for (int i = 0; i < 10; i++) UnitTestSgmm2();
   std::cout << "Test OK.\n";
   return 0;
 }

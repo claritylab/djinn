@@ -26,30 +26,30 @@
 
 namespace kaldi {
 
-template<typename Real>
-std::ostream & operator << (std::ostream &os, const VectorBase<Real> &rv) {
+template <typename Real>
+std::ostream &operator<<(std::ostream &os, const VectorBase<Real> &rv) {
   rv.Write(os, false);
   return os;
 }
 
-template<typename Real>
-std::istream &operator >> (std::istream &is, VectorBase<Real> &rv) {
+template <typename Real>
+std::istream &operator>>(std::istream &is, VectorBase<Real> &rv) {
   rv.Read(is, false);
   return is;
 }
 
-template<typename Real>
-std::istream &operator >> (std::istream &is, Vector<Real> &rv) {
+template <typename Real>
+std::istream &operator>>(std::istream &is, Vector<Real> &rv) {
   rv.Read(is, false);
   return is;
 }
 
-template<>
-template<>
+template <>
+template <>
 void VectorBase<float>::AddVec(const float alpha, const VectorBase<float> &rv);
 
-template<>
-template<>
+template <>
+template <>
 void VectorBase<double>::AddVec<double>(const double alpha,
                                         const VectorBase<double> &rv);
 

@@ -33,14 +33,12 @@ int main(int argc, char *argv[]) {
         "e.g.:\n"
         " gmm-copy --binary=false 1.mdl 1_txt.mdl\n";
 
+    bool binary_write = true, copy_am = true, copy_tm = true;
 
-    bool binary_write = true,
-        copy_am = true,
-        copy_tm = true;
-    
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("copy-am", &copy_am, "Copy the acoustic model (AmDiagGmm object)");
+    po.Register("copy-am", &copy_am,
+                "Copy the acoustic model (AmDiagGmm object)");
     po.Register("copy-tm", &copy_tm, "Copy the transition model");
 
     po.Read(argc, argv);
@@ -51,32 +49,26 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        model_out_filename = po.GetArg(2);
+                model_out_filename = po.GetArg(2);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
     {
       bool binary_read;
       Input ki(model_in_filename, &binary_read);
-      if (copy_tm)
-        trans_model.Read(ki.Stream(), binary_read);
-      if (copy_am)
-        am_gmm.Read(ki.Stream(), binary_read);
+      if (copy_tm) trans_model.Read(ki.Stream(), binary_read);
+      if (copy_am) am_gmm.Read(ki.Stream(), binary_read);
     }
 
     {
       Output ko(model_out_filename, binary_write);
-      if (copy_tm)
-        trans_model.Write(ko.Stream(), binary_write);
-      if (copy_am)
-        am_gmm.Write(ko.Stream(), binary_write);
+      if (copy_tm) trans_model.Write(ko.Stream(), binary_write);
+      if (copy_am) am_gmm.Write(ko.Stream(), binary_write);
     }
 
     KALDI_LOG << "Written model to " << model_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

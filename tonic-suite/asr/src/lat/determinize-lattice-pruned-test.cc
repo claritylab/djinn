@@ -33,33 +33,33 @@ namespace fst {
 // test that determinization proceeds correctly on general
 // FSTs (not guaranteed determinzable, but we use the
 // max-states option to stop it getting out of control).
-template<class Arc> void TestDeterminizeLatticePruned() {
+template <class Arc>
+void TestDeterminizeLatticePruned() {
   typedef kaldi::int32 Int;
   typedef typename Arc::Weight Weight;
   typedef ArcTpl<CompactLatticeWeightTpl<Weight, Int> > CompactArc;
-  
-  for(int i = 0; i < 100; i++) {
+
+  for (int i = 0; i < 100; i++) {
     RandFstOptions opts;
     opts.n_states = 4;
     opts.n_arcs = 10;
     opts.n_final = 2;
     opts.allow_empty = false;
-    opts.weight_multiplier = 0.5; // impt for the randomly generated weights
+    opts.weight_multiplier = 0.5;  // impt for the randomly generated weights
     opts.acyclic = true;
     // to be exactly representable in float,
-    // or this test fails because numerical differences can cause symmetry in 
+    // or this test fails because numerical differences can cause symmetry in
     // weights to be broken, which causes the wrong path to be chosen as far
     // as the string part is concerned.
-    
+
     VectorFst<Arc> *fst = RandPairFst<Arc>(opts);
 
     bool sorted = TopSort(fst);
     KALDI_ASSERT(sorted);
 
     ILabelCompare<Arc> ilabel_comp;
-    if (kaldi::Rand() % 2 == 0)
-      ArcSort(fst, ilabel_comp);
-    
+    if (kaldi::Rand() % 2 == 0) ArcSort(fst, ilabel_comp);
+
     std::cout << "FST before lattice-determinizing is:\n";
     {
       FstPrinter<Arc> fstprinter(*fst, NULL, NULL, NULL, false, true);
@@ -71,7 +71,8 @@ template<class Arc> void TestDeterminizeLatticePruned() {
       lat_opts.max_mem = ((kaldi::Rand() % 2 == 0) ? 100 : 1000);
       lat_opts.max_states = ((kaldi::Rand() % 2 == 0) ? -1 : 20);
       lat_opts.max_arcs = ((kaldi::Rand() % 2 == 0) ? -1 : 30);
-      bool ans = DeterminizeLatticePruned<Weight>(*fst, 10.0, &det_fst, lat_opts);
+      bool ans =
+          DeterminizeLatticePruned<Weight>(*fst, 10.0, &det_fst, lat_opts);
 
       std::cout << "FST after lattice-determinizing is:\n";
       {
@@ -83,30 +84,33 @@ template<class Arc> void TestDeterminizeLatticePruned() {
       // [note: it's not normal determinization, it's taking the best path
       // for any input-symbol sequence....
 
-
       VectorFst<Arc> pruned_fst(*fst);
-      if (pruned_fst.NumStates() != 0)
-        kaldi::PruneLattice(10.0, &pruned_fst);
-      
+      if (pruned_fst.NumStates() != 0) kaldi::PruneLattice(10.0, &pruned_fst);
+
       VectorFst<CompactArc> compact_pruned_fst, compact_pruned_det_fst;
       ConvertLattice<Weight, Int>(pruned_fst, &compact_pruned_fst, false);
       std::cout << "Compact pruned FST is:\n";
       {
-        FstPrinter<CompactArc> fstprinter(compact_pruned_fst, NULL, NULL, NULL, false, true);
+        FstPrinter<CompactArc> fstprinter(compact_pruned_fst, NULL, NULL, NULL,
+                                          false, true);
         fstprinter.Print(&std::cout, "standard output");
       }
       ConvertLattice<Weight, Int>(det_fst, &compact_pruned_det_fst, false);
-      
+
       std::cout << "Compact version of determinized FST is:\n";
       {
-        FstPrinter<CompactArc> fstprinter(compact_pruned_det_fst, NULL, NULL, NULL, false, true);
+        FstPrinter<CompactArc> fstprinter(compact_pruned_det_fst, NULL, NULL,
+                                          NULL, false, true);
         fstprinter.Print(&std::cout, "standard output");
       }
 
       if (ans)
-        KALDI_ASSERT(RandEquivalent(compact_pruned_det_fst, compact_pruned_fst, 5/*paths*/, 0.01/*delta*/, kaldi::Rand()/*seed*/, 100/*path length, max*/));
+        KALDI_ASSERT(RandEquivalent(
+            compact_pruned_det_fst, compact_pruned_fst, 5 /*paths*/,
+            0.01 /*delta*/, kaldi::Rand() /*seed*/, 100 /*path length, max*/));
     } catch (...) {
-      std::cout << "Failed to lattice-determinize this FST (probably not determinizable)\n";
+      std::cout << "Failed to lattice-determinize this FST (probably not "
+                   "determinizable)\n";
     }
     delete fst;
   }
@@ -114,11 +118,12 @@ template<class Arc> void TestDeterminizeLatticePruned() {
 
 // test that determinization proceeds without crash on acyclic FSTs
 // (guaranteed determinizable in this sense).
-template<class Arc> void TestDeterminizeLatticePruned2() {
+template <class Arc>
+void TestDeterminizeLatticePruned2() {
   typedef typename Arc::Weight Weight;
   RandFstOptions opts;
   opts.acyclic = true;
-  for(int i = 0; i < 100; i++) {
+  for (int i = 0; i < 100; i++) {
     VectorFst<Arc> *fst = RandPairFst<Arc>(opts);
     std::cout << "FST before lattice-determinizing is:\n";
     {
@@ -136,8 +141,7 @@ template<class Arc> void TestDeterminizeLatticePruned2() {
   }
 }
 
-
-} // end namespace fst
+}  // end namespace fst
 
 int main() {
   using namespace fst;

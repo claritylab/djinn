@@ -22,27 +22,23 @@
 
 using namespace kaldi;
 
-void
-test_io(const RegressionTree &regtree,
-        const AmDiagGmm &acmodel,
-        bool binary) {
+void test_io(const RegressionTree &regtree, const AmDiagGmm &acmodel,
+             bool binary) {
   std::cout << "Testing I/O, binary = " << binary << '\n';
 
-  regtree.Write(Output("tmp_regtree", binary).Stream(),
-                binary);
+  regtree.Write(Output("tmp_regtree", binary).Stream(), binary);
 
   bool binary_in;
   RegressionTree regtree2;
 
   Input ki("tmp_regtree", &binary_in);
-  regtree2.Read(ki.Stream(),
-                binary_in, acmodel);
+  regtree2.Read(ki.Stream(), binary_in, acmodel);
 
   std::ostringstream s1, s2;
   regtree.Write(s1, false);
   regtree2.Write(s2, false);
   KALDI_ASSERT(s1.str() == s2.str());
-  
+
   unlink("tmp_regtree");
 }
 
@@ -56,8 +52,7 @@ test_io(const RegressionTree &regtree,
 //  size_t num_comp
 // }
 
-void
-rand_diag_gmm(size_t num_comp, size_t dim, DiagGmm *gmm) {
+void rand_diag_gmm(size_t num_comp, size_t dim, DiagGmm *gmm) {
   Vector<BaseFloat> weights(num_comp);
   Matrix<BaseFloat> means(num_comp, dim);
   Matrix<BaseFloat> vars(num_comp, dim);
@@ -65,13 +60,13 @@ rand_diag_gmm(size_t num_comp, size_t dim, DiagGmm *gmm) {
   BaseFloat tot_weight = 0.0;
   for (size_t m = 0; m < num_comp; m++) {
     weights(m) = kaldi::RandUniform();
-    for (size_t d= 0; d < dim; d++) {
+    for (size_t d = 0; d < dim; d++) {
       means(m, d) = kaldi::RandGauss();
       vars(m, d) = exp(kaldi::RandGauss()) + 1e-5;
     }
     tot_weight += weights(m);
   }
-  weights.Scale(1.0/tot_weight);
+  weights.Scale(1.0 / tot_weight);
 
   vars.InvertElements();
   gmm->SetWeights(weights);
@@ -79,8 +74,7 @@ rand_diag_gmm(size_t num_comp, size_t dim, DiagGmm *gmm) {
   gmm->ComputeGconsts();
 }
 
-void
-UnitTestRegressionTree() {
+void UnitTestRegressionTree() {
   // using namespace kaldi;
 
   // dimension of the gmm
@@ -88,10 +82,11 @@ UnitTestRegressionTree() {
   size_t dim = 2;
 
   // number of mixtures in the data
-  size_t num_comp = kaldi::RandInt(2, 2);;
+  size_t num_comp = kaldi::RandInt(2, 2);
+  ;
 
-  std::cout << "Running test with " << num_comp << " components and "
-    << dim << " dimensional vectors" << '\n';
+  std::cout << "Running test with " << num_comp << " components and " << dim
+            << " dimensional vectors" << '\n';
 
   // generate random gmm
   DiagGmm gmm1;
@@ -122,7 +117,7 @@ UnitTestRegressionTree() {
   size_t num_pdfs = 2;
   Vector<BaseFloat> occs(num_pdfs);
   for (int32 i = 0; i < static_cast<int32>(num_pdfs); i++) {
-    occs(i) = 1.0/static_cast<BaseFloat>(num_pdfs*num_comp);
+    occs(i) = 1.0 / static_cast<BaseFloat>(num_pdfs * num_comp);
   }
 
   for (int32 i = 0; i < gmm1.NumGauss(); i++) {
@@ -134,8 +129,7 @@ UnitTestRegressionTree() {
 
   RegressionTree regtree;
   std::vector<int32> sil_pdfs;
-  if (Rand() % 2 == 0)
-    sil_pdfs.push_back(Rand() % 2);
+  if (Rand() % 2 == 0) sil_pdfs.push_back(Rand() % 2);
   regtree.BuildTree(occs, sil_pdfs, acmodel, 2);
 
   // test I/O
@@ -143,10 +137,8 @@ UnitTestRegressionTree() {
   // test_io(regtree, acmodel, true);
 }
 
-int
-main() {
+int main() {
   // repeat the test X times
-  for (int i = 0; i < 4; i++)
-    UnitTestRegressionTree();
+  for (int i = 0; i < 4; i++) UnitTestRegressionTree();
   std::cout << "Test OK.\n";
 }

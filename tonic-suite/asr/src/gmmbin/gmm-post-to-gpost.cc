@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -30,7 +29,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Convert state-level posteriors to Gaussian-level posteriors\n"
-        "Usage:  gmm-post-to-gpost [options] <model-in> <feature-rspecifier> <posteriors-rspecifier> "
+        "Usage:  gmm-post-to-gpost [options] <model-in> <feature-rspecifier> "
+        "<posteriors-rspecifier> "
         "<gpost-wspecifier>\n"
         "e.g.: \n"
         " gmm-post-to-gpost 1.mdl scp:train.scp ark:1.post ark:1.gpost\n";
@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
     bool binary = true;
     BaseFloat rand_prune = 0.0;
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("rand-prune", &rand_prune, "Randomized pruning of posteriors less than this");
+    po.Register("rand-prune", &rand_prune,
+                "Randomized pruning of posteriors less than this");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -48,9 +49,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        gpost_wspecifier = po.GetArg(4);
+                feature_rspecifier = po.GetArg(2),
+                posteriors_rspecifier = po.GetArg(3),
+                gpost_wspecifier = po.GetArg(4);
 
     using namespace kaldi;
     typedef kaldi::int32 int32;
@@ -83,7 +84,8 @@ int main(int argc, char *argv[]) {
         GaussPost gpost(posterior.size());
 
         if (posterior.size() != mat.NumRows()) {
-          KALDI_WARN << "Posterior vector has wrong size "<< (posterior.size()) << " vs. "<< (mat.NumRows());
+          KALDI_WARN << "Posterior vector has wrong size " << (posterior.size())
+                     << " vs. " << (mat.NumRows());
           num_other_error++;
           continue;
         }
@@ -105,8 +107,7 @@ int main(int argc, char *argv[]) {
             this_post_vec.Scale(weight);
             if (rand_prune > 0.0)
               for (int32 k = 0; k < this_post_vec.Dim(); k++)
-                this_post_vec(k) = RandPrune(this_post_vec(k),
-                                             rand_prune);
+                this_post_vec(k) = RandPrune(this_post_vec(k), rand_prune);
             if (!this_post_vec.IsZero())
               gpost[i].push_back(std::make_pair(pdf_id, this_post_vec));
             tot_like_this_file += like * weight;
@@ -114,8 +115,8 @@ int main(int argc, char *argv[]) {
           }
         }
         KALDI_VLOG(1) << "Average like for this file is "
-                      << (tot_like_this_file/tot_weight) << " over "
-                      << tot_weight <<" frames.";
+                      << (tot_like_this_file / tot_weight) << " over "
+                      << tot_weight << " frames.";
         tot_like += tot_like_this_file;
         tot_t += tot_weight;
         gpost_writer.Write(key, gpost);
@@ -126,15 +127,15 @@ int main(int argc, char *argv[]) {
               << " with other errors.";
 
     KALDI_LOG << "Overall avg like per frame (Gaussian only) = "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
-    
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
+
     KALDI_LOG << "Done converting post to gpost";
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

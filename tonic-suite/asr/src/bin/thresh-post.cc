@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -25,18 +24,19 @@
 #include "hmm/hmm-utils.h"
 #include "hmm/posterior.h"
 
-
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   typedef kaldi::int32 int32;
   try {
     const char *usage =
-        "Down-weight posteriors that are lower than a supplied confidence threshold.\n"
-        "(for those below the weight, rather than set to zero we downweight according\n"
+        "Down-weight posteriors that are lower than a supplied confidence "
+        "threshold.\n"
+        "(for those below the weight, rather than set to zero we downweight "
+        "according\n"
         "to the --weight option)\n"
         "\n"
-        "Usage:  thresh-post [options] <posteriors-rspecifier> <posteriors-wspecifier>\n"
+        "Usage:  thresh-post [options] <posteriors-rspecifier> "
+        "<posteriors-wspecifier>\n"
         "e.g.: thresh-post --threshold=0.9 --scale=0.1 ark:- ark:-\n";
 
     ParseOptions po(usage);
@@ -44,9 +44,11 @@ int main(int argc, char *argv[]) {
     BaseFloat threshold = 0.9;
     BaseFloat scale = 0.1;
 
-    po.Register("threshold", &threshold, "Threshold below which we down-weight posteriors.");
-    po.Register("scale", &scale, "Scale which we apply to posteriors below the threshold.");
-    
+    po.Register("threshold", &threshold,
+                "Threshold below which we down-weight posteriors.");
+    po.Register("scale", &scale,
+                "Scale which we apply to posteriors below the threshold.");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -55,15 +57,16 @@ int main(int argc, char *argv[]) {
     }
 
     std::string posteriors_rspecifier = po.GetArg(1),
-        posteriors_wspecifier = po.GetArg(2);
+                posteriors_wspecifier = po.GetArg(2);
 
-    KALDI_ASSERT(threshold < 1.0 && threshold >= 0.0 && scale >= 0.0 && scale <= 1.0);
-    
+    KALDI_ASSERT(threshold < 1.0 && threshold >= 0.0 && scale >= 0.0 &&
+                 scale <= 1.0);
+
     int32 num_posteriors = 0;
     double total_weight_in = 0.0, total_weight_out = 0.0;
     SequentialPosteriorReader posterior_reader(posteriors_rspecifier);
     PosteriorWriter posterior_writer(posteriors_wspecifier);
-    
+
     for (; !posterior_reader.Done(); posterior_reader.Next()) {
       num_posteriors++;
       // Posterior is vector<vector<pair<int32, BaseFloat> > >
@@ -77,19 +80,16 @@ int main(int argc, char *argv[]) {
           total_weight_in += weight;
           if (weight < threshold) weight *= scale;
           total_weight_out += weight;
-          if (weight != 0.0)
-            new_post[i].push_back(std::make_pair(tid, weight));
+          if (weight != 0.0) new_post[i].push_back(std::make_pair(tid, weight));
         }
       }
       posterior_writer.Write(posterior_reader.Key(), new_post);
     }
-    KALDI_LOG << "thresh-post: thresholded " << num_posteriors 
+    KALDI_LOG << "thresh-post: thresholded " << num_posteriors
               << " posteriors, reduced them by a factor of "
-              << (total_weight_out/total_weight_in) << " on average.";
-  } catch(const std::exception &e) {
+              << (total_weight_out / total_weight_in) << " on average.";
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

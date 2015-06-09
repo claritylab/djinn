@@ -28,8 +28,10 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Compute statistics for fMPE training\n"
         "Usage:  fmpe-acc-stats [options...] <fmpe-object> "
-        "<feat-rspecifier> <feat-diff-rspecifier> <gselect-rspecifier> <stats-out>\n"
-        "Note: gmm-fmpe-acc-stats avoids computing the features an extra time\n";
+        "<feat-rspecifier> <feat-diff-rspecifier> <gselect-rspecifier> "
+        "<stats-out>\n"
+        "Note: gmm-fmpe-acc-stats avoids computing the features an extra "
+        "time\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -41,12 +43,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fmpe_rxfilename = po.GetArg(1),
-        feat_rspecifier = po.GetArg(2),
-        feat_diff_rspecifier = po.GetArg(3),
-        gselect_rspecifier = po.GetArg(4),
-        stats_wxfilename = po.GetArg(5);
-    
+    std::string fmpe_rxfilename = po.GetArg(1), feat_rspecifier = po.GetArg(2),
+                feat_diff_rspecifier = po.GetArg(3),
+                gselect_rspecifier = po.GetArg(4),
+                stats_wxfilename = po.GetArg(5);
+
     Fmpe fmpe;
     ReadKaldiObject(fmpe_rxfilename, &fmpe);
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
     FmpeStats fmpe_stats(fmpe);
 
     int32 num_done = 0, num_err = 0;
-    
+
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
       const Matrix<BaseFloat> feat_in(feat_reader.Value());
@@ -81,14 +82,16 @@ int main(int argc, char *argv[]) {
       }
       const Matrix<BaseFloat> &feat_deriv = diff_reader.Value(key);
 
-      if (feat_deriv.NumCols() == feat_in.NumCols()) { // Only direct derivative.
+      if (feat_deriv.NumCols() ==
+          feat_in.NumCols()) {  // Only direct derivative.
         fmpe.AccStats(feat_in, gselect, feat_deriv, NULL, &fmpe_stats);
-      } else if (feat_deriv.NumCols() == feat_in.NumCols() * 2) { // +indirect.
+      } else if (feat_deriv.NumCols() == feat_in.NumCols() * 2) {  // +indirect.
         SubMatrix<BaseFloat> direct_deriv(feat_deriv, 0, feat_deriv.NumRows(),
                                           0, feat_in.NumCols()),
             indirect_deriv(feat_deriv, 0, feat_deriv.NumRows(),
                            feat_in.NumCols(), feat_in.NumCols());
-        fmpe.AccStats(feat_in, gselect, direct_deriv, &indirect_deriv, &fmpe_stats);
+        fmpe.AccStats(feat_in, gselect, direct_deriv, &indirect_deriv,
+                      &fmpe_stats);
       } else {
         KALDI_ERR << "Mismatch in dimension of feature derivative.";
       }
@@ -99,9 +102,9 @@ int main(int argc, char *argv[]) {
               << " had errors.";
 
     WriteKaldiObject(fmpe_stats, stats_wxfilename, binary);
-    
+
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

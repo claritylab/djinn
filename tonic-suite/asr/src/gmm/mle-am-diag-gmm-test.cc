@@ -38,7 +38,7 @@ void TestAmDiagGmmAccsIO(const AmDiagGmm &am_gmm,
   accs.Init(am_gmm, flags);
   BaseFloat loglike = 0.0;
   for (int32 i = 0; i < feats.NumRows(); i++) {
-    int32 state = RandInt(0, am_gmm.NumPdfs()-1);
+    int32 state = RandInt(0, am_gmm.NumPdfs() - 1);
     loglike += accs.AccumulateForGmm(am_gmm, feats.Row(i), state, 1.0);
   }
   KALDI_LOG << "Data log-likelihood = " << loglike << " over "
@@ -53,9 +53,10 @@ void TestAmDiagGmmAccsIO(const AmDiagGmm &am_gmm,
   am_gmm1->CopyFromAmDiagGmm(am_gmm);
   MleAmDiagGmmUpdate(config, accs, flags, am_gmm1, NULL, NULL);
 
-  int32 check_pdf = RandInt(0, am_gmm.NumPdfs()-1),
-      check_frame = RandInt(0, feats.NumRows()-1);
-  BaseFloat loglike1 = am_gmm1->LogLikelihood(check_pdf, feats.Row(check_frame));
+  int32 check_pdf = RandInt(0, am_gmm.NumPdfs() - 1),
+        check_frame = RandInt(0, feats.NumRows() - 1);
+  BaseFloat loglike1 =
+      am_gmm1->LogLikelihood(check_pdf, feats.Row(check_frame));
   delete am_gmm1;
 
   // First, non-binary write
@@ -68,7 +69,8 @@ void TestAmDiagGmmAccsIO(const AmDiagGmm &am_gmm,
   AmDiagGmm *am_gmm2 = new AmDiagGmm();
   am_gmm2->CopyFromAmDiagGmm(am_gmm);
   MleAmDiagGmmUpdate(config, accs, flags, am_gmm2, NULL, NULL);
-  BaseFloat loglike2 = am_gmm2->LogLikelihood(check_pdf, feats.Row(check_frame));
+  BaseFloat loglike2 =
+      am_gmm2->LogLikelihood(check_pdf, feats.Row(check_frame));
   kaldi::AssertEqual(loglike1, loglike2, 1e-6);
   delete am_gmm2;
   delete accs1;
@@ -82,7 +84,8 @@ void TestAmDiagGmmAccsIO(const AmDiagGmm &am_gmm,
   AmDiagGmm *am_gmm3 = new AmDiagGmm();
   am_gmm3->CopyFromAmDiagGmm(am_gmm);
   MleAmDiagGmmUpdate(config, accs, flags, am_gmm3, NULL, NULL);
-  BaseFloat loglike3 = am_gmm3->LogLikelihood(check_pdf, feats.Row(check_frame));
+  BaseFloat loglike3 =
+      am_gmm3->LogLikelihood(check_pdf, feats.Row(check_frame));
   kaldi::AssertEqual(loglike1, loglike3, 1e-6);
   delete am_gmm3;
   delete accs2;
@@ -92,7 +95,7 @@ void TestAmDiagGmmAccsIO(const AmDiagGmm &am_gmm,
 }
 
 void UnitTestMleAmDiagGmm() {
-  int32 dim = 1 + kaldi::RandInt(0, 9),  // random dimension of the gmm
+  int32 dim = 1 + kaldi::RandInt(0, 9),     // random dimension of the gmm
       num_pdfs = 5 + kaldi::RandInt(0, 9);  // random number of states
 
   AmDiagGmm am_gmm;
@@ -108,12 +111,12 @@ void UnitTestMleAmDiagGmm() {
   kaldi::Matrix<BaseFloat> feats;
 
   {  // First, generate random means and variances
-    int32 num_feat_comp = total_num_comp + kaldi::RandInt(-total_num_comp/2,
-                                                          total_num_comp/2);
+    int32 num_feat_comp = total_num_comp + kaldi::RandInt(-total_num_comp / 2,
+                                                          total_num_comp / 2);
     kaldi::Matrix<BaseFloat> means(num_feat_comp, dim),
         vars(num_feat_comp, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      for (int32 d= 0; d < dim; d++) {
+      for (int32 d = 0; d < dim; d++) {
         means(m, d) = kaldi::RandGauss();
         vars(m, d) = exp(kaldi::RandGauss()) + 1e-2;
       }
@@ -121,18 +124,16 @@ void UnitTestMleAmDiagGmm() {
     // Now generate random features with those means and variances.
     feats.Resize(num_feat_comp * 200, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      kaldi::SubMatrix<BaseFloat> tmp(feats, m*200, 200, 0, dim);
+      kaldi::SubMatrix<BaseFloat> tmp(feats, m * 200, 200, 0, dim);
       ut::RandDiagGaussFeatures(200, means.Row(m), vars.Row(m), &tmp);
     }
   }
   TestAmDiagGmmAccsIO(am_gmm, feats);
 }
 
-
 int main() {
-//  std::srand(time(NULL));
-  for (int i = 0; i < 10; i++)
-    UnitTestMleAmDiagGmm();
+  //  std::srand(time(NULL));
+  for (int i = 0; i < 10; i++) UnitTestMleAmDiagGmm();
   std::cout << "Test OK.\n";
   return 0;
 }

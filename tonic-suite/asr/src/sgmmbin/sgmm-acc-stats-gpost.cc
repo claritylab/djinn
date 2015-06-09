@@ -19,15 +19,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "sgmm/am-sgmm.h"
 #include "hmm/transition-model.h"
 #include "sgmm/estimate-am-sgmm.h"
-
-
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -36,7 +32,8 @@ int main(int argc, char *argv[]) {
         "Accumulate stats for SGMM training, given Gaussian-level posteriors\n"
         "Usage: sgmm-acc-stats-gpost [options] <model-in> <feature-rspecifier> "
         "<gpost-rspecifier> <stats-out>\n"
-        "e.g.: sgmm-acc-stats-gpost 1.mdl 1.ali scp:train.scp ark, s, cs:- 1.acc\n";
+        "e.g.: sgmm-acc-stats-gpost 1.mdl 1.ali scp:train.scp ark, s, cs:- "
+        "1.acc\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -45,14 +42,17 @@ int main(int argc, char *argv[]) {
     BaseFloat rand_prune = 1.0e-05;
 
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors (rspecifier)");
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
     po.Register("rand-prune", &rand_prune, "Pruning threshold for posteriors");
-    po.Register("update-flags", &update_flags_str, "Which SGMM parameters to update: subset of vMNwcS.");
+    po.Register("update-flags", &update_flags_str,
+                "Which SGMM parameters to update: subset of vMNwcS.");
     po.Read(argc, argv);
 
-    kaldi::SgmmUpdateFlagsType acc_flags = StringToSgmmUpdateFlags(update_flags_str);
+    kaldi::SgmmUpdateFlagsType acc_flags =
+        StringToSgmmUpdateFlags(update_flags_str);
 
     if (po.NumArgs() != 4) {
       po.PrintUsage();
@@ -60,9 +60,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gpost_rspecifier = po.GetArg(3),
-        accs_wxfilename = po.GetArg(4);
+                feature_rspecifier = po.GetArg(2),
+                gpost_rspecifier = po.GetArg(3), accs_wxfilename = po.GetArg(4);
 
     using namespace kaldi;
     typedef kaldi::int32 int32;
@@ -102,8 +101,8 @@ int main(int argc, char *argv[]) {
         const SgmmGauPost &gpost = gpost_reader.Value(utt);
 
         if (gpost.size() != mat.NumRows()) {
-          KALDI_WARN << "Alignments has wrong size "<< (gpost.size()) <<
-              " vs. "<< (mat.NumRows());
+          KALDI_WARN << "Alignments has wrong size " << (gpost.size())
+                     << " vs. " << (mat.NumRows());
           num_other_error++;
           continue;
         }
@@ -137,13 +136,13 @@ int main(int argc, char *argv[]) {
               trans_model.Accumulate(weight, tid, &transition_accs);
             sgmm_accs.AccumulateFromPosteriors(am_sgmm, per_frame_vars,
                                                gpost[i].posteriors[j],
-                                               spk_vars.v_s,
-                                               pdf_id, acc_flags);
+                                               spk_vars.v_s, pdf_id, acc_flags);
             tot_weight += weight;
           }
         }
 
-        sgmm_accs.CommitStatsForSpk(am_sgmm, spk_vars.v_s);  // no harm doing it per utterance.
+        sgmm_accs.CommitStatsForSpk(
+            am_sgmm, spk_vars.v_s);  // no harm doing it per utterance.
 
         tot_t += tot_weight;
         if (num_done % 50 == 0)
@@ -165,10 +164,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Written accs.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

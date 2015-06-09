@@ -25,7 +25,6 @@
 #include "itf/options-itf.h"
 #include "thread/kaldi-semaphore.h"
 
-
 namespace kaldi {
 
 /**
@@ -54,17 +53,19 @@ namespace kaldi {
    effects such as outputting data.
 
    Note: the destructor of TaskSequencer will wait for any remaining jobs that
-   are still running and will call the destructors.   
+   are still running and will call the destructors.
  */
 
 struct TaskSequencerConfig {
   int32 num_threads;
   int32 num_threads_total;
-  TaskSequencerConfig(): num_threads(1), num_threads_total(0)  { }
+  TaskSequencerConfig() : num_threads(1), num_threads_total(0) {}
   void Register(OptionsItf *po) {
-    po->Register("num-threads", &num_threads, "Number of actively processing "
+    po->Register("num-threads", &num_threads,
+                 "Number of actively processing "
                  "threads to run in parallel");
-    po->Register("num-threads-total", &num_threads_total, "Total number of "
+    po->Register("num-threads-total", &num_threads_total,
+                 "Total number of "
                  "threads, including those that are waiting on other threads "
                  "to produce their output.  Controls memory use.  If <= 0, "
                  "defaults to --num-threads plus 20.  Otherwise, must "
@@ -75,14 +76,15 @@ struct TaskSequencerConfig {
 // C should have an operator () taking no arguments, that does some kind
 // of computation, and a destructor that produces some kind of output (the
 // destructors will be run sequentially in the same order Run as called.
-template<class C>
+template <class C>
 class TaskSequencer {
  public:
-  TaskSequencer(const TaskSequencerConfig &config):
-      threads_avail_(config.num_threads),
-      tot_threads_avail_(config.num_threads_total > 0 ? config.num_threads_total :
-                         config.num_threads + 20),
-      thread_list_(NULL) {
+  TaskSequencer(const TaskSequencerConfig &config)
+      : threads_avail_(config.num_threads),
+        tot_threads_avail_(config.num_threads_total > 0
+                               ? config.num_threads_total
+                               : config.num_threads + 20),
+        thread_list_(NULL) {
     KALDI_ASSERT((config.num_threads_total <= 0 ||
                   config.num_threads_total >= config.num_threads) &&
                  "num-threads-total, if specified, must be >= num-threads");
@@ -91,24 +93,24 @@ class TaskSequencer {
   /// This function takes ownership of the pointer "c", and will delete it
   /// in the same sequence as Run was called on the jobs.
   void Run(C *c) {
-    threads_avail_.Wait(); // wait till we have a thread for computation free.
-    tot_threads_avail_.Wait(); // this ensures we don't have too many threads
+    threads_avail_.Wait();  // wait till we have a thread for computation free.
+    tot_threads_avail_.Wait();  // this ensures we don't have too many threads
     // waiting on I/O, and consume too much memory.
-    
+
     // put the new RunTaskArgsList object at head of the singly
     // linked list thread_list_.
     thread_list_ = new RunTaskArgsList(this, c, thread_list_);
     int32 ret;
-    if ((ret=pthread_create(&(thread_list_->thread),
-                            NULL, // default attributes
-                            TaskSequencer<C>::RunTask,
-                            static_cast<void*>(thread_list_)))) {
+    if ((ret = pthread_create(&(thread_list_->thread),
+                              NULL,  // default attributes
+                              TaskSequencer<C>::RunTask,
+                              static_cast<void *>(thread_list_)))) {
       const char *c = strerror(ret);
       KALDI_ERR << "Error creating thread, errno was: " << (c ? c : "[NULL]");
     }
   }
 
-  void Wait() { // You call this at the end if it's more convenient
+  void Wait() {  // You call this at the end if it's more convenient
     // than waiting for the destructor.  It waits for all tasks to finish.
     if (thread_list_ != NULL) {
       int ret = pthread_join(thread_list_->thread, NULL);
@@ -116,40 +118,40 @@ class TaskSequencer {
         const char *c = strerror(ret);
         KALDI_ERR << "Error joining thread, errno was: " << (c ? c : "[NULL]");
       }
-      KALDI_ASSERT(thread_list_->tail == NULL); // thread would not
+      KALDI_ASSERT(thread_list_->tail == NULL);  // thread would not
       // have exited without setting tail to NULL.
       delete thread_list_;
       thread_list_ = NULL;
     }
   }
-  
+
   /// The destructor waits for the last thread to exit.
-  ~TaskSequencer() {
-    Wait();      
-  }
+  ~TaskSequencer() { Wait(); }
+
  private:
   struct RunTaskArgsList {
-    TaskSequencer *me; // Think of this as a "this" pointer.
-    C *c; // Clist element of the task we're expected
+    TaskSequencer *me;  // Think of this as a "this" pointer.
+    C *c;               // Clist element of the task we're expected
     pthread_t thread;
     RunTaskArgsList *tail;
-    RunTaskArgsList(TaskSequencer *me, C *c, RunTaskArgsList *tail):
-        me(me), c(c), tail(tail) {}
+    RunTaskArgsList(TaskSequencer *me, C *c, RunTaskArgsList *tail)
+        : me(me), c(c), tail(tail) {}
   };
   // This static function gets run in the threads that we create.
-  static void* RunTask(void *input) {
-    RunTaskArgsList *args = static_cast<RunTaskArgsList*>(input);
-    
+  static void *RunTask(void *input) {
+    RunTaskArgsList *args = static_cast<RunTaskArgsList *>(input);
+
     // (1) run the job.
-    (*(args->c))(); // call operator () on args->c, which does the computation.
-    args->me->threads_avail_.Signal(); // Signal that the compute-intensive
+    (*(args->c))();  // call operator () on args->c, which does the computation.
+    args->me->threads_avail_.Signal();  // Signal that the compute-intensive
     // part of the thread is done (we want to run no more than
     // config_.num_threads of these.)
-    
+
     // (2) we want to destroy the object "c" now, by deleting it.  But for
     //     correct sequencing (this is the whole point of this class, it
     //     is intended to ensure the output of the program is in correct order),
-    //     we first wait till the previous thread, whose details will be in "tail",
+    //     we first wait till the previous thread, whose details will be in
+    //     "tail",
     //     is finished.
     if (args->tail != NULL) {
       int ret = pthread_join(args->tail->thread, NULL);
@@ -159,15 +161,15 @@ class TaskSequencer {
       }
     }
 
-    delete args->c; // delete the object "c".  This may cause some output,
+    delete args->c;  // delete the object "c".  This may cause some output,
     // e.g. to a stream.  We don't need to worry about concurrent access to
     // the output stream, because each thread waits for the previous thread
     // to be done, before doing this.  So there is no risk of concurrent
     // access.
     args->c = NULL;
-    
+
     if (args->tail != NULL) {
-      KALDI_ASSERT(args->tail->tail == NULL); // Because we already
+      KALDI_ASSERT(args->tail->tail == NULL);  // Because we already
       // did pthread_join on args->tail->thread, which means that
       // thread was done, and before it exited, it would have
       // deleted and set to NULL its tail (which is the next line of code).
@@ -175,23 +177,24 @@ class TaskSequencer {
       args->tail = NULL;
     }
     // At this point we are exiting from the thread.  Signal the
-    // "tot_threads_avail_" semaphore which is used to limit the total number of threads that are alive, including
-    // not onlhy those that are in active computation in c->operator (), but those
+    // "tot_threads_avail_" semaphore which is used to limit the total number of
+    // threads that are alive, including
+    // not onlhy those that are in active computation in c->operator (), but
+    // those
     // that are waiting on I/O or other threads.
     args->me->tot_threads_avail_.Signal();
-    // .. and exit the thread, by returning. 
+    // .. and exit the thread, by returning.
     return NULL;
   }
 
-  Semaphore threads_avail_; // Initialized to the number of threads we are
+  Semaphore threads_avail_;  // Initialized to the number of threads we are
   // supposed to run with; the function Run() waits on this.
 
-  Semaphore tot_threads_avail_; // We use this semaphore to ensure we don't
+  Semaphore tot_threads_avail_;  // We use this semaphore to ensure we don't
   // consume too much memory...
-  RunTaskArgsList *thread_list_; 
-  
+  RunTaskArgsList *thread_list_;
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_THREAD_KALDI_TASK_SEQUENCE_H_

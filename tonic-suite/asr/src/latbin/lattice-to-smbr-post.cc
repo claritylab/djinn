@@ -33,14 +33,16 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
     using namespace kaldi;
-  
+
     const char *usage =
         "Do forward-backward and collect frame level posteriors for\n"
         "the state-level minimum Bayes Risk criterion (SMBR), which\n"
         "is like MPE with the criterion at a context-dependent state level.\n"
         "The output may be fed into gmm-acc-stats2 or similar to train the\n"
-        "models discriminatively.  The posteriors may be positive or negative.\n"
-        "Usage: lattice-to-smbr-post [options] <model> <num-posteriors-rspecifier>\n"
+        "models discriminatively.  The posteriors may be positive or "
+        "negative.\n"
+        "Usage: lattice-to-smbr-post [options] <model> "
+        "<num-posteriors-rspecifier>\n"
         " <lats-rspecifier> <posteriors-wspecifier> \n"
         "e.g.: lattice-to-smbr-post --acoustic-scale=0.1 1.mdl ark:num.post\n"
         " ark:1.lats ark:1.post\n";
@@ -52,29 +54,32 @@ int main(int argc, char *argv[]) {
                 "Scaling factor for acoustic likelihoods");
     po.Register("lm-scale", &lm_scale,
                 "Scaling factor for \"graph costs\" (including LM costs)");
-    po.Register("silence-phones", &silence_phones_str,
-                "Colon-separated list of integer id's of silence phones, e.g. 46:47");
+    po.Register(
+        "silence-phones", &silence_phones_str,
+        "Colon-separated list of integer id's of silence phones, e.g. 46:47");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
- 
+
     std::vector<int32> silence_phones;
-    if (!kaldi::SplitStringToIntegers(silence_phones_str, ":", false, &silence_phones))
+    if (!kaldi::SplitStringToIntegers(silence_phones_str, ":", false,
+                                      &silence_phones))
       KALDI_ERR << "Invalid silence-phones string " << silence_phones_str;
     kaldi::SortAndUniq(&silence_phones);
     if (silence_phones.empty())
-      KALDI_WARN << "No silence phones specified, make sure this is what you intended.";
+      KALDI_WARN << "No silence phones specified, make sure this is what you "
+                    "intended.";
 
     if (acoustic_scale == 0.0)
       KALDI_ERR << "Do not use a zero acoustic scale (cannot be inverted)";
 
-    std::string model_filename = po.GetArg(1), 
-        alignments_rspecifier = po.GetArg(2),  
-        lats_rspecifier = po.GetArg(3),
-        posteriors_wspecifier = po.GetArg(4);
+    std::string model_filename = po.GetArg(1),
+                alignments_rspecifier = po.GetArg(2),
+                lats_rspecifier = po.GetArg(3),
+                posteriors_wspecifier = po.GetArg(4);
 
     SequentialLatticeReader lattice_reader(lats_rspecifier);
     PosteriorWriter posterior_writer(posteriors_wspecifier);
@@ -83,7 +88,7 @@ int main(int argc, char *argv[]) {
                  << "not posteriors.  Remove ali-to-post from your scripts.";
     }
     RandomAccessInt32VectorReader alignments_reader(alignments_rspecifier);
-    
+
     TransitionModel trans_model;
     {
       bool binary;
@@ -95,20 +100,19 @@ int main(int argc, char *argv[]) {
     double total_lat_frame_acc = 0.0, lat_frame_acc;
     double total_time = 0, lat_time;
 
-
     for (; !lattice_reader.Done(); lattice_reader.Next()) {
       std::string key = lattice_reader.Key();
       kaldi::Lattice lat = lattice_reader.Value();
       lattice_reader.FreeCurrent();
       if (acoustic_scale != 1.0 || lm_scale != 1.0)
         fst::ScaleLattice(fst::LatticeScale(lm_scale, acoustic_scale), &lat);
-      
+
       kaldi::uint64 props = lat.Properties(fst::kFstProperties, false);
       if (!(props & fst::kTopSorted)) {
         if (fst::TopSort(&lat) == false)
           KALDI_ERR << "Cycles detected in lattice.";
       }
-      
+
       if (!alignments_reader.HasKey(key)) {
         KALDI_WARN << "No alignment for utterance " << key;
         num_err++;
@@ -116,26 +120,27 @@ int main(int argc, char *argv[]) {
         const std::vector<int32> &alignment = alignments_reader.Value(key);
         Posterior post;
         lat_frame_acc = LatticeForwardBackwardMpeVariants(
-            trans_model, silence_phones, lat, alignment,
-            "smbr", &post);
+            trans_model, silence_phones, lat, alignment, "smbr", &post);
         total_lat_frame_acc += lat_frame_acc;
         lat_time = post.size();
         total_time += lat_time;
-        KALDI_VLOG(2) << "Processed lattice for utterance: " << key << "; found "
-                      << lat.NumStates() << " states and " << fst::NumArcs(lat)
-                      << " arcs. Average frame accuracies = " << (lat_frame_acc/lat_time)
-                      << " over " << lat_time << " frames.";
+        KALDI_VLOG(2) << "Processed lattice for utterance: " << key
+                      << "; found " << lat.NumStates() << " states and "
+                      << fst::NumArcs(lat)
+                      << " arcs. Average frame accuracies = "
+                      << (lat_frame_acc / lat_time) << " over " << lat_time
+                      << " frames.";
         posterior_writer.Write(key, post);
-        num_done++; 
+        num_done++;
       }
     }
 
     KALDI_LOG << "Overall average frame-accuracy is "
-              << (total_lat_frame_acc/total_time) << " over " << total_time
+              << (total_lat_frame_acc / total_time) << " over " << total_time
               << " frames.";
     KALDI_LOG << "Done " << num_done << " lattices.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

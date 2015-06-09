@@ -19,7 +19,6 @@
 #ifndef KALDI_UTIL_KALDI_IO_INL_H_
 #define KALDI_UTIL_KALDI_IO_INL_H_
 
-
 namespace kaldi {
 
 bool Input::Open(const std::string &rxfilename, bool *binary) {
@@ -30,16 +29,10 @@ bool Input::OpenTextMode(const std::string &rxfilename) {
   return OpenInternal(rxfilename, false, NULL);
 }
 
-bool Input::IsOpen() {
-  return impl_ != NULL;
-}
+bool Input::IsOpen() { return impl_ != NULL; }
 
-bool Output::IsOpen() {
-  return impl_ != NULL;
-}
-
+bool Output::IsOpen() { return impl_ != NULL; }
 
 }  // end namespace kaldi.
-
 
 #endif

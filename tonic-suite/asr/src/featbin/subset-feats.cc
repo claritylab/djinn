@@ -21,7 +21,6 @@
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -34,12 +33,12 @@ int main(int argc, char *argv[]) {
         "(possibly with the --exclude option)\n"
         "Usage: subset-feats [options] in-rspecifier out-wspecifier\n"
         "See also extract-rows, select-feats, subsample-feats\n";
-    
+
     ParseOptions po(usage);
-    
+
     int32 n = 10;
     po.Register("n", &n, "If nonnegative, copy the first n feature files.");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
     std::string wspecifier = po.GetArg(2);
 
     KALDI_ASSERT(n >= 0);
-    
+
     BaseFloatMatrixWriter kaldi_writer(wspecifier);
     SequentialBaseFloatMatrixReader kaldi_reader(rspecifier);
     int32 k = 0;
@@ -59,10 +58,8 @@ int main(int argc, char *argv[]) {
       kaldi_writer.Write(kaldi_reader.Key(), kaldi_reader.Value());
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

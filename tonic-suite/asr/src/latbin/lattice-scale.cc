@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -37,20 +36,24 @@ int main(int argc, char *argv[]) {
         "Apply scaling to lattice weights\n"
         "Usage: lattice-scale [options] lattice-rspecifier lattice-wspecifier\n"
         " e.g.: lattice-scale --lm-scale=0.0 ark:1.lats ark:scaled.lats\n";
-      
+
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 1.0;
     BaseFloat inv_acoustic_scale = 1.0;
     BaseFloat lm_scale = 1.0;
     BaseFloat acoustic2lm_scale = 0.0;
     BaseFloat lm2acoustic_scale = 0.0;
-    
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("inv-acoustic-scale", &inv_acoustic_scale, "An alternative way "
+
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("inv-acoustic-scale", &inv_acoustic_scale,
+                "An alternative way "
                 "of setting the acoustic scale: you can set its inverse.");
     po.Register("lm-scale", &lm_scale, "Scaling factor for graph/lm costs");
-    po.Register("acoustic2lm-scale", &acoustic2lm_scale, "Add this times original acoustic costs to LM costs");
-    po.Register("lm2acoustic-scale", &lm2acoustic_scale, "Add this times original LM costs to acoustic costs");
+    po.Register("acoustic2lm-scale", &acoustic2lm_scale,
+                "Add this times original acoustic costs to LM costs");
+    po.Register("lm2acoustic-scale", &lm2acoustic_scale,
+                "Add this times original LM costs to acoustic costs");
 
     po.Read(argc, argv);
 
@@ -59,20 +62,18 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
 
     SequentialCompactLatticeReader compact_lattice_reader(lats_rspecifier);
-    
-    // Write as compact lattice.
-    CompactLatticeWriter compact_lattice_writer(lats_wspecifier); 
 
-    int32 n_done = 0; 
+    // Write as compact lattice.
+    CompactLatticeWriter compact_lattice_writer(lats_wspecifier);
+
+    int32 n_done = 0;
 
     KALDI_ASSERT(acoustic_scale == 1.0 || inv_acoustic_scale == 1.0);
-    if (inv_acoustic_scale != 1.0)
-      acoustic_scale = 1.0 / inv_acoustic_scale;
-    
+    if (inv_acoustic_scale != 1.0) acoustic_scale = 1.0 / inv_acoustic_scale;
+
     std::vector<std::vector<double> > scale(2);
     scale[0].resize(2);
     scale[1].resize(2);
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
     scale[0][1] = acoustic2lm_scale;
     scale[1][0] = lm2acoustic_scale;
     scale[1][1] = acoustic_scale;
-    
+
     for (; !compact_lattice_reader.Done(); compact_lattice_reader.Next()) {
       CompactLattice lat = compact_lattice_reader.Value();
       ScaleLattice(scale, &lat);
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Done " << n_done << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

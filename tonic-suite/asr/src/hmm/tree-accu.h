@@ -25,14 +25,14 @@
 #include "base/kaldi-common.h"
 #include "hmm/transition-model.h"
 #include "tree/clusterable-classes.h"
-#include "tree/build-tree-questions.h" // needed for this typedef:
-// typedef std::vector<std::pair<EventVector, Clusterable*> > BuildTreeStatsType;
+#include "tree/build-tree-questions.h"  // needed for this typedef:
+// typedef std::vector<std::pair<EventVector, Clusterable*> >
+// BuildTreeStatsType;
 
 namespace kaldi {
 
 /// \ingroup tree_group_top
 /// @{
-
 
 /// Accumulates the stats needed for training context-dependency trees (in the
 /// "normal" way).  It adds to 'stats' the stats obtained from this file.  Any
@@ -45,10 +45,8 @@ void AccumulateTreeStats(const TransitionModel &trans_model,
                          const std::vector<int32> &ci_phones,  // sorted
                          const std::vector<int32> &alignment,
                          const Matrix<BaseFloat> &features,
-                         const std::vector<int32> *phone_map, // or NULL
-                         std::map<EventType, GaussClusterable*> *stats);
-
-
+                         const std::vector<int32> *phone_map,  // or NULL
+                         std::map<EventType, GaussClusterable *> *stats);
 
 /*** Read a mapping from one phone set to another.  The phone map file has lines
  of the form <old-phone> <new-phone>, where both entries are integers, usually
@@ -56,11 +54,9 @@ void AccumulateTreeStats(const TransitionModel &trans_model,
  invalid, e.g. there are multiple inconsistent entries for the same old phone.
  The output vector "phone_map" will be indexed by old-phone and will contain
  the corresponding new-phone, or -1 for any entry that was not defined. */
- 
+
 void ReadPhoneMap(std::string phone_map_rxfilename,
                   std::vector<int32> *phone_map);
-
-
 
 /// @}
 

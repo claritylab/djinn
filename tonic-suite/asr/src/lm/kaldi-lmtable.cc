@@ -33,15 +33,13 @@ namespace kaldi {
 
 // newlyAdded will be updated
 LmFstConverter::StateId LmFstConverter::AddStateFromSymb(
-    const std::vector<string> &ngramString,
-    int kstart, int kend,
-    fst::StdVectorFst *pfst,
-    bool &newlyAdded) {
+    const std::vector<string> &ngramString, int kstart, int kend,
+    fst::StdVectorFst *pfst, bool &newlyAdded) {
   fst::StdArc::StateId sid;
   std::string separator;
   separator.resize(1);
   separator[0] = '\0';
-  
+
   std::string hist;
   if (kstart == 0) {
     hist.append(separator);
@@ -56,67 +54,66 @@ LmFstConverter::StateId LmFstConverter::AddStateFromSymb(
   sid = FindState(hist);
   if (sid < 0) {
     sid = pfst->AddState();
-    histState_[hist] = sid; 
+    histState_[hist] = sid;
     newlyAdded = true;
-    //cerr << "Created state " << sid << " for " << hist << endl;
+    // cerr << "Created state " << sid << " for " << hist << endl;
   } else {
-    //cerr << "State symbol " << hist << " already exists" << endl;
+    // cerr << "State symbol " << hist << " already exists" << endl;
   }
 
   return sid;
 }
 
 void LmFstConverter::ConnectUnusedStates(fst::StdVectorFst *pfst) {
-
-  // go through all states with a recorded backoff destination 
+  // go through all states with a recorded backoff destination
   // and find out any that has no output arcs and is not final
   unsigned int connected = 0;
   // cerr << "ConnectUnusedStates has recorded "<<bkState_.size()<<" states.\n";
 
-  for (BkStateMap::iterator bkit = bkState_.begin(); bkit != bkState_.end(); ++bkit) {
+  for (BkStateMap::iterator bkit = bkState_.begin(); bkit != bkState_.end();
+       ++bkit) {
     // add an output arc to its backoff destination recorded in backoff_
     fst::StdArc::StateId src = bkit->first, dst = bkit->second;
-    if (pfst->NumArcs(src)==0 && !IsFinal(pfst, src)) {
-      // cerr << "ConnectUnusedStates: adding arc from "<<src<<" to "<<dst<<endl;
-      pfst->AddArc(src, fst::StdArc(0, 0, fst::StdArc::Weight::One(), dst)); // epsilon arc with no cost
+    if (pfst->NumArcs(src) == 0 && !IsFinal(pfst, src)) {
+      // cerr << "ConnectUnusedStates: adding arc from "<<src<<" to
+      // "<<dst<<endl;
+      pfst->AddArc(src, fst::StdArc(0, 0, fst::StdArc::Weight::One(),
+                                    dst));  // epsilon arc with no cost
       connected++;
     }
   }
   cerr << "Connected " << connected << " states without outgoing arcs." << endl;
 }
 
-void LmFstConverter::AddArcsForNgramProb(
-    int ilev, int maxlev,
-    float logProb,
-    float logBow,
-    std::vector<string> &ngs,
-    fst::StdVectorFst *fst,
-    const string startSent,
-    const string endSent) {
+void LmFstConverter::AddArcsForNgramProb(int ilev, int maxlev, float logProb,
+                                         float logBow, std::vector<string> &ngs,
+                                         fst::StdVectorFst *fst,
+                                         const string startSent,
+                                         const string endSent) {
   fst::StdArc::StateId src, dst, dbo;
   std::string curwrd = ngs[1];
   int64 ilab, olab;
   LmWeight prob = ConvertArpaLogProbToWeight(logProb);
-  LmWeight bow  = ConvertArpaLogProbToWeight(logBow);
+  LmWeight bow = ConvertArpaLogProbToWeight(logBow);
   bool newSrc, newDbo, newDst = false;
 
   if (ilev >= 2) {
     // General case works from N down to 2-grams
-    src = AddStateFromSymb(ngs,   ilev,   2, fst, newSrc);
+    src = AddStateFromSymb(ngs, ilev, 2, fst, newSrc);
     if (ilev != maxlev) {
       // add all intermediate levels from 2 to current
       // last ones will be current backoff source and destination
-      for (int iilev=2; iilev <= ilev; iilev++) {
-        dst = AddStateFromSymb(ngs, iilev,   1, fst, newDst);
-        dbo = AddStateFromSymb(ngs, iilev-1, 1, fst, newDbo);
+      for (int iilev = 2; iilev <= ilev; iilev++) {
+        dst = AddStateFromSymb(ngs, iilev, 1, fst, newDst);
+        dbo = AddStateFromSymb(ngs, iilev - 1, 1, fst, newDbo);
         bkState_[dst] = dbo;
       }
     } else {
       // add all intermediate levels from 2 to current
       // last ones will be current backoff source and destination
-      for (int iilev=2; iilev <= ilev; iilev++) {
-        dst = AddStateFromSymb(ngs, iilev-1, 1, fst, newDst);
-        dbo = AddStateFromSymb(ngs, iilev-2, 1, fst, newDbo);
+      for (int iilev = 2; iilev <= ilev; iilev++) {
+        dst = AddStateFromSymb(ngs, iilev - 1, 1, fst, newDst);
+        dbo = AddStateFromSymb(ngs, iilev - 2, 1, fst, newDbo);
         bkState_[dst] = dbo;
       }
     }
@@ -160,10 +157,8 @@ void LmFstConverter::AddArcsForNgramProb(
 
 #ifndef HAVE_IRSTLM
 
-bool LmTable::ReadFstFromLmFile(std::istream &istrm,
-                                fst::StdVectorFst *fst,
-                                bool useNaturalOpt,
-                                const string startSent,
+bool LmTable::ReadFstFromLmFile(std::istream &istrm, fst::StdVectorFst *fst,
+                                bool useNaturalOpt, const string startSent,
                                 const string endSent) {
 #ifdef KALDI_PARANOID
   KALDI_ASSERT(fst);
@@ -198,11 +193,11 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
     // look for valid "ngram N = M" lines
     pos1 = inpline.find("ngram");
     pos2 = inpline.find("=");
-    if (pos1 == string::npos ||  pos2 == string::npos || pos2 <= pos1) {
+    if (pos1 == string::npos || pos2 == string::npos || pos2 <= pos1) {
       continue;  // not valid, continue looking
     }
     // found valid line
-    ilev = atoi(inpline.substr(pos1+5, pos2-(pos1+5)).c_str());
+    ilev = atoi(inpline.substr(pos1 + 5, pos2 - (pos1 + 5)).c_str());
     if (ilev > maxlev) {
       maxlev = ilev;
     }
@@ -214,8 +209,8 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
 
   // process "\N-grams:" sections, we may have already read a "\N-grams:" line
   // if so, process it, otherwise get another line
-  while (inpline.find("-grams:") != string::npos
-         || (getline(istrm, inpline) && !istrm.eof()) ) {
+  while (inpline.find("-grams:") != string::npos ||
+         (getline(istrm, inpline) && !istrm.eof())) {
     // look for a valid "\N-grams:" section
     pos1 = inpline.find("\\");
     pos2 = inpline.find("-grams:");
@@ -223,8 +218,8 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
       continue;  // not valid line, continue looking for one
     }
     // found, set current level
-    ilev = atoi(inpline.substr(pos1+1, pos2-(pos1+1)).c_str());
-    cerr << "Processing " << ilev <<"-grams" << endl;
+    ilev = atoi(inpline.substr(pos1 + 1, pos2 - (pos1 + 1)).c_str());
+    cerr << "Processing " << ilev << "-grams" << endl;
 
     // process individual n-grams
     while (getline(istrm, inpline) && !istrm.eof()) {
@@ -239,24 +234,23 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
 
       // eat up space.
       const char *cur_cstr = inpline.c_str();
-      while (*cur_cstr && isspace(*cur_cstr))
-        cur_cstr++;
+      while (*cur_cstr && isspace(*cur_cstr)) cur_cstr++;
 
-      if (*cur_cstr == '\0') // Ignore empty lines.
+      if (*cur_cstr == '\0')  // Ignore empty lines.
         continue;
       char *next_cstr;
       // found, parse probability from first field
       prob = STRTOF(cur_cstr, &next_cstr);
       if (next_cstr == cur_cstr)
-        KALDI_ERR << "Bad line in LM file [parsing "<<(ilev)<<"-grams]: "<<inpline;
+        KALDI_ERR << "Bad line in LM file [parsing " << (ilev)
+                  << "-grams]: " << inpline;
       cur_cstr = next_cstr;
-      while (*cur_cstr && isspace(*cur_cstr))
-        cur_cstr++;
+      while (*cur_cstr && isspace(*cur_cstr)) cur_cstr++;
 
       for (int i = 0; i < ilev; i++) {
-
         if (*cur_cstr == '\0')
-          KALDI_ERR << "Bad line in LM file [parsing "<<(ilev)<<"-grams]: "<<inpline;
+          KALDI_ERR << "Bad line in LM file [parsing " << (ilev)
+                    << "-grams]: " << inpline;
 
         const char *end_cstr = strpbrk(cur_cstr, " \t");
         std::string this_word;
@@ -264,10 +258,9 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
           this_word = std::string(cur_cstr);
           cur_cstr += strlen(cur_cstr);
         } else {
-          this_word = std::string(cur_cstr, end_cstr-cur_cstr);
+          this_word = std::string(cur_cstr, end_cstr - cur_cstr);
           cur_cstr = end_cstr;
-          while (*cur_cstr && isspace(*cur_cstr))
-            cur_cstr++;
+          while (*cur_cstr && isspace(*cur_cstr)) cur_cstr++;
         }
 
         // words are inserted so position 1 is most recent word,
@@ -283,17 +276,17 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
           char *end_cstr;
           bow = STRTOF(cur_cstr, &end_cstr);
           if (end_cstr != cur_cstr) {  // got something.
-            while (*end_cstr != '\0' && isspace(*end_cstr))
-              end_cstr++;
+            while (*end_cstr != '\0' && isspace(*end_cstr)) end_cstr++;
             if (*end_cstr != '\0')
-              KALDI_ERR << "Junk "<<(end_cstr)<<" at end of line [parsing "<<(ilev)<<"-grams]"<<inpline;
+              KALDI_ERR << "Junk " << (end_cstr) << " at end of line [parsing "
+                        << (ilev) << "-grams]" << inpline;
           } else {
-            KALDI_ERR << "Junk "<<(cur_cstr)<<" at end of line [parsing "<<(ilev)<<"-grams]"<<inpline;
+            KALDI_ERR << "Junk " << (cur_cstr) << " at end of line [parsing "
+                      << (ilev) << "-grams]" << inpline;
           }
         }
       }
-      conv_->AddArcsForNgramProb(ilev, maxlev, prob, bow,
-                                 ngramString, fst,
+      conv_->AddArcsForNgramProb(ilev, maxlev, prob, bow, ngramString, fst,
                                  startSent, endSent);
     }  // end of loop on individual n-gram lines
   }
@@ -310,10 +303,8 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
 
 // #ifdef HAVE_IRSTLM implementation
 
-bool LmTable::ReadFstFromLmFile(std::istream &istrm,
-                                fst::StdVectorFst *fst,
-                                bool useNaturalOpt,
-                                const string startSent,
+bool LmTable::ReadFstFromLmFile(std::istream &istrm, fst::StdVectorFst *fst,
+                                bool useNaturalOpt, const string startSent,
                                 const string endSent) {
   load(istrm, "input name?", "output name?", 0, NONE);
   ngram ng(this->getDict(), 0);
@@ -326,10 +317,8 @@ bool LmTable::ReadFstFromLmFile(std::istream &istrm,
 }
 
 // run through all nodes in table (as in dumplm)
-void LmTable::DumpStart(ngram ng,
-                        fst::StdVectorFst *fst,
-                        const string startSent,
-                        const string endSent) {
+void LmTable::DumpStart(ngram ng, fst::StdVectorFst *fst,
+                        const string startSent, const string endSent) {
 #ifdef KALDI_PARANOID
   KALDI_ASSERT(fst);
   KALDI_ASSERT(fst->InputSymbols() && fst->OutputSymbols());
@@ -341,8 +330,7 @@ void LmTable::DumpStart(ngram ng,
   for (int l = 1; l <= maxlev; l++) {
     ng.size = 0;
     cerr << "Processing " << l << "-grams" << endl;
-    DumpContinue(ng, 1, l, 0, cursize[1],
-                 fst, pStateSymbs, startSent, endSent);
+    DumpContinue(ng, 1, l, 0, cursize[1], fst, pStateSymbs, startSent, endSent);
   }
 
   delete pStateSymbs;
@@ -350,9 +338,8 @@ void LmTable::DumpStart(ngram ng,
 }
 
 // run through given levels and positions in table
-void LmTable::DumpContinue(ngram ng, int ilev, int elev,
-                           table_entry_pos_t ipos, table_entry_pos_t epos,
-                           fst::StdVectorFst *fst,
+void LmTable::DumpContinue(ngram ng, int ilev, int elev, table_entry_pos_t ipos,
+                           table_entry_pos_t epos, fst::StdVectorFst *fst,
                            fst::SymbolTable *pStateSymbs,
                            const string startSent, const string endSent) {
   LMT_TYPE ndt = tbltype[ilev];
@@ -376,14 +363,12 @@ void LmTable::DumpContinue(ngram ng, int ilev, int elev,
 
     if (ilev < elev) {
       // get first and last successor position
-      table_entry_pos_t isucc = (i > 0 ? bound(table[ilev] +
-                                               (table_pos_t) (i-1) * ndsz,
-                                               ndt) : 0);
-      table_entry_pos_t esucc = bound(table[ilev] +
-                                      (table_pos_t) i * ndsz, ndt);
+      table_entry_pos_t isucc =
+          (i > 0 ? bound(table[ilev] + (table_pos_t)(i - 1) * ndsz, ndt) : 0);
+      table_entry_pos_t esucc = bound(table[ilev] + (table_pos_t)i * ndsz, ndt);
       if (isucc < esucc)  // there are successors!
-        DumpContinue(ng, ilev+1, elev, isucc, esucc,
-                     fst, pStateSymbs, startSent, endSent);
+        DumpContinue(ng, ilev + 1, elev, isucc, esucc, fst, pStateSymbs,
+                     startSent, endSent);
       // else
       // cerr << "no successors for " << ng << "\n";
     } else {
@@ -412,13 +397,12 @@ void LmTable::DumpContinue(ngram ng, int ilev, int elev,
       float ibo = 0;
       if (ilev < maxlev) {
         // Backoff
-        ibo = bow(table[ilev]+ (table_pos_t)i * ndsz, ndt);
+        ibo = bow(table[ilev] + (table_pos_t)i * ndsz, ndt);
         // if (isQtable) cerr << "\t" << ibo;
         // else if (ibo != 0.0) cerr << "\t" << ibo;
       }
-      conv_->AddArcsForNgramProb(ilev, maxlev, ipr, ibo,
-                                 ngramString, fst, pStateSymbs,
-                                 startSent, endSent);
+      conv_->AddArcsForNgramProb(ilev, maxlev, ipr, ibo, ngramString, fst,
+                                 pStateSymbs, startSent, endSent);
     }
   }
 }
@@ -426,4 +410,3 @@ void LmTable::DumpContinue(ngram ng, int ilev, int elev,
 #endif
 
 }  // end namespace kaldi
-

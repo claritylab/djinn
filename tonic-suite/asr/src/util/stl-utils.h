@@ -40,15 +40,14 @@ using std::tr1::unordered_set;
 namespace kaldi {
 
 /// Sorts and uniq's (removes duplicates) from a vector.
-template<typename T>
+template <typename T>
 inline void SortAndUniq(std::vector<T> *vec) {
   std::sort(vec->begin(), vec->end());
   vec->erase(std::unique(vec->begin(), vec->end()), vec->end());
 }
 
-
 /// Returns true if the vector is sorted.
-template<typename T>
+template <typename T>
 inline bool IsSorted(const std::vector<T> &vec) {
   typename std::vector<T>::const_iterator iter = vec.begin(), end = vec.end();
   if (iter == end) return true;
@@ -61,10 +60,9 @@ inline bool IsSorted(const std::vector<T> &vec) {
   }
 }
 
-
 /// Returns true if the vector is sorted and contains each element
 /// only once.
-template<typename T>
+template <typename T>
 inline bool IsSortedAndUniq(const std::vector<T> &vec) {
   typename std::vector<T>::const_iterator iter = vec.begin(), end = vec.end();
   if (iter == end) return true;
@@ -77,9 +75,8 @@ inline bool IsSortedAndUniq(const std::vector<T> &vec) {
   }
 }
 
-
 /// Removes duplicate elements from a sorted list.
-template<typename T>
+template <typename T>
 inline void Uniq(std::vector<T> *vec) {  // must be already sorted.
   KALDI_PARANOID_ASSERT(IsSorted(*vec));
   KALDI_ASSERT(vec);
@@ -87,7 +84,7 @@ inline void Uniq(std::vector<T> *vec) {  // must be already sorted.
 }
 
 /// Copies the elements of a set to a vector.
-template<class T>
+template <class T>
 void CopySetToVector(const std::set<T> &s, std::vector<T> *v) {
   // adds members of s to v, in sorted order from lowest to highest
   // (because the set was in sorted order).
@@ -100,7 +97,7 @@ void CopySetToVector(const std::set<T> &s, std::vector<T> *v) {
   }
 }
 
-template<class T>
+template <class T>
 void CopySetToVector(const unordered_set<T> &s, std::vector<T> *v) {
   // adds members of s to v, in sorted order from lowest to highest
   // (because the set was in sorted order).
@@ -113,9 +110,8 @@ void CopySetToVector(const unordered_set<T> &s, std::vector<T> *v) {
   }
 }
 
-
 /// Copies the (key, value) pairs in a map to a vector of pairs.
-template<class A, class B>
+template <class A, class B>
 void CopyMapToVector(const std::map<A, B> &m,
                      std::vector<std::pair<A, B> > *v) {
   KALDI_ASSERT(v != NULL);
@@ -129,7 +125,7 @@ void CopyMapToVector(const std::map<A, B> &m,
 }
 
 /// Copies the keys in a map to a vector.
-template<class A, class B>
+template <class A, class B>
 void CopyMapKeysToVector(const std::map<A, B> &m, std::vector<A> *v) {
   KALDI_ASSERT(v != NULL);
   v->resize(m.size());
@@ -141,7 +137,7 @@ void CopyMapKeysToVector(const std::map<A, B> &m, std::vector<A> *v) {
 }
 
 /// Copies the values in a map to a vector.
-template<class A, class B>
+template <class A, class B>
 void CopyMapValuesToVector(const std::map<A, B> &m, std::vector<B> *v) {
   KALDI_ASSERT(v != NULL);
   v->resize(m.size());
@@ -153,7 +149,7 @@ void CopyMapValuesToVector(const std::map<A, B> &m, std::vector<B> *v) {
 }
 
 /// Copies the keys in a map to a set.
-template<class A, class B>
+template <class A, class B>
 void CopyMapKeysToSet(const std::map<A, B> &m, std::set<A> *s) {
   KALDI_ASSERT(s != NULL);
   s->clear();
@@ -164,33 +160,30 @@ void CopyMapKeysToSet(const std::map<A, B> &m, std::set<A> *s) {
 }
 
 /// Copies the values in a map to a set.
-template<class A, class B>
+template <class A, class B>
 void CopyMapValuesToSet(const std::map<A, B> &m, std::set<B> *s) {
   KALDI_ASSERT(s != NULL);
   s->clear();
   typename std::map<A, B>::const_iterator miter = m.begin(), mend = m.end();
-  for (; miter != mend; ++miter)
-    s->insert(s->end(), miter->second);
+  for (; miter != mend; ++miter) s->insert(s->end(), miter->second);
 }
 
-
 /// Copies the contents of a vector to a set.
-template<class A>
+template <class A>
 void CopyVectorToSet(const std::vector<A> &v, std::set<A> *s) {
   KALDI_ASSERT(s != NULL);
   s->clear();
   typename std::vector<A>::const_iterator iter = v.begin(), end = v.end();
-  for (; iter != end; ++iter)
-    s->insert(s->end(), *iter);
+  for (; iter != end; ++iter) s->insert(s->end(), *iter);
   // s->end() is a hint in case v was sorted.  will work regardless.
 }
 
 /// Deletes any non-NULL pointers in the vector v, and sets
 /// the corresponding entries of v to NULL
-template<class A>
-void DeletePointers(std::vector<A*> *v) {
+template <class A>
+void DeletePointers(std::vector<A *> *v) {
   KALDI_ASSERT(v != NULL);
-  typename std::vector<A*>::iterator iter = v->begin(), end = v->end();
+  typename std::vector<A *>::iterator iter = v->begin(), end = v->end();
   for (; iter != end; ++iter) {
     if (*iter != NULL) {
       delete *iter;
@@ -200,26 +193,26 @@ void DeletePointers(std::vector<A*> *v) {
 }
 
 /// Returns true if the vector of pointers contains NULL pointers.
-template<class A>
-bool ContainsNullPointers(const std::vector<A*> &v) {
-  typename std::vector<A*>::const_iterator iter = v.begin(), end = v.end();
+template <class A>
+bool ContainsNullPointers(const std::vector<A *> &v) {
+  typename std::vector<A *>::const_iterator iter = v.begin(), end = v.end();
   for (; iter != end; ++iter)
-    if (*iter == static_cast<A*> (NULL)) return true;
+    if (*iter == static_cast<A *>(NULL)) return true;
   return false;
 }
 
 /// Copies the contents a vector of one type to a vector
 /// of another type.
-template<typename A, typename B>
+template <typename A, typename B>
 void CopyVectorToVector(const std::vector<A> &vec_in, std::vector<B> *vec_out) {
   KALDI_ASSERT(vec_out != NULL);
   vec_out->resize(vec_in.size());
   for (size_t i = 0; i < vec_in.size(); i++)
-    (*vec_out)[i] = static_cast<B> (vec_in[i]);
+    (*vec_out)[i] = static_cast<B>(vec_in[i]);
 }
 
 /// A hashing function-object for vectors.
-template<typename Int>
+template <typename Int>
 struct VectorHasher {  // hashing function for vector<Int>.
   size_t operator()(const std::vector<Int> &x) const {
     size_t ans = 0;
@@ -233,23 +226,24 @@ struct VectorHasher {  // hashing function for vector<Int>.
   VectorHasher() {  // Check we're instantiated with an integer type.
     KALDI_ASSERT_IS_INTEGER_TYPE(Int);
   }
+
  private:
   static const int kPrime = 7853;
 };
 
 /// A hashing function-object for pairs of ints
-template<typename Int>
-struct PairHasher { // hashing function for pair<int>
-  size_t operator()(const std::pair<Int,Int> &x) const {
+template <typename Int>
+struct PairHasher {  // hashing function for pair<int>
+  size_t operator()(const std::pair<Int, Int> &x) const {
     return x.first + x.second * kPrime;
   }
   PairHasher() {  // Check we're instantiated with an integer type.
     KALDI_ASSERT_IS_INTEGER_TYPE(Int);
   }
+
  private:
   static const int kPrime = 7853;
 };
-
 
 /// A hashing function object for strings.
 struct StringHasher {  // hashing function for std::string
@@ -262,25 +256,23 @@ struct StringHasher {  // hashing function for std::string
     }
     return ans;
   }
+
  private:
   static const int kPrime = 7853;
 };
 
 /// Reverses the contents of a vector.
-template<typename T>
+template <typename T>
 inline void ReverseVector(std::vector<T> *vec) {
   KALDI_ASSERT(vec != NULL);
   size_t sz = vec->size();
-  for (size_t i = 0; i < sz/2; i++)
-    std::swap( (*vec)[i], (*vec)[sz-1-i]);
+  for (size_t i = 0; i < sz / 2; i++) std::swap((*vec)[i], (*vec)[sz - 1 - i]);
 }
 
-
 /// Comparator object for pairs that compares only the first pair.
-template<class A, class B>
+template <class A, class B>
 struct CompareFirstMemberOfPair {
-  inline bool operator() (const std::pair<A, B> &p1,
-                          const std::pair<A, B> &p2) {
+  inline bool operator()(const std::pair<A, B> &p1, const std::pair<A, B> &p2) {
     return p1.first < p2.first;
   }
 };
@@ -291,23 +283,24 @@ struct CompareFirstMemberOfPair {
 /// the F component and then removing any F component with zero value.  This
 /// is for where the vector of pairs represents a map from the integer to float
 /// component, with an "adding" type of semantics for combining the elements.
-template<typename I, typename F>
+template <typename I, typename F>
 inline void MergePairVectorSumming(std::vector<std::pair<I, F> > *vec) {
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
   CompareFirstMemberOfPair<I, F> c;
-  std::sort(vec->begin(), vec->end(), c); // sort on 1st element. 
+  std::sort(vec->begin(), vec->end(), c);  // sort on 1st element.
   typename std::vector<std::pair<I, F> >::iterator out = vec->begin(),
-      in = vec->begin(), end = vec->end();
+                                                   in = vec->begin(),
+                                                   end = vec->end();
   while (in < end) {
     // We reach this point only at the first element of
     // each stretch of identical .first elements.
     *out = *in;
     ++in;
     while (in < end && in->first == out->first) {
-      out->second += in->second; // this is the merge operation.
+      out->second += in->second;  // this is the merge operation.
       ++in;
     }
-    if (out->second != static_cast<F>(0)) // Don't keep zero elements.
+    if (out->second != static_cast<F>(0))  // Don't keep zero elements.
       out++;
   }
   vec->erase(out, end);
@@ -316,4 +309,3 @@ inline void MergePairVectorSumming(std::vector<std::pair<I, F> > *vec) {
 }  // namespace kaldi
 
 #endif  // KALDI_UTIL_STL_UTILS_H_
-

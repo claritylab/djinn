@@ -33,18 +33,14 @@ namespace kaldi {
 void FullGmmNormal::Resize(int32 nmix, int32 dim) {
   KALDI_ASSERT(nmix > 0 && dim > 0);
 
-  if (weights_.Dim() != nmix)
-    weights_.Resize(nmix);
+  if (weights_.Dim() != nmix) weights_.Resize(nmix);
 
-  if (means_.NumRows() != nmix ||
-      means_.NumCols() != dim)
+  if (means_.NumRows() != nmix || means_.NumCols() != dim)
     means_.Resize(nmix, dim);
 
-  if (vars_.size() != nmix)
-    vars_.resize(nmix);
+  if (vars_.size() != nmix) vars_.resize(nmix);
   for (int32 i = 0; i < nmix; i++) {
-    if (vars_[i].NumRows() != nmix ||
-        vars_[i].NumCols() != dim) {
+    if (vars_[i].NumRows() != nmix || vars_[i].NumCols() != dim) {
       vars_[i].Resize(dim);
     }
   }
@@ -74,13 +70,12 @@ void FullGmmNormal::CopyFromFullGmm(const FullGmm &fullgmm) {
 }
 
 void FullGmmNormal::CopyToFullGmm(FullGmm *fullgmm, GmmFlagsType flags) {
-  KALDI_ASSERT(weights_.Dim() == fullgmm->weights_.Dim()
-               && means_.NumCols() == fullgmm->Dim());
+  KALDI_ASSERT(weights_.Dim() == fullgmm->weights_.Dim() &&
+               means_.NumCols() == fullgmm->Dim());
 
   FullGmmNormal oldg(*fullgmm);
 
-  if (flags & kGmmWeights)
-    fullgmm->weights_.CopyFromVec(weights_);
+  if (flags & kGmmWeights) fullgmm->weights_.CopyFromVec(weights_);
 
   size_t num_comp = fullgmm->NumGauss(), dim = fullgmm->Dim();
   for (size_t i = 0; i < num_comp; i++) {
@@ -109,7 +104,7 @@ void FullGmmNormal::CopyToFullGmm(FullGmm *fullgmm, GmmFlagsType flags) {
 
 void FullGmmNormal::Rand(MatrixBase<BaseFloat> *feats) {
   int32 dim = means_.NumCols(), num_frames = feats->NumRows(),
-      num_gauss = means_.NumRows();
+        num_gauss = means_.NumRows();
   KALDI_ASSERT(feats->NumCols() == dim);
   std::vector<TpMatrix<BaseFloat> > sqrt_var(num_gauss);
   for (int32 i = 0; i < num_gauss; i++) {
@@ -118,7 +113,8 @@ void FullGmmNormal::Rand(MatrixBase<BaseFloat> *feats) {
   }
   Vector<BaseFloat> rand(dim);
   for (int32 t = 0; t < num_frames; t++) {
-    int32 i = weights_.RandCategorical(); // index with prob propto weights_[i].
+    int32 i =
+        weights_.RandCategorical();  // index with prob propto weights_[i].
     SubVector<BaseFloat> frame(*feats, t);
     frame.CopyFromVec(means_.Row(i));
     rand.SetRandn();

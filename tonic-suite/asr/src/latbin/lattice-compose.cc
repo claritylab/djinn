@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -34,24 +33,28 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Composes lattices (in transducer form, as type Lattice).  Depending\n"
-        "on the command-line arguments, either composes lattices with lattices,\n"
+        "on the command-line arguments, either composes lattices with "
+        "lattices,\n"
         "or lattices with FSTs (rspecifiers are assumed to be lattices, and\n"
-        "rxfilenames are assumed to be FSTs, which have their weights interpreted\n"
+        "rxfilenames are assumed to be FSTs, which have their weights "
+        "interpreted\n"
         "as \"graph weights\" when converted into the Lattice format.\n"
         "\n"
         "Usage: lattice-compose [options] lattice-rspecifier1 "
         "(lattice-rspecifier2|fst-rxfilename2) lattice-wspecifier\n"
         " e.g.: lattice-compose ark:1.lats ark:2.lats ark:composed.lats\n"
         " or: lattice-compose ark:1.lats G.fst ark:composed.lats\n";
-    
+
     ParseOptions po(usage);
 
     int32 num_states_cache = 50000;
-    int32 phi_label = fst::kNoLabel; // == -1
-    po.Register("phi-label", &phi_label, "If >0, the label on backoff arcs of the LM");
-    po.Register("num-states-cache", &num_states_cache,
-                "Number of states we cache when mapping LM FST to lattice type. "
-                "More -> more memory but faster.");
+    int32 phi_label = fst::kNoLabel;  // == -1
+    po.Register("phi-label", &phi_label,
+                "If >0, the label on backoff arcs of the LM");
+    po.Register(
+        "num-states-cache", &num_states_cache,
+        "Number of states we cache when mapping LM FST to lattice type. "
+        "More -> more memory but faster.");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -59,18 +62,17 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    KALDI_ASSERT(phi_label > 0 || phi_label == fst::kNoLabel); // e.g. 0 not allowed.
-    
-    std::string lats_rspecifier1 = po.GetArg(1),
-        arg2 = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
+    KALDI_ASSERT(phi_label > 0 ||
+                 phi_label == fst::kNoLabel);  // e.g. 0 not allowed.
+
+    std::string lats_rspecifier1 = po.GetArg(1), arg2 = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
     int32 n_done = 0, n_fail = 0;
-    
+
     SequentialLatticeReader lattice_reader1(lats_rspecifier1);
     // Write as compact lattice.
-    CompactLatticeWriter compact_lattice_writer(lats_wspecifier); 
+    CompactLatticeWriter compact_lattice_writer(lats_wspecifier);
 
-    
     if (ClassifyRspecifier(arg2, NULL, NULL) == kNoRspecifier) {
       std::string fst_rxfilename = arg2;
       VectorFst<StdArc> *fst2 = fst::ReadFstKaldi(fst_rxfilename);
@@ -82,8 +84,7 @@ int main(int argc, char *argv[]) {
         fst::ILabelCompare<StdArc> ilabel_comp;
         ArcSort(fst2, ilabel_comp);
       }
-      if (phi_label > 0)
-        PropagateFinal(phi_label, fst2);
+      if (phi_label > 0) PropagateFinal(phi_label, fst2);
 
       fst::CacheOptions cache_opts(true, num_states_cache);
       fst::StdToLatticeMapper<BaseFloat> mapper;
@@ -95,10 +96,13 @@ int main(int argc, char *argv[]) {
         Lattice lat1 = lattice_reader1.Value();
         ArcSort(&lat1, fst::OLabelCompare<LatticeArc>());
         Lattice composed_lat;
-        if (phi_label > 0) PhiCompose(lat1, mapped_fst2, phi_label, &composed_lat);
-        else Compose(lat1, mapped_fst2, &composed_lat);
+        if (phi_label > 0)
+          PhiCompose(lat1, mapped_fst2, phi_label, &composed_lat);
+        else
+          Compose(lat1, mapped_fst2, &composed_lat);
         if (composed_lat.Start() == fst::kNoStateId) {
-          KALDI_WARN << "Empty lattice for utterance " << key << " (incompatible LM?)";
+          KALDI_WARN << "Empty lattice for utterance " << key
+                     << " (incompatible LM?)";
           n_fail++;
         } else {
           CompactLattice clat;
@@ -114,10 +118,10 @@ int main(int argc, char *argv[]) {
       // read in another set of lattices and compose them.  But in this
       // case we don't do any projection; we assume that the user has already
       // done this (e.g. with lattice-project).
-      RandomAccessLatticeReader lattice_reader2(lats_rspecifier2);    
+      RandomAccessLatticeReader lattice_reader2(lats_rspecifier2);
       for (; !lattice_reader1.Done(); lattice_reader1.Next()) {
         std::string key = lattice_reader1.Key();
-        KALDI_VLOG(1) << "Processing lattice for key " << key;        
+        KALDI_VLOG(1) << "Processing lattice for key " << key;
         Lattice lat1 = lattice_reader1.Value();
         lattice_reader1.FreeCurrent();
         if (!lattice_reader2.HasKey(key)) {
@@ -130,8 +134,8 @@ int main(int argc, char *argv[]) {
         // Make sure that either lat2 is ilabel sorted
         // or lat1 is olabel sorted, to ensure that
         // composition will work.
-        if (lat2.Properties(fst::kILabelSorted, true) == 0
-            && lat1.Properties(fst::kOLabelSorted, true) == 0) {
+        if (lat2.Properties(fst::kILabelSorted, true) == 0 &&
+            lat1.Properties(fst::kOLabelSorted, true) == 0) {
           // arbitrarily choose to sort lat2 rather than lat1.
           fst::ILabelCompare<LatticeArc> ilabel_comp;
           fst::ArcSort(&lat2, ilabel_comp);
@@ -145,7 +149,8 @@ int main(int argc, char *argv[]) {
           Compose(lat1, lat2, &lat_out);
         }
         if (lat_out.Start() == fst::kNoStateId) {
-          KALDI_WARN << "Empty lattice for utterance " << key << " (incompatible LM?)";
+          KALDI_WARN << "Empty lattice for utterance " << key
+                     << " (incompatible LM?)";
           n_fail++;
         } else {
           CompactLattice clat_out;
@@ -155,11 +160,10 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    
-    KALDI_LOG << "Done " << n_done << " lattices; failed for "
-              << n_fail;
+
+    KALDI_LOG << "Done " << n_done << " lattices; failed for " << n_fail;
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

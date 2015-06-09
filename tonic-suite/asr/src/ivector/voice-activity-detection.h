@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_IVECTOR_VOICE_ACTIVITY_DETECTION_H_
 #define KALDI_IVECTOR_VOICE_ACTIVITY_DETECTION_H_
 
@@ -38,21 +37,23 @@ namespace kaldi {
   for automatic speech recognition (ASR) because it makes independent
   decisions for each frame without imposing any notion of continuity.
 */
- 
+
 struct VadEnergyOptions {
   BaseFloat vad_energy_threshold;
   BaseFloat vad_energy_mean_scale;
   int32 vad_frames_context;
   BaseFloat vad_proportion_threshold;
-  
-  VadEnergyOptions(): vad_energy_threshold(5.0),
-                      vad_energy_mean_scale(0.5),
-                      vad_frames_context(5),
-                      vad_proportion_threshold(0.6) { }
+
+  VadEnergyOptions()
+      : vad_energy_threshold(5.0),
+        vad_energy_mean_scale(0.5),
+        vad_frames_context(5),
+        vad_proportion_threshold(0.6) {}
   void Register(OptionsItf *po) {
-    po->Register("vad-energy-threshold", &vad_energy_threshold,
-                 "Constant term in energy threshold for MFCC0 for VAD (also see "
-                 "--vad-energy-mean-scale)");
+    po->Register(
+        "vad-energy-threshold", &vad_energy_threshold,
+        "Constant term in energy threshold for MFCC0 for VAD (also see "
+        "--vad-energy-mean-scale)");
     po->Register("vad-energy-mean-scale", &vad_energy_mean_scale,
                  "If this is set to s, to get the actual threshold we "
                  "let m be the mean log-energy of the file, and use "
@@ -67,12 +68,11 @@ struct VadEnergyOptions {
   }
 };
 
-
 /// Compute voice-activity vector for a file: 1 if we judge the frame as
 /// voiced, 0 otherwise.  There are no continuity constraints.
 /// This method is a very simple energy-based method which only looks
 /// at the first coefficient of "input_features", which is assumed to
-/// be a log-energy or something similar.  A cutoff is set-- we use 
+/// be a log-energy or something similar.  A cutoff is set-- we use
 /// a formula of the general type: cutoff = 5.0 + 0.5 * (average log-energy
 /// in this file), and for each frame the decision is based on the
 /// proportion of frames in a context window around the current frame,
@@ -81,9 +81,6 @@ void ComputeVadEnergy(const VadEnergyOptions &opts,
                       const MatrixBase<BaseFloat> &input_features,
                       Vector<BaseFloat> *output_voiced);
 
-
 }  // namespace kaldi
-
-
 
 #endif  // KALDI_IVECTOR_VOICE_ACTIVITY_DETECTION_H_

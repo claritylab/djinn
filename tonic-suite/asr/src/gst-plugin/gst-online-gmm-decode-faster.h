@@ -34,24 +34,24 @@
 
 namespace kaldi {
 
-
 typedef OnlineFeInput<Mfcc> FeInput;
 
 G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
-#define GST_TYPE_ONLINEGMMDECODEFASTER \
-    (gst_online_gmm_decode_faster_get_type())
-#define GST_ONLINEGMMDECODEFASTER(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_ONLINEGMMDECODEFASTER,GstOnlineGmmDecodeFaster))
-#define GST_ONLINEGMMDECODEFASTER_CLASS(klass) \
-    (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_ONLINEGMMDECODEFASTER,GstOnlineGmmDecodeFasterClass))
+#define GST_TYPE_ONLINEGMMDECODEFASTER (gst_online_gmm_decode_faster_get_type())
+#define GST_ONLINEGMMDECODEFASTER(obj)                               \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj), GST_TYPE_ONLINEGMMDECODEFASTER, \
+                              GstOnlineGmmDecodeFaster))
+#define GST_ONLINEGMMDECODEFASTER_CLASS(klass)                      \
+  (G_TYPE_CHECK_CLASS_CAST((klass), GST_TYPE_ONLINEGMMDECODEFASTER, \
+                           GstOnlineGmmDecodeFasterClass))
 #define GST_IS_ONLINEGMMDECODEFASTER(obj) \
-    (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_ONLINEGMMDECODEFASTER))
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj), GST_TYPE_ONLINEGMMDECODEFASTER))
 #define GST_IS_ONLINEGMMDECODEFASTER_CLASS(klass) \
-    (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_ONLINEGMMDECODEFASTER))
+  (G_TYPE_CHECK_CLASS_TYPE((klass), GST_TYPE_ONLINEGMMDECODEFASTER))
 
-typedef struct _GstOnlineGmmDecodeFaster      GstOnlineGmmDecodeFaster;
+typedef struct _GstOnlineGmmDecodeFaster GstOnlineGmmDecodeFaster;
 typedef struct _GstOnlineGmmDecodeFasterClass GstOnlineGmmDecodeFasterClass;
 
 uint32 kSampleFreq = 16000;
@@ -72,12 +72,11 @@ struct _GstOnlineGmmDecodeFaster {
   fst::VectorFst<LatticeArc> *out_fst_;
   GstBufferSource *au_src_;
 
-  gchar* model_rspecifier_;
-  gchar* fst_rspecifier_;
-  gchar* word_syms_filename_;
-  gchar* lda_mat_rspecifier_;
+  gchar *model_rspecifier_;
+  gchar *fst_rspecifier_;
+  gchar *word_syms_filename_;
+  gchar *lda_mat_rspecifier_;
   std::vector<int32> *silence_phones_;
-
 
   BaseFloat acoustic_scale_;
   int32 cmn_window_;

@@ -25,7 +25,6 @@ using std::vector;
 
 namespace kaldi {
 
-
 DecodableAmSgmm2::~DecodableAmSgmm2() {
   if (delete_vars_) {
     delete gselect_;
@@ -37,18 +36,16 @@ DecodableAmSgmm2::~DecodableAmSgmm2() {
 BaseFloat DecodableAmSgmm2::LogLikelihoodForPdf(int32 frame, int32 pdf_id) {
   if (frame != cur_frame_) {
     cur_frame_ = frame;
-    sgmm_cache_.NextFrame(); // it has a frame-index internally but it doesn't
+    sgmm_cache_.NextFrame();  // it has a frame-index internally but it doesn't
     // have to match up with our index here, it just needs to be unique.
 
-
     SubVector<BaseFloat> data(*feature_matrix_, frame);
-    
+
     sgmm_.ComputePerFrameVars(data, (*gselect_)[frame], *spk_,
                               &per_frame_vars_);
   }
   return sgmm_.LogLikelihood(per_frame_vars_, pdf_id, &sgmm_cache_, spk_,
-                             log_prune_);  
+                             log_prune_);
 }
-
 
 }  // namespace kaldi

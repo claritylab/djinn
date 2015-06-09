@@ -32,9 +32,9 @@ int main(int argc, char *argv[]) {
         "Usage:  gmm-info [options] <model-in>\n"
         "e.g.:\n"
         " gmm-info 1.mdl\n";
-    
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1) {
@@ -62,10 +62,8 @@ int main(int argc, char *argv[]) {
     std::cout << "feature dimension " << am_gmm.Dim() << '\n';
     std::cout << "number of gaussians " << am_gmm.NumGauss() << '\n';
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

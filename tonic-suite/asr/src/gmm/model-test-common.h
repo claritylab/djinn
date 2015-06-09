@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_GMM_MODEL_TEST_COMMON_H_
 #define KALDI_GMM_MODEL_TEST_COMMON_H_
 
@@ -31,12 +30,10 @@ namespace unittest {
 void RandPosdefSpMatrix(int32 dim, SpMatrix<BaseFloat> *matrix,
                         TpMatrix<BaseFloat> *matrix_sqrt = NULL,
                         BaseFloat *logdet = NULL);
-void RandDiagGaussFeatures(int32 num_samples,
-                           const VectorBase<BaseFloat> &mean,
+void RandDiagGaussFeatures(int32 num_samples, const VectorBase<BaseFloat> &mean,
                            const VectorBase<BaseFloat> &sqrt_var,
                            MatrixBase<BaseFloat> *feats);
-void RandFullGaussFeatures(int32 num_samples,
-                           const VectorBase<BaseFloat> &mean,
+void RandFullGaussFeatures(int32 num_samples, const VectorBase<BaseFloat> &mean,
                            const TpMatrix<BaseFloat> &sqrt_var,
                            MatrixBase<BaseFloat> *feats);
 void InitRandDiagGmm(int32 dim, int32 num_comp, DiagGmm *gmm);
@@ -44,6 +41,5 @@ void InitRandFullGmm(int32 dim, int32 num_comp, FullGmm *gmm);
 
 }  // End namespace unittest
 }  // End namespace kaldi
-
 
 #endif  // KALDI_GMM_MODEL_TEST_COMMON_H_

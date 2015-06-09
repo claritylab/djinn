@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_THREAD_KALDI_MUTEX_H_
 #define KALDI_THREAD_KALDI_MUTEX_H_ 1
 
@@ -26,11 +25,11 @@
 namespace kaldi {
 
 /**
- * This class encapsulates mutex to ensure 
+ * This class encapsulates mutex to ensure
  * exclusive access to some critical section
  * which manipulates shared resources.
  *
- * Note.: The mutex MUST BE UNLOCKED from 
+ * Note.: The mutex MUST BE UNLOCKED from
  * the SAME THREAD which has locked it!
  */
 class Mutex {
@@ -46,14 +45,14 @@ class Mutex {
    *         false when mutex was already locked
    */
   bool TryLock();
-  
+
   void Unlock();
 
  private:
   pthread_mutex_t mutex_;
-  KALDI_DISALLOW_COPY_AND_ASSIGN(Mutex);  
+  KALDI_DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
-#endif // KALDI_THREAD_KALDI_MUTEX_H_
+#endif  // KALDI_THREAD_KALDI_MUTEX_H_

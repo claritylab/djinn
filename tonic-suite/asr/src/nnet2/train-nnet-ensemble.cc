@@ -19,7 +19,7 @@
 // limitations under the License.
 
 #include "nnet2/train-nnet-ensemble.h"
-#include <numeric> // for std::accumulate
+#include <numeric>  // for std::accumulate
 
 namespace kaldi {
 namespace nnet2 {
@@ -32,9 +32,8 @@ static inline Int32Pair MakePair(int32 first, int32 second) {
 }
 
 NnetEnsembleTrainer::NnetEnsembleTrainer(
-    const NnetEnsembleTrainerConfig &config,
-    std::vector<Nnet*> nnet_ensemble):
-    config_(config), nnet_ensemble_(nnet_ensemble) {
+    const NnetEnsembleTrainerConfig &config, std::vector<Nnet *> nnet_ensemble)
+    : config_(config), nnet_ensemble_(nnet_ensemble) {
   beta_ = config_.beta;
   num_phases_ = 0;
   bool first_time = true;
@@ -49,15 +48,18 @@ void NnetEnsembleTrainer::TrainOnExample(const NnetExample &value) {
 
 void NnetEnsembleTrainer::TrainOneMinibatch() {
   KALDI_ASSERT(!buffer_.empty());
-  
-  int32 num_states = nnet_ensemble_[0]->GetComponent(nnet_ensemble_[0]->NumComponents() - 1).OutputDim();
+
+  int32 num_states = nnet_ensemble_[0]
+                         ->GetComponent(nnet_ensemble_[0]->NumComponents() - 1)
+                         .OutputDim();
   // average of posteriors matrix, storing averaged outputs of net ensemble.
   CuMatrix<BaseFloat> post_avg(buffer_.size(), num_states);
   updater_ensemble_.reserve(nnet_ensemble_.size());
   std::vector<CuMatrix<BaseFloat> > post_mat;
   post_mat.resize(nnet_ensemble_.size());
   for (int32 i = 0; i < nnet_ensemble_.size(); i++) {
-    updater_ensemble_.push_back(new NnetUpdater(*(nnet_ensemble_[i]), nnet_ensemble_[i]));
+    updater_ensemble_.push_back(
+        new NnetUpdater(*(nnet_ensemble_[i]), nnet_ensemble_[i]));
     updater_ensemble_[i]->FormatInput(buffer_);
     updater_ensemble_[i]->Propagate();
     // posterior matrix, storing output of one net.
@@ -66,16 +68,18 @@ void NnetEnsembleTrainer::TrainOneMinibatch() {
     post_avg.AddMat(1.0, post_mat[i]);
   }
 
-  // calculate the interpolated posterios as new supervision labels, and also 
-  // collect the indices of the original supervision labels for later use (calc. objf.).
+  // calculate the interpolated posterios as new supervision labels, and also
+  // collect the indices of the original supervision labels for later use (calc.
+  // objf.).
   std::vector<MatrixElement<BaseFloat> > sv_labels;
-  std::vector<Int32Pair > sv_labels_ind;
-  sv_labels.reserve(buffer_.size()); // We must have at least this many labels.
-  sv_labels_ind.reserve(buffer_.size()); // We must have at least this many labels.
+  std::vector<Int32Pair> sv_labels_ind;
+  sv_labels.reserve(buffer_.size());  // We must have at least this many labels.
+  sv_labels_ind.reserve(
+      buffer_.size());  // We must have at least this many labels.
   for (int32 m = 0; m < buffer_.size(); m++) {
     for (size_t i = 0; i < buffer_[m].labels.size(); i++) {
-      MatrixElement<BaseFloat> 
-         tmp = {m, buffer_[m].labels[i].first, buffer_[m].labels[i].second};
+      MatrixElement<BaseFloat> tmp = {m, buffer_[m].labels[i].first,
+                                      buffer_[m].labels[i].second};
       sv_labels.push_back(tmp);
       sv_labels_ind.push_back(MakePair(m, buffer_[m].labels[i].first));
     }
@@ -85,14 +89,14 @@ void NnetEnsembleTrainer::TrainOneMinibatch() {
   post_avg.AddElements(1.0, sv_labels);
 
   // calculate the deriv, do backprop, and calculate the objf.
-  for (int32 i = 0; i < nnet_ensemble_.size(); i++) {  
+  for (int32 i = 0; i < nnet_ensemble_.size(); i++) {
     CuMatrix<BaseFloat> tmp_deriv(post_mat[i]);
     post_mat[i].ApplyLog();
     std::vector<BaseFloat> log_post_correct;
     post_mat[i].Lookup(sv_labels_ind, &log_post_correct);
-    BaseFloat log_prob_this_net = std::accumulate(log_post_correct.begin(),
-                                                  log_post_correct.end(),
-                                                  static_cast<BaseFloat>(0));
+    BaseFloat log_prob_this_net =
+        std::accumulate(log_post_correct.begin(), log_post_correct.end(),
+                        static_cast<BaseFloat>(0));
     avg_logprob_this_phase_ += log_prob_this_net;
     tmp_deriv.InvertElements();
     tmp_deriv.MulElements(post_avg);
@@ -110,8 +114,9 @@ void NnetEnsembleTrainer::TrainOneMinibatch() {
 
 void NnetEnsembleTrainer::BeginNewPhase(bool first_time) {
   if (!first_time)
-    KALDI_LOG << "Averaged cross-entropy between the supervision labels and the output is "
-              << (avg_logprob_this_phase_/count_this_phase_) << " over "
+    KALDI_LOG << "Averaged cross-entropy between the supervision labels and "
+                 "the output is "
+              << (avg_logprob_this_phase_ / count_this_phase_) << " over "
               << count_this_phase_ << " frames, during this phase";
   avg_logprob_this_phase_ = 0.0;
   count_this_phase_ = 0.0;
@@ -119,11 +124,9 @@ void NnetEnsembleTrainer::BeginNewPhase(bool first_time) {
   num_phases_++;
 }
 
-
 NnetEnsembleTrainer::~NnetEnsembleTrainer() {
   if (!buffer_.empty()) {
-    KALDI_LOG << "Doing partial minibatch of size "
-              << buffer_.size();
+    KALDI_LOG << "Doing partial minibatch of size " << buffer_.size();
     TrainOneMinibatch();
     if (minibatches_seen_this_phase_ != 0) {
       bool first_time = false;
@@ -132,6 +135,5 @@ NnetEnsembleTrainer::~NnetEnsembleTrainer() {
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi

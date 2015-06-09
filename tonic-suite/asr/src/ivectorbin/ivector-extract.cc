@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -31,24 +30,24 @@ namespace kaldi {
 // output happens in the destructor.
 class IvectorExtractTask {
  public:
-  IvectorExtractTask(const IvectorExtractor &extractor,
-                     std::string utt,
-                     const Matrix<BaseFloat> &feats,
-                     const Posterior &posterior,
-                     BaseFloatVectorWriter *writer,
-                     double *tot_auxf_change):
-      extractor_(extractor), utt_(utt), feats_(feats), posterior_(posterior),
-      writer_(writer), tot_auxf_change_(tot_auxf_change) { }
+  IvectorExtractTask(const IvectorExtractor &extractor, std::string utt,
+                     const Matrix<BaseFloat> &feats, const Posterior &posterior,
+                     BaseFloatVectorWriter *writer, double *tot_auxf_change)
+      : extractor_(extractor),
+        utt_(utt),
+        feats_(feats),
+        posterior_(posterior),
+        writer_(writer),
+        tot_auxf_change_(tot_auxf_change) {}
 
-  void operator () () {
+  void operator()() {
     bool need_2nd_order_stats = false;
-    
-    IvectorExtractorUtteranceStats utt_stats(extractor_.NumGauss(),
-                                             extractor_.FeatDim(),
-                                             need_2nd_order_stats);
-      
+
+    IvectorExtractorUtteranceStats utt_stats(
+        extractor_.NumGauss(), extractor_.FeatDim(), need_2nd_order_stats);
+
     utt_stats.AccStats(feats_, posterior_);
-    
+
     ivector_.Resize(extractor_.IvectorDim());
     ivector_(0) = extractor_.PriorOffset();
 
@@ -74,25 +73,22 @@ class IvectorExtractTask {
     // formulations of iVectors have zero-mean priors so this is not normally an
     // issue).
     ivector_(0) -= extractor_.PriorOffset();
-    KALDI_VLOG(2) << "Ivector norm for utterance " << utt_
-                  << " was " << ivector_.Norm(2.0);
+    KALDI_VLOG(2) << "Ivector norm for utterance " << utt_ << " was "
+                  << ivector_.Norm(2.0);
     writer_->Write(utt_, Vector<BaseFloat>(ivector_));
   }
+
  private:
   const IvectorExtractor &extractor_;
   std::string utt_;
   Matrix<BaseFloat> feats_;
   Posterior posterior_;
   BaseFloatVectorWriter *writer_;
-  double *tot_auxf_change_; // if non-NULL we need the auxf change.
+  double *tot_auxf_change_;  // if non-NULL we need the auxf change.
   Vector<double> ivector_;
   double auxf_change_;
 };
-
-
-
 }
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -105,7 +101,8 @@ int main(int argc, char *argv[]) {
         "Usage:  ivector-extract [options] <model-in> <feature-rspecifier>"
         "<posteriors-rspecifier> <ivector-wspecifier>\n"
         "e.g.: \n"
-        " fgmm-global-gselect-to-post 1.ubm '$feats' 'ark:gunzip -c gselect.1.gz|' ark:- | \\\n"
+        " fgmm-global-gselect-to-post 1.ubm '$feats' 'ark:gunzip -c "
+        "gselect.1.gz|' ark:- | \\\n"
         "  ivector-extract final.ie '$feats' ark,s,cs:- ark,t:ivectors.1.ark\n";
 
     ParseOptions po(usage);
@@ -118,29 +115,29 @@ int main(int argc, char *argv[]) {
                 "with --verbose=2 for per-utterance information");
     stats_opts.Register(&po);
     sequencer_config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string ivector_extractor_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        ivectors_wspecifier = po.GetArg(4);
+                feature_rspecifier = po.GetArg(2),
+                posteriors_rspecifier = po.GetArg(3),
+                ivectors_wspecifier = po.GetArg(4);
 
     // g_num_threads affects how ComputeDerivedVars is called when we read the
     // extractor.
-    g_num_threads = sequencer_config.num_threads; 
+    g_num_threads = sequencer_config.num_threads;
     IvectorExtractor extractor;
     ReadKaldiObject(ivector_extractor_rxfilename, &extractor);
 
     double tot_auxf_change = 0.0;
     int64 tot_t = 0;
     int32 num_done = 0, num_err = 0;
-    
+
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     RandomAccessPosteriorReader posteriors_reader(posteriors_rspecifier);
     BaseFloatVectorWriter ivector_writer(ivectors_wspecifier);
@@ -165,11 +162,11 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        double *auxf_ptr = (compute_objf_change ? &tot_auxf_change : NULL );
+        double *auxf_ptr = (compute_objf_change ? &tot_auxf_change : NULL);
 
         sequencer.Run(new IvectorExtractTask(extractor, key, mat, posterior,
                                              &ivector_writer, auxf_ptr));
-                      
+
         tot_t += posterior.size();
         num_done++;
       }
@@ -185,7 +182,7 @@ int main(int argc, char *argv[]) {
                 << " over " << tot_t << " frames.";
 
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

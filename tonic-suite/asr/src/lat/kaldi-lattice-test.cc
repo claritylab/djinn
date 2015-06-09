@@ -17,13 +17,10 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "lat/kaldi-lattice.h"
 #include "fstext/rand-fst.h"
 
-
 namespace kaldi {
-
 
 CompactLattice *RandCompactLattice() {
   Lattice *fst = fst::RandPairFst<LatticeArc>();
@@ -41,7 +38,7 @@ Lattice *RandLattice() {
 void TestCompactLatticeTable(bool binary) {
   CompactLatticeWriter writer(binary ? "ark:tmpf" : "ark,t:tmpf");
   int N = 10;
-  std::vector<CompactLattice*> lat_vec(N);
+  std::vector<CompactLattice *> lat_vec(N);
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -53,7 +50,7 @@ void TestCompactLatticeTable(bool binary) {
   }
   writer.Close();
 
-  RandomAccessCompactLatticeReader reader("ark:tmpf");  
+  RandomAccessCompactLatticeReader reader("ark:tmpf");
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -69,7 +66,7 @@ void TestCompactLatticeTable(bool binary) {
 void TestCompactLatticeTableCross(bool binary) {
   CompactLatticeWriter writer(binary ? "ark:tmpf" : "ark,t:tmpf");
   int N = 10;
-  std::vector<CompactLattice*> lat_vec(N);
+  std::vector<CompactLattice *> lat_vec(N);
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -81,7 +78,7 @@ void TestCompactLatticeTableCross(bool binary) {
   }
   writer.Close();
 
-  RandomAccessLatticeReader reader("ark:tmpf");  
+  RandomAccessLatticeReader reader("ark:tmpf");
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -99,7 +96,7 @@ void TestCompactLatticeTableCross(bool binary) {
 void TestLatticeTable(bool binary) {
   LatticeWriter writer(binary ? "ark:tmpf" : "ark,t:tmpf");
   int N = 10;
-  std::vector<Lattice*> lat_vec(N);
+  std::vector<Lattice *> lat_vec(N);
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -111,7 +108,7 @@ void TestLatticeTable(bool binary) {
   }
   writer.Close();
 
-  RandomAccessLatticeReader reader("ark:tmpf");  
+  RandomAccessLatticeReader reader("ark:tmpf");
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -123,12 +120,11 @@ void TestLatticeTable(bool binary) {
   }
 }
 
-
 // Write as Lattice, read as CompactLattice.
 void TestLatticeTableCross(bool binary) {
   LatticeWriter writer(binary ? "ark:tmpf" : "ark,t:tmpf");
   int N = 10;
-  std::vector<Lattice*> lat_vec(N);
+  std::vector<Lattice *> lat_vec(N);
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -140,7 +136,7 @@ void TestLatticeTableCross(bool binary) {
   }
   writer.Close();
 
-  RandomAccessCompactLatticeReader reader("ark:tmpf");  
+  RandomAccessCompactLatticeReader reader("ark:tmpf");
   for (int i = 0; i < N; i++) {
     char buf[2];
     buf[0] = '0' + i;
@@ -154,20 +150,18 @@ void TestLatticeTableCross(bool binary) {
   }
 }
 
-
-
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;
   for (int i = 0; i < 2; i++) {
-    bool binary = (i%2 == 0);
+    bool binary = (i % 2 == 0);
     TestCompactLatticeTable(binary);
     TestCompactLatticeTableCross(binary);
     TestLatticeTable(binary);
     TestLatticeTableCross(binary);
   }
   std::cout << "Test OK\n";
-  
+
   unlink("tmpf");
 }

@@ -20,9 +20,8 @@
 
 namespace kaldi {
 
-
 void UnitTestSimpleOptions() {
-  std::string str="default_for_str";
+  std::string str = "default_for_str";
   int32 num = 1;
   uint32 unum = 2;
   float realnum = 0.1;
@@ -40,7 +39,7 @@ void UnitTestSimpleOptions() {
   KALDI_ASSERT(rval);
   so.SetOption("unum", (uint32)43);
   KALDI_ASSERT(rval);
-  rval = so.SetOption("str", (std::string)"foo");
+  rval = so.SetOption("str", (std::string) "foo");
   KALDI_ASSERT(rval);
   rval = so.SetOption("flag", false);
   KALDI_ASSERT(rval);
@@ -74,12 +73,9 @@ void UnitTestSimpleOptions() {
 
   rval = so.GetOptionType("xxxx", &type);
   KALDI_ASSERT(rval == false);
-
 }
 
-
-}// end namespace kaldi.
-
+}  // end namespace kaldi.
 
 int main() {
   using namespace kaldi;

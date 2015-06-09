@@ -26,9 +26,9 @@ namespace kaldi {
 
 fst::Fst<fst::StdArc> *ReadDecodeGraph(std::string filename) {
   // read decoding network FST
-  Input ki(filename); // use ki.Stream() instead of is.
-  if (!ki.Stream().good()) KALDI_ERR << "Could not open decoding-graph FST "
-                                      << filename;
+  Input ki(filename);  // use ki.Stream() instead of is.
+  if (!ki.Stream().good())
+    KALDI_ERR << "Could not open decoding-graph FST " << filename;
 
   fst::FstHeader hdr;
   if (!hdr.Read(ki.Stream(), "<unknown>")) {
@@ -48,7 +48,7 @@ fst::Fst<fst::StdArc> *ReadDecodeGraph(std::string filename) {
   } else {
     KALDI_ERR << "Reading FST: unsupported FST type: " << hdr.FstType();
   }
-  if (decode_fst == NULL) { // fst code will warn.
+  if (decode_fst == NULL) {  // fst code will warn.
     KALDI_ERR << "Error reading FST (after reading header).";
     return NULL;
   } else {
@@ -56,15 +56,13 @@ fst::Fst<fst::StdArc> *ReadDecodeGraph(std::string filename) {
   }
 }
 
-
-void PrintPartialResult(const std::vector<int32>& words,
-                        const fst::SymbolTable *word_syms,
-                        bool line_break) {
+void PrintPartialResult(const std::vector<int32> &words,
+                        const fst::SymbolTable *word_syms, bool line_break) {
   KALDI_ASSERT(word_syms != NULL);
   for (size_t i = 0; i < words.size(); i++) {
     std::string word = word_syms->Find(words[i]);
     if (word == "")
-      KALDI_ERR << "Word-id " << words[i] <<" not in symbol table.";
+      KALDI_ERR << "Word-id " << words[i] << " not in symbol table.";
     std::cout << word << ' ';
   }
   if (line_break)
@@ -73,4 +71,4 @@ void PrintPartialResult(const std::vector<int32>& words,
     std::cout.flush();
 }
 
-} // namespace kaldi
+}  // namespace kaldi

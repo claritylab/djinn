@@ -23,8 +23,7 @@
 namespace kaldi {
 
 void UnitTestPosteriors() {
-  int32 n_features = Rand() % 600 + 10,
-        n_xs = Rand() % 200 + 100,
+  int32 n_features = Rand() % 600 + 10, n_xs = Rand() % 200 + 100,
         n_labels = Rand() % 20 + 10;
 
   LogisticRegressionConfig conf;
@@ -41,7 +40,7 @@ void UnitTestPosteriors() {
     classes.push_back(i);
   }
   classifier.SetWeights(weights, classes);
-  
+
   // Get posteriors for the xs using batch and serial methods.
   Matrix<BaseFloat> batch_log_posteriors;
   classifier.GetLogPosteriors(xs, &batch_log_posteriors);
@@ -51,23 +50,21 @@ void UnitTestPosteriors() {
     x.CopyRowFromMat(xs, i);
     Vector<BaseFloat> log_post;
     classifier.GetLogPosteriors(x, &log_post);
-    
+
     // Verify that sum_y p(y|x) = 1.0.
     Vector<BaseFloat> post(log_post);
     post.ApplyExp();
     KALDI_ASSERT(ApproxEqual(post.Sum(), 1.0));
     log_posteriors.Row(i).CopyFromVec(log_post);
   }
-  
+
   // Verify equivalence of batch and serial methods.
   float tolerance = 0.01;
   KALDI_ASSERT(log_posteriors.ApproxEqual(batch_log_posteriors, tolerance));
 }
 
 void UnitTestTrain() {
-
-  int32 n_features = Rand() % 600 + 10,
-        n_xs = Rand() % 200 + 100,
+  int32 n_features = Rand() % 600 + 10, n_xs = Rand() % 200 + 100,
         n_labels = Rand() % 20 + 10;
   double normalizer = 0.01;
   Matrix<BaseFloat> xs(n_xs, n_features);
@@ -95,27 +92,25 @@ void UnitTestTrain() {
   sub_xs.CopyFromMat(xs);
 
   Matrix<BaseFloat> xw(n_xs, n_labels);
-  xw.AddMatMat(1.0, xs_with_prior, kNoTrans, classifier.weights_, 
-               kTrans, 0.0);
+  xw.AddMatMat(1.0, xs_with_prior, kNoTrans, classifier.weights_, kTrans, 0.0);
 
   Matrix<BaseFloat> grad(classifier.weights_.NumRows(),
-                      classifier.weights_.NumCols());
+                         classifier.weights_.NumCols());
 
-  double objf_trained = classifier.GetObjfAndGrad(xs_with_prior, 
-                                                  ys, xw, &grad, normalizer);
+  double objf_trained =
+      classifier.GetObjfAndGrad(xs_with_prior, ys, xw, &grad, normalizer);
 
   // Calculate objective function using a random weight matrix.
   Matrix<BaseFloat> xw_rand(n_xs, n_labels);
-  
+
   Matrix<BaseFloat> weights_rand(classifier.weights_);
   weights_rand.SetRandn();
-  xw.AddMatMat(1.0, xs_with_prior, kNoTrans, weights_rand, 
-               kTrans, 0.0);
+  xw.AddMatMat(1.0, xs_with_prior, kNoTrans, weights_rand, kTrans, 0.0);
 
   // Verify that the objective function after training is better
   // than the objective function with a random weight matrix.
-  double objf_rand_w = classifier.GetObjfAndGrad(xs_with_prior, ys, 
-                                                 xw_rand, &grad, normalizer);
+  double objf_rand_w =
+      classifier.GetObjfAndGrad(xs_with_prior, ys, xw_rand, &grad, normalizer);
   KALDI_ASSERT(objf_trained > objf_rand_w);
   KALDI_ASSERT(objf_trained > std::log(1.0 / n_xs));
 }
@@ -123,7 +118,7 @@ void UnitTestTrain() {
 
 int main() {
   using namespace kaldi;
-  srand (time(NULL));
+  srand(time(NULL));
   UnitTestTrain();
   UnitTestPosteriors();
   return 0;

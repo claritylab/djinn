@@ -4,7 +4,6 @@
 //           2013  Vassil Panayotov
 //           2014  Johns Hopkins Universithy (author: Daniel Povey)
 
-
 // See ../../COPYING for clarification regarding multiple authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +28,6 @@
 
 namespace kaldi {
 
-
 class DecodableDiagGmmScaledOnline : public DecodableInterface {
  public:
   DecodableDiagGmmScaledOnline(const AmDiagGmm &am,
@@ -37,20 +35,19 @@ class DecodableDiagGmmScaledOnline : public DecodableInterface {
                                const BaseFloat scale,
                                OnlineFeatureInterface *input_feats);
 
-  
   /// Returns the scaled log likelihood
   virtual BaseFloat LogLikelihood(int32 frame, int32 index);
-  
+
   virtual bool IsLastFrame(int32 frame) const;
 
-  virtual int32 NumFramesReady() const;  
-  
+  virtual int32 NumFramesReady() const;
+
   /// Indices are one-based!  This is for compatibility with OpenFst.
   virtual int32 NumIndices() const { return trans_model_.NumTransitionIds(); }
 
  private:
   void CacheFrame(int32 frame);
-  
+
   OnlineFeatureInterface *features_;
   const AmDiagGmm &ac_model_;
   BaseFloat ac_scale_;
@@ -63,6 +60,6 @@ class DecodableDiagGmmScaledOnline : public DecodableInterface {
   KALDI_DISALLOW_COPY_AND_ASSIGN(DecodableDiagGmmScaledOnline);
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
-#endif // KALDI_ONLINE2_ONLINE_GMM_DECODABLE_H_
+#endif  // KALDI_ONLINE2_ONLINE_GMM_DECODABLE_H_

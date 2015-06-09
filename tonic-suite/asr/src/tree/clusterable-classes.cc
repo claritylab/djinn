@@ -78,7 +78,7 @@ BaseFloat ScalarClusterable::Objf() const {
 void ScalarClusterable::Add(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "scalar");
   const ScalarClusterable *other =
-      static_cast<const ScalarClusterable*>(&other_in);
+      static_cast<const ScalarClusterable *>(&other_in);
   x_ += other->x_;
   x2_ += other->x2_;
   count_ += other->count_;
@@ -87,13 +87,13 @@ void ScalarClusterable::Add(const Clusterable &other_in) {
 void ScalarClusterable::Sub(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "scalar");
   const ScalarClusterable *other =
-      static_cast<const ScalarClusterable*>(&other_in);
+      static_cast<const ScalarClusterable *>(&other_in);
   x_ -= other->x_;
   x2_ -= other->x2_;
   count_ -= other->count_;
 }
 
-Clusterable* ScalarClusterable::Copy() const {
+Clusterable *ScalarClusterable::Copy() const {
   ScalarClusterable *ans = new ScalarClusterable();
   ans->Add(*this);
   return ans;
@@ -106,7 +106,7 @@ void ScalarClusterable::Write(std::ostream &os, bool binary) const {
   WriteBasicType(os, binary, count_);
 }
 
-Clusterable* ScalarClusterable::ReadNew(std::istream &is, bool binary) const {
+Clusterable *ScalarClusterable::ReadNew(std::istream &is, bool binary) const {
   ScalarClusterable *sc = new ScalarClusterable();
   sc->Read(is, binary);
   return sc;
@@ -124,8 +124,8 @@ std::string ScalarClusterable::Info() {
   if (count_ == 0) {
     str << "[empty]";
   } else {
-    str << "[mean " << (x_ / count_) << ", var " << (x2_ / count_ -
-        (x_ * x_ / (count_ * count_))) << "]";
+    str << "[mean " << (x_ / count_) << ", var "
+        << (x2_ / count_ - (x_ * x_ / (count_ * count_))) << "]";
   }
   return str.str();
 }
@@ -144,7 +144,7 @@ void GaussClusterable::AddStats(const VectorBase<BaseFloat> &vec,
 void GaussClusterable::Add(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "gauss");
   const GaussClusterable *other =
-      static_cast<const GaussClusterable*>(&other_in);
+      static_cast<const GaussClusterable *>(&other_in);
   count_ += other->count_;
   stats_.AddMat(1.0, other->stats_);
 }
@@ -152,12 +152,12 @@ void GaussClusterable::Add(const Clusterable &other_in) {
 void GaussClusterable::Sub(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "gauss");
   const GaussClusterable *other =
-      static_cast<const GaussClusterable*>(&other_in);
+      static_cast<const GaussClusterable *>(&other_in);
   count_ -= other->count_;
   stats_.AddMat(-1.0, other->stats_);
 }
 
-Clusterable* GaussClusterable::Copy() const {
+Clusterable *GaussClusterable::Copy() const {
   KALDI_ASSERT(stats_.NumRows() == 2);
   GaussClusterable *ans = new GaussClusterable(stats_.NumCols(), var_floor_);
   ans->Add(*this);
@@ -177,7 +177,7 @@ void GaussClusterable::Write(std::ostream &os, bool binary) const {
   stats_.Write(os, binary);
 }
 
-Clusterable* GaussClusterable::ReadNew(std::istream &is, bool binary) const {
+Clusterable *GaussClusterable::ReadNew(std::istream &is, bool binary) const {
   GaussClusterable *gc = new GaussClusterable();
   gc->Read(is, binary);
   return gc;
@@ -201,8 +201,9 @@ BaseFloat GaussClusterable::Objf() const {
     Vector<double> vars(dim);
     double objf_per_frame = 0.0;
     for (size_t d = 0; d < dim; d++) {
-      double mean(stats_(0, d) / count_), var = stats_(1, d) / count_ - mean
-          * mean, floored_var = std::max(var, var_floor_);
+      double mean(stats_(0, d) / count_),
+          var = stats_(1, d) / count_ - mean * mean,
+          floored_var = std::max(var, var_floor_);
       vars(d) = floored_var;
       objf_per_frame += -0.5 * var / floored_var;
     }
@@ -211,12 +212,13 @@ BaseFloat GaussClusterable::Objf() const {
       KALDI_WARN << "GaussClusterable::Objf(), objf is NaN";
       return 0.0;
     }
-    // KALDI_VLOG(2) << "count = " << count_ << ", objf_per_frame = "<< objf_per_frame
-    //   << ", returning " << (objf_per_frame*count_) << ", floor = " << var_floor_;
+    // KALDI_VLOG(2) << "count = " << count_ << ", objf_per_frame = "<<
+    // objf_per_frame
+    //   << ", returning " << (objf_per_frame*count_) << ", floor = " <<
+    //   var_floor_;
     return objf_per_frame * count_;
   }
 }
-
 
 // ============================================================================
 // Implementation of VectorClusterable class.
@@ -225,7 +227,7 @@ BaseFloat GaussClusterable::Objf() const {
 void VectorClusterable::Add(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "vector");
   const VectorClusterable *other =
-      static_cast<const VectorClusterable*>(&other_in);
+      static_cast<const VectorClusterable *>(&other_in);
   weight_ += other->weight_;
   stats_.AddVec(1.0, other->stats_);
   sumsq_ += other->sumsq_;
@@ -234,7 +236,7 @@ void VectorClusterable::Add(const Clusterable &other_in) {
 void VectorClusterable::Sub(const Clusterable &other_in) {
   KALDI_ASSERT(other_in.Type() == "vector");
   const VectorClusterable *other =
-      static_cast<const VectorClusterable*>(&other_in);
+      static_cast<const VectorClusterable *>(&other_in);
   weight_ -= other->weight_;
   sumsq_ -= other->sumsq_;
   stats_.AddVec(-1.0, other->stats_);
@@ -252,7 +254,7 @@ void VectorClusterable::Sub(const Clusterable &other_in) {
   }
 }
 
-Clusterable* VectorClusterable::Copy() const {
+Clusterable *VectorClusterable::Copy() const {
   VectorClusterable *ans = new VectorClusterable();
   ans->weight_ = weight_;
   ans->sumsq_ = sumsq_;
@@ -271,13 +273,13 @@ void VectorClusterable::Write(std::ostream &os, bool binary) const {
   WriteToken(os, binary, "VCL");  // magic string.
   WriteToken(os, binary, "<Weight>");
   WriteBasicType(os, binary, weight_);
-  WriteToken(os, binary, "<Sumsq>");  
+  WriteToken(os, binary, "<Sumsq>");
   WriteBasicType(os, binary, sumsq_);
-  WriteToken(os, binary, "<Stats>");    
+  WriteToken(os, binary, "<Stats>");
   stats_.Write(os, binary);
 }
 
-Clusterable* VectorClusterable::ReadNew(std::istream &is, bool binary) const {
+Clusterable *VectorClusterable::ReadNew(std::istream &is, bool binary) const {
   VectorClusterable *vc = new VectorClusterable();
   vc->Read(is, binary);
   return vc;
@@ -287,20 +289,19 @@ void VectorClusterable::Read(std::istream &is, bool binary) {
   ExpectToken(is, binary, "VCL");  // magic string.
   ExpectToken(is, binary, "<Weight>");
   ReadBasicType(is, binary, &weight_);
-  ExpectToken(is, binary, "<Sumsq>");  
+  ExpectToken(is, binary, "<Sumsq>");
   ReadBasicType(is, binary, &sumsq_);
-  ExpectToken(is, binary, "<Stats>");    
+  ExpectToken(is, binary, "<Stats>");
   stats_.Read(is, binary);
 }
 
 VectorClusterable::VectorClusterable(const Vector<BaseFloat> &vector,
-                                     BaseFloat weight):
-    weight_(weight), stats_(vector), sumsq_(0.0) {
+                                     BaseFloat weight)
+    : weight_(weight), stats_(vector), sumsq_(0.0) {
   stats_.Scale(weight);
   KALDI_ASSERT(weight >= 0.0);
   sumsq_ = VecVec(vector, vector) * weight;
-}    
-
+}
 
 BaseFloat VectorClusterable::Objf() const {
   double direct_sumsq;
@@ -311,16 +312,16 @@ BaseFloat VectorClusterable::Objf() const {
   }
   // ans is a negated weighted sum of squared distances; it should not be
   // positive.
-  double ans = -(sumsq_ - direct_sumsq); 
+  double ans = -(sumsq_ - direct_sumsq);
   if (ans > 0.0) {
     if (ans > 1.0) {
-      KALDI_WARN << "Positive objective function encountered (treating as zero): "
-                 << ans;
+      KALDI_WARN
+          << "Positive objective function encountered (treating as zero): "
+          << ans;
     }
     ans = 0.0;
   }
   return ans;
 }
-
 
 }  // end namespace kaldi.

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-utils.h"
@@ -36,12 +35,16 @@ int main(int argc, char *argv[]) {
     typedef kaldi::uint64 uint64;
 
     const char *usage =
-        "Create an inverted index of the given lattices. The output index is in the T*T*T\n"
-        "semiring. For details for the semiring, please refer to Dogan Can and Muran Saraclar's"
+        "Create an inverted index of the given lattices. The output index is "
+        "in the T*T*T\n"
+        "semiring. For details for the semiring, please refer to Dogan Can and "
+        "Muran Saraclar's"
         "lattice indexing paper."
         "\n"
-        "Usage: lattice-to-kws-index [options]  utter-symtab-rspecifier lattice-rspecifier index-wspecifier\n"
-        " e.g.: lattice-to-kws-index ark:utter.symtab ark:1.lats ark:global.idx\n";
+        "Usage: lattice-to-kws-index [options]  utter-symtab-rspecifier "
+        "lattice-rspecifier index-wspecifier\n"
+        " e.g.: lattice-to-kws-index ark:utter.symtab ark:1.lats "
+        "ark:global.idx\n";
 
     ParseOptions po(usage);
 
@@ -49,15 +52,19 @@ int main(int argc, char *argv[]) {
     bool strict = true;
     bool allow_partial = true;
     BaseFloat max_states_scale = 4;
-    po.Register("max-silence-frames", &max_silence_frames, "Maximum #frames for"
+    po.Register("max-silence-frames", &max_silence_frames,
+                "Maximum #frames for"
                 " silence arc.");
-    po.Register("strict", &strict, "Setting --strict=false will cause successful "
+    po.Register("strict", &strict,
+                "Setting --strict=false will cause successful "
                 "termination even if we processed no lattices.");
-    po.Register("max-states-scale", &max_states_scale, "Number of states in the"
+    po.Register("max-states-scale", &max_states_scale,
+                "Number of states in the"
                 " original lattice times this scale is the number of states "
                 "allowed when optimizing the index. Negative number means no "
                 "limit on the number of states.");
-    po.Register("allow-partial", &allow_partial, "Allow partial output if fails"
+    po.Register("allow-partial", &allow_partial,
+                "Allow partial output if fails"
                 " to determinize, otherwise skip determinization if it fails.");
 
     po.Read(argc, argv);
@@ -68,8 +75,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string usymtab_rspecifier = po.GetOptArg(1),
-        lats_rspecifier = po.GetArg(2),
-        index_wspecifier = po.GetOptArg(3);
+                lats_rspecifier = po.GetArg(2),
+                index_wspecifier = po.GetOptArg(3);
 
     // We use RandomAccessInt32Reader to read the utterance symtab table.
     RandomAccessInt32Reader usymtab_reader(usymtab_rspecifier);
@@ -77,7 +84,8 @@ int main(int argc, char *argv[]) {
     // We read the lattice in as CompactLattice; We need the CompactLattice
     // structure for the rest of the work
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    TableWriter< fst::VectorFstTplHolder<KwsLexicographicArc> > index_writer(index_wspecifier);
+    TableWriter<fst::VectorFstTplHolder<KwsLexicographicArc> > index_writer(
+        index_wspecifier);
 
     int32 n_done = 0;
     int32 n_fail = 0;
@@ -110,7 +118,7 @@ int main(int argc, char *argv[]) {
           n_fail++;
           continue;
         }
-      } 
+      }
 
       // Get the alignments
       vector<int32> state_times;
@@ -126,7 +134,8 @@ int main(int argc, char *argv[]) {
       bool success = false;
       success = ClusterLattice(&clat, state_times);
       if (!success) {
-        KALDI_WARN << "State id's and alignments do not match for lattice " << key;
+        KALDI_WARN << "State id's and alignments do not match for lattice "
+                   << key;
         n_fail++;
         continue;
       }
@@ -145,9 +154,9 @@ int main(int argc, char *argv[]) {
         EnsureEpsilonProperty(&clat);
         fst::TopSort(&clat);
         // We have to recompute the state times because they will have changed.
-        CompactLatticeStateTimes(clat, &state_times);        
+        CompactLatticeStateTimes(clat, &state_times);
       }
-      
+
       // Generate factor transducer
       // CreateFactorTransducer() corresponds to the "Factor Generation" part of
       // Dogan and Murat's paper. But we also move the weight pushing step to
@@ -155,10 +164,11 @@ int main(int argc, char *argv[]) {
       KALDI_VLOG(1) << "Generating factor transducer...";
       KwsProductFst factor_transducer;
       int32 utterance_id = usymtab_reader.Value(key);
-      success = CreateFactorTransducer(clat, state_times, utterance_id, &factor_transducer);
+      success = CreateFactorTransducer(clat, state_times, utterance_id,
+                                       &factor_transducer);
       if (!success) {
         KALDI_WARN << "Cannot generate factor transducer for lattice " << key;
-        n_fail++; 
+        n_fail++;
       }
 
       MaybeDoSanityCheck(factor_transducer);
@@ -178,7 +188,7 @@ int main(int argc, char *argv[]) {
       DoFactorMerging(&factor_transducer, &index_transducer);
 
       MaybeDoSanityCheck(index_transducer);
-      
+
       // Do factor disambiguation. It corresponds to the "Factor Disambiguation"
       // step in Dogan and Murat's paper.
       KALDI_VLOG(1) << "Doing factor disambiguation...";
@@ -191,10 +201,10 @@ int main(int argc, char *argv[]) {
       KALDI_VLOG(1) << "Optimizing factor transducer...";
       OptimizeFactorTransducer(&index_transducer, max_states, allow_partial);
 
-      MaybeDoSanityCheck(index_transducer);      
-      
+      MaybeDoSanityCheck(index_transducer);
+
       // Write result
-      index_writer.Write(key, index_transducer);  
+      index_writer.Write(key, index_transducer);
 
       n_done++;
     }
@@ -204,7 +214,7 @@ int main(int argc, char *argv[]) {
       return (n_done != 0 ? 0 : 1);
     else
       return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

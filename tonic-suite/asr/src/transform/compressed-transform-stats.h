@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_COMPRESSED_TRANSFORM_STATS_H_
 #define KALDI_TRANSFORM_COMPRESSED_TRANSFORM_STATS_H_
 
@@ -43,25 +42,25 @@ namespace kaldi {
 
 class CompressedAffineXformStats {
  public:
-  CompressedAffineXformStats(): beta_(0.0) { }
+  CompressedAffineXformStats() : beta_(0.0) {}
   CompressedAffineXformStats(const AffineXformStats &input) {
     CopyFromAffineXformStats(input);
   }
   void CopyFromAffineXformStats(const AffineXformStats &input);
-  
+
   void CopyToAffineXformStats(AffineXformStats *output) const;
 
   void Write(std::ostream &os, bool binary) const;
 
   void Read(std::istream &is, bool binary);
 
-  private:
+ private:
   // Note: normally we don't use float, only BaseFloat.  In this case
   // it seems more appropriate to use float (since the stuff in G_ is
   // already a lot more approximate than float.)
   float beta_;
   Matrix<float> K_;
-  CompressedMatrix G_; // This dim x [ 1 + (0.5*(dim+1)*(dim+2))] matrix
+  CompressedMatrix G_;  // This dim x [ 1 + (0.5*(dim+1)*(dim+2))] matrix
   // stores the contents of the G_ matrix of the AffineXform Stats, in a
   // compressed form.
 
@@ -72,10 +71,8 @@ class CompressedAffineXformStats {
   // Reverse the process of PrepareOneG.
   static void ExtractOneG(const SubVector<double> &linearized, double beta,
                           SpMatrix<double> *Gi);
-  
 };
 
-
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_TRANSFORM_COMPRESSED_TRANSFORM_STATS_H_

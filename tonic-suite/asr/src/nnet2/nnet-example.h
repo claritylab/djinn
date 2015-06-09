@@ -35,35 +35,33 @@ namespace nnet2 {
 // labels with different weights.  (note: we may not end up using
 // this for discriminative training after all.)
 struct NnetExample {
-
   /// The label(s) for this frame; in the normal case, this will be a vector of
   /// length one, containing (the pdf-id, 1.0)
-  std::vector<std::pair<int32, BaseFloat> > labels;  
+  std::vector<std::pair<int32, BaseFloat> > labels;
 
   /// The input data-- typically with NumRows() more than
   /// labels.size(), it includes features to the left and
   /// right as needed for the temporal context of the network.
   /// (see the left_context variable).
-  CompressedMatrix input_frames; 
+  CompressedMatrix input_frames;
 
   /// The number of frames of left context (we can work out the #frames
   /// of right context from input_frames.NumRows(), labels.size(), and this).
   int32 left_context;
 
-
   /// The speaker-specific input, if any, or an empty vector if
   /// we're not using this features.  We'll append this to each of the
-  Vector<BaseFloat> spk_info; 
-  
+  Vector<BaseFloat> spk_info;
+
   void Write(std::ostream &os, bool binary) const;
   void Read(std::istream &is, bool binary);
 };
 
-
-typedef TableWriter<KaldiObjectHolder<NnetExample > > NnetExampleWriter;
-typedef SequentialTableReader<KaldiObjectHolder<NnetExample > > SequentialNnetExampleReader;
-typedef RandomAccessTableReader<KaldiObjectHolder<NnetExample > > RandomAccessNnetExampleReader;
-
+typedef TableWriter<KaldiObjectHolder<NnetExample> > NnetExampleWriter;
+typedef SequentialTableReader<KaldiObjectHolder<NnetExample> >
+    SequentialNnetExampleReader;
+typedef RandomAccessTableReader<KaldiObjectHolder<NnetExample> >
+    RandomAccessNnetExampleReader;
 
 /** This class stores neural net training examples to be used in
     multi-threaded training.  */
@@ -76,14 +74,15 @@ class ExamplesRepository {
   /// The following function is called by the code that reads in the examples,
   /// when we're done reading examples.
   void ExamplesDone();
-  
+
   /// This function is called by the code that does the training.  It gets the
   /// training examples, and if they are available, puts them in "examples" and
   /// returns true.  It returns false when there are no examples left and
   /// ExamplesDone() has been called.
   bool ProvideExamples(std::vector<NnetExample> *examples);
-  
-  ExamplesRepository(): empty_semaphore_(1), done_(false) { }
+
+  ExamplesRepository() : empty_semaphore_(1), done_(false) {}
+
  private:
   Semaphore full_semaphore_;
   Semaphore empty_semaphore_;
@@ -93,13 +92,16 @@ class ExamplesRepository {
   KALDI_DISALLOW_COPY_AND_ASSIGN(ExamplesRepository);
 };
 
-
 /**
-   This struct is used to store the information we need for discriminative training
-   (MMI or MPE).  Each example corresponds to one chunk of a file (for better randomization
+   This struct is used to store the information we need for discriminative
+   training
+   (MMI or MPE).  Each example corresponds to one chunk of a file (for better
+   randomization
    and to prevent instability, we may split files in the middle).
-   The example contains the numerator alignment, the denominator lattice, and the
-   input features (extended at the edges according to the left-context and right-context
+   The example contains the numerator alignment, the denominator lattice, and
+   the
+   input features (extended at the edges according to the left-context and
+   right-context
    the network needs).  It may also contain a speaker-vector (note: this is
    not part of any standard recipe right now but is included in case it's useful
    in the future).
@@ -107,16 +109,16 @@ class ExamplesRepository {
 struct DiscriminativeNnetExample {
   /// The weight we assign to this example;
   /// this will typically be one, but we include it
-  /// for the sake of generality.  
-  BaseFloat weight; 
+  /// for the sake of generality.
+  BaseFloat weight;
 
   /// The numerator alignment
-  std::vector<int32> num_ali; 
+  std::vector<int32> num_ali;
 
   /// The denominator lattice.  Note: any acoustic
   /// likelihoods in the denominator lattice will be
   /// recomputed at the time we train.
-  CompactLattice den_lat; 
+  CompactLattice den_lat;
 
   /// The input data-- typically with a number of frames [NumRows()] larger than
   /// labels.size(), because it includes features to the left and right as
@@ -133,30 +135,27 @@ struct DiscriminativeNnetExample {
   /// #frames of right context from input_frames.NumRows(), num_ali.size(), and
   /// this).
   int32 left_context;
-  
 
   /// spk_info contains any component of the features that varies slowly or not
   /// at all with time (and hence, we would lose little by averaging it over
   /// time and storing the average).  We'll append this to each of the input
   /// features, if used.
-  Vector<BaseFloat> spk_info; 
+  Vector<BaseFloat> spk_info;
 
-  void Check() const; // will crash if invalid.
-  
+  void Check() const;  // will crash if invalid.
+
   void Write(std::ostream &os, bool binary) const;
   void Read(std::istream &is, bool binary);
 };
 
 // Yes, the length of typenames is getting out of hand.
-typedef TableWriter<KaldiObjectHolder<DiscriminativeNnetExample > >
-   DiscriminativeNnetExampleWriter;
-typedef SequentialTableReader<KaldiObjectHolder<DiscriminativeNnetExample > >
-   SequentialDiscriminativeNnetExampleReader;
-typedef RandomAccessTableReader<KaldiObjectHolder<DiscriminativeNnetExample > >
-   RandomAccessDiscriminativeNnetExampleReader;
-
-
+typedef TableWriter<KaldiObjectHolder<DiscriminativeNnetExample> >
+    DiscriminativeNnetExampleWriter;
+typedef SequentialTableReader<KaldiObjectHolder<DiscriminativeNnetExample> >
+    SequentialDiscriminativeNnetExampleReader;
+typedef RandomAccessTableReader<KaldiObjectHolder<DiscriminativeNnetExample> >
+    RandomAccessDiscriminativeNnetExampleReader;
 }
-} // namespace
+}  // namespace
 
-#endif // KALDI_NNET2_NNET_EXAMPLE_H_
+#endif  // KALDI_NNET2_NNET_EXAMPLE_H_

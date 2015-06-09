@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 /** @file kaldi-pipebuf.h
  *  This is an Kaldi C++ Library header.
  */
@@ -27,8 +26,7 @@
 
 #include <fstream>
 
-namespace kaldi
-{
+namespace kaldi {
 
 #ifndef _MSC_VER
 // This class provides a way to initialize a filebuf with a FILE* pointer
@@ -37,11 +35,10 @@ namespace kaldi
 // this constructor within basic_filebuf, which makes it hard to deal
 // with pipes using completely native C++.  This is a workaround
 
-template<class CharType, class Traits = std::char_traits<CharType> >
-class basic_pipebuf : public std::basic_filebuf<CharType, Traits>
-{
+template <class CharType, class Traits = std::char_traits<CharType> >
+class basic_pipebuf : public std::basic_filebuf<CharType, Traits> {
  public:
-  typedef basic_pipebuf<CharType, Traits>   ThisType;
+  typedef basic_pipebuf<CharType, Traits> ThisType;
 
  public:
   basic_pipebuf(FILE *fptr, std::ios_base::openmode mode)
@@ -61,10 +58,8 @@ class basic_pipebuf : public std::basic_filebuf<CharType, Traits>
   }
 };  // class basic_pipebuf
 
-
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 };  // namespace kaldi
 
-#endif // KALDI_UTIL_KALDI_PIPEBUF_H_
-
+#endif  // KALDI_UTIL_KALDI_PIPEBUF_H_

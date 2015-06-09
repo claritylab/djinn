@@ -1,6 +1,7 @@
 // sgmmbin/sgmm-est-fmllr-gpost.cc
 
-// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Saarland University  Microsoft Corporation  Johns
+// Hopkins University (Author: Daniel Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -35,13 +36,12 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
                             const TransitionModel &trans_model,
                             const AmSgmm &am_sgmm,
                             const SgmmPerSpkDerivedVars &spk_vars,
-                            BaseFloat logdet,
-                            FmllrSgmmAccs *spk_stats) {
-//  kaldi::SgmmPerFrameDerivedVars per_frame_vars;
+                            BaseFloat logdet, FmllrSgmmAccs *spk_stats) {
+  //  kaldi::SgmmPerFrameDerivedVars per_frame_vars;
 
   for (size_t i = 0; i < gpost.size(); i++) {
-//    am_sgmm.ComputePerFrameVars(feats.Row(i), gpost[i].gselect, spk_vars,
-//                                logdet, &per_frame_vars);
+    //    am_sgmm.ComputePerFrameVars(feats.Row(i), gpost[i].gselect, spk_vars,
+    //                                logdet, &per_frame_vars);
 
     for (size_t j = 0; j < gpost[i].tids.size(); j++) {
       int32 pdf_id = trans_model.TransitionIdToPdf(gpost[i].tids[j]);
@@ -86,10 +86,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gpost_rspecifier = po.GetArg(3),
-        fmllr_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           gpost_rspecifier = po.GetArg(3), fmllr_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm am_sgmm;
@@ -186,14 +184,13 @@ int main(int argc, char *argv[]) {
         fmllr_writer.Write(spk, fmllr_xform);
         tot_impr += impr;
         tot_t += spk_frame_count;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!gpost_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_no_gpost++;
           continue;
         }
@@ -228,8 +225,8 @@ int main(int argc, char *argv[]) {
         const SgmmGauPost &gpost = gpost_reader.Value(utt);
 
         if (static_cast<int32>(gpost.size()) != feats.NumRows()) {
-          KALDI_WARN << "gpost has wrong size " << (gpost.size())
-              << " vs. " << (feats.NumRows());
+          KALDI_WARN << "gpost has wrong size " << (gpost.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -249,13 +246,13 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_gpost
-              << " with no gposts, " << num_other_error << " with other errors.";
+              << " with no gposts, " << num_other_error
+              << " with other errors.";
     KALDI_LOG << "Num frames " << tot_t << ", auxf impr per frame is "
               << (tot_impr / tot_t);
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

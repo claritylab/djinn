@@ -50,7 +50,6 @@ void JoinVectorToString(const std::vector<std::string> &vec_in,
                         const char *delim, bool omit_empty_strings,
                         std::string *str_out);
 
-
 /// Split a string (e.g. 1:2:3) into a vector of integers.
 /// The delimiting char may be any character in "delim".
 /// returns true on success, false on failure.
@@ -59,16 +58,15 @@ void JoinVectorToString(const std::vector<std::string> &vec_in,
 /// Regardless of the value of omit_empty_strings,
 /// the empty string is successfully parsed as an empty
 /// vector of integers
-template<class I>
-bool SplitStringToIntegers(const std::string &full,
-                           const char *delim,
+template <class I>
+bool SplitStringToIntegers(const std::string &full, const char *delim,
                            bool omit_empty_strings,  // typically false [but
                                                      // should probably be true
                                                      // if "delim" is spaces].
                            std::vector<I> *out) {
   KALDI_ASSERT(out != NULL);
   KALDI_ASSERT_IS_INTEGER_TYPE(I);
-  if ( *(full.c_str()) == '\0') {
+  if (*(full.c_str()) == '\0') {
     out->clear();
     return true;
   }
@@ -97,20 +95,18 @@ bool SplitStringToIntegers(const std::string &full,
 }
 
 // This is defined for F = float and double.
-template<class F>
-bool SplitStringToFloats(const std::string &full,
-                         const char *delim,
-                         bool omit_empty_strings, // typically false
+template <class F>
+bool SplitStringToFloats(const std::string &full, const char *delim,
+                         bool omit_empty_strings,  // typically false
                          std::vector<F> *out);
-
 
 /// Converts a string into an integer via strtoll and
 /// returns false if there was any kind of problem (i.e. the string was not an
-/// integer or contained extra non-whitespace junk, or the integer was too large to fit into the
+/// integer or contained extra non-whitespace junk, or the integer was too large
+/// to fit into the
 /// type it is being converted into.
-template<class Int>
-bool ConvertStringToInteger(const std::string &str,
-                            Int *out) {
+template <class Int>
+bool ConvertStringToInteger(const std::string &str, Int *out) {
   KALDI_ASSERT_IS_INTEGER_TYPE(Int);
   const char *this_str = str.c_str();
   char *end = NULL;
@@ -118,49 +114,42 @@ bool ConvertStringToInteger(const std::string &str,
   long long int i = KALDI_STRTOLL(this_str, &end);
   if (end != this_str)
     while (isspace(*end)) end++;
-  if (end == this_str || *end != '\0' || errno != 0)
-    return false;
+  if (end == this_str || *end != '\0' || errno != 0) return false;
   Int iInt = static_cast<Int>(i);
-  if (static_cast<long long int>(iInt) != i || (i<0 && !std::numeric_limits<Int>::is_signed)) {
+  if (static_cast<long long int>(iInt) != i ||
+      (i < 0 && !std::numeric_limits<Int>::is_signed)) {
     return false;
   }
   *out = iInt;
   return true;
 }
 
-
-/// ConvertStringToReal converts a string into either float or double via strtod,
-/// and returns false if there was any kind of problem (i.e. the string was not a
+/// ConvertStringToReal converts a string into either float or double via
+/// strtod,
+/// and returns false if there was any kind of problem (i.e. the string was not
+/// a
 /// floating point number or contained extra non-whitespace junk.
-bool ConvertStringToReal(const std::string &str,
-                         double *out);
-bool ConvertStringToReal(const std::string &str,
-                         float *out);
-
+bool ConvertStringToReal(const std::string &str, double *out);
+bool ConvertStringToReal(const std::string &str, float *out);
 
 /// Removes the beginning and trailing whitespaces from a string
 void Trim(std::string *str);
-
 
 /// Removes leading and trailing white space from the string, then splits on the
 /// first section of whitespace found (if present), putting the part before the
 /// whitespace in "first" and the rest in "rest".  If there is no such space,
 /// everything that remains after removing leading and trailing whitespace goes
 /// in "first".
-void SplitStringOnFirstSpace(const std::string &line,
-                             std::string *first,
+void SplitStringOnFirstSpace(const std::string &line, std::string *first,
                              std::string *rest);
-
 
 /// Returns true if "token" is nonempty, and all characters are
 /// printable and whitespace-free.
 bool IsToken(const std::string &token);
 
-
 /// Returns true if "line" is free of \n characters and unprintable
 /// characters, and does not contain leading or trailing whitespace.
 bool IsLine(const std::string &line);
-
 
 }  // namespace kaldi
 

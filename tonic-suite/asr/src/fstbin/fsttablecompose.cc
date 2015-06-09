@@ -18,18 +18,17 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/table-matcher.h"
 #include "fstext/fstext-utils.h"
 
-
 /*
   cd ~/tmpdir
   while true; do
-    fstrand  | fstarcsort --sort_type=olabel > 1.fst; fstrand | fstarcsort > 2.fst
+    fstrand  | fstarcsort --sort_type=olabel > 1.fst; fstrand | fstarcsort >
+  2.fst
     fstcompose 1.fst 2.fst > 3a.fst
     fsttablecompose 1.fst 2.fst > 3b.fst
     fstequivalent --random=true 3a.fst 3b.fst || echo "Test failed"
@@ -54,7 +53,8 @@ int main(int argc, char *argv[]) {
     */
 
     const char *usage =
-        "Composition algorithm [between two FSTs of standard type, in tropical\n"
+        "Composition algorithm [between two FSTs of standard type, in "
+        "tropical\n"
         "semiring] that is more efficient for certain cases-- in particular,\n"
         "where one of the FSTs (the left one, if --match-side=left) has large\n"
         "out-degree\n"
@@ -69,11 +69,13 @@ int main(int argc, char *argv[]) {
     std::string compose_filter = "sequence";
 
     po.Register("connect", &opts.connect, "If true, trim FST before output.");
-    po.Register("match-side", &match_side, "Side of composition to do table "
+    po.Register("match-side", &match_side,
+                "Side of composition to do table "
                 "match, one of: \"left\" or \"right\".");
-    po.Register("compose-filter", &compose_filter, "Composition filter to use, "
+    po.Register("compose-filter", &compose_filter,
+                "Composition filter to use, "
                 "one of: \"alt_sequence\", \"auto\", \"match\", \"sequence\"");
-    
+
     po.Read(argc, argv);
 
     if (match_side == "left") {
@@ -88,9 +90,9 @@ int main(int argc, char *argv[]) {
       opts.filter_type = ALT_SEQUENCE_FILTER;
     } else if (compose_filter == "auto") {
       opts.filter_type = AUTO_FILTER;
-    } else  if (compose_filter == "match") {
+    } else if (compose_filter == "match") {
       opts.filter_type = MATCH_FILTER;
-    } else  if (compose_filter == "sequence") {
+    } else if (compose_filter == "sequence") {
       opts.filter_type = SEQUENCE_FILTER;
     } else {
       KALDI_ERR << "Invalid compose-filter option: " << compose_filter;
@@ -101,28 +103,26 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fst1_in_str = po.GetArg(1),
-        fst2_in_str = po.GetArg(2),
-        fst_out_str = po.GetOptArg(3);
-
+    std::string fst1_in_str = po.GetArg(1), fst2_in_str = po.GetArg(2),
+                fst_out_str = po.GetOptArg(3);
 
     // Note: the "table" in is_table_1 and similar variables has nothing
     // to do with the "table" in "fsttablecompose"; is_table_1 relates to
     // whether we are dealing with a single FST or a whole set of FSTs.
     bool is_table_1 =
-        (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_2 =
-        (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_out =
-        (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) != kNoWspecifier);
+             (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_2 =
+             (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_out = (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) !=
+                         kNoWspecifier);
     if (is_table_out != (is_table_1 || is_table_2))
       KALDI_ERR << "Incompatible combination of archives and files";
-    
-    if (!is_table_1 && !is_table_2) { // Only dealing with files...
+
+    if (!is_table_1 && !is_table_2) {  // Only dealing with files...
       VectorFst<StdArc> *fst1 = ReadFstKaldi(fst1_in_str);
-      
+
       VectorFst<StdArc> *fst2 = ReadFstKaldi(fst2_in_str);
-      
+
       VectorFst<StdArc> composed_fst;
 
       TableCompose(*fst1, *fst2, &composed_fst, opts);
@@ -132,11 +132,11 @@ int main(int argc, char *argv[]) {
 
       WriteFstKaldi(composed_fst, fst_out_str);
       return 0;
-    } else if (!is_table_1 && is_table_2
-               && opts.table_match_type == MATCH_OUTPUT) {
+    } else if (!is_table_1 && is_table_2 &&
+               opts.table_match_type == MATCH_OUTPUT) {
       // second arg is an archive, and match-side=left (default).
       TableComposeCache<Fst<StdArc> > cache(opts);
-      VectorFst<StdArc> *fst1 = ReadFstKaldi(fst1_in_str);      
+      VectorFst<StdArc> *fst1 = ReadFstKaldi(fst1_in_str);
       SequentialTableReader<VectorFstHolder> fst2_reader(fst2_in_str);
       TableWriter<VectorFstHolder> fst_writer(fst_out_str);
       int32 n_done = 0;
@@ -175,14 +175,14 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Successfully composed " << n_done << " FSTs, errors or "
                 << "empty output on " << n_err;
     } else {
-      KALDI_ERR << "The combination of tables/non-tables and match-type that you "
-                << "supplied is not currently supported.  Either implement this, "
-                << "ask the maintainers to implement it, or call this program "
-                << "differently.";
+      KALDI_ERR
+          << "The combination of tables/non-tables and match-type that you "
+          << "supplied is not currently supported.  Either implement this, "
+          << "ask the maintainers to implement it, or call this program "
+          << "differently.";
     }
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

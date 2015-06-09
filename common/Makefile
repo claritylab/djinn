@@ -34,4 +34,4 @@ $(TARGET): $(OBJECTS) Makefile
 	$(CXX) -c $(CXX_FLAGS) $< -o $@
 
 clean:
-	rm libtonic.a $(SRC)/tonic.o
+	rm -f *.a $(SRC)/*.o

@@ -17,19 +17,14 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 
 // testing that we get the stack trace.
 namespace kaldi {
 
-void MyFunction2() {
-  KALDI_ERR << "Ignore this error";
-}
+void MyFunction2() { KALDI_ERR << "Ignore this error"; }
 
-void MyFunction1() {
-  MyFunction2();
-}
+void MyFunction1() { MyFunction2(); }
 
 void UnitTestError() {
   {
@@ -37,7 +32,6 @@ void UnitTestError() {
     MyFunction1();
   }
 }
-
 
 }  // end namespace kaldi.
 
@@ -50,4 +44,3 @@ int main() {
     std::cout << "UnitTestError: the error we generated was: " << r.what();
   }
 }
-

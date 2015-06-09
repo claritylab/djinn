@@ -18,25 +18,22 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "feat/feature-spectrogram.h"
-
 
 namespace kaldi {
 
 Spectrogram::Spectrogram(const SpectrogramOptions &opts)
     : opts_(opts), feature_window_function_(opts.frame_opts), srfft_(NULL) {
-  if (opts.energy_floor > 0.0)
-    log_energy_floor_ = log(opts.energy_floor);
+  if (opts.energy_floor > 0.0) log_energy_floor_ = log(opts.energy_floor);
 
   int32 padded_window_size = opts.frame_opts.PaddedWindowSize();
-  if ((padded_window_size & (padded_window_size-1)) == 0)  // Is a power of two
+  if ((padded_window_size & (padded_window_size - 1)) ==
+      0)  // Is a power of two
     srfft_ = new SplitRadixRealFft<BaseFloat>(padded_window_size);
 }
 
 Spectrogram::~Spectrogram() {
-  if (srfft_ != NULL)
-    delete srfft_;
+  if (srfft_ != NULL) delete srfft_;
 }
 
 void Spectrogram::Compute(const VectorBase<BaseFloat> &wave,
@@ -46,7 +43,7 @@ void Spectrogram::Compute(const VectorBase<BaseFloat> &wave,
 
   // Get dimensions of output features
   int32 rows_out = NumFrames(wave.Dim(), opts_.frame_opts);
-  int32 cols_out =  opts_.frame_opts.PaddedWindowSize()/2 +1;
+  int32 cols_out = opts_.frame_opts.PaddedWindowSize() / 2 + 1;
   if (rows_out == 0)
     KALDI_ERR << "No frames fit in file (#samples is " << wave.Dim() << ")";
   // Prepare the output buffer
@@ -63,14 +60,14 @@ void Spectrogram::Compute(const VectorBase<BaseFloat> &wave,
   // Compute all the freames, r is frame index..
   for (int32 r = 0; r < rows_out; r++) {
     // Cut the window, apply window function
-    ExtractWindow(wave, r, opts_.frame_opts, feature_window_function_,
-                  &window, (opts_.raw_energy ? &log_energy : NULL));
+    ExtractWindow(wave, r, opts_.frame_opts, feature_window_function_, &window,
+                  (opts_.raw_energy ? &log_energy : NULL));
 
     // Compute energy after window function (not the raw one)
     if (!opts_.raw_energy)
       log_energy = log(std::max(VecVec(window, window),
                                 std::numeric_limits<BaseFloat>::min()));
-    
+
     if (srfft_ != NULL)  // Compute FFT using split-radix algorithm.
       srfft_->Compute(window.Data(), true);
     else  // An alternative algorithm that works for non-powers-of-two
@@ -78,7 +75,7 @@ void Spectrogram::Compute(const VectorBase<BaseFloat> &wave,
 
     // Convert the FFT into a power spectrum.
     ComputePowerSpectrum(&window);
-    SubVector<BaseFloat> power_spectrum(window, 0, window.Dim()/2 + 1);
+    SubVector<BaseFloat> power_spectrum(window, 0, window.Dim() / 2 + 1);
 
     power_spectrum.ApplyFloor(std::numeric_limits<BaseFloat>::min());
     power_spectrum.ApplyLog();
@@ -87,7 +84,7 @@ void Spectrogram::Compute(const VectorBase<BaseFloat> &wave,
     SubVector<BaseFloat> this_output(output->Row(r));
     this_output.CopyFromVec(power_spectrum);
     if (opts_.energy_floor > 0.0 && log_energy < log_energy_floor_) {
-        log_energy = log_energy_floor_;
+      log_energy = log_energy_floor_;
     }
     this_output(0) = log_energy;
   }

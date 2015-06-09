@@ -36,8 +36,9 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Estimate fMLLR basis representation. Reads a set of gradient scatter\n"
         "accumulations. Outputs basis matrices.\n"
-        "Usage: gmm-basis-fmllr-training [options] <model-in> <basis-wspecifier>"
-         "<accs-in1> <accs-in2> ...\n";
+        "Usage: gmm-basis-fmllr-training [options] <model-in> "
+        "<basis-wspecifier>"
+        "<accs-in1> <accs-in2> ...\n";
 
     bool binary_write = true;
     ParseOptions po(usage);
@@ -49,9 +50,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        basis_wspecifier = po.GetArg(2);
+    string model_rxfilename = po.GetArg(1), basis_wspecifier = po.GetArg(2);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -81,9 +80,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Generate " << basis_est.BasisSize() << " bases, written to "
               << basis_wspecifier;
     return 0;
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

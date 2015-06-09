@@ -23,29 +23,29 @@
 
 #define SAMPLE 100000
 
-int main() { 
+int main() {
   float dummy = 0.0;
   kaldi::Timer exp_timer;
-  for(int i = 0; i < SAMPLE; ++i) {
+  for (int i = 0; i < SAMPLE; ++i) {
     dummy += exp((double)(i % 10));
   }
   double exp_time = exp_timer.Elapsed();
 
   kaldi::Timer expf_timer;
-  for(int i = 0; i < SAMPLE; ++i) {
+  for (int i = 0; i < SAMPLE; ++i) {
     dummy += expf((double)(i % 10));
   }
   double expf_time = expf_timer.Elapsed();
-  
-  // Often exp() and expf() perform very similarly, 
-  // so we will replace expf() by exp() only if there is at least 10% difference 
-  if (expf_time < exp_time * 1.1) { 
+
+  // Often exp() and expf() perform very similarly,
+  // so we will replace expf() by exp() only if there is at least 10% difference
+  if (expf_time < exp_time * 1.1) {
     return 0;
   } else {
     std::cerr << "exp() time: " << exp_time << std::endl;
     std::cerr << "expf() time: " << expf_time << std::endl;
     return 1;
   }
-  
-  std::cerr << dummy << std::endl; // No complaint about the unused variable
+
+  std::cerr << dummy << std::endl;  // No complaint about the unused variable
 }

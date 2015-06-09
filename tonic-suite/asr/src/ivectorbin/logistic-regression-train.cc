@@ -17,11 +17,9 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "ivector/logistic-regression.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -31,10 +29,10 @@ int main(int argc, char *argv[]) {
         "Trains a model using Logistic Regression with L-BFGS from\n"
         "a set of vectors. The class labels in <classes-rspecifier>\n"
         "must be a set of integers such that there are no gaps in \n"
-        "its range and the smallest label must be 0.\n" 
+        "its range and the smallest label must be 0.\n"
         "Usage: logistic-regression-train <vector-rspecifier>\n"
         "<classes-rspecifier> <model-out>\n";
-    
+
     ParseOptions po(usage);
 
     bool binary = true;
@@ -42,19 +40,18 @@ int main(int argc, char *argv[]) {
     config.Register(&po);
     po.Register("binary", &binary, "Write output in binary mode");
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string vector_rspecifier = po.GetArg(1),
-        class_rspecifier = po.GetArg(2),
-        model_out = po.GetArg(3);
+                class_rspecifier = po.GetArg(2), model_out = po.GetArg(3);
 
     RandomAccessBaseFloatVectorReader vector_reader(vector_rspecifier);
     SequentialInt32Reader class_reader(class_rspecifier);
-    
+
     std::vector<int32> ys;
     std::vector<std::string> utt_ids;
     std::vector<Vector<BaseFloat> > vectors;
@@ -72,7 +69,7 @@ int main(int argc, char *argv[]) {
         ys.push_back(class_label);
         const Vector<BaseFloat> &vector = vector_reader.Value(utt);
         vectors.push_back(vector);
-    
+
         // Since there are no gaps in the class labels and we
         // start at 0, the largest label is the number of the
         // of the classes - 1.
@@ -87,8 +84,8 @@ int main(int argc, char *argv[]) {
     // classes.
     num_classes += 1;
 
-    KALDI_LOG << "Retrieved " << num_utt_done << " vectors with "
-              << num_utt_err << " missing. "
+    KALDI_LOG << "Retrieved " << num_utt_done << " vectors with " << num_utt_err
+              << " missing. "
               << "There were " << num_classes << " class labels.";
 
     if (num_utt_done == 0)
@@ -99,13 +96,13 @@ int main(int argc, char *argv[]) {
       xs.Row(i).CopyFromVec(vectors[i]);
     }
     vectors.clear();
-  
+
     LogisticRegression classifier = LogisticRegression();
     classifier.Train(xs, ys, config);
     WriteKaldiObject(classifier, model_out, binary);
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

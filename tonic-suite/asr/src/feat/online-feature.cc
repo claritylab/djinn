@@ -24,8 +24,7 @@
 
 namespace kaldi {
 
-
-template<class C>
+template <class C>
 void OnlineGenericBaseFeature<C>::GetFrame(int32 frame,
                                            VectorBase<BaseFloat> *feat) {
   KALDI_ASSERT(frame >= 0 && frame < num_frames_);
@@ -33,20 +32,22 @@ void OnlineGenericBaseFeature<C>::GetFrame(int32 frame,
   feat->CopyFromVec(features_.Row(frame));
 };
 
-template<class C>
+template <class C>
 bool OnlineGenericBaseFeature<C>::IsLastFrame(int32 frame) const {
   return (frame == num_frames_ - 1 && input_finished_);
 }
 
-template<class C>
+template <class C>
 OnlineGenericBaseFeature<C>::OnlineGenericBaseFeature(
     const typename C::Options &opts)
-    :mfcc_or_plp_(opts), input_finished_(false), num_frames_(0),
-    sampling_frequency_(opts.frame_opts.samp_freq) { }
+    : mfcc_or_plp_(opts),
+      input_finished_(false),
+      num_frames_(0),
+      sampling_frequency_(opts.frame_opts.samp_freq) {}
 
-template<class C>
-void OnlineGenericBaseFeature<C>::AcceptWaveform(BaseFloat sampling_rate,
-                                        const VectorBase<BaseFloat> &waveform) {
+template <class C>
+void OnlineGenericBaseFeature<C>::AcceptWaveform(
+    BaseFloat sampling_rate, const VectorBase<BaseFloat> &waveform) {
   if (waveform.Dim() == 0) {
     return;  // Nothing to do.
   }
@@ -54,21 +55,20 @@ void OnlineGenericBaseFeature<C>::AcceptWaveform(BaseFloat sampling_rate,
     KALDI_ERR << "AcceptWaveform called after InputFinished() was called.";
   }
   if (sampling_rate != sampling_frequency_) {
-    KALDI_ERR << "Sampling frequency mismatch, expected "
-              << sampling_frequency_ << ", got " << sampling_rate;
+    KALDI_ERR << "Sampling frequency mismatch, expected " << sampling_frequency_
+              << ", got " << sampling_rate;
   }
 
   Vector<BaseFloat> appended_wave;
 
-  const VectorBase<BaseFloat> &wave_to_use = (waveform_remainder_.Dim() != 0 ?
-                                              appended_wave : waveform);
+  const VectorBase<BaseFloat> &wave_to_use =
+      (waveform_remainder_.Dim() != 0 ? appended_wave : waveform);
   if (waveform_remainder_.Dim() != 0) {
-    appended_wave.Resize(waveform_remainder_.Dim() +
-                         waveform.Dim());
-    appended_wave.Range(0, waveform_remainder_.Dim()).CopyFromVec(
-        waveform_remainder_);
-    appended_wave.Range(waveform_remainder_.Dim(),
-                        waveform.Dim()).CopyFromVec(waveform);
+    appended_wave.Resize(waveform_remainder_.Dim() + waveform.Dim());
+    appended_wave.Range(0, waveform_remainder_.Dim())
+        .CopyFromVec(waveform_remainder_);
+    appended_wave.Range(waveform_remainder_.Dim(), waveform.Dim())
+        .CopyFromVec(waveform);
   }
   waveform_remainder_.Resize(0);
 
@@ -86,8 +86,8 @@ void OnlineGenericBaseFeature<C>::AcceptWaveform(BaseFloat sampling_rate,
                                    // compute; it's the factor by which we
                                    // increase the memory used each time.
   if (new_num_frames > features_.NumRows()) {
-    int32 new_num_rows = std::max<int32>(new_num_frames,
-                                         features_.NumRows() * increase_ratio);
+    int32 new_num_rows =
+        std::max<int32>(new_num_frames, features_.NumRows() * increase_ratio);
     // Increase the size of the features_ matrix and copy over any existing
     // data.
     features_.Resize(new_num_rows, Dim(), kCopyData);
@@ -101,32 +101,30 @@ template class OnlineGenericBaseFeature<Mfcc>;
 template class OnlineGenericBaseFeature<Plp>;
 template class OnlineGenericBaseFeature<Fbank>;
 
-
-OnlineCmvnState::OnlineCmvnState(const OnlineCmvnState &other):
-    speaker_cmvn_stats(other.speaker_cmvn_stats),
-    global_cmvn_stats(other.global_cmvn_stats),
-    frozen_state(other.frozen_state) { }
+OnlineCmvnState::OnlineCmvnState(const OnlineCmvnState &other)
+    : speaker_cmvn_stats(other.speaker_cmvn_stats),
+      global_cmvn_stats(other.global_cmvn_stats),
+      frozen_state(other.frozen_state) {}
 
 OnlineCmvn::OnlineCmvn(const OnlineCmvnOptions &opts,
                        const OnlineCmvnState &cmvn_state,
-                       OnlineFeatureInterface *src):
-    opts_(opts), src_(src) {
+                       OnlineFeatureInterface *src)
+    : opts_(opts), src_(src) {
   SetState(cmvn_state);
   if (!SplitStringToIntegers(opts.skip_dims, ":", false, &skip_dims_))
     KALDI_ERR << "Bad --skip-dims option (should be colon-separated list of "
-              <<  "integers)";
+              << "integers)";
 }
 
 OnlineCmvn::OnlineCmvn(const OnlineCmvnOptions &opts,
-                       OnlineFeatureInterface *src): opts_(opts), src_(src) {
+                       OnlineFeatureInterface *src)
+    : opts_(opts), src_(src) {
   if (!SplitStringToIntegers(opts.skip_dims, ":", false, &skip_dims_))
     KALDI_ERR << "Bad --skip-dims option (should be colon-separated list of "
-              <<  "integers)";
+              << "integers)";
 }
 
-
-void OnlineCmvn::GetMostRecentCachedFrame(int32 frame,
-                                          int32 *cached_frame,
+void OnlineCmvn::GetMostRecentCachedFrame(int32 frame, int32 *cached_frame,
                                           Matrix<double> *stats) {
   KALDI_ASSERT(frame >= 0);
   InitRingBufferIfNeeded();
@@ -155,7 +153,7 @@ void OnlineCmvn::GetMostRecentCachedFrame(int32 frame,
       n = static_cast<int32>(cached_stats_modulo_.size() - 1);
     }
   }
-  *cached_frame = n * opts_.modulus;
+  *cached_frame = n *opts_.modulus;
   KALDI_ASSERT(cached_stats_modulo_[n] != NULL);
   *stats = *(cached_stats_modulo_[n]);
 }
@@ -234,7 +232,6 @@ void OnlineCmvn::ComputeStatsForFrame(int32 frame,
   stats_out->CopyFromMat(stats);
 }
 
-
 // static
 void OnlineCmvn::SmoothOnlineCmvnStats(const MatrixBase<double> &speaker_stats,
                                        const MatrixBase<double> &global_stats,
@@ -248,33 +245,29 @@ void OnlineCmvn::SmoothOnlineCmvnStats(const MatrixBase<double> &speaker_stats,
   if (cur_count >= opts.cmn_window) return;
   if (speaker_stats.NumRows() != 0) {  // if we have speaker stats..
     double count_from_speaker = opts.cmn_window - cur_count,
-        speaker_count = speaker_stats(0, dim);
+           speaker_count = speaker_stats(0, dim);
     if (count_from_speaker > opts.speaker_frames)
       count_from_speaker = opts.speaker_frames;
-    if (count_from_speaker > speaker_count)
-      count_from_speaker = speaker_count;
+    if (count_from_speaker > speaker_count) count_from_speaker = speaker_count;
     if (count_from_speaker > 0.0)
-      stats->AddMat(count_from_speaker / speaker_count,
-                             speaker_stats);
+      stats->AddMat(count_from_speaker / speaker_count, speaker_stats);
     cur_count = (*stats)(0, dim);
   }
   if (cur_count >= opts.cmn_window) return;
   if (global_stats.NumRows() != 0) {
     double count_from_global = opts.cmn_window - cur_count,
-        global_count = global_stats(0, dim);
+           global_count = global_stats(0, dim);
     KALDI_ASSERT(global_count > 0.0);
     if (count_from_global > opts.global_frames)
       count_from_global = opts.global_frames;
     if (count_from_global > 0.0)
-      stats->AddMat(count_from_global / global_count,
-                             global_stats);
+      stats->AddMat(count_from_global / global_count, global_stats);
   } else {
     KALDI_ERR << "Global CMN stats are required";
   }
 }
 
-void OnlineCmvn::GetFrame(int32 frame,
-                          VectorBase<BaseFloat> *feat) {
+void OnlineCmvn::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   src_->GetFrame(frame, feat);
   KALDI_ASSERT(feat->Dim() == this->Dim());
   int32 dim = feat->Dim();
@@ -286,14 +279,11 @@ void OnlineCmvn::GetFrame(int32 frame,
     this->ComputeStatsForFrame(frame, &stats);
     // now smooth them.
     SmoothOnlineCmvnStats(orig_state_.speaker_cmvn_stats,
-                          orig_state_.global_cmvn_stats,
-                          opts_,
-                          &stats);
+                          orig_state_.global_cmvn_stats, opts_, &stats);
   }
 
-  if (!skip_dims_.empty())
-    FakeStatsForSomeDims(skip_dims_, &stats);
-  
+  if (!skip_dims_.empty()) FakeStatsForSomeDims(skip_dims_, &stats);
+
   // call the function ApplyCmvn declared in ../transform/cmvn.h, which
   // requires a matrix.
   Matrix<BaseFloat> feat_mat(1, dim);
@@ -313,16 +303,13 @@ void OnlineCmvn::Freeze(int32 cur_frame) {
   this->ComputeStatsForFrame(cur_frame, &stats);
   // now smooth them.
   SmoothOnlineCmvnStats(orig_state_.speaker_cmvn_stats,
-                        orig_state_.global_cmvn_stats,
-                        opts_,
-                        &stats);
+                        orig_state_.global_cmvn_stats, opts_, &stats);
   this->frozen_state_ = stats;
 }
 
-void OnlineCmvn::GetState(int32 cur_frame,
-                          OnlineCmvnState *state_out) {
+void OnlineCmvn::GetState(int32 cur_frame, OnlineCmvnState *state_out) {
   *state_out = this->orig_state_;
-  { // This block updates state_out->speaker_cmvn_stats
+  {  // This block updates state_out->speaker_cmvn_stats
     int32 dim = this->Dim();
     if (state_out->speaker_cmvn_stats.NumRows() == 0)
       state_out->speaker_cmvn_stats.Resize(2, dim + 1);
@@ -350,7 +337,7 @@ void OnlineCmvn::SetState(const OnlineCmvnState &cmvn_state) {
 
 int32 OnlineSpliceFrames::NumFramesReady() const {
   int32 num_frames = src_->NumFramesReady();
-  if (num_frames > 0 && src_->IsLastFrame(num_frames-1))
+  if (num_frames > 0 && src_->IsLastFrame(num_frames - 1))
     return num_frames;
   else
     return std::max<int32>(0, num_frames - right_context_);
@@ -374,12 +361,12 @@ void OnlineSpliceFrames::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
 }
 
 OnlineTransform::OnlineTransform(const MatrixBase<BaseFloat> &transform,
-                                 OnlineFeatureInterface *src):
-    src_(src) {
+                                 OnlineFeatureInterface *src)
+    : src_(src) {
   int32 src_dim = src_->Dim();
   if (transform.NumCols() == src_dim) {  // Linear transform
     linear_term_ = transform;
-    offset_.Resize(transform.NumRows());  // Resize() will zero it.
+    offset_.Resize(transform.NumRows());            // Resize() will zero it.
   } else if (transform.NumCols() == src_dim + 1) {  // Affine transform
     linear_term_ = transform.Range(0, transform.NumRows(), 0, src_dim);
     offset_.Resize(transform.NumRows());
@@ -397,7 +384,6 @@ void OnlineTransform::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   feat->AddMatVec(1.0, linear_term_, kNoTrans, input_feat, 1.0);
 }
 
-
 int32 OnlineDeltaFeature::Dim() const {
   int32 src_dim = src_->Dim();
   return src_dim * (1 + opts_.order);
@@ -405,31 +391,27 @@ int32 OnlineDeltaFeature::Dim() const {
 
 int32 OnlineDeltaFeature::NumFramesReady() const {
   int32 num_frames = src_->NumFramesReady(),
-      context = opts_.order * opts_.window;
+        context = opts_.order * opts_.window;
   // "context" is the number of frames on the left or (more relevant
   // here) right which we need in order to produce the output.
-  if (num_frames > 0 && src_->IsLastFrame(num_frames-1))
+  if (num_frames > 0 && src_->IsLastFrame(num_frames - 1))
     return num_frames;
   else
     return std::max<int32>(0, num_frames - context);
 }
 
-void OnlineDeltaFeature::GetFrame(int32 frame,
-                                      VectorBase<BaseFloat> *feat) {
+void OnlineDeltaFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   KALDI_ASSERT(frame >= 0 && frame < NumFramesReady());
   KALDI_ASSERT(feat->Dim() == Dim());
   // We'll produce a temporary matrix containing the features we want to
   // compute deltas on, but truncated to the necessary context.
   int32 context = opts_.order * opts_.window;
-  int32 left_frame = frame - context,
-      right_frame = frame + context,
-      src_frames_ready = src_->NumFramesReady();
+  int32 left_frame = frame - context, right_frame = frame + context,
+        src_frames_ready = src_->NumFramesReady();
   if (left_frame < 0) left_frame = 0;
-  if (right_frame >= src_frames_ready)
-    right_frame = src_frames_ready - 1;
+  if (right_frame >= src_frames_ready) right_frame = src_frames_ready - 1;
   KALDI_ASSERT(right_frame >= left_frame);
-  int32 temp_num_frames = right_frame + 1 - left_frame,
-      src_dim = src_->Dim();
+  int32 temp_num_frames = right_frame + 1 - left_frame, src_dim = src_->Dim();
   Matrix<BaseFloat> temp_src(temp_num_frames, src_dim);
   for (int32 t = left_frame; t <= right_frame; t++) {
     SubVector<BaseFloat> temp_row(temp_src, t - left_frame);
@@ -440,10 +422,9 @@ void OnlineDeltaFeature::GetFrame(int32 frame,
   delta_features_.Process(temp_src, temp_t, feat);
 }
 
-
 OnlineDeltaFeature::OnlineDeltaFeature(const DeltaFeaturesOptions &opts,
-                                       OnlineFeatureInterface *src):
-    src_(src), opts_(opts), delta_features_(opts) { }
+                                       OnlineFeatureInterface *src)
+    : src_(src), opts_(opts), delta_features_(opts) {}
 
 void OnlineCacheFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   KALDI_ASSERT(frame >= 0);
@@ -462,12 +443,9 @@ void OnlineCacheFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
 
 void OnlineCacheFeature::ClearCache() {
   for (size_t i = 0; i < cache_.size(); i++)
-    if (cache_[i] != NULL)
-      delete cache_[i];
+    if (cache_[i] != NULL) delete cache_[i];
   cache_.resize(0);
 }
-
-
 
 void OnlineAppendFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   KALDI_ASSERT(feat->Dim() == Dim());
@@ -477,6 +455,5 @@ void OnlineAppendFeature::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   src1_->GetFrame(frame, &feat1);
   src2_->GetFrame(frame, &feat2);
 };
-
 
 }  // namespace kaldi

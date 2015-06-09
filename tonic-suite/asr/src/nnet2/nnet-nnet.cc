@@ -24,7 +24,6 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 int32 Nnet::OutputDim() const {
   KALDI_ASSERT(!components_.empty());
   return components_.back()->OutputDim();
@@ -34,7 +33,6 @@ int32 Nnet::InputDim() const {
   KALDI_ASSERT(!components_.empty());
   return components_.front()->InputDim();
 }
-
 
 int32 Nnet::LeftContext() const {
   KALDI_ASSERT(!components_.empty());
@@ -52,21 +50,21 @@ int32 Nnet::RightContext() const {
   return ans;
 }
 
-const Component& Nnet::GetComponent(int32 component) const {
+const Component &Nnet::GetComponent(int32 component) const {
   KALDI_ASSERT(static_cast<size_t>(component) < components_.size());
   return *(components_[component]);
 }
 
-Component& Nnet::GetComponent(int32 component) {
+Component &Nnet::GetComponent(int32 component) {
   KALDI_ASSERT(static_cast<size_t>(component) < components_.size());
   return *(components_[component]);
 }
 
 void Nnet::SetZero(bool treat_as_gradient) {
   for (size_t i = 0; i < components_.size(); i++) {
-    UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(components_[i]);
+    UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(components_[i]);
     if (uc != NULL) uc->SetZero(treat_as_gradient);
-    NonlinearComponent *nc = dynamic_cast<NonlinearComponent*>(components_[i]);
+    NonlinearComponent *nc = dynamic_cast<NonlinearComponent *>(components_[i]);
     if (nc != NULL) nc->Scale(0.0);
   }
 }
@@ -83,7 +81,7 @@ void Nnet::Write(std::ostream &os, bool binary) const {
     if (!binary) os << std::endl;
   }
   WriteToken(os, binary, "</Components>");
-  WriteToken(os, binary, "</Nnet>");  
+  WriteToken(os, binary, "</Nnet>");
 }
 
 void Nnet::Read(std::istream &is, bool binary) {
@@ -94,21 +92,20 @@ void Nnet::Read(std::istream &is, bool binary) {
   ReadBasicType(is, binary, &num_components);
   ExpectToken(is, binary, "<Components>");
   components_.resize(num_components);
-  for (int32 c = 0; c < num_components; c++) 
+  for (int32 c = 0; c < num_components; c++)
     components_[c] = Component::ReadNew(is, binary);
   ExpectToken(is, binary, "</Components>");
   ExpectToken(is, binary, "</Nnet>");
   SetIndexes();
-  Check();  
+  Check();
 }
-
 
 void Nnet::ZeroStats() {
   for (size_t i = 0; i < components_.size(); i++) {
     NonlinearComponent *nonlinear_component =
-        dynamic_cast<NonlinearComponent*>(components_[i]);
+        dynamic_cast<NonlinearComponent *>(components_[i]);
     if (nonlinear_component != NULL)
-      nonlinear_component->Scale(0.0); // Zero the stats this way.
+      nonlinear_component->Scale(0.0);  // Zero the stats this way.
   }
 }
 void Nnet::Destroy() {
@@ -118,26 +115,25 @@ void Nnet::Destroy() {
   }
 }
 
-void Nnet::ComponentDotProducts(
-    const Nnet &other,
-    VectorBase<BaseFloat> *dot_prod) const {
+void Nnet::ComponentDotProducts(const Nnet &other,
+                                VectorBase<BaseFloat> *dot_prod) const {
   KALDI_ASSERT(dot_prod->Dim() == NumUpdatableComponents());
   int32 index = 0;
   for (size_t i = 0; i < components_.size(); i++) {
-    UpdatableComponent *uc1 = dynamic_cast<UpdatableComponent*>(components_[i]);
-    const UpdatableComponent *uc2 = dynamic_cast<const UpdatableComponent*>(
-        &(other.GetComponent(i)));
+    UpdatableComponent *uc1 =
+        dynamic_cast<UpdatableComponent *>(components_[i]);
+    const UpdatableComponent *uc2 =
+        dynamic_cast<const UpdatableComponent *>(&(other.GetComponent(i)));
     KALDI_ASSERT((uc1 != NULL) == (uc2 != NULL));
     if (uc1 != NULL) {
       (*dot_prod)(index) = uc1->DotProduct(*uc2);
       index++;
     }
-  }    
+  }
   KALDI_ASSERT(index == NumUpdatableComponents());
 }
 
-
-Nnet::Nnet(const Nnet &other): components_(other.components_.size()) {
+Nnet::Nnet(const Nnet &other) : components_(other.components_.size()) {
   for (size_t i = 0; i < other.components_.size(); i++)
     components_[i] = other.components_[i]->Copy();
   SetIndexes();
@@ -147,8 +143,8 @@ Nnet::Nnet(const Nnet &other): components_(other.components_.size()) {
 Nnet::Nnet(const Nnet &other1, const Nnet &other2) {
   int32 dim1 = other1.OutputDim(), dim2 = other2.InputDim();
   if (dim1 != dim2)
-    KALDI_ERR << "Concatenating neural nets: dimension mismatch "
-              << dim1 << " vs. " << dim2;
+    KALDI_ERR << "Concatenating neural nets: dimension mismatch " << dim1
+              << " vs. " << dim2;
   for (size_t i = 0; i < other1.components_.size(); i++)
     components_.push_back(other1.components_[i]->Copy());
   for (size_t i = 0; i < other2.components_.size(); i++)
@@ -157,8 +153,7 @@ Nnet::Nnet(const Nnet &other1, const Nnet &other2) {
   Check();
 }
 
-
-Nnet &Nnet::operator = (const Nnet &other) {
+Nnet &Nnet::operator=(const Nnet &other) {
   Destroy();
   components_.resize(other.components_.size());
   for (size_t i = 0; i < other.components_.size(); i++)
@@ -177,7 +172,7 @@ std::string Nnet::Info() const {
   ostr << "input-dim " << InputDim() << std::endl;
   ostr << "output-dim " << OutputDim() << std::endl;
   ostr << "parameter-dim " << GetParameterDim() << std::endl;
-  for (int32 i = 0; i < NumComponents(); i++) 
+  for (int32 i = 0; i < NumComponents(); i++)
     ostr << "component " << i << " : " << components_[i]->Info() << std::endl;
   return ostr.str();
 }
@@ -186,7 +181,7 @@ void Nnet::Check() const {
   for (size_t i = 0; i + 1 < components_.size(); i++) {
     KALDI_ASSERT(components_[i] != NULL);
     int32 output_dim = components_[i]->OutputDim(),
-      next_input_dim = components_[i+1]->InputDim();
+          next_input_dim = components_[i + 1]->InputDim();
     KALDI_ASSERT(output_dim == next_input_dim);
     KALDI_ASSERT(components_[i]->Index() == static_cast<int32>(i));
   }
@@ -197,66 +192,66 @@ void Nnet::Init(std::istream &is) {
   std::string line;
   /* example config file as follows.  The things in brackets specify the context
      splicing for each layer, and after that is the info about the actual layer.
-     Imagine the input dim is 13, and the speaker dim is 40, so (13 x 9) + 40 =  527.
-     The config file might be as follows; the lines beginning with # are comments.
-     
+     Imagine the input dim is 13, and the speaker dim is 40, so (13 x 9) + 40 =
+     527.
+     The config file might be as follows; the lines beginning with # are
+     comments.
+
      # layer-type layer-options
      AffineLayer 0.01 0.001 527 1000 0.04356
   */
   components_.clear();
   while (getline(is, line)) {
     std::istringstream line_is(line);
-    line_is >> std::ws; // Eat up whitespace.
-    if (line_is.peek() == '#' || line_is.eof()) continue; // Comment or empty.
+    line_is >> std::ws;                                    // Eat up whitespace.
+    if (line_is.peek() == '#' || line_is.eof()) continue;  // Comment or empty.
     Component *c = Component::NewFromString(line);
     KALDI_ASSERT(c != NULL);
-    components_.push_back(c);    
+    components_.push_back(c);
   }
   SetIndexes();
   Check();
 }
 
-void Nnet::Init(std::vector<Component*> *components) {
+void Nnet::Init(std::vector<Component *> *components) {
   Destroy();
   components_.swap(*components);
   SetIndexes();
   Check();
 }
 
-
 void Nnet::ScaleLearningRates(BaseFloat factor) {
   std::ostringstream ostr;
   for (int32 c = 0; c < NumComponents(); c++) {
-    UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(components_[c]);
-    if (uc != NULL) { // Updatable component...
+    UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(components_[c]);
+    if (uc != NULL) {  // Updatable component...
       uc->SetLearningRate(uc->LearningRate() * factor);
       ostr << uc->LearningRate() << " ";
     }
   }
   KALDI_LOG << "Scaled learning rates by " << factor
-            << ", new learning rates are "
-            << ostr.str();
+            << ", new learning rates are " << ostr.str();
 }
 
 void Nnet::SetLearningRates(BaseFloat learning_rate) {
   for (int32 c = 0; c < NumComponents(); c++) {
-    UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(components_[c]);
-    if (uc != NULL) { // Updatable component...
+    UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(components_[c]);
+    if (uc != NULL) {  // Updatable component...
       uc->SetLearningRate(learning_rate);
     }
   }
   KALDI_LOG << "Set learning rates to " << learning_rate;
 }
 
-
 void Nnet::AdjustLearningRates(
     const VectorBase<BaseFloat> &old_model_old_gradient,
     const VectorBase<BaseFloat> &new_model_old_gradient,
     const VectorBase<BaseFloat> &old_model_new_gradient,
     const VectorBase<BaseFloat> &new_model_new_gradient,
-    BaseFloat measure_at, // where to measure gradient, on line between old and new model;
-                          // 0.5 < measure_at <= 1.0.
-    BaseFloat ratio, // e.g. 1.1; ratio by  which we change learning rate.
+    BaseFloat measure_at,  // where to measure gradient, on line between old and
+                           // new model;
+                           // 0.5 < measure_at <= 1.0.
+    BaseFloat ratio,       // e.g. 1.1; ratio by  which we change learning rate.
     BaseFloat max_learning_rate) {
   std::vector<BaseFloat> new_lrates;
   KALDI_ASSERT(old_model_old_gradient.Dim() == NumUpdatableComponents() &&
@@ -270,27 +265,31 @@ void Nnet::AdjustLearningRates(
   BaseFloat inv_ratio = 1.0 / ratio;
   int32 index = 0;
   for (int32 c = 0; c < NumComponents(); c++) {
-    UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(components_[c]);
-    if (uc == NULL) { // Non-updatable component.
+    UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(components_[c]);
+    if (uc == NULL) {  // Non-updatable component.
       KALDI_ASSERT(old_model_old_gradient(c) == 0.0);
-      continue; 
+      continue;
     } else {
-      BaseFloat grad_dotprod_at_end =
-          new_model_new_gradient(index) - old_model_new_gradient(index),
-          grad_dotprod_at_start =
-          new_model_old_gradient(index) - old_model_old_gradient(index),
-          grad_dotprod_interp =
-          measure_at * grad_dotprod_at_end +
-          (1.0 - measure_at) * grad_dotprod_at_start;
-      // grad_dotprod_interp will be positive if we want more of the gradient term
+      BaseFloat grad_dotprod_at_end = new_model_new_gradient(index) -
+                                      old_model_new_gradient(index),
+                grad_dotprod_at_start = new_model_old_gradient(index) -
+                                        old_model_old_gradient(index),
+                grad_dotprod_interp =
+                    measure_at * grad_dotprod_at_end +
+                    (1.0 - measure_at) * grad_dotprod_at_start;
+      // grad_dotprod_interp will be positive if we want more of the gradient
+      // term
       // -> faster learning rate for this component
 
       BaseFloat lrate = uc->LearningRate();
       lrate *= (grad_dotprod_interp > 0 ? ratio : inv_ratio);
-      changes_str = changes_str + (grad_dotprod_interp > 0 ? " increase" : " decrease");
-      dotprod_str = dotprod_str + (new_model_new_gradient(index) > 0 ? " positive" : " negative");
+      changes_str =
+          changes_str + (grad_dotprod_interp > 0 ? " increase" : " decrease");
+      dotprod_str =
+          dotprod_str +
+          (new_model_new_gradient(index) > 0 ? " positive" : " negative");
       if (lrate > max_learning_rate) lrate = max_learning_rate;
-    
+
       new_lrates.push_back(lrate);
       uc->SetLearningRate(lrate);
       index++;
@@ -306,11 +305,10 @@ void Nnet::AdjustLearningRates(
   KALDI_VLOG(1) << "Learning rates are " << lrate_str.str();
 }
 
-
 int32 Nnet::NumUpdatableComponents() const {
   int32 ans = 0;
   for (int32 i = 0; i < NumComponents(); i++)
-    if (dynamic_cast<const UpdatableComponent*>(&(GetComponent(i))) != NULL)
+    if (dynamic_cast<const UpdatableComponent *>(&(GetComponent(i))) != NULL)
       ans++;
   return ans;
 }
@@ -320,8 +318,8 @@ void Nnet::ScaleComponents(const VectorBase<BaseFloat> &scale_params) {
   int32 i = 0;
   for (int32 j = 0; j < NumComponents(); j++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(j)));
-    if (uc!= NULL) {
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(j)));
+    if (uc != NULL) {
       uc->Scale(scale_params(i));
       i++;
     }
@@ -333,10 +331,10 @@ void Nnet::ScaleComponents(const VectorBase<BaseFloat> &scale_params) {
 void Nnet::Scale(BaseFloat scale) {
   for (int32 i = 0; i < NumComponents(); i++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(i)));
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(i)));
     if (uc != NULL) uc->Scale(scale);
     NonlinearComponent *nc =
-        dynamic_cast<NonlinearComponent*>(&(GetComponent(i)));
+        dynamic_cast<NonlinearComponent *>(&(GetComponent(i)));
     if (nc != NULL) nc->Scale(scale);
   }
 }
@@ -345,9 +343,9 @@ void Nnet::CopyStatsFrom(const Nnet &other) {
   KALDI_ASSERT(NumComponents() == other.NumComponents());
   for (int32 i = 0; i < NumComponents(); i++) {
     NonlinearComponent *nc =
-        dynamic_cast<NonlinearComponent*>(&(GetComponent(i)));
+        dynamic_cast<NonlinearComponent *>(&(GetComponent(i)));
     const NonlinearComponent *nc_other =
-        dynamic_cast<const NonlinearComponent*>(&(other.GetComponent(i)));
+        dynamic_cast<const NonlinearComponent *>(&(other.GetComponent(i)));
     if (nc != NULL) {
       nc->Scale(0.0);
       nc->Add(1.0, *nc_other);
@@ -357,12 +355,12 @@ void Nnet::CopyStatsFrom(const Nnet &other) {
 
 void Nnet::SetLearningRates(const VectorBase<BaseFloat> &learning_rates) {
   KALDI_ASSERT(learning_rates.Dim() == this->NumUpdatableComponents());
-  KALDI_ASSERT(learning_rates.Min() >= 0.0); // we allow zero learning rate.
+  KALDI_ASSERT(learning_rates.Min() >= 0.0);  // we allow zero learning rate.
   int32 i = 0;
   for (int32 j = 0; j < NumComponents(); j++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(j)));
-    if (uc!= NULL) {
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(j)));
+    if (uc != NULL) {
       uc->SetLearningRate(learning_rates(i));
       i++;
     }
@@ -375,8 +373,8 @@ void Nnet::GetLearningRates(VectorBase<BaseFloat> *learning_rates) const {
   int32 i = 0;
   for (int32 j = 0; j < NumComponents(); j++) {
     const UpdatableComponent *uc =
-        dynamic_cast<const UpdatableComponent*>(&(GetComponent(j)));
-    if (uc!= NULL) {
+        dynamic_cast<const UpdatableComponent *>(&(GetComponent(j)));
+    if (uc != NULL) {
       (*learning_rates)(i) = uc->LearningRate();
       i++;
     }
@@ -386,17 +384,16 @@ void Nnet::GetLearningRates(VectorBase<BaseFloat> *learning_rates) const {
 
 void Nnet::Resize(int32 new_size) {
   KALDI_ASSERT(new_size <= static_cast<int32>(components_.size()));
-  for (size_t i = new_size; i < components_.size(); i++)
-    delete components_[i];
+  for (size_t i = new_size; i < components_.size(); i++) delete components_[i];
   components_.resize(new_size);
 }
 
 void Nnet::RemoveDropout() {
-  std::vector<Component*> components;
+  std::vector<Component *> components;
   int32 removed = 0;
   for (size_t i = 0; i < components_.size(); i++) {
-    if (dynamic_cast<DropoutComponent*>(components_[i]) != NULL ||
-        dynamic_cast<AdditiveNoiseComponent*>(components_[i]) != NULL) {
+    if (dynamic_cast<DropoutComponent *>(components_[i]) != NULL ||
+        dynamic_cast<AdditiveNoiseComponent *>(components_[i]) != NULL) {
       delete components_[i];
       removed++;
     } else {
@@ -404,8 +401,7 @@ void Nnet::RemoveDropout() {
     }
   }
   components_ = components;
-  if (removed > 0)
-    KALDI_LOG << "Removed " << removed << " dropout components.";
+  if (removed > 0) KALDI_LOG << "Removed " << removed << " dropout components.";
   SetIndexes();
   Check();
 }
@@ -413,29 +409,27 @@ void Nnet::RemoveDropout() {
 void Nnet::SetDropoutScale(BaseFloat scale) {
   size_t n_set = 0;
   for (size_t i = 0; i < components_.size(); i++) {
-    DropoutComponent *dc =
-        dynamic_cast<DropoutComponent*>(components_[i]);
+    DropoutComponent *dc = dynamic_cast<DropoutComponent *>(components_[i]);
     if (dc != NULL) {
       dc->SetDropoutScale(scale);
       n_set++;
     }
   }
-  KALDI_LOG << "Set dropout scale to " << scale
-            << " for " << n_set << " components.";
-}      
-
+  KALDI_LOG << "Set dropout scale to " << scale << " for " << n_set
+            << " components.";
+}
 
 void Nnet::RemovePreconditioning() {
   for (size_t i = 0; i < components_.size(); i++) {
-    if (dynamic_cast<AffineComponentPreconditioned*>(components_[i]) != NULL) {
+    if (dynamic_cast<AffineComponentPreconditioned *>(components_[i]) != NULL) {
       AffineComponent *ac = new AffineComponent(
-          *(dynamic_cast<AffineComponent*>(components_[i])));
+          *(dynamic_cast<AffineComponent *>(components_[i])));
       delete components_[i];
       components_[i] = ac;
-    } else if (dynamic_cast<AffineComponentPreconditionedOnline*>(
-        components_[i]) != NULL) {
+    } else if (dynamic_cast<AffineComponentPreconditionedOnline *>(
+                   components_[i]) != NULL) {
       AffineComponent *ac = new AffineComponent(
-          *(dynamic_cast<AffineComponent*>(components_[i])));
+          *(dynamic_cast<AffineComponent *>(components_[i])));
       delete components_[i];
       components_[i] = ac;
     }
@@ -444,29 +438,29 @@ void Nnet::RemovePreconditioning() {
   Check();
 }
 
-
-void Nnet::SwitchToOnlinePreconditioning(int32 rank_in, int32 rank_out, int32 update_period,
-                                         BaseFloat num_samples_history, BaseFloat alpha) {
+void Nnet::SwitchToOnlinePreconditioning(int32 rank_in, int32 rank_out,
+                                         int32 update_period,
+                                         BaseFloat num_samples_history,
+                                         BaseFloat alpha) {
   int32 switched = 0;
   for (size_t i = 0; i < components_.size(); i++) {
-    if (dynamic_cast<AffineComponent*>(components_[i]) != NULL) {
+    if (dynamic_cast<AffineComponent *>(components_[i]) != NULL) {
       AffineComponentPreconditionedOnline *ac =
           new AffineComponentPreconditionedOnline(
-              *(dynamic_cast<AffineComponent*>(components_[i])),
-              rank_in, rank_out, update_period, num_samples_history, alpha);
+              *(dynamic_cast<AffineComponent *>(components_[i])), rank_in,
+              rank_out, update_period, num_samples_history, alpha);
       delete components_[i];
       components_[i] = ac;
       switched++;
     }
   }
   KALDI_LOG << "Switched " << switched << " components to use online "
-            << "preconditioning, with (input, output) rank = "
-            << rank_in << ", " << rank_out << " and num_samples_history = "
-            << num_samples_history;
+            << "preconditioning, with (input, output) rank = " << rank_in
+            << ", " << rank_out
+            << " and num_samples_history = " << num_samples_history;
   SetIndexes();
   Check();
 }
-
 
 void Nnet::AddNnet(const VectorBase<BaseFloat> &scale_params,
                    const Nnet &other) {
@@ -474,9 +468,9 @@ void Nnet::AddNnet(const VectorBase<BaseFloat> &scale_params,
   int32 i = 0;
   for (int32 j = 0; j < NumComponents(); j++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(j)));
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(j)));
     const UpdatableComponent *uc_other =
-        dynamic_cast<const UpdatableComponent*>(&(other.GetComponent(j)));
+        dynamic_cast<const UpdatableComponent *>(&(other.GetComponent(j)));
     if (uc != NULL) {
       KALDI_ASSERT(uc_other != NULL);
       BaseFloat alpha = scale_params(i);
@@ -487,21 +481,20 @@ void Nnet::AddNnet(const VectorBase<BaseFloat> &scale_params,
   KALDI_ASSERT(i == scale_params.Dim());
 }
 
-void Nnet::AddNnet(BaseFloat alpha,
-                   const Nnet &other) {
+void Nnet::AddNnet(BaseFloat alpha, const Nnet &other) {
   for (int32 i = 0; i < NumComponents(); i++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(i)));
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(i)));
     const UpdatableComponent *uc_other =
-        dynamic_cast<const UpdatableComponent*>(&(other.GetComponent(i)));
+        dynamic_cast<const UpdatableComponent *>(&(other.GetComponent(i)));
     if (uc != NULL) {
       KALDI_ASSERT(uc_other != NULL);
       uc->Add(alpha, *uc_other);
     }
     NonlinearComponent *nc =
-        dynamic_cast<NonlinearComponent*>(&(GetComponent(i)));
+        dynamic_cast<NonlinearComponent *>(&(GetComponent(i)));
     const NonlinearComponent *nc_other =
-        dynamic_cast<const NonlinearComponent*>(&(other.GetComponent(i)));
+        dynamic_cast<const NonlinearComponent *>(&(other.GetComponent(i)));
     if (nc != NULL) {
       KALDI_ASSERT(nc_other != NULL);
       nc->Add(alpha, *nc_other);
@@ -509,23 +502,21 @@ void Nnet::AddNnet(BaseFloat alpha,
   }
 }
 
-void Nnet::AddNnet(BaseFloat alpha,
-                   Nnet *other,
-                   BaseFloat beta) {
+void Nnet::AddNnet(BaseFloat alpha, Nnet *other, BaseFloat beta) {
   for (int32 i = 0; i < NumComponents(); i++) {
     UpdatableComponent *uc =
-        dynamic_cast<UpdatableComponent*>(&(GetComponent(i)));
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(i)));
     UpdatableComponent *uc_other =
-        dynamic_cast<UpdatableComponent*>(&(other->GetComponent(i)));
+        dynamic_cast<UpdatableComponent *>(&(other->GetComponent(i)));
     if (uc != NULL) {
       KALDI_ASSERT(uc_other != NULL);
       uc->Add(alpha, *uc_other);
       uc_other->Scale(beta);
     }
     NonlinearComponent *nc =
-        dynamic_cast<NonlinearComponent*>(&(GetComponent(i)));
+        dynamic_cast<NonlinearComponent *>(&(GetComponent(i)));
     NonlinearComponent *nc_other =
-        dynamic_cast<NonlinearComponent*>(&(other->GetComponent(i)));
+        dynamic_cast<NonlinearComponent *>(&(other->GetComponent(i)));
     if (nc != NULL) {
       KALDI_ASSERT(nc_other != NULL);
       nc->Add(alpha, *nc_other);
@@ -534,10 +525,9 @@ void Nnet::AddNnet(BaseFloat alpha,
   }
 }
 
-
 void Nnet::Append(Component *new_component) {
   components_.push_back(new_component);
-  SetIndexes();  
+  SetIndexes();
   Check();
 }
 
@@ -546,16 +536,15 @@ void Nnet::SetComponent(int32 c, Component *component) {
   delete components_[c];
   components_[c] = component;
   SetIndexes();
-  Check(); // Check that all the dimensions still match up.
+  Check();  // Check that all the dimensions still match up.
 }
 
 int32 Nnet::GetParameterDim() const {
   int32 ans = 0;
   for (int32 c = 0; c < NumComponents(); c++) {
-    const UpdatableComponent *uc = dynamic_cast<const UpdatableComponent*>(
-        &(GetComponent(c)));
-    if (uc != NULL)
-      ans += uc->GetParameterDim();
+    const UpdatableComponent *uc =
+        dynamic_cast<const UpdatableComponent *>(&(GetComponent(c)));
+    if (uc != NULL) ans += uc->GetParameterDim();
   }
   return ans;
 }
@@ -563,8 +552,8 @@ int32 Nnet::GetParameterDim() const {
 void Nnet::Vectorize(VectorBase<BaseFloat> *params) const {
   int32 offset = 0;
   for (int32 c = 0; c < NumComponents(); c++) {
-    const UpdatableComponent *uc = dynamic_cast<const UpdatableComponent*>(
-        &(GetComponent(c)));
+    const UpdatableComponent *uc =
+        dynamic_cast<const UpdatableComponent *>(&(GetComponent(c)));
     if (uc != NULL) {
       int32 size = uc->GetParameterDim();
       SubVector<BaseFloat> temp(*params, offset, size);
@@ -575,21 +564,20 @@ void Nnet::Vectorize(VectorBase<BaseFloat> *params) const {
   KALDI_ASSERT(offset == GetParameterDim());
 }
 
-void Nnet::ResetGenerators() { // resets random-number generators for all random
-                               // components.
+void Nnet::ResetGenerators() {  // resets random-number generators for all
+                                // random
+                                // components.
   for (int32 c = 0; c < NumComponents(); c++) {
-    RandomComponent *rc = dynamic_cast<RandomComponent*>(
-        &(GetComponent(c)));
-    if (rc != NULL)
-      rc->ResetGenerator();
+    RandomComponent *rc = dynamic_cast<RandomComponent *>(&(GetComponent(c)));
+    if (rc != NULL) rc->ResetGenerator();
   }
 }
 
 void Nnet::UnVectorize(const VectorBase<BaseFloat> &params) {
   int32 offset = 0;
   for (int32 c = 0; c < NumComponents(); c++) {
-    UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(
-        &(GetComponent(c)));
+    UpdatableComponent *uc =
+        dynamic_cast<UpdatableComponent *>(&(GetComponent(c)));
     if (uc != NULL) {
       int32 size = uc->GetParameterDim();
       uc->UnVectorize(params.Range(offset, size));
@@ -602,7 +590,7 @@ void Nnet::UnVectorize(const VectorBase<BaseFloat> &params) {
 void Nnet::LimitRankOfLastLayer(int32 dim) {
   for (int32 i = components_.size() - 1; i >= 0; i--) {
     AffineComponent *a = NULL, *b = NULL,
-        *c = dynamic_cast<AffineComponent*>(components_[i]);
+                    *c = dynamic_cast<AffineComponent *>(components_[i]);
     if (c != NULL) {
       c->LimitRank(dim, &a, &b);
       delete c;
@@ -617,8 +605,7 @@ void Nnet::LimitRankOfLastLayer(int32 dim) {
 }
 
 void Nnet::SetIndexes() {
-  for (size_t i = 0; i < components_.size(); i++)
-    components_[i]->SetIndex(i);
+  for (size_t i = 0; i < components_.size(); i++) components_[i]->SetIndex(i);
 }
 
 void Nnet::Collapse(bool match_updatableness) {
@@ -627,11 +614,12 @@ void Nnet::Collapse(bool match_updatableness) {
   while (changed) {
     changed = false;
     for (size_t i = 0; i + 1 < components_.size(); i++) {
-      AffineComponent *a1 = dynamic_cast<AffineComponent*>(components_[i]),
-          *a2 = dynamic_cast<AffineComponent*>(components_[i + 1]);
-      FixedAffineComponent
-          *f1 = dynamic_cast<FixedAffineComponent*>(components_[i]),
-          *f2 = dynamic_cast<FixedAffineComponent*>(components_[i + 1]);
+      AffineComponent *a1 = dynamic_cast<AffineComponent *>(components_[i]),
+                      *a2 = dynamic_cast<AffineComponent *>(components_[i + 1]);
+      FixedAffineComponent *f1 = dynamic_cast<FixedAffineComponent *>(
+                               components_[i]),
+                           *f2 = dynamic_cast<FixedAffineComponent *>(
+                               components_[i + 1]);
       Component *c = NULL;
       if (a1 != NULL && a2 != NULL) {
         c = a1->CollapseWithNext(*a2);
@@ -661,21 +649,18 @@ void Nnet::Collapse(bool match_updatableness) {
   KALDI_LOG << "Collapsed " << num_collapsed << " components.";
 }
 
-Nnet *GenRandomNnet(int32 input_dim,
-                    int32 output_dim) {
-
-  std::vector<Component*> components;
+Nnet *GenRandomNnet(int32 input_dim, int32 output_dim) {
+  std::vector<Component *> components;
   int32 cur_dim = input_dim;
   // have up to 4 layers before the final one.
   for (size_t i = 0; i < 4; i++) {
     if (rand() % 2 == 0) {
       // add an affine component.
       int32 next_dim = 50 + rand() % 100;
-      BaseFloat learning_rate = 0.0001, param_stddev = 0.001,
-          bias_stddev = 0.1;
+      BaseFloat learning_rate = 0.0001, param_stddev = 0.001, bias_stddev = 0.1;
       AffineComponent *component = new AffineComponent();
-      component->Init(learning_rate, cur_dim, next_dim,
-                      param_stddev, bias_stddev);
+      component->Init(learning_rate, cur_dim, next_dim, param_stddev,
+                      bias_stddev);
       components.push_back(component);
       cur_dim = next_dim;
     } else if (rand() % 2 == 0) {
@@ -693,10 +678,9 @@ Nnet *GenRandomNnet(int32 input_dim,
 
   {
     AffineComponent *component = new AffineComponent();
-    BaseFloat learning_rate = 0.0001, param_stddev = 0.001,
-        bias_stddev = 0.1;
-    component->Init(learning_rate, cur_dim, output_dim,
-                    param_stddev, bias_stddev);
+    BaseFloat learning_rate = 0.0001, param_stddev = 0.001, bias_stddev = 0.1;
+    component->Init(learning_rate, cur_dim, output_dim, param_stddev,
+                    bias_stddev);
     components.push_back(component);
     cur_dim = output_dim;
   }
@@ -708,16 +692,13 @@ Nnet *GenRandomNnet(int32 input_dim,
   return ans;
 }
 
-
-
 int32 Nnet::LastUpdatableComponent() const {
   int32 last_updatable_component = NumComponents();
   for (int32 i = NumComponents() - 1; i >= 0; i--)
-    if (dynamic_cast<UpdatableComponent*>(components_[i]) != NULL)
+    if (dynamic_cast<UpdatableComponent *>(components_[i]) != NULL)
       last_updatable_component = i;
   return last_updatable_component;
 }
 
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi

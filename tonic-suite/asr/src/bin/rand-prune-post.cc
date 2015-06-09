@@ -17,15 +17,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "hmm/hmm-utils.h"
 #include "hmm/posterior.h"
-
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -36,12 +33,13 @@ int main(int argc, char *argv[]) {
         "Note: for posteriors derived from alignments, threshold must be\n"
         "greater than one, or this will have no effect (speedup factor will\n"
         "be roughly the same as the threshold)\n"
-        "Usage:  rand-prune-post [options] <rand-prune-value> <posteriors-rspecifier> <posteriors-wspecifier>\n"
+        "Usage:  rand-prune-post [options] <rand-prune-value> "
+        "<posteriors-rspecifier> <posteriors-wspecifier>\n"
         "e.g.:\n"
         " rand-prune-post 5.0 ark:- ark:-\n";
 
     ParseOptions po(usage);
-        
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -50,18 +48,18 @@ int main(int argc, char *argv[]) {
     }
 
     std::string rand_prune_str = po.GetArg(1),
-        posteriors_rspecifier = po.GetArg(2),
-        posteriors_wspecifier = po.GetArg(3);
+                posteriors_rspecifier = po.GetArg(2),
+                posteriors_wspecifier = po.GetArg(3);
 
     BaseFloat rand_prune = 0.0;
     if (!ConvertStringToReal(rand_prune_str, &rand_prune) || rand_prune < 0.0)
       KALDI_ERR << "Invalid rand_prune parameter: expected float, got \""
-                 << rand_prune_str << '"';
-    
+                << rand_prune_str << '"';
+
     int32 num_posteriors = 0;
     SequentialPosteriorReader posterior_reader(posteriors_rspecifier);
     PosteriorWriter posterior_writer(posteriors_wspecifier);
-    
+
     for (; !posterior_reader.Done(); posterior_reader.Next()) {
       num_posteriors++;
       // Posterior is vector<vector<pair<int32, BaseFloat> > >
@@ -82,11 +80,10 @@ int main(int argc, char *argv[]) {
         posterior_writer.Write(posterior_reader.Key(), new_post);
       }
     }
-    KALDI_LOG << "rand-prune-post: processed " << num_posteriors << " posteriors.";
-  } catch(const std::exception &e) {
+    KALDI_LOG << "rand-prune-post: processed " << num_posteriors
+              << " posteriors.";
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

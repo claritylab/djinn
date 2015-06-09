@@ -32,34 +32,39 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int64 int64;
 
     const char *usage =
-        "Do the forward computation for a neural net acoustic model (and division by\n"
-        "the prior, if --divide-by-priors=true), and output as an archive the matrix\n"
-        "of log probabilities for each utterance, e.g. for input to latgen-faster-mapped\n"
+        "Do the forward computation for a neural net acoustic model (and "
+        "division by\n"
+        "the prior, if --divide-by-priors=true), and output as an archive the "
+        "matrix\n"
+        "of log probabilities for each utterance, e.g. for input to "
+        "latgen-faster-mapped\n"
         "(note: you can also directly use nnet-latgen-faster.\n"
         "\n"
-        "Usage: nnet-logprob [options] <model-in> <features-rspecifier> <logprobs-wspecifier>\n"
+        "Usage: nnet-logprob [options] <model-in> <features-rspecifier> "
+        "<logprobs-wspecifier>\n"
         "\n"
-        "e.g.: nnet-logprob 1.nnet \"$feats\" ark:- | latgen-faster-mapped ... \n";
-    
-    bool pad_input = true; // This is not currently configurable.
+        "e.g.: nnet-logprob 1.nnet \"$feats\" ark:- | latgen-faster-mapped ... "
+        "\n";
+
+    bool pad_input = true;  // This is not currently configurable.
     bool divide_by_priors = true;
-    
+
     ParseOptions po(usage);
-    
-    po.Register("divide-by-priors", &divide_by_priors, "If true, before getting "
+
+    po.Register("divide-by-priors", &divide_by_priors,
+                "If true, before getting "
                 "the log-probs, divide by the priors stored with the model");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
-    
-    std::string nnet_rxfilename = po.GetArg(1),
-        feats_rspecifier = po.GetArg(2),
-        logprob_wspecifier = po.GetArg(3);
-    
+
+    std::string nnet_rxfilename = po.GetArg(1), feats_rspecifier = po.GetArg(2),
+                logprob_wspecifier = po.GetArg(3);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -75,20 +80,21 @@ int main(int argc, char *argv[]) {
     KALDI_ASSERT(inv_priors.Dim() == am_nnet.NumPdfs() &&
                  "Priors in neural network not set up.");
     inv_priors.ApplyPow(-1.0);
-    
+
     SequentialBaseFloatCuMatrixReader feature_reader(feats_rspecifier);
     BaseFloatCuMatrixWriter logprob_writer(logprob_wspecifier);
-    
+
     for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string key = feature_reader.Key();
       const CuMatrix<BaseFloat> &feats = feature_reader.Value();
-      
+
       CuMatrix<BaseFloat> log_probs(feats.NumRows(), am_nnet.NumPdfs());
       NnetComputation(am_nnet.GetNnet(), feats, pad_input, &log_probs);
       // at this point "log_probs" contains actual probabilities, not logs.
 
       if (divide_by_priors) {
-        log_probs.MulColsVec(inv_priors); // scales each column by the corresponding element
+        log_probs.MulColsVec(
+            inv_priors);  // scales each column by the corresponding element
         // of inv_priors.
         for (int32 i = 0; i < log_probs.NumRows(); i++) {
           CuSubVector<BaseFloat> frame(log_probs, i);
@@ -96,23 +102,22 @@ int main(int argc, char *argv[]) {
           if (!(p > 0.0)) {
             KALDI_WARN << "Bad sum of probabilities " << p;
           } else {
-            frame.Scale(1.0 / p); // re-normalize to sum to one.
+            frame.Scale(1.0 / p);  // re-normalize to sum to one.
           }
         }
       }
-      log_probs.ApplyFloor(1.0e-20); // To avoid log of zero which leads to NaN.
+      log_probs.ApplyFloor(
+          1.0e-20);  // To avoid log of zero which leads to NaN.
       log_probs.ApplyLog();
       logprob_writer.Write(key, log_probs);
       num_done++;
     }
-    
+
     KALDI_LOG << "Finished computing neural net log-probs, processed "
               << num_done << " utterances, " << num_err << " with errors.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

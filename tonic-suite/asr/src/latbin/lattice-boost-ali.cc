@@ -31,48 +31,61 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Boost graph likelihoods (decrease graph costs) by b * #frame-phone-errors\n"
-        "on each arc in the lattice.  Useful for discriminative training, e.g.\n"
-        "boosted MMI.  Modifies input lattices.  This version takes the reference\n"
-        "in the form of alignments.  Needs the model (just the transitions) to\n"
-        "transform pdf-ids to phones.  Takes the --silence-phones option and these\n"
-        "phones appearing in the lattice are always assigned zero error, or with the\n"
+        "Boost graph likelihoods (decrease graph costs) by b * "
+        "#frame-phone-errors\n"
+        "on each arc in the lattice.  Useful for discriminative training, "
+        "e.g.\n"
+        "boosted MMI.  Modifies input lattices.  This version takes the "
+        "reference\n"
+        "in the form of alignments.  Needs the model (just the transitions) "
+        "to\n"
+        "transform pdf-ids to phones.  Takes the --silence-phones option and "
+        "these\n"
+        "phones appearing in the lattice are always assigned zero error, or "
+        "with the\n"
         "--max-silence-error option, at most this error-count per frame\n"
-        "(--max-silence-error=1 is equivalent to not specifying --silence-phones).\n"
+        "(--max-silence-error=1 is equivalent to not specifying "
+        "--silence-phones).\n"
         "\n"
-        "Usage: lattice-boost-ali [options] model lats-rspecifier ali-rspecifier lats-wspecifier\n"
-        " e.g.: lattice-boost-ali --silence-phones=1:2:3 --b=0.05 1.mdl ark:1.lats ark:1.ali ark:boosted.lats\n";
+        "Usage: lattice-boost-ali [options] model lats-rspecifier "
+        "ali-rspecifier lats-wspecifier\n"
+        " e.g.: lattice-boost-ali --silence-phones=1:2:3 --b=0.05 1.mdl "
+        "ark:1.lats ark:1.ali ark:boosted.lats\n";
 
     kaldi::BaseFloat b = 0.05;
     kaldi::BaseFloat max_silence_error = 0.0;
     std::string silence_phones_str;
 
     kaldi::ParseOptions po(usage);
-    po.Register("b", &b, 
-                "Boosting factor (more -> more boosting of errors / larger margin)");
-    po.Register("max-silence", &max_silence_error,
-                "Maximum error assigned to silence phones [c.f. --silence-phones option]."
-                "0.0 -> original BMMI paper, 1.0 -> no special silence treatment.");
-    po.Register("silence-phones", &silence_phones_str,
-                "Colon-separated list of integer id's of silence phones, e.g. 46:47");
+    po.Register(
+        "b", &b,
+        "Boosting factor (more -> more boosting of errors / larger margin)");
+    po.Register(
+        "max-silence", &max_silence_error,
+        "Maximum error assigned to silence phones [c.f. --silence-phones "
+        "option]."
+        "0.0 -> original BMMI paper, 1.0 -> no special silence treatment.");
+    po.Register(
+        "silence-phones", &silence_phones_str,
+        "Colon-separated list of integer id's of silence phones, e.g. 46:47");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::vector<int32> silence_phones;
-    if (!kaldi::SplitStringToIntegers(silence_phones_str, ":", false, &silence_phones))
+    if (!kaldi::SplitStringToIntegers(silence_phones_str, ":", false,
+                                      &silence_phones))
       KALDI_ERR << "Invalid silence-phones string " << silence_phones_str;
     kaldi::SortAndUniq(&silence_phones);
     if (silence_phones.empty())
-      KALDI_WARN <<"No silence phones specified, make sure this is what you intended.";
-    
-    std::string model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        ali_rspecifier = po.GetArg(3),
-        lats_wspecifier = po.GetArg(4);
+      KALDI_WARN << "No silence phones specified, make sure this is what you "
+                    "intended.";
+
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                ali_rspecifier = po.GetArg(3), lats_wspecifier = po.GetArg(4);
 
     // Read as regular lattice and write as compact.
     kaldi::SequentialLatticeReader lattice_reader(lats_rspecifier);
@@ -85,9 +98,9 @@ int main(int argc, char *argv[]) {
       kaldi::Input ki(model_rxfilename, &binary_in);
       trans.Read(ki.Stream(), binary_in);
     }
-    
+
     int32 n_done = 0, n_err = 0, n_no_ali = 0;
-    
+
     for (; !lattice_reader.Done(); lattice_reader.Next()) {
       std::string key = lattice_reader.Key();
       kaldi::Lattice lat = lattice_reader.Value();
@@ -98,7 +111,7 @@ int main(int argc, char *argv[]) {
         n_err++;
         continue;
       }
-      
+
       if (b != 0.0) {
         if (!alignment_reader.HasKey(key)) {
           KALDI_WARN << "No alignment for utterance " << key;
@@ -108,7 +121,7 @@ int main(int argc, char *argv[]) {
         const std::vector<int32> &alignment = alignment_reader.Value(key);
         if (!LatticeBoost(trans, alignment, silence_phones, b,
                           max_silence_error, &lat)) {
-          n_err++; // will already have printed warning.
+          n_err++;  // will already have printed warning.
           continue;
         }
       }
@@ -120,7 +133,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done " << n_done << " lattices, missing alignments for "
               << n_no_ali << ", other errors on " << n_err;
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

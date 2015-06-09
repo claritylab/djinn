@@ -25,22 +25,23 @@ int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
     using namespace kaldi;
-    
+
     const char *usage =
         "Do model re-estimation of iVector extractor (this is\n"
         "the update phase of a single pass of E-M)\n"
-        "Usage: ivector-extractor-est [options] <model-in> <stats-in> <model-out>\n";
+        "Usage: ivector-extractor-est [options] <model-in> <stats-in> "
+        "<model-out>\n";
 
     bool binary = true;
     IvectorExtractorEstimationOptions update_opts;
-    
+
     kaldi::ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("num-threads", &g_num_threads,
                 "Number of threads used in update");
-    
+
     update_opts.Register(&po);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -49,8 +50,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_rxfilename = po.GetArg(1),
-        stats_rxfilename = po.GetArg(2),
-        model_wxfilename = po.GetArg(3);
+                stats_rxfilename = po.GetArg(2),
+                model_wxfilename = po.GetArg(3);
 
     KALDI_LOG << "Reading model";
     IvectorExtractor extractor;
@@ -63,15 +64,12 @@ int main(int argc, char *argv[]) {
     stats.Update(update_opts, &extractor);
 
     WriteKaldiObject(extractor, model_wxfilename, binary);
-    
-    KALDI_LOG << "Updated model and wrote it to "
-              << model_wxfilename;
+
+    KALDI_LOG << "Updated model and wrote it to " << model_wxfilename;
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -34,7 +33,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Convert alignments to posteriors\n"
-        "Usage:  ali-to-post [options] alignments-rspecifier posteriors-wspecifier\n"
+        "Usage:  ali-to-post [options] alignments-rspecifier "
+        "posteriors-wspecifier\n"
         "e.g.:\n"
         " ali-to-post ark:1.ali ark:1.post\n";
 
@@ -64,10 +64,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Converted " << num_done << " alignments.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

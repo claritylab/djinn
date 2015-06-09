@@ -32,20 +32,17 @@ using std::vector;
 
 namespace kaldi {
 void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
-                            const GaussPost &gpost,
-                            const AmDiagGmm &am_gmm,
+                            const GaussPost &gpost, const AmDiagGmm &am_gmm,
                             FmllrDiagGmmAccs *spk_stats) {
   for (size_t i = 0; i < gpost.size(); i++) {
     for (size_t j = 0; j < gpost[i].size(); j++) {
       int32 pdf_id = gpost[i][j].first;
       const Vector<BaseFloat> &posterior(gpost[i][j].second);
-      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id),
-                                          feats.Row(i), posterior);
+      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id), feats.Row(i),
+                                          posterior);
     }
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -56,16 +53,20 @@ int main(int argc, char *argv[]) {
         "Estimate linear-VTLN transforms, either per utterance or for "
         "the supplied set of speakers (spk2utt option).  Reads posteriors. \n"
         "Usage: gmm-est-lvtln-trans [options] <model-in> <lvtln-in> "
-        "<feature-rspecifier> <gpost-rspecifier> <lvtln-trans-wspecifier> [<warp-wspecifier>]\n";
+        "<feature-rspecifier> <gpost-rspecifier> <lvtln-trans-wspecifier> "
+        "[<warp-wspecifier>]\n";
 
     ParseOptions po(usage);
     string spk2utt_rspecifier;
     BaseFloat logdet_scale = 1.0;
     std::string norm_type = "offset";
-    po.Register("norm-type", &norm_type, "type of fMLLR applied (\"offset\"|\"none\"|\"diag\")");
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("norm-type", &norm_type,
+                "type of fMLLR applied (\"offset\"|\"none\"|\"diag\")");
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
-    po.Register("logdet-scale", &logdet_scale, "Scale on log-determinant term in auxiliary function");
+    po.Register("logdet-scale", &logdet_scale,
+                "Scale on log-determinant term in auxiliary function");
 
     po.Read(argc, argv);
 
@@ -74,13 +75,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        lvtln_rxfilename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        gpost_rspecifier = po.GetArg(4),
-        trans_wspecifier = po.GetArg(5),
-        warp_wspecifier = po.GetOptArg(6);
+    string model_rxfilename = po.GetArg(1), lvtln_rxfilename = po.GetArg(2),
+           feature_rspecifier = po.GetArg(3), gpost_rspecifier = po.GetArg(4),
+           trans_wspecifier = po.GetArg(5), warp_wspecifier = po.GetOptArg(6);
 
     AmDiagGmm am_gmm;
     {
@@ -92,7 +89,6 @@ int main(int argc, char *argv[]) {
     }
     LinearVtln lvtln;
     ReadKaldiObject(lvtln_rxfilename, &lvtln);
-
 
     RandomAccessGaussPostReader gpost_reader(gpost_rspecifier);
 
@@ -139,33 +135,26 @@ int main(int argc, char *argv[]) {
 
         BaseFloat impr, spk_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim()+1);
+          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim() + 1);
           int32 class_idx;
-          lvtln.ComputeTransform(spk_stats,
-                                 norm_type,
-                                 logdet_scale,
-                                 &transform,
-                                 &class_idx,
-                                 NULL,
-                                 &impr,
-                                 &spk_tot_t);
+          lvtln.ComputeTransform(spk_stats, norm_type, logdet_scale, &transform,
+                                 &class_idx, NULL, &impr, &spk_tot_t);
           class_counts[class_idx]++;
           transform_writer.Write(spk, transform);
           if (warp_wspecifier != "")
             warp_writer.Write(spk, lvtln.GetWarp(class_idx));
         }
         KALDI_LOG << "For speaker " << spk << ", auxf-impr from LVTLN is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+                  << (impr / spk_tot_t) << ", over " << spk_tot_t << " frames.";
         tot_lvtln_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!gpost_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find gposts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find gposts for utterance " << utt;
           num_no_gpost++;
           continue;
         }
@@ -173,8 +162,8 @@ int main(int argc, char *argv[]) {
         const GaussPost &gpost = gpost_reader.Value(utt);
 
         if (static_cast<int32>(gpost.size()) != feats.NumRows()) {
-          KALDI_WARN << "GauPost has wrong size " << gpost.size()
-              << " vs. " << feats.NumRows();
+          KALDI_WARN << "GauPost has wrong size " << gpost.size() << " vs. "
+                     << feats.NumRows();
           num_other_error++;
           continue;
         }
@@ -182,20 +171,13 @@ int main(int argc, char *argv[]) {
 
         FmllrDiagGmmAccs spk_stats(lvtln.Dim());
 
-        AccumulateForUtterance(feats, gpost, am_gmm,
-                               &spk_stats);
+        AccumulateForUtterance(feats, gpost, am_gmm, &spk_stats);
         BaseFloat impr, utt_tot_t = spk_stats.beta_;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim()+1);
+          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim() + 1);
           int32 class_idx;
-          lvtln.ComputeTransform(spk_stats,
-                                 norm_type,
-                                 logdet_scale,
-                                 &transform,
-                                 &class_idx,
-                                 NULL,
-                                 &impr,
-                                 &utt_tot_t);
+          lvtln.ComputeTransform(spk_stats, norm_type, logdet_scale, &transform,
+                                 &class_idx, NULL, &impr, &utt_tot_t);
           class_counts[class_idx]++;
           transform_writer.Write(utt, transform);
           if (warp_wspecifier != "")
@@ -203,7 +185,7 @@ int main(int argc, char *argv[]) {
         }
 
         KALDI_LOG << "For utterance " << utt << ", auxf-impr from LVTLN is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_lvtln_impr += impr;
         tot_t += utt_tot_t;
       }
@@ -217,13 +199,13 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_gpost
-              << " with no gposts, " << num_other_error << " with other errors.";
+              << " with no gposts, " << num_other_error
+              << " with other errors.";
     KALDI_LOG << "Overall LVTLN auxf impr per frame is "
               << (tot_lvtln_impr / tot_t) << " over " << tot_t << " frames.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

@@ -20,7 +20,6 @@
 #include "gmm/full-gmm.h"
 #include "gmm/mle-full-gmm.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
@@ -28,7 +27,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Sum multiple accumulated stats files for diagonal-covariance GMM "
         "training.\n"
-        "Usage: gmm-global-sum-accs [options] stats-out stats-in1 stats-in2 ...\n";
+        "Usage: gmm-global-sum-accs [options] stats-out stats-in1 stats-in2 "
+        "...\n";
 
     bool binary = true;
     kaldi::ParseOptions po(usage);
@@ -57,9 +57,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written stats to " << stats_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-

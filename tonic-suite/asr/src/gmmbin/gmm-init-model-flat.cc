@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -31,7 +30,7 @@
 namespace kaldi {
 
 void GetFeatureMeanAndVariance(const std::string &feat_rspecifier,
-                               Vector<BaseFloat> *inv_var_out,                               
+                               Vector<BaseFloat> *inv_var_out,
                                Vector<BaseFloat> *mean_out) {
   double count = 0.0;
   Vector<double> x_stats, x2_stats;
@@ -50,12 +49,13 @@ void GetFeatureMeanAndVariance(const std::string &feat_rspecifier,
       x2_stats.AddVec2(1.0, mat.Row(i));
     }
   }
-  if (count == 0) { KALDI_ERR << "No features were read!"; }
-  x_stats.Scale(1.0/count);
-  x2_stats.Scale(1.0/count);
+  if (count == 0) {
+    KALDI_ERR << "No features were read!";
+  }
+  x_stats.Scale(1.0 / count);
+  x2_stats.Scale(1.0 / count);
   x2_stats.AddVec2(-1.0, x_stats);
-  if (x2_stats.Min() <= 0.0)
-    KALDI_ERR << "Variance is zero or negative!";
+  if (x2_stats.Min() <= 0.0) KALDI_ERR << "Variance is zero or negative!";
   x2_stats.InvertElements();
   int32 dim = x_stats.Dim();
   inv_var_out->Resize(dim);
@@ -63,8 +63,6 @@ void GetFeatureMeanAndVariance(const std::string &feat_rspecifier,
   inv_var_out->CopyFromVec(x2_stats);
   mean_out->CopyFromVec(x_stats);
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -77,17 +75,20 @@ int main(int argc, char *argv[]) {
         "Initialize GMM, with Gaussians initialized to mean and variance\n"
         "of some provided example data (or to 0,1 if not provided: in that\n"
         "case, provide --dim option)\n"
-        "Usage:  gmm-init-model-flat [options] <tree-in> <topo-file> <model-out> [<features-rspecifier>]\n"
+        "Usage:  gmm-init-model-flat [options] <tree-in> <topo-file> "
+        "<model-out> [<features-rspecifier>]\n"
         "e.g.: \n"
         "  gmm-init-model-flat tree topo 1.mdl ark:feats.scp\n";
-    
+
     bool binary = true;
     int32 dim = 40;
 
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("dim", &dim, "Dimension of model (this matters only if not providing features).");
-    
+    po.Register(
+        "dim", &dim,
+        "Dimension of model (this matters only if not providing features).");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() < 3 || po.NumArgs() > 4) {
@@ -95,28 +96,25 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        tree_filename = po.GetArg(1),
-        topo_filename = po.GetArg(2),
-        model_out_filename = po.GetArg(3),
-        feats_rspecifier = po.GetOptArg(4);
+    std::string tree_filename = po.GetArg(1), topo_filename = po.GetArg(2),
+                model_out_filename = po.GetArg(3),
+                feats_rspecifier = po.GetOptArg(4);
 
     ContextDependency ctx_dep;
     ReadKaldiObject(tree_filename, &ctx_dep);
 
-    HmmTopology topo; 
+    HmmTopology topo;
     ReadKaldiObject(topo_filename, &topo);
 
     Vector<BaseFloat> global_inverse_var, global_mean;
     if (po.NumArgs() == 4) {
-      GetFeatureMeanAndVariance(feats_rspecifier,
-                                &global_inverse_var,
+      GetFeatureMeanAndVariance(feats_rspecifier, &global_inverse_var,
                                 &global_mean);
       dim = global_mean.Dim();
     } else {
       global_inverse_var.Resize(dim);
       global_inverse_var.Set(1.0);
-      global_mean.Resize(dim); // leave it at zero.
+      global_mean.Resize(dim);  // leave it at zero.
     }
 
     int32 num_pdfs = ctx_dep.NumPdfs();
@@ -135,9 +133,8 @@ int main(int argc, char *argv[]) {
       gmm.SetWeights(weights);
       gmm.ComputeGconsts();
     }
-    for (int i = 0; i < num_pdfs; i++)
-      am_gmm.AddPdf(gmm);
-    
+    for (int i = 0; i < num_pdfs; i++) am_gmm.AddPdf(gmm);
+
     TransitionModel trans_model(ctx_dep, topo);
 
     {
@@ -146,7 +143,7 @@ int main(int argc, char *argv[]) {
       am_gmm.Write(ko.Stream(), binary);
     }
     KALDI_LOG << "Wrote model.";
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

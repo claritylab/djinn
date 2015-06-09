@@ -21,19 +21,22 @@
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
-        "Reads an archive of features.  If second argument is wxfilename, writes\n"
-        "the feature dimension of the first feature file; if second argument is\n"
-        "wspecifier, writes an archive of the feature dimension, indexed by utterance\n"
+        "Reads an archive of features.  If second argument is wxfilename, "
+        "writes\n"
+        "the feature dimension of the first feature file; if second argument "
+        "is\n"
+        "wspecifier, writes an archive of the feature dimension, indexed by "
+        "utterance\n"
         "id.\n"
-        "Usage: feat-to-dim [options] <feat-rspecifier> (<dim-wspecifier>|<dim-wxfilename>)\n"
+        "Usage: feat-to-dim [options] <feat-rspecifier> "
+        "(<dim-wspecifier>|<dim-wxfilename>)\n"
         "e.g.: feat-to-dim scp:feats.scp -\n";
-    
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -47,23 +50,21 @@ int main(int argc, char *argv[]) {
     std::string wspecifier_or_wxfilename = po.GetArg(2);
 
     SequentialBaseFloatMatrixReader kaldi_reader(rspecifier);
-      
-    if (ClassifyWspecifier(wspecifier_or_wxfilename, NULL, NULL, NULL)
-        != kNoWspecifier) {
+
+    if (ClassifyWspecifier(wspecifier_or_wxfilename, NULL, NULL, NULL) !=
+        kNoWspecifier) {
       Int32Writer dim_writer(wspecifier_or_wxfilename);
       for (; !kaldi_reader.Done(); kaldi_reader.Next())
         dim_writer.Write(kaldi_reader.Key(), kaldi_reader.Value().NumCols());
     } else {
       if (kaldi_reader.Done())
         KALDI_ERR << "Could not read any features (empty archive?)";
-      Output ko(wspecifier_or_wxfilename, false); // text mode.
+      Output ko(wspecifier_or_wxfilename, false);  // text mode.
       ko.Stream() << kaldi_reader.Value().NumCols() << "\n";
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

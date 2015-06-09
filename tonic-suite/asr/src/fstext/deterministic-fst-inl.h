@@ -1,7 +1,9 @@
 // fstext/deterministic-fst-inl.h
 
-// Copyright 2011-2012 Gilles Boulianne  Johns Hopkins University (author: Daniel Povey)
-//                2014 Telepoint Global Hosting Service, LLC. (Author: David Snyder)
+// Copyright 2011-2012 Gilles Boulianne  Johns Hopkins University (author:
+// Daniel Povey)
+//                2014 Telepoint Global Hosting Service, LLC. (Author: David
+//                Snyder)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -23,16 +25,14 @@
 #include "base/kaldi-common.h"
 #include "fstext/fstext-utils.h"
 
-
 namespace fst {
 // Do not include this file directly.  It is included by deterministic-fst.h.
 
-template<class Arc>
-typename Arc::StateId
-BackoffDeterministicOnDemandFst<Arc>::GetBackoffState(StateId s,
-                                                      Weight *w) {
+template <class Arc>
+typename Arc::StateId BackoffDeterministicOnDemandFst<Arc>::GetBackoffState(
+    StateId s, Weight *w) {
   ArcIterator<Fst<Arc> > aiter(fst_, s);
-  if (aiter.Done()) // no arcs.
+  if (aiter.Done())  // no arcs.
     return kNoStateId;
   const Arc &arc = aiter.Value();
   if (arc.ilabel == 0) {
@@ -43,30 +43,34 @@ BackoffDeterministicOnDemandFst<Arc>::GetBackoffState(StateId s,
   }
 }
 
-template<class Arc>
-typename Arc::Weight BackoffDeterministicOnDemandFst<Arc>::Final(StateId state) {
+template <class Arc>
+typename Arc::Weight BackoffDeterministicOnDemandFst<Arc>::Final(
+    StateId state) {
   Weight w = fst_.Final(state);
   if (w != Weight::Zero()) return w;
   Weight backoff_w;
   StateId backoff_state = GetBackoffState(state, &backoff_w);
-  if (backoff_state == kNoStateId) return Weight::Zero();
-  else return Times(backoff_w, this->Final(backoff_state));
+  if (backoff_state == kNoStateId)
+    return Weight::Zero();
+  else
+    return Times(backoff_w, this->Final(backoff_state));
 }
 
-template<class Arc>
+template <class Arc>
 BackoffDeterministicOnDemandFst<Arc>::BackoffDeterministicOnDemandFst(
-    const Fst<Arc> &fst): fst_(fst) {
+    const Fst<Arc> &fst)
+    : fst_(fst) {
 #ifdef KALDI_PARANOID
-  KALDI_ASSERT(fst_.Properties(kILabelSorted|kIDeterministic, true) ==
-               (kILabelSorted|kIDeterministic) &&
+  KALDI_ASSERT(fst_.Properties(kILabelSorted | kIDeterministic, true) ==
+                   (kILabelSorted | kIDeterministic) &&
                "Input FST is not i-label sorted and deterministic.");
 #endif
 }
 
-template<class Arc>
-bool BackoffDeterministicOnDemandFst<Arc>::GetArc(
-    StateId s, Label ilabel, Arc *oarc) {
-  KALDI_ASSERT(ilabel != 0); //  We don't allow GetArc for epsilon.
+template <class Arc>
+bool BackoffDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
+                                                  Arc *oarc) {
+  KALDI_ASSERT(ilabel != 0);  //  We don't allow GetArc for epsilon.
 
   SortedMatcher<Fst<Arc> > sm(fst_, MATCH_INPUT, 1);
   sm.SetState(s);
@@ -84,8 +88,9 @@ bool BackoffDeterministicOnDemandFst<Arc>::GetArc(
   }
 }
 
-template<class Arc>
-UnweightedNgramFst<Arc>::UnweightedNgramFst(int n): n_(n) {
+template <class Arc>
+UnweightedNgramFst<Arc>::UnweightedNgramFst(int n)
+    : n_(n) {
   // Starting state is an empty vector
   std::vector<Label> start_state;
   state_vec_.push_back(start_state);
@@ -93,92 +98,88 @@ UnweightedNgramFst<Arc>::UnweightedNgramFst(int n): n_(n) {
   state_map_[start_state] = 0;
 }
 
-template<class Arc>
-bool UnweightedNgramFst<Arc>::GetArc(
-  StateId s, Label ilabel, Arc *oarc) {
-
+template <class Arc>
+bool UnweightedNgramFst<Arc>::GetArc(StateId s, Label ilabel, Arc *oarc) {
   // The state ids increment with each state we encounter.
-  // if the assert fails, then we are trying to access 
-  // unseen states that are not immediately traversable. 
+  // if the assert fails, then we are trying to access
+  // unseen states that are not immediately traversable.
   KALDI_ASSERT(static_cast<size_t>(s) < state_vec_.size());
   std::vector<Label> seq = state_vec_[s];
   // Update state info.
   seq.push_back(ilabel);
-  if (seq.size() > n_-1) {
+  if (seq.size() > n_ - 1) {
     // Remove oldest word in the history.
     seq.erase(seq.begin());
   }
   std::pair<const std::vector<Label>, StateId> new_state(
-    seq,
-    static_cast<Label>(state_vec_.size()));
+      seq, static_cast<Label>(state_vec_.size()));
   // Now get state id for destination state.
-  typedef typename MapType::iterator IterType;  
+  typedef typename MapType::iterator IterType;
   std::pair<IterType, bool> result = state_map_.insert(new_state);
   if (result.second == true) {
     state_vec_.push_back(seq);
   }
-  oarc->weight = Weight::One(); // Because the FST is unweightd.
+  oarc->weight = Weight::One();  // Because the FST is unweightd.
   oarc->ilabel = ilabel;
   oarc->olabel = ilabel;
-  oarc->nextstate = result.first->second; // The next state id.
+  oarc->nextstate = result.first->second;  // The next state id.
   // All arcs can be matched.
   return true;
 }
 
-template<class Arc>
+template <class Arc>
 typename Arc::Weight UnweightedNgramFst<Arc>::Final(StateId state) {
   KALDI_ASSERT(state < static_cast<StateId>(state_vec_.size()));
   return Weight::One();
 }
 
-template<class Arc>
+template <class Arc>
 ComposeDeterministicOnDemandFst<Arc>::ComposeDeterministicOnDemandFst(
-    DeterministicOnDemandFst<Arc> *fst1,
-    DeterministicOnDemandFst<Arc> *fst2): fst1_(fst1), fst2_(fst2) {
+    DeterministicOnDemandFst<Arc> *fst1, DeterministicOnDemandFst<Arc> *fst2)
+    : fst1_(fst1), fst2_(fst2) {
   KALDI_ASSERT(fst1 != NULL && fst2 != NULL);
   if (fst1_->Start() == -1 || fst2_->Start() == -1) {
     start_state_ = -1;
-    next_state_ = 0; // actually we don't care about this value.
+    next_state_ = 0;  // actually we don't care about this value.
   } else {
     start_state_ = 0;
-    std::pair<StateId,StateId> start_pair(fst1_->Start(), fst2_->Start());
+    std::pair<StateId, StateId> start_pair(fst1_->Start(), fst2_->Start());
     state_map_[start_pair] = start_state_;
     state_vec_.push_back(start_pair);
     next_state_ = 1;
   }
 }
 
-template<class Arc>
+template <class Arc>
 typename Arc::Weight ComposeDeterministicOnDemandFst<Arc>::Final(StateId s) {
   KALDI_ASSERT(s < static_cast<StateId>(state_vec_.size()));
-  const std::pair<StateId, StateId> &pr (state_vec_[s]);
+  const std::pair<StateId, StateId> &pr(state_vec_[s]);
   return Times(fst1_->Final(pr.first), fst2_->Final(pr.second));
 }
 
-template<class Arc>
+template <class Arc>
 bool ComposeDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
                                                   Arc *oarc) {
   typedef typename MapType::iterator IterType;
   KALDI_ASSERT(ilabel != 0);
   KALDI_ASSERT(s < static_cast<StateId>(state_vec_.size()));
-  const std::pair<StateId, StateId> pr (state_vec_[s]);
-  
+  const std::pair<StateId, StateId> pr(state_vec_[s]);
+
   Arc arc1;
   if (!fst1_->GetArc(pr.first, ilabel, &arc1)) return false;
-  if (arc1.olabel == 0) { // There is no output label on the
+  if (arc1.olabel == 0) {  // There is no output label on the
     // arc, so only the first state changes.
     std::pair<const std::pair<StateId, StateId>, StateId> new_value(
-        std::pair<StateId, StateId>(arc1.nextstate, pr.second),
-        next_state_);
-    
+        std::pair<StateId, StateId>(arc1.nextstate, pr.second), next_state_);
+
     std::pair<IterType, bool> result = state_map_.insert(new_value);
     oarc->ilabel = ilabel;
     oarc->olabel = 0;
     oarc->nextstate = result.first->second;
     oarc->weight = arc1.weight;
-    if (result.second == true) { // was inserted
+    if (result.second == true) {  // was inserted
       next_state_++;
-      const std::pair<StateId, StateId> &new_pair (new_value.first);
+      const std::pair<StateId, StateId> &new_pair(new_value.first);
       state_vec_.push_back(new_pair);
     }
     return true;
@@ -188,47 +189,46 @@ bool ComposeDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
   Arc arc2;
   if (!fst2_->GetArc(pr.second, arc1.olabel, &arc2)) return false;
   std::pair<const std::pair<StateId, StateId>, StateId> new_value(
-      std::pair<StateId, StateId>(arc1.nextstate, arc2.nextstate),
-      next_state_);
-  std::pair<IterType, bool> result =
-      state_map_.insert(new_value);
+      std::pair<StateId, StateId>(arc1.nextstate, arc2.nextstate), next_state_);
+  std::pair<IterType, bool> result = state_map_.insert(new_value);
   oarc->ilabel = ilabel;
   oarc->olabel = arc2.olabel;
   oarc->nextstate = result.first->second;
   oarc->weight = Times(arc1.weight, arc2.weight);
-  if (result.second == true) { // was inserted
+  if (result.second == true) {  // was inserted
     next_state_++;
-    const std::pair<StateId, StateId> &new_pair (new_value.first);
+    const std::pair<StateId, StateId> &new_pair(new_value.first);
     state_vec_.push_back(new_pair);
   }
   return true;
 }
 
-template<class Arc>
-inline size_t CacheDeterministicOnDemandFst<Arc>::GetIndex(
-    StateId src_state, Label ilabel) {
-  const StateId p1 = 26597, p2 = 50329; // these are two
+template <class Arc>
+inline size_t CacheDeterministicOnDemandFst<Arc>::GetIndex(StateId src_state,
+                                                           Label ilabel) {
+  const StateId p1 = 26597, p2 = 50329;  // these are two
   // values that I drew at random from a table of primes.
   // note: num_cached_arcs_ > 0.
 
   // We cast to size_t before the modulus, to ensure the
   // result is positive.
   return static_cast<size_t>(src_state * p1 + ilabel * p2) %
-      static_cast<size_t>(num_cached_arcs_);
+         static_cast<size_t>(num_cached_arcs_);
 }
 
-template<class Arc>
+template <class Arc>
 CacheDeterministicOnDemandFst<Arc>::CacheDeterministicOnDemandFst(
-    DeterministicOnDemandFst<Arc> *fst,
-    StateId num_cached_arcs): fst_(fst),
-                              num_cached_arcs_(num_cached_arcs),
-                              cached_arcs_(num_cached_arcs) {
+    DeterministicOnDemandFst<Arc> *fst, StateId num_cached_arcs)
+    : fst_(fst),
+      num_cached_arcs_(num_cached_arcs),
+      cached_arcs_(num_cached_arcs) {
   KALDI_ASSERT(num_cached_arcs > 0);
   for (StateId i = 0; i < num_cached_arcs; i++)
-    cached_arcs_[i].first = kNoStateId; // Invalidate all elements of the cache.
+    cached_arcs_[i].first =
+        kNoStateId;  // Invalidate all elements of the cache.
 }
-      
-template<class Arc>
+
+template <class Arc>
 bool CacheDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
                                                 Arc *oarc) {
   // Note: we don't cache anything in case a requested arc does not exist.
@@ -250,15 +250,17 @@ bool CacheDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
     } else {
       return false;
     }
-  }  
+  }
 }
 
-template<class Arc>
+template <class Arc>
 LmExampleDeterministicOnDemandFst<Arc>::LmExampleDeterministicOnDemandFst(
-    void *lm, Label bos_symbol, Label eos_symbol):
-    lm_(lm), bos_symbol_(bos_symbol), eos_symbol_(eos_symbol) {
-  std::vector<Label> begin_state; // history state corresponding to beginning of sentence
-  begin_state.push_back(bos_symbol); // Depending how your LM is set up, you might
+    void *lm, Label bos_symbol, Label eos_symbol)
+    : lm_(lm), bos_symbol_(bos_symbol), eos_symbol_(eos_symbol) {
+  std::vector<Label>
+      begin_state;  // history state corresponding to beginning of sentence
+  begin_state.push_back(
+      bos_symbol);  // Depending how your LM is set up, you might
   // want to have a history vector with more than one bos_symbol on it.
 
   state_vec_.push_back(begin_state);
@@ -266,52 +268,52 @@ LmExampleDeterministicOnDemandFst<Arc>::LmExampleDeterministicOnDemandFst(
   state_map_[begin_state] = 0;
 }
 
-template<class Arc>
+template <class Arc>
 typename Arc::Weight LmExampleDeterministicOnDemandFst<Arc>::Final(StateId s) {
   KALDI_ASSERT(static_cast<size_t>(s) < state_vec_.size());
   // In a real version you would probably use the following variable somehow
   // (commenting it because it's generating warnings).
   // const std::vector<Label> &wseq = state_vec_[s];
-  float log_prob = -0.5; // e.g. log_prob = lm->GetLogProb(wseq, eos_symbol_);
-  return Weight(-log_prob); // assuming weight is FloatWeight.
+  float log_prob = -0.5;  // e.g. log_prob = lm->GetLogProb(wseq, eos_symbol_);
+  return Weight(-log_prob);  // assuming weight is FloatWeight.
 }
 
-template<class Arc>
-bool LmExampleDeterministicOnDemandFst<Arc>::GetArc(
-    StateId s, Label ilabel, Arc *oarc) {
+template <class Arc>
+bool LmExampleDeterministicOnDemandFst<Arc>::GetArc(StateId s, Label ilabel,
+                                                    Arc *oarc) {
   KALDI_ASSERT(static_cast<size_t>(s) < state_vec_.size());
   std::vector<Label> wseq = state_vec_[s];
-  float log_prob = -0.25; // e.g. log_prob = lm->GetLogProb(wseq, ilabel);
-  wseq.push_back(ilabel); // the code might be different if your histories are the
+  float log_prob = -0.25;  // e.g. log_prob = lm->GetLogProb(wseq, ilabel);
+  wseq.push_back(
+      ilabel);  // the code might be different if your histories are the
   // other way around.
 
-  while (0) { // e.g. while !lm->HistoryStateExists(wseq)
-    wseq.erase(wseq.begin(), wseq.begin() + 1); // remove most distant element of history.
+  while (0) {  // e.g. while !lm->HistoryStateExists(wseq)
+    wseq.erase(wseq.begin(),
+               wseq.begin() + 1);  // remove most distant element of history.
     // note: if your histories are the other way round, you might just do
-    // wseq.pop() here.  
+    // wseq.pop() here.
   }
-  if (log_prob == -numeric_limits<float>::infinity()) { // assume this
+  if (log_prob == -numeric_limits<float>::infinity()) {  // assume this
     // is what happens if prob of the word is zero.  Some LMs will never
     // return zero.
-    return false; // no arc.
+    return false;  // no arc.
   }
   std::pair<const std::vector<Label>, StateId> new_value(
-      wseq,
-      static_cast<Label>(state_vec_.size()));
-  
+      wseq, static_cast<Label>(state_vec_.size()));
+
   // Now get state id for destination state.
-  typedef typename MapType::iterator IterType;  
+  typedef typename MapType::iterator IterType;
   std::pair<IterType, bool> result = state_map_.insert(new_value);
-  if (result.second == true) // was inserted
+  if (result.second == true)  // was inserted
     state_vec_.push_back(wseq);
   oarc->ilabel = ilabel;
   oarc->olabel = ilabel;
-  oarc->nextstate = result.first->second; // the next-state id.
+  oarc->nextstate = result.first->second;  // the next-state id.
   oarc->weight = Weight(-log_prob);
   return true;
 }
 
-} // end namespace fst
-
+}  // end namespace fst
 
 #endif

@@ -17,11 +17,9 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "lat/kaldi-lattice.h"
 #include "lat/push-lattice.h"
 #include "fstext/rand-fst.h"
-
 
 namespace kaldi {
 using namespace fst;
@@ -43,8 +41,8 @@ void TestPushCompactLatticeStrings() {
   KALDI_ASSERT(fst::RandEquivalent(*clat, clat2, 5, 0.001, Rand(), 10));
   for (CompactLatticeArc::StateId s = 0; s < clat2.NumStates(); s++) {
     if (s == 0)
-      continue; // We don't check state zero, as the "leftover string" stays
-               // there.
+      continue;  // We don't check state zero, as the "leftover string" stays
+                 // there.
     int32 first_label;
     bool ok = false;
     bool first_label_set = false;
@@ -63,7 +61,8 @@ void TestPushCompactLatticeStrings() {
       }
     }
     if (clat2.Final(s) != CompactLatticeWeight::Zero()) {
-      if (clat2.Final(s).String().size() == 0) ok = true;
+      if (clat2.Final(s).String().size() == 0)
+        ok = true;
       else {
         int32 this_label = clat2.Final(s).String().front();
         if (first_label_set && this_label != first_label) ok = true;
@@ -81,8 +80,8 @@ void TestPushCompactLatticeWeights() {
   KALDI_ASSERT(fst::RandEquivalent(*clat, clat2, 5, 0.001, Rand(), 10));
   for (CompactLatticeArc::StateId s = 0; s < clat2.NumStates(); s++) {
     if (s == 0)
-      continue; // We don't check state zero, as the "leftover string" stays
-                // there.
+      continue;  // We don't check state zero, as the "leftover string" stays
+                 // there.
     LatticeWeight sum = clat2.Final(s).Weight();
     for (ArcIterator<CompactLattice> aiter(clat2, s); !aiter.Done();
          aiter.Next()) {
@@ -90,13 +89,13 @@ void TestPushCompactLatticeWeights() {
     }
     if (!ApproxEqual(sum, LatticeWeight::One())) {
       {
-        fst::FstPrinter<CompactLatticeArc> printer(clat2, NULL, NULL,
-                                                   NULL, true, true);
+        fst::FstPrinter<CompactLatticeArc> printer(clat2, NULL, NULL, NULL,
+                                                   true, true);
         printer.Print(&std::cerr, "<unknown>");
       }
       {
-        fst::FstPrinter<CompactLatticeArc> printer(*clat, NULL, NULL, 
-                                                   NULL, true, true);
+        fst::FstPrinter<CompactLatticeArc> printer(*clat, NULL, NULL, NULL,
+                                                   true, true);
         printer.Print(&std::cerr, "<unknown>");
       }
       KALDI_ERR << "Bad lattice being pushed.";
@@ -105,9 +104,7 @@ void TestPushCompactLatticeWeights() {
   delete clat;
 }
 
-
-
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;

@@ -38,9 +38,7 @@ LinearVtln::LinearVtln(int32 dim, int32 num_classes, int32 default_class) {
   logdets_.resize(num_classes, 0.0);
   warps_.clear();
   warps_.resize(num_classes, 1.0);
-} // namespace kaldi
-
-
+}  // namespace kaldi
 
 void LinearVtln::Read(std::istream &is, bool binary) {
   int32 sz;
@@ -73,7 +71,7 @@ void LinearVtln::Read(std::istream &is, bool binary) {
 
 void LinearVtln::Write(std::ostream &os, bool binary) const {
   WriteToken(os, binary, "<LinearVtln>");
-  if(!binary) os << "\n";
+  if (!binary) os << "\n";
   int32 sz = A_.size();
   KALDI_ASSERT(static_cast<size_t>(sz) == logdets_.size());
   KALDI_ASSERT(static_cast<size_t>(sz) == warps_.size());
@@ -85,34 +83,35 @@ void LinearVtln::Write(std::ostream &os, bool binary) const {
     WriteBasicType(os, binary, logdets_[i]);
     WriteToken(os, binary, "<warp>");
     WriteBasicType(os, binary, warps_[i]);
-    if(!binary) os << "\n";
+    if (!binary) os << "\n";
   }
   WriteToken(os, binary, "<DefaultClass>");
   WriteBasicType(os, binary, default_class_);
   WriteToken(os, binary, "</LinearVtln>");
 }
 
-
 /// Compute the transform for the speaker.
-void LinearVtln::ComputeTransform(const FmllrDiagGmmAccs &accs,
-                                  std::string norm_type,  // "none", "offset", "diag"
-                                  BaseFloat logdet_scale,
-                                  MatrixBase<BaseFloat> *Ws,  // output fMLLR transform, should be size dim x dim+1
-                                  int32 *class_idx,  // the transform that was chosen...
-                                  BaseFloat *logdet_out,
-                                  BaseFloat *objf_impr,  // versus no transform
-                                  BaseFloat *count) {
+void LinearVtln::ComputeTransform(
+    const FmllrDiagGmmAccs &accs,
+    std::string norm_type,  // "none", "offset", "diag"
+    BaseFloat logdet_scale,
+    MatrixBase<BaseFloat> *
+        Ws,            // output fMLLR transform, should be size dim x dim+1
+    int32 *class_idx,  // the transform that was chosen...
+    BaseFloat *logdet_out,
+    BaseFloat *objf_impr,  // versus no transform
+    BaseFloat *count) {
   int32 dim = Dim();
   KALDI_ASSERT(dim != 0);
-  if (norm_type != "none"  && norm_type != "offset" && norm_type != "diag")
+  if (norm_type != "none" && norm_type != "offset" && norm_type != "diag")
     KALDI_ERR << "LinearVtln::ComputeTransform, norm_type should be "
-        "one of \"none\", \"offset\" or \"diag\"";
-  
+                 "one of \"none\", \"offset\" or \"diag\"";
+
   if (accs.beta_ == 0.0) {
     KALDI_WARN << "no stats, returning default transform";
     int32 dim = Dim();
     if (Ws) {
-      KALDI_ASSERT(Ws->NumRows() == dim && Ws->NumCols() == dim+1);
+      KALDI_ASSERT(Ws->NumRows() == dim && Ws->NumCols() == dim + 1);
       Ws->Range(0, dim, 0, dim).CopyFromMat(A_[default_class_]);
       Ws->Range(0, dim, dim, 1).SetZero();  // Set last column to zero.
     }
@@ -122,23 +121,25 @@ void LinearVtln::ComputeTransform(const FmllrDiagGmmAccs &accs,
     if (count) *count = 0;
     return;
   }
-  
-  Matrix<BaseFloat> best_transform(dim, dim+1);
+
+  Matrix<BaseFloat> best_transform(dim, dim + 1);
   best_transform.SetUnit();
   BaseFloat old_objf = FmllrAuxFuncDiagGmm(best_transform, accs),
-      best_objf = -1.0e+100;
+            best_objf = -1.0e+100;
   int32 best_class = -1;
 
   for (int32 i = 0; i < NumClasses(); i++) {
     FmllrDiagGmmAccs accs_tmp(accs);
     ApplyFeatureTransformToStats(A_[i], &accs_tmp);
     // "old_trans" just needed by next function as "initial" transform.
-    Matrix<BaseFloat> old_trans(dim, dim+1); old_trans.SetUnit();
-    Matrix<BaseFloat> trans(dim, dim+1);
-    ComputeFmllrMatrixDiagGmm(old_trans, accs_tmp, norm_type,
-                              100,  // num iters.. don't care since norm_type != "full"
-                              &trans);
-    Matrix<BaseFloat> product(dim, dim+1);
+    Matrix<BaseFloat> old_trans(dim, dim + 1);
+    old_trans.SetUnit();
+    Matrix<BaseFloat> trans(dim, dim + 1);
+    ComputeFmllrMatrixDiagGmm(
+        old_trans, accs_tmp, norm_type,
+        100,  // num iters.. don't care since norm_type != "full"
+        &trans);
+    Matrix<BaseFloat> product(dim, dim + 1);
     // product = trans * A_[i] (modulo messing about with offsets)
     ComposeTransforms(trans, A_[i], false, &product);
 
@@ -146,7 +147,7 @@ void LinearVtln::ComputeTransform(const FmllrDiagGmmAccs &accs,
 
     if (logdet_scale != 1.0)
       objf += accs.beta_ * (logdet_scale - 1.0) * logdets_[i];
-    
+
     if (objf > best_objf) {
       best_objf = objf;
       best_class = i;
@@ -160,8 +161,6 @@ void LinearVtln::ComputeTransform(const FmllrDiagGmmAccs &accs,
   if (objf_impr) *objf_impr = best_objf - old_objf;
   if (count) *count = accs.beta_;
 }
-
-
 
 void LinearVtln::SetTransform(int32 i, const MatrixBase<BaseFloat> &transform) {
   KALDI_ASSERT(i >= 0 && i < NumClasses());
@@ -189,7 +188,4 @@ void LinearVtln::GetTransform(int32 i, MatrixBase<BaseFloat> *transform) const {
   transform->CopyFromMat(A_[i]);
 }
 
-
-
-} // end namespace kaldi
-
+}  // end namespace kaldi

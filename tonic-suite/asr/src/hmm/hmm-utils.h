@@ -26,7 +26,6 @@
 
 namespace kaldi {
 
-
 /// \defgroup hmm_group_graph Classes and functions for creating FSTs from HMMs
 /// \ingroup hmm_group
 /// @{
@@ -45,29 +44,29 @@ struct HTransducerConfig {
   bool reverse;
 
   /// This variable is only looked at if reverse == true.  If reverse == true
-  /// and push_weights == true, then we push the weights in the reversed FSTs we create for each
-  /// phone HMM.  This is only safe if the HMMs are probabilistic (i.e. not discriminatively
+  /// and push_weights == true, then we push the weights in the reversed FSTs we
+  /// create for each
+  /// phone HMM.  This is only safe if the HMMs are probabilistic (i.e. not
+  /// discriminatively
   bool push_weights;
 
   /// delta used if we do push_weights [only relevant if reverse == true
   /// and push_weights == true].
   BaseFloat push_delta;
 
-  HTransducerConfig():
-      transition_scale(1.0),
-      reverse(false),
-      push_weights(true),
-      push_delta(0.001)
-  { }
+  HTransducerConfig()
+      : transition_scale(1.0),
+        reverse(false),
+        push_weights(true),
+        push_delta(0.001) {}
 
   // Note-- this Register registers the easy-to-register options
   // but not the "sym_type" which is an enum and should be handled
   // separately in main().
-  void Register (OptionsItf *po) {
+  void Register(OptionsItf *po) {
     po->Register("transition-scale", &transition_scale,
                  "Scale of transition probs (relative to LM)");
-    po->Register("reverse", &reverse,
-                 "Set true to build time-reversed FST.");
+    po->Register("reverse", &reverse, "Set true to build time-reversed FST.");
     po->Register("push-weights", &push_weights,
                  "Push weights (only applicable if reverse == true)");
     po->Register("push-delta", &push_delta,
@@ -76,21 +75,18 @@ struct HTransducerConfig {
   }
 };
 
-
 struct HmmCacheHash {
-  int operator () (const std::pair<int32, std::vector<int32> >&p) const {
+  int operator()(const std::pair<int32, std::vector<int32> > &p) const {
     VectorHasher<int32> v;
     int32 prime = 103049;
-    return prime*p.first + v(p.second);
+    return prime * p.first + v(p.second);
   }
 };
 
 /// HmmCacheType is a map from (central-phone, sequence of pdf-ids) to FST, used
 /// as cache in GetHmmAsFst, as an optimization.
 typedef unordered_map<std::pair<int32, std::vector<int32> >,
-                      fst::VectorFst<fst::StdArc>*,
-                      HmmCacheHash> HmmCacheType;
-
+                      fst::VectorFst<fst::StdArc> *, HmmCacheHash> HmmCacheType;
 
 /// Called by GetHTransducer() and probably will not need to be called directly;
 /// it creates the FST corresponding to the phone.  Does not include self-loops;
@@ -113,18 +109,15 @@ typedef unordered_map<std::pair<int32, std::vector<int32> >,
 fst::VectorFst<fst::StdArc> *GetHmmAsFst(
     std::vector<int32> context_window,
     const ContextDependencyInterface &ctx_dep,
-    const TransitionModel &trans_model,
-    const HTransducerConfig &config,
+    const TransitionModel &trans_model, const HTransducerConfig &config,
     HmmCacheType *cache = NULL);
 
 /// Included mainly as a form of documentation, not used in any other code
 /// currently.  Creates the FST with self-loops, and with fewer options.
-fst::VectorFst<fst::StdArc>*
-GetHmmAsFstSimple(std::vector<int32> context_window,
-                  const ContextDependencyInterface &ctx_dep,
-                  const TransitionModel &trans_model,
-                  BaseFloat prob_scale);
-
+fst::VectorFst<fst::StdArc> *GetHmmAsFstSimple(
+    std::vector<int32> context_window,
+    const ContextDependencyInterface &ctx_dep,
+    const TransitionModel &trans_model, BaseFloat prob_scale);
 
 /**
   * Returns the H tranducer; result owned by caller.
@@ -132,7 +125,8 @@ GetHmmAsFstSimple(std::vector<int32> context_window,
   * input transition-ids, and also possibly some disambiguation symbols, which
   * will be put in disambig_syms.  The output side contains the identifiers that
   * are indexes into "ilabel_info" (these represent phones-in-context or
-  * disambiguation symbols).  The ilabel_info vector allows GetHTransducer to map
+  * disambiguation symbols).  The ilabel_info vector allows GetHTransducer to
+ * map
   * from symbols to phones-in-context (i.e. phonetic context windows).  Any
   * singleton symbols in the ilabel_info vector which are not phones, will be
   * treated as disambiguation symbols.  [Not all recipes use these].  The output
@@ -140,56 +134,65 @@ GetHmmAsFstSimple(std::vector<int32> context_window,
   * the input of the transducer (i.e. same symbol type as whatever is on the
   * input of the transducer
   */
-fst::VectorFst<fst::StdArc>*
-GetHTransducer (const std::vector<std::vector<int32> > &ilabel_info,
-                const ContextDependencyInterface &ctx_dep,
-                const TransitionModel &trans_model,
-                const HTransducerConfig &config,
-                std::vector<int32> *disambig_syms_left);
+fst::VectorFst<fst::StdArc> *GetHTransducer(
+    const std::vector<std::vector<int32> > &ilabel_info,
+    const ContextDependencyInterface &ctx_dep,
+    const TransitionModel &trans_model, const HTransducerConfig &config,
+    std::vector<int32> *disambig_syms_left);
 
 /**
-  * GetIlabelMapping produces a mapping that's similar to HTK's logical-to-physical
+  * GetIlabelMapping produces a mapping that's similar to HTK's
+ * logical-to-physical
   * model mapping (i.e. the xwrd.clustered.mlist files).   It groups together
   * "logical HMMs" (i.e. in our world, phonetic context windows) that share the
   * same sequence of transition-ids.   This can be used in an
-  * optional graph-creation step that produces a remapped form of CLG that can be
-  * more productively determinized and minimized.  This is used in the command-line program
+  * optional graph-creation step that produces a remapped form of CLG that can
+ * be
+  * more productively determinized and minimized.  This is used in the
+ * command-line program
   * make-ilabel-transducer.cc.
-  * @param ilabel_info_old [in] The original \ref tree_ilabel "ilabel_info" vector
+  * @param ilabel_info_old [in] The original \ref tree_ilabel "ilabel_info"
+ * vector
   * @param ctx_dep [in] The tree
   * @param trans_model [in] The transition-model object
-  * @param old2new_map [out] The output; this vector, which is of size equal to the
-  *       number of new labels, is a mapping to the old labels such that we could
+  * @param old2new_map [out] The output; this vector, which is of size equal to
+ * the
+  *       number of new labels, is a mapping to the old labels such that we
+ * could
   *       create a vector ilabel_info_new such that
   *       ilabel_info_new[i] == ilabel_info_old[old2new_map[i]]
   */
-void GetIlabelMapping (const std::vector<std::vector<int32> > &ilabel_info_old,
-                       const ContextDependencyInterface &ctx_dep,
-                       const TransitionModel &trans_model,
-                       std::vector<int32> *old2new_map);
-
-
+void GetIlabelMapping(const std::vector<std::vector<int32> > &ilabel_info_old,
+                      const ContextDependencyInterface &ctx_dep,
+                      const TransitionModel &trans_model,
+                      std::vector<int32> *old2new_map);
 
 /**
-  * For context, see \ref hmm_graph_add_self_loops.  Expands an FST that has been
+  * For context, see \ref hmm_graph_add_self_loops.  Expands an FST that has
+ * been
   * built without self-loops, and adds the self-loops (it also needs to modify
   * the probability of the non-self-loop ones, as the graph without self-loops
   * was created in such a way that it was stochastic).  Note that the
   * disambig_syms will be empty in some recipes (e.g.  if you already removed
   * the disambiguation symbols).
   * @param trans_model [in] Transition model
-  * @param disambig_syms [in] Sorted, uniq list of disambiguation symbols, required
-  *       if the graph contains disambiguation symbols but only needed for sanity checks.
-  * @param self_loop_scale [in] Transition-probability scale for self-loops; c.f.
+  * @param disambig_syms [in] Sorted, uniq list of disambiguation symbols,
+ * required
+  *       if the graph contains disambiguation symbols but only needed for
+ * sanity checks.
+  * @param self_loop_scale [in] Transition-probability scale for self-loops;
+ * c.f.
   *                    \ref hmm_scale
-  * @param reorder [in] If true, reorders the transitions (see \ref hmm_reorder).
+  * @param reorder [in] If true, reorders the transitions (see \ref
+ * hmm_reorder).
   * @param  fst [in, out] The FST to be modified.
   */
-void AddSelfLoops(const TransitionModel &trans_model,
-                  const std::vector<int32> &disambig_syms,  // used as a check only.
-                  BaseFloat self_loop_scale,
-                  bool reorder,  // true->dan-style, false->lukas-style.
-                  fst::VectorFst<fst::StdArc> *fst);
+void AddSelfLoops(
+    const TransitionModel &trans_model,
+    const std::vector<int32> &disambig_syms,  // used as a check only.
+    BaseFloat self_loop_scale,
+    bool reorder,  // true->dan-style, false->lukas-style.
+    fst::VectorFst<fst::StdArc> *fst);
 
 /**
   * Adds transition-probs, with the supplied
@@ -210,8 +213,7 @@ void AddSelfLoops(const TransitionModel &trans_model,
   */
 void AddTransitionProbs(const TransitionModel &trans_model,
                         const std::vector<int32> &disambig_syms,
-                        BaseFloat transition_scale,
-                        BaseFloat self_loop_scale,
+                        BaseFloat transition_scale, BaseFloat self_loop_scale,
                         fst::VectorFst<fst::StdArc> *fst);
 
 /**
@@ -219,15 +221,13 @@ void AddTransitionProbs(const TransitionModel &trans_model,
    it affects the graph part of the weight (the first element
    of the pair). */
 void AddTransitionProbs(const TransitionModel &trans_model,
-                        BaseFloat transition_scale,
-                        BaseFloat self_loop_scale,
+                        BaseFloat transition_scale, BaseFloat self_loop_scale,
                         Lattice *lat);
-
 
 /// Returns a transducer from pdfs plus one (input) to  transition-ids (output).
 /// Currenly of use only for testing.
-fst::VectorFst<fst::StdArc>*
-GetPdfToTransitionIdTransducer(const TransitionModel &trans_model);
+fst::VectorFst<fst::StdArc> *GetPdfToTransitionIdTransducer(
+    const TransitionModel &trans_model);
 
 /// Converts all transition-ids in the FST to pdfs plus one.
 /// Placeholder: not implemented yet!
@@ -282,14 +282,12 @@ bool ConvertAlignment(const TransitionModel &old_trans_model,
 // if the phone-sequence doesn't seem to have the right number of
 // words in it.
 bool ConvertPhnxToProns(const std::vector<int32> &phnx,
-                        const std::vector<int32> &words,
-                        int32 word_start_sym,
+                        const std::vector<int32> &words, int32 word_start_sym,
                         int32 word_end_sym,
                         std::vector<std::vector<int32> > *prons);
 
 /// @} end "addtogroup hmm_group"
 
-} // end namespace kaldi
-
+}  // end namespace kaldi
 
 #endif

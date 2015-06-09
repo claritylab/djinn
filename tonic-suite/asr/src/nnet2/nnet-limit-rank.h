@@ -32,31 +32,29 @@ namespace nnet2 {
 struct NnetLimitRankOpts {
   int32 num_threads;
   BaseFloat parameter_proportion;
-  
-  NnetLimitRankOpts(): num_threads(1), parameter_proportion(0.75) { }
+
+  NnetLimitRankOpts() : num_threads(1), parameter_proportion(0.75) {}
 
   void Register(OptionsItf *po) {
-    po->Register("num-threads", &num_threads, "Number of threads used for "
+    po->Register("num-threads", &num_threads,
+                 "Number of threads used for "
                  "rank-limiting operation; note, will never use more than "
                  "#layers.");
-    po->Register("parameter-proportion", &parameter_proportion, "Proportion of "
+    po->Register("parameter-proportion", &parameter_proportion,
+                 "Proportion of "
                  "dimension of each transform to limit the rank to.");
-  }  
+  }
 };
-
 
 /// This function limits the rank of each affine transform in the
 /// neural net, by zeroing out the smallest singular values.  The number of
 /// singular values to zero out is determined on a layer by layer basis, using
 /// "parameter_proportion" to set the proportion of parameters to remove.
-void LimitRankParallel(const NnetLimitRankOpts &opts,
-                       Nnet *nnet);
+void LimitRankParallel(const NnetLimitRankOpts &opts, Nnet *nnet);
 
+/// Also see the function LimitRankOfLastLayer in class Nnet.
 
-/// Also see the function LimitRankOfLastLayer in class Nnet.                            
+}  // namespace nnet2
+}  // namespace kaldi
 
-
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_NNET_LIMIT_RANK_H_
+#endif  // KALDI_NNET2_NNET_LIMIT_RANK_H_

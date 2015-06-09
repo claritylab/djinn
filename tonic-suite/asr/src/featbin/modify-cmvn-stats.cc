@@ -22,21 +22,22 @@
 #include "matrix/kaldi-matrix.h"
 #include "transform/cmvn.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
-        "Copy cepstral mean/variance stats so that some dimensions have 'fake' stats\n"
+        "Copy cepstral mean/variance stats so that some dimensions have 'fake' "
+        "stats\n"
         "that will skip normalization\n"
         "Copy features [and possibly change format]\n"
-        "Usage: modify-cmvn-stats <fake-dims> <in-rspecifier> <out-wspecifier>\n"
+        "Usage: modify-cmvn-stats <fake-dims> <in-rspecifier> "
+        "<out-wspecifier>\n"
         "e.g.: modify-cmvn-stats 13:14:15 ark:- ark:-\n"
         "See also: compute-cmvn-stats\n";
-    
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -46,17 +47,15 @@ int main(int argc, char *argv[]) {
 
     int32 num_done = 0;
 
-    std::string
-        skip_dims_str = po.GetArg(1),
-        rspecifier = po.GetArg(2),
-        wspecifier = po.GetArg(3);
+    std::string skip_dims_str = po.GetArg(1), rspecifier = po.GetArg(2),
+                wspecifier = po.GetArg(3);
 
     std::vector<int32> skip_dims;
     if (!SplitStringToIntegers(skip_dims_str, ":", false, &skip_dims)) {
       KALDI_ERR << "Bad first argument (should be colon-separated list of "
-                <<  "integers)";
+                << "integers)";
     }
-    
+
     SequentialDoubleMatrixReader reader(rspecifier);
     DoubleMatrixWriter writer(wspecifier);
 
@@ -74,17 +73,16 @@ int main(int argc, char *argv[]) {
           KALDI_ERR << "Bad entry " << d << " in list of fake dims; "
                     << "feature dim is " << dim;
         mat(0, d) = 0.0;  // zero 'x' stats.
-        mat(1, d) = count;  // 'x^2' stats equalt to count, implying unit variance.
+        mat(1, d) =
+            count;  // 'x^2' stats equalt to count, implying unit variance.
       }
       writer.Write(reader.Key(), mat);
       num_done++;
     }
     KALDI_LOG << "Modified " << num_done << " sets of stats.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

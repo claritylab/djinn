@@ -23,11 +23,10 @@
 #include "matrix/kaldi-matrix.h"
 #include "matrix/cblas-wrappers.h"
 
-
 namespace kaldi {
 
 #ifndef HAVE_ATLAS
-template<typename Real>
+template <typename Real>
 void TpMatrix<Real>::Invert() {
   // these are CLAPACK types
   KaldiBlasInt result;
@@ -45,17 +44,17 @@ void TpMatrix<Real>::Invert() {
   }
 }
 #else
-template<typename Real>
+template <typename Real>
 void TpMatrix<Real>::Invert() {
   // ATLAS doesn't implement triangular matrix inversion in packed
   // format, so we temporarily put in non-packed format.
   Matrix<Real> tmp(*this);
   int rows = static_cast<int>(this->num_rows_);
-  
+
   // ATLAS call.  It's really row-major ordering and a lower triangular matrix,
   // but there is some weirdness with Fortran-style indexing that we need to
   // take account of, so everything gets swapped.
-  int result = clapack_Xtrtri( rows, tmp.Data(), tmp.Stride());
+  int result = clapack_Xtrtri(rows, tmp.Data(), tmp.Stride());
   // Let's hope ATLAS has the same return value conventions as clapack.
   // I couldn't find any documentation online.
   if (result < 0) {
@@ -67,54 +66,52 @@ void TpMatrix<Real>::Invert() {
 }
 #endif
 
-template<typename Real>
+template <typename Real>
 Real TpMatrix<Real>::Determinant() {
-  double   det = 1.0;
-  for (MatrixIndexT i = 0; i<this->NumRows(); i++) {
+  double det = 1.0;
+  for (MatrixIndexT i = 0; i < this->NumRows(); i++) {
     det *= (*this)(i, i);
   }
   return static_cast<Real>(det);
 }
 
-
-template<typename Real>
+template <typename Real>
 void TpMatrix<Real>::Swap(TpMatrix<Real> *other) {
   std::swap(this->data_, other->data_);
   std::swap(this->num_rows_, other->num_rows_);
 }
 
-
-template<typename Real>
+template <typename Real>
 void TpMatrix<Real>::Cholesky(const SpMatrix<Real> &orig) {
   KALDI_ASSERT(orig.NumRows() == this->NumRows());
   MatrixIndexT n = this->NumRows();
   this->SetZero();
   Real *data = this->data_, *jdata = data;  // start of j'th row of matrix.
-  const Real *orig_jdata = orig.Data(); // start of j'th row of matrix.
+  const Real *orig_jdata = orig.Data();     // start of j'th row of matrix.
   for (MatrixIndexT j = 0; j < n; j++, jdata += j, orig_jdata += j) {
-    Real *kdata = data; // start of k'th row of matrix.
+    Real *kdata = data;  // start of k'th row of matrix.
     Real d(0.0);
     for (MatrixIndexT k = 0; k < j; k++, kdata += k) {
       Real s = cblas_Xdot(k, kdata, 1, jdata, 1);
       // (*this)(j, k) = s = (orig(j, k) - s)/(*this)(k, k);
-      jdata[k] = s = (orig_jdata[k] - s)/kdata[k];
-      d = d + s*s;
+      jdata[k] = s = (orig_jdata[k] - s) / kdata[k];
+      d = d + s * s;
     }
     // d = orig(j, j) - d;
     d = orig_jdata[j] - d;
-    
+
     if (d >= 0.0) {
       // (*this)(j, j) = std::sqrt(d);
       jdata[j] = std::sqrt(d);
     } else {
       KALDI_WARN << "Cholesky decomposition failed. Maybe matrix "
-          "is not positive definite. Throwing error";
+                    "is not positive definite. Throwing error";
       throw std::runtime_error("Cholesky decomposition failed.");
     }
   }
 }
 
-template<typename Real>
+template <typename Real>
 void TpMatrix<Real>::CopyFromMat(const MatrixBase<Real> &M,
                                  MatrixTransposeType Trans) {
   if (Trans == kNoTrans) {
@@ -124,8 +121,7 @@ void TpMatrix<Real>::CopyFromMat(const MatrixBase<Real> &M,
     MatrixIndexT stride = M.Stride();
     Real *out_i = this->data_;
     for (MatrixIndexT i = 0; i < D; i++, in_i += stride, out_i += i)
-      for (MatrixIndexT j = 0; j <= i; j++)
-        out_i[j] = in_i[j];
+      for (MatrixIndexT j = 0; j <= i; j++) out_i[j] = in_i[j];
   } else {
     KALDI_ASSERT(this->NumRows() == M.NumRows() && M.NumRows() == M.NumCols());
     MatrixIndexT D = this->NumRows();
@@ -133,16 +129,12 @@ void TpMatrix<Real>::CopyFromMat(const MatrixBase<Real> &M,
     MatrixIndexT stride = M.Stride();
     Real *out_i = this->data_;
     for (MatrixIndexT i = 0; i < D; i++, in_i++, out_i += i) {
-      for (MatrixIndexT j = 0; j <= i; j++)
-        out_i[j] = in_i[stride*j];
+      for (MatrixIndexT j = 0; j <= i; j++) out_i[j] = in_i[stride * j];
     }
   }
 }
-
 
 template class TpMatrix<float>;
 template class TpMatrix<double>;
 
 }  // namespace kaldi
-
-

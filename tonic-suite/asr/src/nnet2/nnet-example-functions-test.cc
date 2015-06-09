@@ -36,7 +36,7 @@ void UnitTestSolvePackingProblem() {
 
   std::vector<std::vector<size_t> > groups;
   SolvePackingProblem(max_cost, item_costs, &groups);
-  
+
   std::vector<size_t> all_indices;
   for (size_t i = 0; i < groups.size(); i++) {
     BaseFloat this_group_cost = 0.0;
@@ -50,20 +50,15 @@ void UnitTestSolvePackingProblem() {
   }
   SortAndUniq(&all_indices);
   KALDI_ASSERT(all_indices.size() == size);
-  if (!all_indices.empty())
-    KALDI_ASSERT(all_indices.back() + 1 == size);
+  if (!all_indices.empty()) KALDI_ASSERT(all_indices.back() + 1 == size);
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
   using namespace kaldi::nnet2;
   using kaldi::int32;
-  for (int32 i = 0; i < 10; i++)
-    UnitTestSolvePackingProblem();
+  for (int32 i = 0; i < 10; i++) UnitTestSolvePackingProblem();
 }
-

@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -34,11 +33,12 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Time reversal of compact lattice and write out as lattice\n"
-        "Usage: lattice-reverse [options] lattice-rspecifier lattice-wspecifier\n"
+        "Usage: lattice-reverse [options] lattice-rspecifier "
+        "lattice-wspecifier\n"
         " e.g.: lattice-reverse ark:1.lats ark:1.reverse.lats\n";
-      
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -46,13 +46,12 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
 
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    
+
     // Write as compact lattice.
-    CompactLatticeWriter compact_lat_writer(lats_wspecifier); 
+    CompactLatticeWriter compact_lat_writer(lats_wspecifier);
 
     int32 n_done = 0;
 
@@ -60,7 +59,7 @@ int main(int argc, char *argv[]) {
       std::string key = clat_reader.Key();
       CompactLattice clat = clat_reader.Value();
       clat_reader.FreeCurrent();
-      
+
       Lattice lat;
       ConvertLattice(clat, &lat);
       Lattice reverse_lat;
@@ -69,13 +68,13 @@ int main(int argc, char *argv[]) {
       CompactLattice reverse_clat;
       ConvertLattice(reverse_lat, &reverse_clat);
       RemoveEpsLocal(&reverse_clat);
-    
+
       compact_lat_writer.Write(key, reverse_clat);
       n_done++;
     }
     KALDI_LOG << "Done converting " << n_done << " to best path";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

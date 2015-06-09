@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_UTIL_EDIT_DISTANCE_H_
 #define KALDI_UTIL_EDIT_DISTANCE_H_
 #include <vector>
@@ -30,18 +29,17 @@
 namespace kaldi {
 
 // Compute the edit-distance between two strings.
-template<class T>
-int32 LevenshteinEditDistance(const std::vector<T> &a,
-                              const std::vector<T> &b);
-
+template <class T>
+int32 LevenshteinEditDistance(const std::vector<T> &a, const std::vector<T> &b);
 
 // edit distance calculation with conventional method.
-// note: noise word must be filtered out from the hypothesis and reference sequence
+// note: noise word must be filtered out from the hypothesis and reference
+// sequence
 // before the following procedure conducted.
-template<class T>
+template <class T>
 int32 LevenshteinEditDistance(const std::vector<T> &ref,
-                              const std::vector<T> &hyp,
-                              int32 *ins, int32 *del, int32 *sub);
+                              const std::vector<T> &hyp, int32 *ins, int32 *del,
+                              int32 *sub);
 
 // This version of the edit-distance computation outputs the alignment
 // between the two.  This is a vector of pairs of (symbol a, symbol b).
@@ -50,13 +48,11 @@ int32 LevenshteinEditDistance(const std::vector<T> &ref,
 // epsilon will be the corresponding member of the pair.
 // It returns the edit-distance between the two strings.
 
-template<class T>
-int32 LevenshteinAlignment(const std::vector<T> &a,
-                           const std::vector<T> &b,
-                           T eps_symbol,
-                           std::vector<std::pair<T, T> > *output);
+template <class T>
+int32 LevenshteinAlignment(const std::vector<T> &a, const std::vector<T> &b,
+                           T eps_symbol, std::vector<std::pair<T, T> > *output);
 
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #include "edit-distance-inl.h"
 

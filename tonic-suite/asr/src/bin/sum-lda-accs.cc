@@ -21,7 +21,6 @@
 #include "gmm/mle-am-diag-gmm.h"
 #include "transform/lda-estimate.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -29,7 +28,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Sum stats obtained with acc-lda.\n"
-        "Usage: sum-lda-accs [options] <stats-out> <stats-in1> <stats-in2> ...\n";
+        "Usage: sum-lda-accs [options] <stats-out> <stats-in1> <stats-in2> "
+        "...\n";
 
     bool binary = true;
     ParseOptions po(usage);
@@ -53,10 +53,8 @@ int main(int argc, char *argv[]) {
     Output ko(stats_out_filename, binary);
     lda.Write(ko.Stream(), binary);
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

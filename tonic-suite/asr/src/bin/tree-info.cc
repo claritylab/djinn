@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "hmm/hmm-topology.h"
@@ -30,11 +29,12 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Print information about decision tree (mainly the number of pdfs), to stdout\n"
+        "Print information about decision tree (mainly the number of pdfs), to "
+        "stdout\n"
         "Usage:  tree-info <tree-in>\n";
-        
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1) {
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
     ReadKaldiObject(tree_in_filename, &ctx_dep);
 
     std::cout << "num-pdfs " << ctx_dep.NumPdfs() << std::endl;
-    
-  } catch(const std::exception &e) {
+
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

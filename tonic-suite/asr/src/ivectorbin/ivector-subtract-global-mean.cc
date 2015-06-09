@@ -17,10 +17,8 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -28,42 +26,44 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Copies a table of iVectors but subtracts the global mean as\n"
-        "it does so.  The mean may be specified as the first argument; if not,\n"
+        "it does so.  The mean may be specified as the first argument; if "
+        "not,\n"
         "the sum of the input iVectors is used.\n"
         "\n"
-        "Usage: ivector-subtract-global-mean <ivector-rspecifier> <ivector-wspecifier>\n"
-        "or: ivector-subtract-global-mean <mean-rxfliename> <ivector-rspecifier> <ivector-wspecifier>\n"
+        "Usage: ivector-subtract-global-mean <ivector-rspecifier> "
+        "<ivector-wspecifier>\n"
+        "or: ivector-subtract-global-mean <mean-rxfliename> "
+        "<ivector-rspecifier> <ivector-wspecifier>\n"
         "e.g.: ivector-subtract-global-mean scp:ivectors.scp ark:-\n"
         "or: ivector-subtract-global-mean mean.vec scp:ivectors.scp ark:-\n"
         "See also: ivector-mean\n";
-    
+
     ParseOptions po(usage);
 
     bool subtract_mean = true;
     po.Register("subtract-mean", &subtract_mean,
                 "If true, subtract mean; if false, just copy the input.");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() < 2 || po.NumArgs() > 3) {
       po.PrintUsage();
       exit(1);
     }
 
     int64 num_done = 0;
-    
+
     if (po.NumArgs() == 2) {
       std::string ivector_rspecifier = po.GetArg(1),
-          ivector_wspecifier = po.GetArg(2);
-    
+                  ivector_wspecifier = po.GetArg(2);
+
       Vector<double> sum;
-    
-      std::vector<std::pair<std::string, Vector<BaseFloat>*> > ivectors;
-    
+
+      std::vector<std::pair<std::string, Vector<BaseFloat> *> > ivectors;
+
       SequentialBaseFloatVectorReader ivector_reader(ivector_rspecifier);
       BaseFloatVectorWriter ivector_writer(ivector_wspecifier);
 
-    
       for (; !ivector_reader.Done(); ivector_reader.Next()) {
         std::string key = ivector_reader.Key();
         const Vector<BaseFloat> &ivector = ivector_reader.Value();
@@ -74,14 +74,13 @@ int main(int argc, char *argv[]) {
       }
 
       KALDI_LOG << "Read " << num_done << " iVectors.";
-    
+
       if (num_done != 0) {
         KALDI_LOG << "Norm of iVector mean was " << (sum.Norm(2.0) / num_done);
         for (size_t i = 0; i < ivectors.size(); i++) {
           std::string key = ivectors[i].first;
           Vector<BaseFloat> *ivector = ivectors[i].second;
-          if (subtract_mean)
-            ivector->AddVec(-1.0 / num_done, sum);
+          if (subtract_mean) ivector->AddVec(-1.0 / num_done, sum);
           ivector_writer.Write(key, *ivector);
           delete ivector;
           ivectors[i].second = NULL;
@@ -90,11 +89,11 @@ int main(int argc, char *argv[]) {
     } else {
       // po.NumArgs() == 3
       std::string mean_rxfilename = po.GetArg(1),
-          ivector_rspecifier = po.GetArg(2),
-          ivector_wspecifier = po.GetArg(3);
+                  ivector_rspecifier = po.GetArg(2),
+                  ivector_wspecifier = po.GetArg(3);
       Vector<BaseFloat> mean;
       ReadKaldiObject(mean_rxfilename, &mean);
-      
+
       SequentialBaseFloatVectorReader ivector_reader(ivector_rspecifier);
       BaseFloatVectorWriter ivector_writer(ivector_wspecifier);
       for (; !ivector_reader.Done(); ivector_reader.Next()) {
@@ -107,8 +106,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Wrote " << num_done << " mean-subtracted iVectors";
     return (num_done != 0 ? 0 : 1);
-    
-  } catch(const std::exception &e) {
+
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

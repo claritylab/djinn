@@ -41,7 +41,6 @@
 #include "util/common-utils.h"
 #include "lm/kaldi-lmtable.h"
 
-
 namespace kaldi {
 
 /// @defgroup LanguageModel LanguageModel
@@ -49,79 +48,66 @@ namespace kaldi {
 /// @brief Language model and lexicon FST implementations.
 
 /// Controls reading or ARPA, IRSTLM, OpenFST, or text formats
-enum GrammarType {
-  kArpaLm, kIrstLm, kFst, kTextString
-};
+enum GrammarType { kArpaLm, kIrstLm, kFst, kTextString };
 
 /// @brief Finite-state transducer language model.
 
 /// LangModelFst is a standard vector FST that also provides
 /// Read() and Write() functions for file-based language models
 /// or text files defining strings and grammars.
-class LangModelFst: public fst::VectorFst<fst::StdArc> {
+class LangModelFst : public fst::VectorFst<fst::StdArc> {
  public:
   typedef fst::StdArc::Weight LmWeight;
   typedef fst::StdArc::StateId StateId;
-  
 
-  LangModelFst() {
-    pfst_ = new fst::VectorFst<fst::StdArc>;
-  }
+  LangModelFst() { pfst_ = new fst::VectorFst<fst::StdArc>; }
 
   LangModelFst(const LangModelFst &lm)
-    : pfst_(lm.pfst_ ? new fst::VectorFst<fst::StdArc>(*(lm.pfst_)) : 0) {}
+      : pfst_(lm.pfst_ ? new fst::VectorFst<fst::StdArc>(*(lm.pfst_)) : 0) {}
 
   ~LangModelFst() {
     if (pfst_) delete pfst_;
   }
 
   /// Reads a language model from an input stream.
-  bool Read(std::istream &strm,
-            const string &sourcename,
-            GrammarType gtype,
-            fst::SymbolTable *pst = NULL,
-            bool useNaturalLog = true,
-            const string startSent = "<s>",
-            const string endSent = "</s>") {
+  bool Read(std::istream &strm, const string &sourcename, GrammarType gtype,
+            fst::SymbolTable *pst = NULL, bool useNaturalLog = true,
+            const string startSent = "<s>", const string endSent = "</s>") {
     if (pfst_) delete pfst_;
-    pfst_ = ReadStream(strm, sourcename,
-                       gtype, pst,
-                       useNaturalLog,
-                       startSent, endSent);
-    return(pfst_ ? true : false);
+    pfst_ = ReadStream(strm, sourcename, gtype, pst, useNaturalLog, startSent,
+                       endSent);
+    return (pfst_ ? true : false);
   }
 
-  bool Read(const string &rxfilename,
-            GrammarType gtype,
-            fst::SymbolTable *pst = 0,
-            bool useNaturalLog = true,
-            const string startSent = "<s>",
-            const string endSent = "</s>") {
-    if (pfst_) { delete pfst_; pfst_ = NULL; }
+  bool Read(const string &rxfilename, GrammarType gtype,
+            fst::SymbolTable *pst = 0, bool useNaturalLog = true,
+            const string startSent = "<s>", const string endSent = "</s>") {
+    if (pfst_) {
+      delete pfst_;
+      pfst_ = NULL;
+    }
     if (rxfilename == "") {
-      KALDI_ERR << "arpa2fst and similar programs no longer support empty filename "
-                << "for standard input; use '-'";
+      KALDI_ERR
+          << "arpa2fst and similar programs no longer support empty filename "
+          << "for standard input; use '-'";
     }
     Input ki(rxfilename);
-    
-    pfst_ = ReadStream(ki.Stream(),
-                       PrintableRxfilename(rxfilename),
-                       gtype, pst,
-                       useNaturalLog,
-                       startSent, endSent);
-    return(pfst_ ? true : false);
+
+    pfst_ = ReadStream(ki.Stream(), PrintableRxfilename(rxfilename), gtype, pst,
+                       useNaturalLog, startSent, endSent);
+    return (pfst_ ? true : false);
   }
 
-  fst::SymbolTable* MutableInputSymbols() {
+  fst::SymbolTable *MutableInputSymbols() {
     return pfst_->MutableInputSymbols();
   }
 
-  const fst::VectorFst<fst::StdArc>* GetFst() const {return pfst_;}
-  fst::VectorFst<fst::StdArc>* GetFst() {return pfst_;}
+  const fst::VectorFst<fst::StdArc> *GetFst() const { return pfst_; }
+  fst::VectorFst<fst::StdArc> *GetFst() { return pfst_; }
 
   /// Writes language model FST to named output file, return false on error.
   bool Write(std::string wxfilename) {
-    if (wxfilename == "") wxfilename = "-"; // interpret "" as stdout,
+    if (wxfilename == "") wxfilename = "-";  // interpret "" as stdout,
     // for compatibility with OpenFst conventions.
     bool write_binary = true, write_header = false;
     kaldi::Output ko(wxfilename, write_binary, write_header);
@@ -132,13 +118,10 @@ class LangModelFst: public fst::VectorFst<fst::StdArc> {
 
  private:
   fst::VectorFst<fst::StdArc> *pfst_;
-  fst::VectorFst<fst::StdArc>* ReadStream(std::istream &strm,
-                                          const string &sourcename,
-                                          GrammarType gtype,
-                                          fst::SymbolTable *pst,
-                                          bool useNaturalLog,
-                                          const string startSent,
-                                          const string endSent);
+  fst::VectorFst<fst::StdArc> *ReadStream(
+      std::istream &strm, const string &sourcename, GrammarType gtype,
+      fst::SymbolTable *pst, bool useNaturalLog, const string startSent,
+      const string endSent);
   void ReadTxtString(std::istream &strm);
   fst::StdArc::StateId ReadTxtLine(const string &inpline);
 };
@@ -147,4 +130,3 @@ class LangModelFst: public fst::VectorFst<fst::StdArc> {
 }  // end namespace kaldi
 
 #endif  // KALDI_LM_KALDI_LM_H_
-

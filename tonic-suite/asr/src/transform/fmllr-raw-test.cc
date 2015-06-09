@@ -25,14 +25,12 @@
 
 namespace kaldi {
 
-
-void InitRandomGmm (DiagGmm *gmm_in) {
-  int32 num_gauss = 5 + rand () % 4;
+void InitRandomGmm(DiagGmm *gmm_in) {
+  int32 num_gauss = 5 + rand() % 4;
   int32 dim = 6 + Rand() % 5;
   DiagGmm &gmm(*gmm_in);
   gmm.Resize(num_gauss, dim);
-  Matrix<BaseFloat> inv_vars(num_gauss, dim),
-      means(num_gauss, dim);
+  Matrix<BaseFloat> inv_vars(num_gauss, dim), means(num_gauss, dim);
   Vector<BaseFloat> weights(num_gauss);
   for (int32 i = 0; i < num_gauss; i++) {
     for (int32 j = 0; j < dim; j++) {
@@ -51,7 +49,7 @@ void UnitTestFmllrRaw(bool use_offset) {
   using namespace kaldi;
   DiagGmm gmm;
   InitRandomGmm(&gmm);
-  int32 model_dim =  gmm.Dim();
+  int32 model_dim = gmm.Dim();
 
   int32 raw_dim = 10 + Rand() % 5;
   int32 num_splice = 1 + Rand() % 5;
@@ -60,12 +58,13 @@ void UnitTestFmllrRaw(bool use_offset) {
   }
 
   int32 full_dim = num_splice * raw_dim;
-  int32 npoints = raw_dim*(raw_dim+1)*10;
+  int32 npoints = raw_dim * (raw_dim + 1) * 10;
 
   Matrix<BaseFloat> rand_points(npoints, full_dim);
   rand_points.SetRandn();
-  
-  Matrix<BaseFloat> lda_mllt(full_dim, full_dim + (use_offset ? 1 : 0)); // This is the full LDA+MLLT
+
+  Matrix<BaseFloat> lda_mllt(
+      full_dim, full_dim + (use_offset ? 1 : 0));  // This is the full LDA+MLLT
   // matrix.  TODO: test with offset.
   lda_mllt.SetRandn();
 
@@ -73,15 +72,14 @@ void UnitTestFmllrRaw(bool use_offset) {
 
   BaseFloat prev_objf_impr;
   for (int32 iter = 0; iter < 4; iter++) {
-      
     for (int32 i = 0; i < npoints; i++) {
       SubVector<BaseFloat> sample(rand_points, i);
       accs.AccumulateForGmm(gmm, sample, 1.0);
     }
 
     Matrix<BaseFloat> fmllr_mat(raw_dim, raw_dim + 1);
-    fmllr_mat.SetUnit(); // sets diagonal elements to one.
-    
+    fmllr_mat.SetUnit();  // sets diagonal elements to one.
+
     FmllrRawOptions opts;
     BaseFloat objf_impr, count;
     accs.Update(opts, &fmllr_mat, &objf_impr, &count);
@@ -94,13 +92,11 @@ void UnitTestFmllrRaw(bool use_offset) {
       KALDI_ASSERT(objf_impr < prev_objf_impr);
     }
     prev_objf_impr = objf_impr;
-    
-    
+
     // Now transform the raw features.
     for (int32 splice = 0; splice < num_splice; splice++) {
-      SubMatrix<BaseFloat> raw_feats(rand_points,
-                                     0, npoints,
-                                     splice * raw_dim, raw_dim);
+      SubMatrix<BaseFloat> raw_feats(rand_points, 0, npoints, splice * raw_dim,
+                                     raw_dim);
       for (int32 t = 0; t < npoints; t++) {
         SubVector<BaseFloat> this_feat(raw_feats, t);
         ApplyAffineTransform(fmllr_mat, &this_feat);
@@ -110,12 +106,11 @@ void UnitTestFmllrRaw(bool use_offset) {
   }
 }
 
-
 }  // namespace kaldi ends here
 
 int main() {
   kaldi::g_kaldi_verbose_level = 5;
-    
+
   for (int i = 0; i < 2; i++) {  // did more iterations when first testing...
     kaldi::UnitTestFmllrRaw(i % 2 == 0);
   }

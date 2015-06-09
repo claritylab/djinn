@@ -17,22 +17,22 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
-
 
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
-    typedef kaldi::int32 int32;  
+    typedef kaldi::int32 int32;
 
     const char *usage =
-        "Takes two archives of vectors (typically representing per-frame weights)\n"
+        "Takes two archives of vectors (typically representing per-frame "
+        "weights)\n"
         "and for each utterance, outputs the dot product.\n"
         "Useful for evaluating the accuracy of silence classifiers.\n"
-        "Usage: dot-weights weights-rspecifier1 weights-rspecifier2 float-wspecifier\n";
-    
+        "Usage: dot-weights weights-rspecifier1 weights-rspecifier2 "
+        "float-wspecifier\n";
+
     ParseOptions po(usage);
     po.Read(argc, argv);
 
@@ -40,17 +40,18 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-      
+
     std::string weights1_rspecifier = po.GetArg(1),
-        weights2_rspecifier = po.GetArg(2),
-        float_wspecifier = po.GetArg(3);
+                weights2_rspecifier = po.GetArg(2),
+                float_wspecifier = po.GetArg(3);
 
     kaldi::SequentialBaseFloatVectorReader weights1_reader(weights1_rspecifier);
-    kaldi::RandomAccessBaseFloatVectorReader weights2_reader(weights2_rspecifier);
-    kaldi::BaseFloatWriter float_writer(float_wspecifier); 
-    
+    kaldi::RandomAccessBaseFloatVectorReader weights2_reader(
+        weights2_rspecifier);
+    kaldi::BaseFloatWriter float_writer(float_wspecifier);
+
     int32 num_done = 0, num_err = 0;
-    
+
     for (; !weights1_reader.Done(); weights1_reader.Next()) {
       std::string key = weights1_reader.Key();
       const Vector<BaseFloat> &weights1 = weights1_reader.Value();
@@ -62,8 +63,8 @@ int main(int argc, char *argv[]) {
         // Next line will crash if different sizes.  This is the
         // behavior we want [for now].
         if (weights1.Dim() != weights2.Dim()) {
-          KALDI_WARN << "Dimension mismatch for utterance " << key
-                     << " : " << weights1.Dim() << " vs. " << weights2.Dim();
+          KALDI_WARN << "Dimension mismatch for utterance " << key << " : "
+                     << weights1.Dim() << " vs. " << weights2.Dim();
           num_err++;
           continue;
         }
@@ -75,9 +76,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done computing dot products of " << num_done
               << " weights; errors on " << num_err;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

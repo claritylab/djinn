@@ -32,31 +32,30 @@
 
 int main(int argc, char *argv[]) {
   try {
-    const char *usage  =
+    const char *usage =
         "Converts an ARPA format language model into a FST\n"
         "Usage: arpa2fst [opts] (input_arpa|-)  [output_fst|-]\n";
     kaldi::ParseOptions po(usage);
 
     bool natural_base = true;
-    po.Register("natural-base", &natural_base, "Use log-base e (not log-base 10)");
+    po.Register("natural-base", &natural_base,
+                "Use log-base e (not log-base 10)");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1 && po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
-    std::string arpa_filename = po.GetArg(1),
-        fst_filename = po.GetOptArg(2);
-    
+    std::string arpa_filename = po.GetArg(1), fst_filename = po.GetOptArg(2);
+
     kaldi::LangModelFst lm;
     // read from standard input and write to standard output
     lm.Read(arpa_filename, kaldi::kArpaLm, NULL, natural_base);
     lm.Write(fst_filename);
     exit(0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
 /// @}
-

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_LAT_MINIMIZE_LATTICE_H_
 #define KALDI_LAT_MINIMIZE_LATTICE_H_
 
@@ -33,19 +32,16 @@
 
 namespace fst {
 
-
 /// This function minimizes the compact lattice.  It is to be called after
 /// determinization (see ./determinize-lattice-pruned.h) and pushing
 /// (see ./push-lattice.h).  If the lattice is not determinized and pushed this
 /// function will not combine as many states as it could, but it won't crash.
 /// Returns true on success, and false if it failed due to topological sorting
 /// failing.
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool MinimizeCompactLattice(
     MutableFst<ArcTpl<CompactLatticeWeightTpl<Weight, IntType> > > *clat,
     float delta = fst::kDelta);
-
-
 
 }  // namespace fst
 

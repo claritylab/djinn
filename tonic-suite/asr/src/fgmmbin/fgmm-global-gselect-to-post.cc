@@ -17,12 +17,10 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/full-gmm.h"
 #include "hmm/posterior.h"
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -38,17 +36,21 @@ int main(int argc, char *argv[]) {
         "See also: gmm-gselect, fgmm-gselect, gmm-global-get-post,\n"
         " gmm-global-gselect-to-post\n"
         "\n"
-        "Usage:  fgmm-global-gselect-to-post [options] <model-in> <feature-rspecifier> "
+        "Usage:  fgmm-global-gselect-to-post [options] <model-in> "
+        "<feature-rspecifier> "
         "<gselect-rspecifier> <post-wspecifier>\n"
-        "e.g.: fgmm-global-gselect-to-post 1.ubm ark:- 'ark:gunzip -c 1.gselect|' ark:-\n";
-        
+        "e.g.: fgmm-global-gselect-to-post 1.ubm ark:- 'ark:gunzip -c "
+        "1.gselect|' ark:-\n";
+
     ParseOptions po(usage);
 
     BaseFloat min_post = 0.0;
-    po.Register("min-post", &min_post, "If nonzero, posteriors below this "
-                "threshold will be pruned away and the rest will be renormalized "
-                "to sum to one.");
-    
+    po.Register(
+        "min-post", &min_post,
+        "If nonzero, posteriors below this "
+        "threshold will be pruned away and the rest will be renormalized "
+        "to sum to one.");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -57,13 +59,13 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gselect_rspecifier = po.GetArg(3),
-        post_wspecifier = po.GetArg(4);
-    
+                feature_rspecifier = po.GetArg(2),
+                gselect_rspecifier = po.GetArg(3),
+                post_wspecifier = po.GetArg(4);
+
     FullGmm fgmm;
     ReadKaldiObject(model_rxfilename, &fgmm);
-    
+
     double tot_loglike = 0.0, tot_frames = 0.0;
     int64 tot_posts = 0;
 
@@ -77,15 +79,17 @@ int main(int argc, char *argv[]) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
 
       int32 num_frames = mat.NumRows();
-      // typedef std::vector<std::vector<std::pair<int32, BaseFloat> > > Posterior;
+      // typedef std::vector<std::vector<std::pair<int32, BaseFloat> > >
+      // Posterior;
       Posterior post(num_frames);
-      
+
       if (!gselect_reader.HasKey(utt)) {
         KALDI_WARN << "No gselect information for utterance " << utt;
         num_err++;
         continue;
       }
-      const std::vector<std::vector<int32> > &gselect(gselect_reader.Value(utt));
+      const std::vector<std::vector<int32> > &gselect(
+          gselect_reader.Value(utt));
       if (static_cast<int32>(gselect.size()) != num_frames) {
         KALDI_WARN << "gselect information for utterance " << utt
                    << " has wrong size " << gselect.size() << " vs. "
@@ -96,7 +100,7 @@ int main(int argc, char *argv[]) {
 
       double this_tot_loglike = 0;
       bool utt_ok = true;
-      
+
       for (int32 t = 0; t < num_frames; t++) {
         SubVector<BaseFloat> frame(mat, t);
         const std::vector<int32> &this_gselect = gselect[t];
@@ -109,11 +113,10 @@ int main(int argc, char *argv[]) {
           utt_ok = false;
         } else {
           if (min_post != 0.0) {
-            int32 max_index = 0; // in case all pruned away...
+            int32 max_index = 0;  // in case all pruned away...
             loglikes.Max(&max_index);
             for (int32 i = 0; i < loglikes.Dim(); i++)
-              if (loglikes(i) < min_post)
-                loglikes(i) = 0.0;
+              if (loglikes(i) < min_post) loglikes(i) = 0.0;
             BaseFloat sum = loglikes.Sum();
             if (sum == 0.0) {
               loglikes(max_index) = 1.0;
@@ -132,13 +135,13 @@ int main(int argc, char *argv[]) {
       }
       if (!utt_ok) {
         KALDI_WARN << "Skipping utterance " << utt
-                  << " because bad posterior-sum encountered (NaN?)";
+                   << " because bad posterior-sum encountered (NaN?)";
         num_err++;
       } else {
         post_writer.Write(utt, post);
         num_done++;
         KALDI_VLOG(2) << "Like/frame for utt " << utt << " was "
-                      << (this_tot_loglike/num_frames) << " per frame over "
+                      << (this_tot_loglike / num_frames) << " per frame over "
                       << num_frames << " frames.";
         tot_loglike += this_tot_loglike;
         tot_frames += num_frames;
@@ -150,7 +153,7 @@ int main(int argc, char *argv[]) {
               << " with " << (tot_posts / tot_frames) << " entries per frame, "
               << " over " << tot_frames << " frames";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

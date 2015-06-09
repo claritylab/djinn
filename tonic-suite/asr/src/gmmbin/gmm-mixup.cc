@@ -36,26 +36,30 @@ int main(int argc, char *argv[]) {
         " gmm-mixup --mix-up=4000 1.mdl 1.occs 2.mdl\n"
         "e.g. of merging:\n"
         " gmm-mixup --merge=2000 1.mdl 1.occs 2.mdl\n";
-        
+
     bool binary_write = true;
     int32 mixup = 0;
     int32 mixdown = 0;
     BaseFloat perturb_factor = 0.01;
     BaseFloat power = 0.2;
     BaseFloat min_count = 20.0;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("mix-up", &mixup, "Increase number of mixture components to "
+    po.Register("mix-up", &mixup,
+                "Increase number of mixture components to "
                 "this overall target.");
     po.Register("min-count", &min_count,
                 "Minimum count enforced while mixing up.");
-    po.Register("mix-down", &mixdown, "If nonzero, merge mixture components to this "
+    po.Register("mix-down", &mixdown,
+                "If nonzero, merge mixture components to this "
                 "target.");
-    po.Register("power", &power, "If mixing up, power to allocate Gaussians to"
-        " states.");
-    po.Register("perturb-factor", &perturb_factor, "While mixing up, perturb "
-        "means by standard deviation times this factor.");
+    po.Register("power", &power,
+                "If mixing up, power to allocate Gaussians to"
+                " states.");
+    po.Register("perturb-factor", &perturb_factor,
+                "While mixing up, perturb "
+                "means by standard deviation times this factor.");
 
     po.Read(argc, argv);
 
@@ -64,10 +68,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
     std::string model_in_filename = po.GetArg(1),
-        occs_in_filename = po.GetArg(2),
-        model_out_filename = po.GetArg(3);
+                occs_in_filename = po.GetArg(2),
+                model_out_filename = po.GetArg(3);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -79,19 +82,16 @@ int main(int argc, char *argv[]) {
     }
 
     if (mixup != 0 || mixdown != 0) {
-
       Vector<BaseFloat> occs;
       ReadKaldiObject(occs_in_filename, &occs);
       if (occs.Dim() != am_gmm.NumPdfs())
         KALDI_ERR << "Dimension of state occupancies " << occs.Dim()
-                   << " does not match num-pdfs " << am_gmm.NumPdfs();
+                  << " does not match num-pdfs " << am_gmm.NumPdfs();
 
-      if (mixdown != 0)
-        am_gmm.MergeByCount(occs, mixdown, power, min_count);
+      if (mixdown != 0) am_gmm.MergeByCount(occs, mixdown, power, min_count);
 
       if (mixup != 0)
-        am_gmm.SplitByCount(occs, mixup, perturb_factor,
-                            power, min_count);
+        am_gmm.SplitByCount(occs, mixup, perturb_factor, power, min_count);
     }
 
     {
@@ -101,10 +101,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written model to " << model_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

@@ -40,14 +40,12 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   for (size_t i = 0; i < gpost.size(); i++) {
     for (size_t j = 0; j < gpost[i].size(); j++) {
       int32 pdf_id = gpost[i][j].first;
-      const Vector<BaseFloat> & posterior(gpost[i][j].second);
-      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id),
-                                          feats.Row(i), posterior);
+      const Vector<BaseFloat> &posterior(gpost[i][j].second);
+      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id), feats.Row(i),
+                                          posterior);
     }
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -55,11 +53,15 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
     using namespace kaldi;
     const char *usage =
-        "Perform basis fMLLR adaptation in testing stage, either per utterance or\n"
-        "for the supplied set of speakers (spk2utt option). Reads Gaussian-level\n"
-        "posterior to accumulate fMLLR stats for each speaker/utterance. Writes\n"
+        "Perform basis fMLLR adaptation in testing stage, either per utterance "
+        "or\n"
+        "for the supplied set of speakers (spk2utt option). Reads "
+        "Gaussian-level\n"
+        "posterior to accumulate fMLLR stats for each speaker/utterance. "
+        "Writes\n"
         "to a table of matrices.\n"
-        "Usage: gmm-est-basis-fmllr-gpost [options] <model-in> <basis-rspecifier> "
+        "Usage: gmm-est-basis-fmllr-gpost [options] <model-in> "
+        "<basis-rspecifier> "
         "<feature-rspecifier> <post-rspecifier> <transform-wspecifier>\n";
 
     ParseOptions po(usage);
@@ -67,9 +69,11 @@ int main(int argc, char *argv[]) {
     string spk2utt_rspecifier;
     string weights_out_filename;
 
-    po.Register("spk2utt", &spk2utt_rspecifier, "Rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "Rspecifier for speaker to "
                 "utterance-list map");
-    po.Register("write-weights", &weights_out_filename, "File to write base "
+    po.Register("write-weights", &weights_out_filename,
+                "File to write base "
                 "weights to.");
 
     basis_fmllr_opts.Register(&po);
@@ -80,12 +84,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        basis_rspecifier = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        gpost_rspecifier = po.GetArg(4),
-        trans_wspecifier = po.GetArg(5);
+    string model_rxfilename = po.GetArg(1), basis_rspecifier = po.GetArg(2),
+           feature_rspecifier = po.GetArg(3), gpost_rspecifier = po.GetArg(4),
+           trans_wspecifier = po.GetArg(5);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
 
     BasisFmllrEstimate basis_est;
     ReadKaldiObject(basis_rspecifier, &basis_est);
-    
+
     RandomAccessGaussPostReader gpost_reader(gpost_rspecifier);
 
     double tot_impr = 0.0, tot_t = 0.0;
@@ -143,20 +144,21 @@ int main(int argc, char *argv[]) {
           num_done++;
         }  // end looping over all utterances of the current speaker
 
-        double impr, spk_tot_t; int32 wgt_size;
+        double impr, spk_tot_t;
+        int32 wgt_size;
         {
           // Compute the transform and write it out.
           Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim() + 1);
           transform.SetUnit();
           Vector<BaseFloat> weights;
-          impr = basis_est.ComputeTransform(spk_stats, &transform,
-                                            &weights, basis_fmllr_opts);
+          impr = basis_est.ComputeTransform(spk_stats, &transform, &weights,
+                                            basis_fmllr_opts);
           spk_tot_t = spk_stats.beta_;
           wgt_size = weights.Dim();
           transform_writer.Write(spk, transform);
           // Optionally write out the base weights
           if (!weights_out_filename.empty() && weights.Dim() > 0)
-              weights_writer.Write(spk, weights);
+            weights_writer.Write(spk, weights);
         }
 
         KALDI_LOG << "For speaker " << spk << ", auxf-impr from Basis fMLLR is "
@@ -164,7 +166,7 @@ int main(int argc, char *argv[]) {
                   << "the top " << wgt_size << " basis elements have been used";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -178,8 +180,8 @@ int main(int argc, char *argv[]) {
         const GaussPost &gpost = gpost_reader.Value(utt);
 
         if (static_cast<int32>(gpost.size()) != feats.NumRows()) {
-          KALDI_WARN << "GaussPost has wrong size " << (gpost.size())
-                     << " vs. " << (feats.NumRows());
+          KALDI_WARN << "GaussPost has wrong size " << (gpost.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -188,13 +190,14 @@ int main(int argc, char *argv[]) {
         AccumulateForUtterance(feats, gpost, trans_model, am_gmm, &spk_stats);
         num_done++;
 
-        BaseFloat impr, utt_tot_t; int32 wgt_size;
+        BaseFloat impr, utt_tot_t;
+        int32 wgt_size;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim()+1);
+          Matrix<BaseFloat> transform(am_gmm.Dim(), am_gmm.Dim() + 1);
           transform.SetUnit();
           Vector<BaseFloat> weights;
-          impr = basis_est.ComputeTransform(spk_stats, &transform,
-                                            &weights, basis_fmllr_opts);
+          impr = basis_est.ComputeTransform(spk_stats, &transform, &weights,
+                                            basis_fmllr_opts);
           utt_tot_t = spk_stats.beta_;
           wgt_size = weights.Dim();
           transform_writer.Write(utt, transform);
@@ -202,8 +205,9 @@ int main(int argc, char *argv[]) {
           if (!weights_out_filename.empty() && weights.Dim() > 0)
             weights_writer.Write(utt, weights);
         }
-        KALDI_LOG << "For utterance " << utt << ", auxf-impr from Basis fMLLR is "
-                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames, "
+        KALDI_LOG << "For utterance " << utt
+                  << ", auxf-impr from Basis fMLLR is " << (impr / utt_tot_t)
+                  << ", over " << utt_tot_t << " frames, "
                   << "the top " << wgt_size << " basis elements have been used";
         tot_impr += impr;
         tot_t += utt_tot_t;
@@ -212,12 +216,11 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_post
               << " with no posts, " << num_other_error << " with other errors.";
-    KALDI_LOG << "Overall fMLLR auxf-impr per frame is "
-              << (tot_impr / tot_t) << " over " << tot_t << " frames.";
+    KALDI_LOG << "Overall fMLLR auxf-impr per frame is " << (tot_impr / tot_t)
+              << " over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

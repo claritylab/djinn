@@ -37,7 +37,7 @@ LangModelFst::StateId LangModelFst::ReadTxtLine(const string &inpline) {
 
   StateId dst = pfst_->Start(), src = pfst_->Start();
   // this will split on white spaces only
-  string curwrd;  // Have a buffer string
+  string curwrd;                  // Have a buffer string
   std::stringstream ss(inpline);  // Insert the string into a stream
   while (ss >> curwrd) {
     // add labels to symbol tables
@@ -70,14 +70,10 @@ void LangModelFst::ReadTxtString(std::istream &strm) {
 // allocate an FST and provide symbol tables if not provided through pst
 // we allocate the FST here to parallel OpenFst Read()
 // although this is questionable
-fst::StdVectorFst* LangModelFst::ReadStream(
-                                            std::istream &strm,
-                                            const string &sourcename,
-                                            GrammarType gtype,
-                                            fst::SymbolTable *pst,
-                                            bool useNaturalLog,
-                                            const string startSent,
-                                            const string endSent) {
+fst::StdVectorFst *LangModelFst::ReadStream(
+    std::istream &strm, const string &sourcename, GrammarType gtype,
+    fst::SymbolTable *pst, bool useNaturalLog, const string startSent,
+    const string endSent) {
   if (gtype == kArpaLm || gtype == kTextString) {
     // always allocate local symbol table so we know we always have to delete it
     fst::SymbolTable *psyms = new fst::SymbolTable("lmInputSymbols");
@@ -103,7 +99,7 @@ fst::StdVectorFst* LangModelFst::ReadStream(
     if (gtype == kArpaLm) {
       LmTable lmt;
       lmt.ReadFstFromLmFile(strm, pfst_, useNaturalLog, startSent, endSent);
-    } else if (gtype== kTextString) {
+    } else if (gtype == kTextString) {
       ReadTxtString(strm);
     }
 
@@ -118,5 +114,3 @@ fst::StdVectorFst* LangModelFst::ReadStream(
 }
 
 }  // end namespace kaldi
-
-

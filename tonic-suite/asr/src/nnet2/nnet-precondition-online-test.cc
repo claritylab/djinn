@@ -27,51 +27,47 @@ namespace nnet2 {
 // sure it is behaving as advertised.
 class OnlinePreconditionerSimple {
  public:
-  OnlinePreconditionerSimple(): rank_(40), num_samples_history_(2000.0), alpha_(4.0),
-                                epsilon_(1.0e-10), delta_(1.0e-05) { }
-  
+  OnlinePreconditionerSimple()
+      : rank_(40),
+        num_samples_history_(2000.0),
+        alpha_(4.0),
+        epsilon_(1.0e-10),
+        delta_(1.0e-05) {}
+
   void SetRank(int32 rank) { rank_ = rank; }
 
-  void PreconditionDirections(
-      CuMatrixBase<BaseFloat> *R,
-      CuVectorBase<BaseFloat> *row_prod,
-      BaseFloat *scale);
-
+  void PreconditionDirections(CuMatrixBase<BaseFloat> *R,
+                              CuVectorBase<BaseFloat> *row_prod,
+                              BaseFloat *scale);
 
  private:
   BaseFloat Eta(int32 N) const;
-  
-  void PreconditionDirectionsCpu(
-      MatrixBase<double> *R,
-      VectorBase<double> *row_prod,
-      BaseFloat *scale);
-  
-  
+
+  void PreconditionDirectionsCpu(MatrixBase<double> *R,
+                                 VectorBase<double> *row_prod,
+                                 BaseFloat *scale);
+
   void Init(const MatrixBase<double> &R0);
 
-  int32 rank_;  
+  int32 rank_;
   double num_samples_history_;
   double alpha_;
   double epsilon_;
   double delta_;
-  
+
   Vector<double> d_t_;
   Matrix<double> X_t_;
-  double rho_t_;  
+  double rho_t_;
 };
 
-
 void OnlinePreconditionerSimple::PreconditionDirections(
-      CuMatrixBase<BaseFloat> *R,
-      CuVectorBase<BaseFloat> *row_prod,
-      BaseFloat *scale) {
+    CuMatrixBase<BaseFloat> *R, CuVectorBase<BaseFloat> *row_prod,
+    BaseFloat *scale) {
   Matrix<BaseFloat> R_cpu(*R);
   Vector<BaseFloat> row_prod_cpu(*row_prod);
   Matrix<double> R_cpu_dbl(R_cpu);
   Vector<double> row_prod_cpu_dbl(row_prod_cpu);
-  PreconditionDirectionsCpu(&R_cpu_dbl,
-                            &row_prod_cpu_dbl,
-                            scale);
+  PreconditionDirectionsCpu(&R_cpu_dbl, &row_prod_cpu_dbl, scale);
   row_prod_cpu.CopyFromVec(row_prod_cpu_dbl);
   R_cpu.CopyFromMat(R_cpu_dbl);
   R->CopyFromMat(R_cpu);
@@ -87,9 +83,9 @@ void OnlinePreconditionerSimple::Init(const MatrixBase<double> &R0) {
   S.Eig(&s, &P);
   SortSvd(&s, &P);
   if (rank_ >= D) {
-    KALDI_WARN << "Rank " << rank_ << " of online preconditioner is >= dim " << D
-               << ", setting it to "
-               << (D - 1) << " (but this is probably still too high)";
+    KALDI_WARN << "Rank " << rank_ << " of online preconditioner is >= dim "
+               << D << ", setting it to " << (D - 1)
+               << " (but this is probably still too high)";
     rank_ = D - 1;
   }
   int32 R = rank_;
@@ -110,7 +106,7 @@ void OnlinePreconditionerSimple::Init(const MatrixBase<double> &R0) {
   int32 nf = d_t_.ApplyFloor(epsilon_);
   if (nf > 0) {
     KALDI_WARN << "Floored " << nf << " elements of D_0";
-  }  
+  }
 }
 
 BaseFloat OnlinePreconditionerSimple::Eta(int32 N) const {
@@ -118,16 +114,12 @@ BaseFloat OnlinePreconditionerSimple::Eta(int32 N) const {
   return 1.0 - exp(-N / num_samples_history_);
 }
 
-
 void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
-    MatrixBase<double> *R_t,
-    VectorBase<double> *row_prod,
-    BaseFloat *scale) {
-  if (X_t_.NumRows() == 0)
-    Init(*R_t);
+    MatrixBase<double> *R_t, VectorBase<double> *row_prod, BaseFloat *scale) {
+  if (X_t_.NumRows() == 0) Init(*R_t);
   int32 R = X_t_.NumRows(), D = X_t_.NumCols(), N = R_t->NumRows();
   BaseFloat eta = Eta(N);
-  
+
   SpMatrix<double> F_t(D);
   // F_t =(def) X_t^T D_t X_t + \rho_t I
   F_t.AddToDiag(rho_t_);
@@ -163,7 +155,7 @@ void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
   // KALDI_LOG << "c_t is " << c_t;
   // KALDI_LOG << "U_t is " << U_t;
   // KALDI_LOG << "Z_t is " << Z_t;
-  
+
   Vector<double> sqrt_c_t(c_t);
   sqrt_c_t.ApplyPow(0.5);
   Vector<double> inv_sqrt_c_t(sqrt_c_t);
@@ -174,7 +166,8 @@ void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
   X_t1.MulRowsVec(inv_sqrt_c_t);
 
   double rho_t1 = (1.0 / (D - R)) *
-      (eta * S_t.Trace() + (1.0 - eta) * (D * rho_t_ + d_t_.Sum()) - sqrt_c_t.Sum());
+                  (eta * S_t.Trace() + (1.0 - eta) * (D * rho_t_ + d_t_.Sum()) -
+                   sqrt_c_t.Sum());
 
   Vector<double> d_t1(sqrt_c_t);
   d_t1.Add(-rho_t1);
@@ -188,7 +181,7 @@ void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
   if (nf > 0) {
     KALDI_VLOG(3) << "d_t1 was " << d_t1;
     KALDI_WARN << "Floored " << nf << " elements of d_{t+1}.";
-  }  
+  }
   // a check.
   if (nf == 0 && rho_t1 > epsilon_) {
     double tr_F_t1 = D * rho_t1 + d_t1.Sum(), tr_T_t = T_t.Trace();
@@ -201,13 +194,13 @@ void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
   SpMatrix<double> G_t_inv(G_t);
   G_t_inv.Invert();
 
-  double beta_t = rho_t_ + alpha_/D * F_t.Trace();
+  double beta_t = rho_t_ + alpha_ / D * F_t.Trace();
   // P_t = beta_t R_t G_t^{-1}.
   Matrix<double> P_t(N, D);
   P_t.AddMatSp(beta_t, *R_t, kNoTrans, G_t_inv, 0.0);
 
   double tr_r_r = TraceMatMat(*R_t, *R_t, kTrans),
-      tr_p_p = TraceMatMat(P_t, P_t, kTrans);
+         tr_p_p = TraceMatMat(P_t, P_t, kTrans);
   double gamma = (tr_p_p == 0 ? 1.0 : sqrt(tr_r_r / tr_p_p));
 
   R_t->CopyFromMat(P_t);
@@ -222,31 +215,31 @@ void OnlinePreconditionerSimple::PreconditionDirectionsCpu(
   KALDI_VLOG(3) << "rho_t_ = " << rho_t_;
   KALDI_VLOG(3) << "d_t_ = " << d_t_;
   KALDI_VLOG(3) << "X_t_ = " << X_t_;
-  
 
-  { // check that X_t_ X_t_^T = I.
+  {  // check that X_t_ X_t_^T = I.
     SpMatrix<double> unit(R);
     unit.AddMat2(1.0, X_t_, kNoTrans, 0.0);
     KALDI_ASSERT(unit.IsUnit(1.0e-03));
   }
 }
 
-
 void UnitTestPreconditionDirectionsOnline() {
   MatrixIndexT R = 1 + Rand() % 5,  // rank of correction
-      N = (2 * R) + Rand() % 30,  // batch size
-      D = R + 1 + Rand() % 20; // problem dimension.  Must be > R.
+      N = (2 * R) + Rand() % 30,    // batch size
+      D = R + 1 + Rand() % 20;      // problem dimension.  Must be > R.
 
   // Test sometimes with features that are all-zero or all-one; this will
   // help to make sure low-rank or zero input doesn't crash the code.
   bool zero = false;
   bool one = false;
-  if (Rand() % 3 == 0) zero = true;
-  else if (Rand() % 2 == 0) one = true;
-  
+  if (Rand() % 3 == 0)
+    zero = true;
+  else if (Rand() % 2 == 0)
+    one = true;
+
   CuVector<BaseFloat> row_prod1(N), row_prod2(N);
   BaseFloat gamma1, gamma2;
-  
+
   OnlinePreconditionerSimple preconditioner1;
   OnlinePreconditioner preconditioner2;
   preconditioner1.SetRank(R);
@@ -256,10 +249,11 @@ void UnitTestPreconditionDirectionsOnline() {
   int32 num_iters = 100;
   for (int32 iter = 0; iter < num_iters; iter++) {
     CuMatrix<BaseFloat> M(N, D);
-    if (one) M.Set(1.0);
+    if (one)
+      M.Set(1.0);
     else if (!zero)
       M.SetRandn();
-    
+
     CuMatrix<BaseFloat> Mcopy1(M), Mcopy2(M);
 
     preconditioner1.PreconditionDirections(&Mcopy1, &row_prod1, &gamma1);
@@ -271,11 +265,9 @@ void UnitTestPreconditionDirectionsOnline() {
   return;
 }
 
-
 // outputs eigs to rows of P.
 void ExactEigsOfProduct(const CuMatrixBase<BaseFloat> &M,
-                        MatrixTransposeType trans,
-                        CuMatrixBase<BaseFloat> *P,
+                        MatrixTransposeType trans, CuMatrixBase<BaseFloat> *P,
                         CuVectorBase<BaseFloat> *s) {
   Matrix<BaseFloat> M_cpu(M);
   int32 D = trans == kTrans ? M.NumCols() : M.NumRows();
@@ -288,15 +280,13 @@ void ExactEigsOfProduct(const CuMatrixBase<BaseFloat> &M,
   P->CopyFromMat(P_cpu.Range(0, D, 0, P->NumRows()), kTrans);
   s->CopyFromVec(s_cpu.Range(0, P->NumRows()));
 }
-  
 
 void UnitTestApproxEigsOfProduct() {
-  int32 dimM = 10 + Rand() % 50,
-      dimN = 10 + Rand() % 50;
+  int32 dimM = 10 + Rand() % 50, dimN = 10 + Rand() % 50;
   MatrixTransposeType trans = (Rand() % 2 == 0 ? kTrans : kNoTrans);
   int32 product_dim = (trans == kTrans ? dimN : dimM),
-      other_dim = (trans == kTrans ? dimM : dimN);
-  
+        other_dim = (trans == kTrans ? dimM : dimN);
+
   CuMatrix<BaseFloat> M(dimM, dimN);
   if (Rand() % 4 == 0) {
     M.SetRandn();
@@ -312,10 +302,8 @@ void UnitTestApproxEigsOfProduct() {
 
   int32 rank = 1 + Rand() % (product_dim - 1);
 
-  CuMatrix<BaseFloat> P_approx(rank, product_dim),
-      P_exact(rank, product_dim);
-  CuVector<BaseFloat> s_approx(rank),
-      s_exact(rank);
+  CuMatrix<BaseFloat> P_approx(rank, product_dim), P_exact(rank, product_dim);
+  CuVector<BaseFloat> s_approx(rank), s_exact(rank);
 
   ExactEigsOfProduct(M, trans, &P_exact, &s_exact);
   ApproxEigsOfProduct(M, trans, &P_approx, &s_approx);
@@ -336,13 +324,12 @@ void UnitTestApproxEigsOfProduct() {
 
   CuVector<BaseFloat> s2_approx(rank), s2_exact(rank);
   s2_approx.AddDiagMat2(1.0, Mproj_approx, kNoTrans, 0.0);
-  s2_exact.AddDiagMat2(1.0, Mproj_exact, kNoTrans, 0.0);  
+  s2_exact.AddDiagMat2(1.0, Mproj_exact, kNoTrans, 0.0);
   KALDI_ASSERT(s_approx.ApproxEqual(s2_approx));
   // KALDI_LOG << "s_exact is " << s_exact;
   // KALDI_LOG << "s2_exact is " << s2_exact;
   // KALDI_LOG << "P_exact is " << P_exact;
   KALDI_ASSERT(s_exact.ApproxEqual(s2_exact));
-  
 }
 
 /*
@@ -351,7 +338,7 @@ void UnitTestApproxEigsOfProduct() {
   G.ScaleDiag(lambda);
   // G += R^T R.
   G.AddMat2(1.0/(N-1), R, kTrans, 1.0);
-  
+
   for (int32 n = 0; n < N; n++) {
     CuSubVector<BaseFloat> rn(R, n);
     CuSpMatrix<BaseFloat> Gn(G);
@@ -366,9 +353,8 @@ void UnitTestApproxEigsOfProduct() {
 }
 
 */
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
@@ -376,9 +362,10 @@ int main() {
   for (int32 loop = 0; loop < 2; loop++) {
 #if HAVE_CUDA == 1
     if (loop == 0)
-      CuDevice::Instantiate().SelectGpuId("no"); // -1 means no GPU
+      CuDevice::Instantiate().SelectGpuId("no");  // -1 means no GPU
     else
-      CuDevice::Instantiate().SelectGpuId("optional"); // -2 .. automatic selection
+      CuDevice::Instantiate().SelectGpuId(
+          "optional");  // -2 .. automatic selection
 #endif
     for (int32 i = 0; i < 30; i++) {
       UnitTestPreconditionDirectionsOnline();

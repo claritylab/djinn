@@ -22,7 +22,6 @@
 #include "matrix/kaldi-vector.h"
 #include "transform/transform-common.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -31,14 +30,18 @@ int main(int argc, char *argv[]) {
         "Copy vectors of integers, or archives of vectors of integers \n"
         "(e.g. alignments)\n"
         "\n"
-        "Usage: copy-int-vector [options] (vector-in-rspecifier|vector-in-rxfilename) (vector-out-wspecifier|vector-out-wxfilename)\n"
+        "Usage: copy-int-vector [options] "
+        "(vector-in-rspecifier|vector-in-rxfilename) "
+        "(vector-out-wspecifier|vector-out-wxfilename)\n"
         " e.g.: copy-int-vector --binary=false foo -\n"
         "   copy-int-vector ark:1.ali ark,t:-\n";
-    
+
     bool binary = true;
     ParseOptions po(usage);
 
-    po.Register("binary", &binary, "Write in binary mode (only relevant if output is a wxfilename)");
+    po.Register(
+        "binary", &binary,
+        "Write in binary mode (only relevant if output is a wxfilename)");
 
     po.Read(argc, argv);
 
@@ -47,22 +50,18 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
-    std::string vector_in_fn = po.GetArg(1),
-        vector_out_fn = po.GetArg(2);
+    std::string vector_in_fn = po.GetArg(1), vector_out_fn = po.GetArg(2);
 
     // all these "fn"'s are either rspecifiers or filenames.
 
     bool in_is_rspecifier =
-        (ClassifyRspecifier(vector_in_fn, NULL, NULL)
-         != kNoRspecifier),
-        out_is_wspecifier =
-        (ClassifyWspecifier(vector_out_fn, NULL, NULL, NULL)
-         != kNoWspecifier);
+             (ClassifyRspecifier(vector_in_fn, NULL, NULL) != kNoRspecifier),
+         out_is_wspecifier = (ClassifyWspecifier(vector_out_fn, NULL, NULL,
+                                                 NULL) != kNoWspecifier);
 
     if (in_is_rspecifier != out_is_wspecifier)
       KALDI_ERR << "Cannot mix archives with regular files (copying vectors)";
-    
+
     if (!in_is_rspecifier) {
       std::vector<int32> vec;
       {
@@ -83,10 +82,8 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Copied " << num_done << " vectors of int32.";
       return (num_done != 0 ? 0 : 1);
     }
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

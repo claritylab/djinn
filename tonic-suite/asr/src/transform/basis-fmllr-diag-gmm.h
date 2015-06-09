@@ -19,7 +19,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_BASIS_FMLLR_DIAG_GMM_H_
 #define KALDI_TRANSFORM_BASIS_FMLLR_DIAG_GMM_H_
 
@@ -47,10 +46,11 @@ namespace kaldi {
 
 struct BasisFmllrOptions {
   int32 num_iters;
-  BaseFloat size_scale; // how many basis elements we add for each new frame.
+  BaseFloat size_scale;  // how many basis elements we add for each new frame.
   BaseFloat min_count;
   int32 step_size_iters;
-  BasisFmllrOptions(): num_iters(10), size_scale(0.2), min_count(50.0), step_size_iters(3) { }
+  BasisFmllrOptions()
+      : num_iters(10), size_scale(0.2), min_count(50.0), step_size_iters(3) {}
   void Register(OptionsItf *po) {
     po->Register("num-iters", &num_iters,
                  "Number of iterations in basis fMLLR update during testing");
@@ -71,13 +71,12 @@ struct BasisFmllrOptions {
  *  function BasisFmllrCoefficients()).
  */
 class BasisFmllrAccus {
-
  public:
-  BasisFmllrAccus() { }
+  BasisFmllrAccus() {}
   explicit BasisFmllrAccus(int32 dim) {
-      dim_ = dim;
-      beta_ = 0;
-      ResizeAccus(dim);
+    dim_ = dim;
+    beta_ = 0;
+    ResizeAccus(dim);
   }
 
   void ResizeAccus(int32 dim);
@@ -105,17 +104,16 @@ class BasisFmllrAccus {
  *  Estimation functions for basis fMLLR.
  */
 class BasisFmllrEstimate {
-
  public:
-  BasisFmllrEstimate(): dim_(0), basis_size_(0) { }
+  BasisFmllrEstimate() : dim_(0), basis_size_(0) {}
   explicit BasisFmllrEstimate(int32 dim) {
-      dim_ = dim; basis_size_ = dim * (dim + 1);
+    dim_ = dim;
+    basis_size_ = dim * (dim + 1);
   }
 
   /// Routines for reading and writing fMLLR basis matrices
   void Write(std::ostream &out_stream, bool binary) const;
   void Read(std::istream &in_stream, bool binary);
-
 
   /// Estimate the base matrices efficiently in a Maximum Likelihood manner.
   /// It takes diagonal GMM as argument, which will be used for preconditioner
@@ -153,17 +151,15 @@ class BasisFmllrEstimate {
                           BasisFmllrOptions options) const;
 
  private:
-
   /// Basis matrices. Dim is [T] [D] [D+1]
   /// T is the number of bases
-  std::vector< Matrix<BaseFloat> > fmllr_basis_;
+  std::vector<Matrix<BaseFloat> > fmllr_basis_;
   /// Feature dimension
   int32 dim_;
   /// Number of bases D*(D+1)
   int32 basis_size_;
 };
 
-
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_TRANSFORM_BASIS_FMLLR_DIAG_GMM_H_

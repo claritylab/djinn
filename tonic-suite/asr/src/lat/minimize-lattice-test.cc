@@ -17,12 +17,10 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "lat/kaldi-lattice.h"
 #include "lat/minimize-lattice.h"
 #include "lat/push-lattice.h"
 #include "fstext/rand-fst.h"
-
 
 namespace kaldi {
 using namespace fst;
@@ -52,15 +50,14 @@ void TestMinimizeCompactLattice() {
   // Minimization will only work well on determinized and pushed lattices.
   PushCompactLatticeStrings(&clat2);
   PushCompactLatticeWeights(&clat2);
-  
+
   MinimizeCompactLattice(&clat2, delta);
   KALDI_ASSERT(fst::RandEquivalent(*clat, clat2, 5, delta, Rand(), 10));
-  
+
   delete clat;
 }
 
-
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;

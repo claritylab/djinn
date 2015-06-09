@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -35,18 +34,22 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Convert the words or transition-ids into phones, which are worked out\n"
+        "Convert the words or transition-ids into phones, which are worked "
+        "out\n"
         "from the transition-ids.  If --replace-words=true (true by default),\n"
-        "replaces the words with phones, otherwise replaces the transition-ids.\n"
+        "replaces the words with phones, otherwise replaces the "
+        "transition-ids.\n"
         "\n"
-        "Usage: lattice-to-phone-lattice [options] model lattice-rspecifier lattice-wspecifier\n"
+        "Usage: lattice-to-phone-lattice [options] model lattice-rspecifier "
+        "lattice-wspecifier\n"
         " e.g.: lattice-to-phone-lattice 1.mdl ark:1.lats ark:phones.lats\n";
-      
+
     ParseOptions po(usage);
     bool replace_words = true;
     po.Register("replace-words", &replace_words,
-                "If true, replace words with phones; otherwise replace transition-ids with phones.");
-    
+                "If true, replace words with phones; otherwise replace "
+                "transition-ids with phones.");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -54,27 +57,27 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
-    
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
+
     int32 n_done = 0;
 
     TransitionModel trans_model;
-    
+
     ReadKaldiObject(model_rxfilename, &trans_model);
-    
+
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    CompactLatticeWriter clat_writer(lats_wspecifier); // write as compact.
+    CompactLatticeWriter clat_writer(lats_wspecifier);  // write as compact.
     for (; !clat_reader.Done(); clat_reader.Next()) {
       if (replace_words) {
         Lattice lat;
         ConvertLattice(clat_reader.Value(), &lat);
-        ConvertLatticeToPhones(trans_model, &lat); // this function replaces words -> phones
+        ConvertLatticeToPhones(trans_model,
+                               &lat);  // this function replaces words -> phones
         CompactLattice clat;
         ConvertLattice(lat, &clat);
         clat_writer.Write(clat_reader.Key(), clat);
-      } else { // replace transition-ids with phones.
+      } else {  // replace transition-ids with phones.
         CompactLattice clat(clat_reader.Value());
         ConvertCompactLatticeToPhones(trans_model, &clat);
         // this function replaces transition-ids with phones.  We do it in the
@@ -87,7 +90,7 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Done converting " << n_done << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

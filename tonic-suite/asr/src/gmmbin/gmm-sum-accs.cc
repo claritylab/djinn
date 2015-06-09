@@ -21,7 +21,6 @@
 #include "gmm/mle-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
@@ -64,10 +63,8 @@ int main(int argc, char *argv[]) {
               << (gmm_accs.TotLogLike() / gmm_accs.TotCount());
     KALDI_LOG << "Total count of stats is " << gmm_accs.TotStatsCount();
     KALDI_LOG << "Written stats to " << stats_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

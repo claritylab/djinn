@@ -30,9 +30,11 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Do EBW update on weights for MMI, MPE or MCE discriminative training.\n"
+        "Do EBW update on weights for MMI, MPE or MCE discriminative "
+        "training.\n"
         "Numerator stats should not be I-smoothed\n"
-        "Usage:  gmm-est-weights-ebw [options] <model-in> <stats-num-in> <stats-den-in> <model-out>\n"
+        "Usage:  gmm-est-weights-ebw [options] <model-in> <stats-num-in> "
+        "<stats-den-in> <model-out>\n"
         "e.g.: gmm-est-weights-ebw 1.mdl num.acc den.acc 2.mdl\n";
 
     bool binary_write = false;
@@ -41,9 +43,10 @@ int main(int argc, char *argv[]) {
     EbwWeightOptions ebw_weight_opts;
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters to "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters to "
                 "update; only \"w\" flag is looked at.");
-    
+
     ebw_weight_opts.Register(&po);
 
     po.Read(argc, argv);
@@ -53,13 +56,12 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    kaldi::GmmFlagsType update_flags =
-        StringToGmmFlags(update_flags_str);    
+    kaldi::GmmFlagsType update_flags = StringToGmmFlags(update_flags_str);
 
     std::string model_in_filename = po.GetArg(1),
-        num_stats_filename = po.GetArg(2),
-        den_stats_filename = po.GetArg(3),
-        model_out_filename = po.GetArg(4);
+                num_stats_filename = po.GetArg(2),
+                den_stats_filename = po.GetArg(3),
+                model_out_filename = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -70,8 +72,8 @@ int main(int argc, char *argv[]) {
       am_gmm.Read(ki.Stream(), binary_read);
     }
 
-    Vector<double> num_transition_accs; // won't be used.
-    Vector<double> den_transition_accs; // won't be used.
+    Vector<double> num_transition_accs;  // won't be used.
+    Vector<double> den_transition_accs;  // won't be used.
 
     AccumAmDiagGmm num_stats;
     AccumAmDiagGmm den_stats;
@@ -79,28 +81,31 @@ int main(int argc, char *argv[]) {
       bool binary;
       Input ki(num_stats_filename, &binary);
       num_transition_accs.Read(ki.Stream(), binary);
-      num_stats.Read(ki.Stream(), binary, true);  // true == add; doesn't matter here.
+      num_stats.Read(ki.Stream(), binary,
+                     true);  // true == add; doesn't matter here.
     }
-    
+
     {
       bool binary;
       Input ki(den_stats_filename, &binary);
       num_transition_accs.Read(ki.Stream(), binary);
-      den_stats.Read(ki.Stream(), binary, true);  // true == add; doesn't matter here.
+      den_stats.Read(ki.Stream(), binary,
+                     true);  // true == add; doesn't matter here.
     }
-    
+
     if (update_flags & kGmmWeights) {  // Update weights.
       BaseFloat auxf_impr, count;
       UpdateEbwWeightsAmDiagGmm(num_stats, den_stats, ebw_weight_opts, &am_gmm,
                                 &auxf_impr, &count);
       KALDI_LOG << "Num count " << num_stats.TotCount() << ", den count "
                 << den_stats.TotCount();
-      KALDI_LOG << "Overall auxf impr/frame from weight update is " << (auxf_impr/count)
-                << " over " << count << " frames.";
+      KALDI_LOG << "Overall auxf impr/frame from weight update is "
+                << (auxf_impr / count) << " over " << count << " frames.";
     } else {
-      KALDI_LOG << "Doing nothing because flags do not specify to update the weights.";
+      KALDI_LOG << "Doing nothing because flags do not specify to update the "
+                   "weights.";
     }
-      
+
     {
       Output ko(model_out_filename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -109,7 +114,7 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Written model to " << model_out_filename;
 
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

@@ -4,6 +4,7 @@ include $(COMMON)/Makefile.config
 CXX = g++
 CXX_FLAGS  = -O3 \
 						 $(INCLUDE_DIRS) \
+						 -w \
 						 -fpermissive \
 						 -I$(COMMON)/include \
 						 -I$(CAFFE)/include \

@@ -1,6 +1,7 @@
 // gmmbin/gmm-acc-stats.cc
 
-// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Microsoft Corporation  Johns Hopkins University (Author:
+// Daniel Povey)
 //                2014  Guoguo Chen
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -18,14 +19,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "gmm/mle-am-diag-gmm.h"
 #include "hmm/posterior.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -40,10 +39,11 @@ int main(int argc, char *argv[]) {
 
     ParseOptions po(usage);
     bool binary = true;
-    std::string update_flags_str = "mvwt"; // note: t is ignored, we acc
+    std::string update_flags_str = "mvwt";  // note: t is ignored, we acc
     // transition stats regardless.
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters will be "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters will be "
                 "updated: subset of mvwt.");
     po.Read(argc, argv);
 
@@ -53,10 +53,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        accs_wxfilename = po.GetArg(4);
-
+                feature_rspecifier = po.GetArg(2),
+                posteriors_rspecifier = po.GetArg(3),
+                accs_wxfilename = po.GetArg(4);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
@@ -89,9 +88,8 @@ int main(int argc, char *argv[]) {
         const Posterior &posterior = posteriors_reader.Value(key);
 
         if (static_cast<int32>(posterior.size()) != mat.NumRows()) {
-          KALDI_WARN << "Posterior vector has wrong size " 
-                     << (posterior.size()) << " vs. "
-                     << (mat.NumRows());
+          KALDI_WARN << "Posterior vector has wrong size " << (posterior.size())
+                     << " vs. " << (mat.NumRows());
           num_err++;
           continue;
         }
@@ -106,8 +104,9 @@ int main(int argc, char *argv[]) {
           for (size_t j = 0; j < pdf_posterior[i].size(); j++) {
             int32 pdf_id = pdf_posterior[i][j].first;
             BaseFloat weight = pdf_posterior[i][j].second;
-            tot_like_this_file += gmm_accs.AccumulateForGmm(am_gmm, mat.Row(i), pdf_id, weight)
-                * weight;
+            tot_like_this_file +=
+                gmm_accs.AccumulateForGmm(am_gmm, mat.Row(i), pdf_id, weight) *
+                weight;
             tot_weight += weight;
           }
 
@@ -120,8 +119,9 @@ int main(int argc, char *argv[]) {
         }
         if (num_done % 50 == 0) {
           KALDI_LOG << "Processed " << num_done << " utterances; for utterance "
-                    << key << " avg. like is " << (tot_like_this_file/tot_weight)
-                    << " over " << tot_weight <<" frames.";
+                    << key << " avg. like is "
+                    << (tot_like_this_file / tot_weight) << " over "
+                    << tot_weight << " frames.";
         }
         tot_like += tot_like_this_file;
         tot_t += tot_weight;
@@ -130,9 +130,9 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Done " << num_done << " files, " << num_err
               << " with errors.";
-    
+
     KALDI_LOG << "Overall avg like per frame (Gaussian only) = "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
 
     {
       Output ko(accs_wxfilename, binary);
@@ -141,10 +141,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Written accs.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

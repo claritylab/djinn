@@ -2,7 +2,7 @@
 #define SOCKET_H
 
 // returns socket to tx data
-int CLIENT_init(char *hostname, int portno, bool debug);
+int CLIENT_init(char* hostname, int portno, bool debug);
 
 // returns socket where to rx data
 int SERVER_init(int portno);

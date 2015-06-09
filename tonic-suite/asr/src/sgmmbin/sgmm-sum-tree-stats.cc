@@ -23,16 +23,16 @@
 #include "tree/build-tree-utils.h"
 #include "sgmm/sgmm-clusterable.h"
 
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   typedef kaldi::int32 int32;
   try {
     const char *usage =
         "Sum SGMM-type statistics used for phonetic decision tree building.\n"
-        "Usage:  sgmm-sum-tree-stats [options] tree-accs-out trea-accs-in1 tree-accs-in2 ...\n"
+        "Usage:  sgmm-sum-tree-stats [options] tree-accs-out trea-accs-in1 "
+        "tree-accs-in2 ...\n"
         "e.g.: sgmm-sum-tree-stats treeacc 1.streeacc 2.streeacc 3.streeacc\n";
-    
+
     ParseOptions po(usage);
     bool binary = true;
 
@@ -45,27 +45,29 @@ int main(int argc, char *argv[]) {
     }
 
     std::string treeacc_wxfilename = po.GetArg(1);
-    
-    std::map<EventType, Clusterable*> tree_stats;
 
-    AmSgmm am_sgmm; // dummy variable needed to initialize stats.
-    std::vector<SpMatrix<double> > H; // also needed to initialize stats,
+    std::map<EventType, Clusterable *> tree_stats;
+
+    AmSgmm am_sgmm;  // dummy variable needed to initialize stats.
+    std::vector<SpMatrix<double> > H;  // also needed to initialize stats,
     // but never accessed in this program.
-    
-    // typedef std::vector<std::pair<EventType, Clusterable*> > BuildTreeStatsType;    
+
+    // typedef std::vector<std::pair<EventType, Clusterable*> >
+    // BuildTreeStatsType;
     for (int32 arg = 2; arg <= po.NumArgs(); arg++) {
       std::string treeacc_rxfilename = po.GetArg(arg);
       bool binary_in;
       Input ki(treeacc_rxfilename, &binary_in);
       BuildTreeStatsType stats_array;
-      SgmmClusterable example(am_sgmm, H); // Needed for its type information.
+      SgmmClusterable example(am_sgmm, H);  // Needed for its type information.
       ReadBuildTreeStats(ki.Stream(), binary_in, example, &stats_array);
       for (BuildTreeStatsType::iterator iter = stats_array.begin();
            iter != stats_array.end(); ++iter) {
         EventType e = iter->first;
         Clusterable *c = iter->second;
-        std::map<EventType, Clusterable*>::iterator map_iter = tree_stats.find(e);
-        if (map_iter == tree_stats.end()) { // Not already present.
+        std::map<EventType, Clusterable *>::iterator map_iter =
+            tree_stats.find(e);
+        if (map_iter == tree_stats.end()) {  // Not already present.
           tree_stats[e] = c;
         } else {
           map_iter->second->Add(*c);
@@ -76,9 +78,9 @@ int main(int argc, char *argv[]) {
 
     BuildTreeStatsType stats;  // all the stats, in vectorized form.
 
-    for (std::map<EventType, Clusterable*>::const_iterator iter = tree_stats.begin();  
-        iter != tree_stats.end();
-        iter++ ) {
+    for (std::map<EventType, Clusterable *>::const_iterator iter =
+             tree_stats.begin();
+         iter != tree_stats.end(); iter++) {
       stats.push_back(std::make_pair(iter->first, iter->second));
     }
     tree_stats.clear();
@@ -91,10 +93,8 @@ int main(int argc, char *argv[]) {
               << stats.size();
     DeleteBuildTreeStats(&stats);
     return (stats.size() != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

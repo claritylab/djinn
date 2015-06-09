@@ -29,14 +29,16 @@ int main(int argc, char *argv[]) {
         "Note: penalties are negative log-probs, base e, and are added to the\n"
         "'language model' part of the cost.\n"
         "\n"
-        "Usage: lattice-add-penalty [options] <lattice-rspecifier> <lattice-wspecifier>\n"
+        "Usage: lattice-add-penalty [options] <lattice-rspecifier> "
+        "<lattice-wspecifier>\n"
         " e.g.: lattice-add-penalty --word-ins-penalty=1.0 ark:- ark:-\n";
-      
+
     ParseOptions po(usage);
-    
+
     BaseFloat word_ins_penalty = 0.0;
 
-    po.Register("word-ins-penalty", &word_ins_penalty, "Word insertion penalty");
+    po.Register("word-ins-penalty", &word_ins_penalty,
+                "Word insertion penalty");
 
     po.Read(argc, argv);
 
@@ -45,11 +47,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
-    
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
+
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    CompactLatticeWriter clat_writer(lats_wspecifier); // write as compact.
+    CompactLatticeWriter clat_writer(lats_wspecifier);  // write as compact.
 
     int64 n_done = 0;
 
@@ -59,9 +60,10 @@ int main(int argc, char *argv[]) {
       clat_writer.Write(clat_reader.Key(), clat);
       n_done++;
     }
-    KALDI_LOG << "Done adding word insertion penalty to " << n_done << " lattices.";
+    KALDI_LOG << "Done adding word insertion penalty to " << n_done
+              << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

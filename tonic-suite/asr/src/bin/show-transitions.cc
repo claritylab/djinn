@@ -20,7 +20,6 @@
 #include "fst/fstlib.h"
 #include "util/common-utils.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -31,7 +30,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Print debugging info from transition model\n"
-        "Usage:  show-transitions phones-symbol-table transition/model-file [occs-file]\n"
+        "Usage:  show-transitions phones-symbol-table transition/model-file "
+        "[occs-file]\n"
         "e.g.: \n"
         " show-transitions phones.txt 1.mdl 1.occs\n";
 
@@ -45,17 +45,15 @@ int main(int argc, char *argv[]) {
     }
 
     std::string phones_symtab_filename = po.GetArg(1),
-        transition_model_filename = po.GetArg(2),
-        accumulator_filename = po.GetOptArg(3);
-
+                transition_model_filename = po.GetArg(2),
+                accumulator_filename = po.GetOptArg(3);
 
     fst::SymbolTable *syms = fst::SymbolTable::ReadText(phones_symtab_filename);
     if (!syms)
       KALDI_ERR << "Could not read symbol table from file "
-                 << phones_symtab_filename;
+                << phones_symtab_filename;
     std::vector<std::string> names(syms->NumSymbols());
-    for (size_t i = 0; i < syms->NumSymbols(); i++)
-      names[i] = syms->Find(i);
+    for (size_t i = 0; i < syms->NumSymbols(); i++) names[i] = syms->Find(i);
 
     TransitionModel trans_model;
     ReadKaldiObject(transition_model_filename, &trans_model);
@@ -67,14 +65,12 @@ int main(int argc, char *argv[]) {
       occs.Read(ki.Stream(), binary_in);
     }
 
-    trans_model.Print(std::cout,
-                      names,
+    trans_model.Print(std::cout, names,
                       (accumulator_filename != "" ? &occs : NULL));
 
     delete syms;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

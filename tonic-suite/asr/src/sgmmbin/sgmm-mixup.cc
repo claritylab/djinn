@@ -18,14 +18,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
 #include "sgmm/am-sgmm.h"
 #include "hmm/transition-model.h"
 #include "sgmm/estimate-am-sgmm.h"
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -43,7 +41,7 @@ int main(int argc, char *argv[]) {
         "E.g. of removing speaker space:\n"
         " sgmm-mixup --remove-speaker-space 1.mdl 2.mdl\n"
         "These modes may be combined.\n";
-    
+
     bool binary_write = true;
     std::string write_flags_str = "gsnu";
     int32 split_substates = 0;
@@ -57,36 +55,45 @@ int main(int argc, char *argv[]) {
 
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("split-substates", &split_substates, "Increase number of "
+    po.Register("split-substates", &split_substates,
+                "Increase number of "
                 "substates to this overall target.");
-    po.Register("increase-phn-dim", &increase_phn_dim, "Increase phone-space "
+    po.Register("increase-phn-dim", &increase_phn_dim,
+                "Increase phone-space "
                 "dimension as far as allowed towards this target.");
-    po.Register("increase-spk-dim", &increase_spk_dim, "Increase speaker-space "
+    po.Register("increase-spk-dim", &increase_spk_dim,
+                "Increase speaker-space "
                 "dimension as far as allowed towards this target.");
-    po.Register("remove-speaker-space", &remove_speaker_space, "Remove speaker-specific "
+    po.Register("remove-speaker-space", &remove_speaker_space,
+                "Remove speaker-specific "
                 "projections N");
-    po.Register("power", &power, "Exponent for substate occupancies used while "
+    po.Register("power", &power,
+                "Exponent for substate occupancies used while "
                 "splitting substates.");
-    po.Register("perturb-factor", &perturb_factor, "Perturbation factor for "
+    po.Register("perturb-factor", &perturb_factor,
+                "Perturbation factor for "
                 "state vectors while splitting substates.");
-    po.Register("max-cond-split", &max_cond, "Max condition number of smoothing "
+    po.Register("max-cond-split", &max_cond,
+                "Max condition number of smoothing "
                 "matrix used in substate splitting.");
-    po.Register("write-flags", &write_flags_str, "Which SGMM parameters to "
+    po.Register("write-flags", &write_flags_str,
+                "Which SGMM parameters to "
                 "write: subset of gsnu");
-    po.Register("read-occs", &occs_in_filename, "Read occupancies from this file "
+    po.Register("read-occs", &occs_in_filename,
+                "Read occupancies from this file "
                 "(required for mixing up)");
-    
+
     po.Read(argc, argv);
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
     std::string model_in_filename = po.GetArg(1),
-        model_out_filename = po.GetArg(2);
+                model_out_filename = po.GetArg(2);
 
     kaldi::SgmmWriteFlagsType write_flags =
         StringToSgmmWriteFlags(write_flags_str);
-    
+
     AmSgmm am_sgmm;
     TransitionModel trans_model;
     {
@@ -98,17 +105,18 @@ int main(int argc, char *argv[]) {
 
     if (split_substates != 0) {
       if (occs_in_filename.empty())
-        KALDI_ERR << "The --split-substates option requires the --read-occs option";
-      
+        KALDI_ERR
+            << "The --split-substates option requires the --read-occs option";
+
       Vector<BaseFloat> state_occs;
       {
         bool binary_in;
         kaldi::Input ki(occs_in_filename, &binary_in);
         state_occs.Read(ki.Stream(), binary_in);
       }
-      
-      am_sgmm.SplitSubstates(state_occs, split_substates, perturb_factor,
-                             power, max_cond);
+
+      am_sgmm.SplitSubstates(state_occs, split_substates, perturb_factor, power,
+                             max_cond);
       am_sgmm.ComputeDerivedVars();  // recompute normalizers...
     }
 
@@ -122,7 +130,7 @@ int main(int argc, char *argv[]) {
       if (increase_spk_dim != 0)
         am_sgmm.IncreaseSpkSpaceDim(increase_spk_dim, norm_xform);
     }
-    
+
     if (remove_speaker_space) {
       KALDI_LOG << "Removing speaker space (projections N_)";
       am_sgmm.RemoveSpeakerSpace();
@@ -133,13 +141,11 @@ int main(int argc, char *argv[]) {
       trans_model.Write(ko.Stream(), binary_write);
       am_sgmm.Write(ko.Stream(), binary_write, write_flags);
     }
-    
+
     KALDI_LOG << "Written model to " << model_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

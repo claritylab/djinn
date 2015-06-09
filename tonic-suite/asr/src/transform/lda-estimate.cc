@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "transform/lda-estimate.h"
 
 namespace kaldi {
@@ -42,8 +41,8 @@ void LdaEstimate::Scale(BaseFloat f) {
   total_second_acc_.Scale(d);
 }
 
-void LdaEstimate::Accumulate(const VectorBase<BaseFloat> &data,
-                             int32 class_id, BaseFloat weight) {
+void LdaEstimate::Accumulate(const VectorBase<BaseFloat> &data, int32 class_id,
+                             BaseFloat weight) {
   KALDI_ASSERT(class_id >= 0);
   KALDI_ASSERT(class_id < NumClasses() && data.Dim() == Dim());
 
@@ -68,7 +67,7 @@ void LdaEstimate::GetStats(SpMatrix<double> *total_covar,
   total_mean->Scale(1.0 / sum);
   total_covar->Scale(1.0 / sum);
   total_covar->AddVec2(-1.0, *total_mean);
-  
+
   between_covar->Resize(dim);
   Vector<double> class_mean(dim);
   for (int32 c = 0; c < num_class; c++) {
@@ -81,21 +80,20 @@ void LdaEstimate::GetStats(SpMatrix<double> *total_covar,
   between_covar->AddVec2(-1.0, *total_mean);
 }
 
-
-void LdaEstimate::Estimate(const LdaEstimateOptions &opts,
-                           Matrix<BaseFloat> *m,
+void LdaEstimate::Estimate(const LdaEstimateOptions &opts, Matrix<BaseFloat> *m,
                            Matrix<BaseFloat> *mfull) const {
   int32 target_dim = opts.dim;
   KALDI_ASSERT(target_dim > 0);
   // between-class covar is of most rank C-1
-  KALDI_ASSERT(target_dim <= Dim() && (target_dim < NumClasses() || opts.allow_large_dim));
+  KALDI_ASSERT(target_dim <= Dim() &&
+               (target_dim < NumClasses() || opts.allow_large_dim));
   int32 dim = Dim();
-  
+
   double count;
   SpMatrix<double> total_covar, bc_covar;
   Vector<double> total_mean;
   GetStats(&total_covar, &bc_covar, &total_mean, &count);
-  
+
   // within-class covariance
   SpMatrix<double> wc_covar(total_covar);
   wc_covar.AddSp(-1.0, bc_covar);
@@ -104,11 +102,10 @@ void LdaEstimate::Estimate(const LdaEstimateOptions &opts,
     wc_covar_sqrt.Cholesky(wc_covar);
   } catch (...) {
     BaseFloat smooth = 1.0e-03 * wc_covar.Trace() / wc_covar.NumRows();
-    KALDI_LOG << "Cholesky failed (possibly not +ve definite), so adding " << smooth
-              << " to diagonal and trying again.\n";
-    for (int32 i = 0; i < wc_covar.NumRows(); i++)
-      wc_covar(i, i) += smooth;
-    wc_covar_sqrt.Cholesky(wc_covar);    
+    KALDI_LOG << "Cholesky failed (possibly not +ve definite), so adding "
+              << smooth << " to diagonal and trying again.\n";
+    for (int32 i = 0; i < wc_covar.NumRows(); i++) wc_covar(i, i) += smooth;
+    wc_covar_sqrt.Cholesky(wc_covar);
   }
   Matrix<double> wc_covar_sqrt_mat(wc_covar_sqrt);
   // copy wc_covar_sqrt to Matrix, because it facilitates further use
@@ -127,39 +124,37 @@ void LdaEstimate::Estimate(const LdaEstimateOptions &opts,
   KALDI_LOG << "LDA singular values are " << svd_d;
 
   KALDI_LOG << "Sum of all singular values is " << svd_d.Sum();
-  KALDI_LOG << "Sum of selected singular values is " <<
-      SubVector<double>(svd_d, 0, target_dim).Sum();
-  
+  KALDI_LOG << "Sum of selected singular values is "
+            << SubVector<double>(svd_d, 0, target_dim).Sum();
+
   Matrix<double> lda_mat(dim, dim);
   lda_mat.AddMatMat(1.0, svd_u, kTrans, wc_covar_sqrt_mat, kNoTrans, 0.0);
 
   // finally, copy first target_dim rows to m
   m->Resize(target_dim, dim);
   m->CopyFromMat(lda_mat.Range(0, target_dim, 0, dim));
-  
+
   if (mfull != NULL) {
     mfull->Resize(dim, dim);
     mfull->CopyFromMat(lda_mat);
   }
 
-  if (opts.within_class_factor != 1.0) { // This is not the normal code path;
+  if (opts.within_class_factor != 1.0) {  // This is not the normal code path;
     // it's intended for use in neural net inputs.
     for (int32 i = 0; i < svd_d.Dim(); i++) {
-      BaseFloat old_var = 1.0 + svd_d(i), // the total variance of that dim..
-          new_var = opts.within_class_factor + svd_d(i), // the variance we want..
+      BaseFloat old_var = 1.0 + svd_d(i),  // the total variance of that dim..
+          new_var =
+              opts.within_class_factor + svd_d(i),  // the variance we want..
           scale = sqrt(new_var / old_var);
-      if (i < m->NumRows())
-        m->Row(i).Scale(scale);
-      if (mfull != NULL)
-        mfull->Row(i).Scale(scale);
+      if (i < m->NumRows()) m->Row(i).Scale(scale);
+      if (mfull != NULL) mfull->Row(i).Scale(scale);
     }
   }
 
   if (opts.remove_offset) {
     AddMeanOffset(total_mean, m);
-    if (mfull != NULL)
-      AddMeanOffset(total_mean, mfull);
-  }  
+    if (mfull != NULL) AddMeanOffset(total_mean, mfull);
+  }
 }
 
 // static
@@ -169,13 +164,10 @@ void LdaEstimate::AddMeanOffset(const VectorBase<double> &mean_dbl,
   Vector<BaseFloat> neg_projected_mean(projection->NumRows());
   // the negative
   neg_projected_mean.AddMatVec(-1.0, *projection, kNoTrans, mean, 0.0);
-  projection->Resize(projection->NumRows(),
-                     projection->NumCols() + 1,
+  projection->Resize(projection->NumRows(), projection->NumCols() + 1,
                      kCopyData);
   projection->CopyColFromVec(neg_projected_mean, projection->NumCols() - 1);
 }
-
-
 
 void LdaEstimate::Read(std::istream &in_stream, bool binary, bool add) {
   int32 num_classes, dim;
@@ -190,9 +182,9 @@ void LdaEstimate::Read(std::istream &in_stream, bool binary, bool add) {
   if (add) {
     if (NumClasses() != 0 || Dim() != 0) {
       if (num_classes != NumClasses() || dim != Dim()) {
-        KALDI_ERR <<"LdaEstimate::Read, dimension or classes count mismatch, "
-                  <<(NumClasses()) << ", " <<(Dim()) << ", "
-                  << " vs. " <<(num_classes) << ", " << (dim);
+        KALDI_ERR << "LdaEstimate::Read, dimension or classes count mismatch, "
+                  << (NumClasses()) << ", " << (Dim()) << ", "
+                  << " vs. " << (num_classes) << ", " << (dim);
       }
     } else {
       Init(num_classes, dim);
@@ -258,6 +250,5 @@ void LdaEstimate::Write(std::ostream &out_stream, bool binary) const {
 
   WriteToken(out_stream, binary, "</LDAACCS>");
 }
-
 
 }  // End of namespace kaldi

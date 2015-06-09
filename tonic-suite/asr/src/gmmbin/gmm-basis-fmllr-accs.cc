@@ -42,14 +42,11 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   for (size_t i = 0; i < post.size(); i++) {
     for (size_t j = 0; j < pdf_post[i].size(); j++) {
       int32 pdf_id = pdf_post[i][j].first;
-      spk_stats->AccumulateForGmm(am_gmm.GetPdf(pdf_id),
-                                  feats.Row(i),
+      spk_stats->AccumulateForGmm(am_gmm.GetPdf(pdf_id), feats.Row(i),
                                   pdf_post[i][j].second);
     }
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -57,9 +54,12 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
     using namespace kaldi;
     const char *usage =
-        "Accumulate gradient scatter from training set, either per utterance or \n"
-        "for the supplied set of speakers (spk2utt option). Reads posterior to accumulate \n"
-        "fMLLR stats for each speaker/utterance. Writes gradient scatter matrix.\n"
+        "Accumulate gradient scatter from training set, either per utterance "
+        "or \n"
+        "for the supplied set of speakers (spk2utt option). Reads posterior to "
+        "accumulate \n"
+        "fMLLR stats for each speaker/utterance. Writes gradient scatter "
+        "matrix.\n"
         "Usage: gmm-basis-fmllr-accs [options] <model-in> <feature-rspecifier>"
         "<post-rspecifier> <accs-wspecifier>\n";
 
@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
     string spk2utt_rspecifier;
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
 
     po.Read(argc, argv);
@@ -76,11 +77,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        accs_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), accs_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -139,8 +137,7 @@ int main(int argc, char *argv[]) {
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!post_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_no_post++;
           continue;
         }
@@ -148,8 +145,8 @@ int main(int argc, char *argv[]) {
         const Posterior &post = post_reader.Value(utt);
 
         if (static_cast<int32>(post.size()) != feats.NumRows()) {
-          KALDI_WARN << "Posterior has wrong size " << (post.size())
-                     << " vs. " << (feats.NumRows());
+          KALDI_WARN << "Posterior has wrong size " << (post.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -159,7 +156,7 @@ int main(int argc, char *argv[]) {
         num_done++;
 
         basis_accs.AccuGradientScatter(utt_stats);
-      } // end looping over utterances
+      }  // end looping over utterances
     }
     // Write out accumulations
     {
@@ -170,9 +167,8 @@ int main(int argc, char *argv[]) {
               << " with no posts, " << num_other_error << " with other errors.";
     KALDI_LOG << "Written gradient scatter to " << accs_wspecifier;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

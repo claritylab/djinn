@@ -23,16 +23,14 @@
 #include "nnet2/train-nnet.h"
 #include "nnet2/am-nnet.h"
 
-
 namespace kaldi {
 namespace nnet2 {
 void SetMaxChange(BaseFloat max_change, Nnet *nnet) {
   for (int32 c = 0; c < nnet->NumComponents(); c++) {
     Component *component = &(nnet->GetComponent(c));
     AffineComponentPreconditioned *ac =
-        dynamic_cast<AffineComponentPreconditioned*>(component);
-    if (ac != NULL)
-      ac->SetMaxChange(max_change);
+        dynamic_cast<AffineComponentPreconditioned *>(component);
+    if (ac != NULL) ac->SetMaxChange(max_change);
   }
 }
 }
@@ -61,17 +59,20 @@ int main(int argc, char *argv[]) {
     BaseFloat average_learning_rate = 0.0;
     BaseFloat first_layer_factor = 1.0;
     BaseFloat last_layer_factor = 1.0;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("average-learning-rate", &average_learning_rate,
                 "If supplied, change learning rate geometric mean to the given "
                 "value.");
-    po.Register("first-layer-factor", &first_layer_factor, "Factor that "
+    po.Register("first-layer-factor", &first_layer_factor,
+                "Factor that "
                 "reduces the target relative learning rate for first layer.");
-    po.Register("last-layer-factor", &last_layer_factor, "Factor that "
+    po.Register("last-layer-factor", &last_layer_factor,
+                "Factor that "
                 "reduces the target relative learning rate for last layer.");
-    po.Register("retroactive", &retroactive, "If true, scale the parameter "
+    po.Register("retroactive", &retroactive,
+                "If true, scale the parameter "
                 "differences as well.");
 
     po.Read(argc, argv);
@@ -84,8 +85,8 @@ int main(int argc, char *argv[]) {
     KALDI_ASSERT(average_learning_rate >= 0);
 
     std::string prev_nnet_rxfilename = po.GetArg(1),
-        cur_nnet_rxfilename = po.GetArg(2),
-        modified_cur_nnet_rxfilename = po.GetOptArg(3);
+                cur_nnet_rxfilename = po.GetArg(2),
+                modified_cur_nnet_rxfilename = po.GetOptArg(3);
 
     TransitionModel trans_model;
     AmNnet am_prev_nnet, am_cur_nnet;
@@ -136,8 +137,9 @@ int main(int argc, char *argv[]) {
         }
       }
       if (num_zero > 0) {
-        BaseFloat average_diff = relative_diff.Sum()
-            / static_cast<BaseFloat>(num_updatable - num_zero);
+        BaseFloat average_diff =
+            relative_diff.Sum() /
+            static_cast<BaseFloat>(num_updatable - num_zero);
         for (int32 i = 0; i < num_updatable; i++) {
           if (relative_diff(i) == 0.0) {
             relative_diff(i) = average_diff;
@@ -157,12 +159,12 @@ int main(int argc, char *argv[]) {
               << prev_nnet_learning_rates;
     KALDI_LOG << "Learning rates for current model per layer are "
               << cur_nnet_learning_rates;
-    
+
     // Gets target geometric mean.
-    BaseFloat target_geometric_mean = 0.0; 
+    BaseFloat target_geometric_mean = 0.0;
     if (average_learning_rate == 0.0) {
-      target_geometric_mean = exp(cur_nnet_learning_rates.SumLog()
-                                  / static_cast<BaseFloat>(num_updatable));
+      target_geometric_mean = exp(cur_nnet_learning_rates.SumLog() /
+                                  static_cast<BaseFloat>(num_updatable));
     } else {
       target_geometric_mean = average_learning_rate;
     }
@@ -177,8 +179,8 @@ int main(int argc, char *argv[]) {
     nnet_learning_rates(num_updatable - 1) *= last_layer_factor;
     KALDI_ASSERT(first_layer_factor > 0.0);
     nnet_learning_rates(0) *= first_layer_factor;
-    BaseFloat cur_geometric_mean = exp(nnet_learning_rates.SumLog()
-                                 / static_cast<BaseFloat>(num_updatable));
+    BaseFloat cur_geometric_mean = exp(nnet_learning_rates.SumLog() /
+                                       static_cast<BaseFloat>(num_updatable));
     nnet_learning_rates.Scale(target_geometric_mean / cur_geometric_mean);
     KALDI_LOG << "New learning rates for current model per layer are "
               << nnet_learning_rates;
@@ -198,13 +200,13 @@ int main(int argc, char *argv[]) {
     am_cur_nnet.GetNnet().SetLearningRates(nnet_learning_rates);
 
     SetMaxChange(0.0, &(am_cur_nnet.GetNnet()));
-    
+
     Output ko(modified_cur_nnet_rxfilename, binary_write);
     trans_model.Write(ko.Stream(), binary_write);
     am_cur_nnet.Write(ko.Stream(), binary_write);
 
     return ret;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

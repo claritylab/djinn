@@ -44,20 +44,19 @@ int main(int argc, char *argv[]) {
 
     NnetWidenConfig config;
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     config.Register(&po);
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(2);
-    
+    std::string nnet_rxfilename = po.GetArg(1), nnet_wxfilename = po.GetArg(2);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -68,7 +67,7 @@ int main(int argc, char *argv[]) {
     }
 
     WidenNnet(config, &(am_nnet.GetNnet()));
-    
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -77,7 +76,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Mixed up neural net from " << nnet_rxfilename
               << " and wrote it to " << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

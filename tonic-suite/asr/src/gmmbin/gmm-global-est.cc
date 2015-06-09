@@ -36,15 +36,18 @@ int main(int argc, char *argv[]) {
     bool binary_write = true;
     int32 mixup = 0;
     BaseFloat perturb_factor = 0.01;
-    std::string update_flags_str = "mvw"; 
+    std::string update_flags_str = "mvw";
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters will be "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters will be "
                 "updated: subset of mvw.");
-    po.Register("mix-up", &mixup, "Increase number of mixture components to "
+    po.Register("mix-up", &mixup,
+                "Increase number of mixture components to "
                 "this overall target.");
-    po.Register("perturb-factor", &perturb_factor, "While mixing up, perturb "
-        "means by standard deviation times this factor.");
+    po.Register("perturb-factor", &perturb_factor,
+                "While mixing up, perturb "
+                "means by standard deviation times this factor.");
     gmm_opts.Register(&po);
 
     po.Read(argc, argv);
@@ -54,9 +57,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_in_filename = po.GetArg(1),
-        stats_filename = po.GetArg(2),
-        model_out_filename = po.GetArg(3);
+    std::string model_in_filename = po.GetArg(1), stats_filename = po.GetArg(2),
+                model_out_filename = po.GetArg(3);
 
     DiagGmm gmm;
     {
@@ -74,24 +76,20 @@ int main(int argc, char *argv[]) {
 
     {  // Update GMMs.
       BaseFloat objf_impr, count;
-      MleDiagGmmUpdate(gmm_opts, gmm_accs,
-                       StringToGmmFlags(update_flags_str),
+      MleDiagGmmUpdate(gmm_opts, gmm_accs, StringToGmmFlags(update_flags_str),
                        &gmm, &objf_impr, &count);
       KALDI_LOG << "Overall objective function improvement is "
-                << (objf_impr/count) << " per frame over "
-                <<  (count) <<  " frames.";
+                << (objf_impr / count) << " per frame over " << (count)
+                << " frames.";
     }
 
-    if (mixup != 0)
-      gmm.Split(mixup, perturb_factor);
+    if (mixup != 0) gmm.Split(mixup, perturb_factor);
 
     WriteKaldiObject(gmm, model_out_filename, binary_write);
 
     KALDI_LOG << "Written model to " << model_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

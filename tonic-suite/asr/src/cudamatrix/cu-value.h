@@ -17,8 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 #ifndef KALDI_CUDAMATRIX_CU_VALUE_H_
 #define KALDI_CUDAMATRIX_CU_VALUE_H_
 
@@ -30,16 +28,17 @@ namespace kaldi {
 /// references to Real, e.g. as returned by the non-const operator ().
 /// This class is also used as a convenient way of
 /// reading a single Real value from the device.
-template<typename Real>
+template <typename Real>
 class CuValue {
  public:
-  CuValue(Real *data): data_(data) { }
-  CuValue(const CuValue &other): data_(other.data_) { }
+  CuValue(Real *data) : data_(data) {}
+  CuValue(const CuValue &other) : data_(other.data_) {}
 
-  inline CuValue operator = (const CuValue<Real> &other) {
+  inline CuValue operator=(const CuValue<Real> &other) {
 #if HAVE_CUDA == 1
     if (CuDevice::Instantiate().Enabled()) {
-      CU_SAFE_CALL(cudaMemcpy(data_, other.data_, sizeof(Real), cudaMemcpyDeviceToDevice));
+      CU_SAFE_CALL(cudaMemcpy(data_, other.data_, sizeof(Real),
+                              cudaMemcpyDeviceToDevice));
       return *this;
     } else
 #endif
@@ -48,8 +47,8 @@ class CuValue {
       return *this;
     }
   }
-  
-  inline Real operator = (Real r) { // assignment from Real
+
+  inline Real operator=(Real r) {  // assignment from Real
 #if HAVE_CUDA == 1
     if (CuDevice::Instantiate().Enabled()) {
       CU_SAFE_CALL(cudaMemcpy(data_, &r, sizeof(Real), cudaMemcpyHostToDevice));
@@ -62,27 +61,24 @@ class CuValue {
     }
   }
 
-  inline Real operator += (Real r) { return (*this = r + Real(*this)); }
-    
+  inline Real operator+=(Real r) { return (*this = r + Real(*this)); }
 
-  inline operator Real () const { // assignment to Real
+  inline operator Real() const {  // assignment to Real
 #if HAVE_CUDA == 1
-  if (CuDevice::Instantiate().Enabled()) {
-    Real value;
-    CU_SAFE_CALL(cudaMemcpy(&value, data_,
-                            sizeof(Real), cudaMemcpyDeviceToHost));
-    return value;
-  } else
+    if (CuDevice::Instantiate().Enabled()) {
+      Real value;
+      CU_SAFE_CALL(
+          cudaMemcpy(&value, data_, sizeof(Real), cudaMemcpyDeviceToHost));
+      return value;
+    } else
 #endif
-    return *data_;
+      return *data_;
   }
+
  private:
   Real *data_;
-}; // class CuValue<Real>
-
+};  // class CuValue<Real>
 
 }  // namespace
-
-
 
 #endif  // KALDI_CUDAMATRIX_CU_VALUE_H_

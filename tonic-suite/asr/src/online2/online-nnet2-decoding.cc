@@ -24,16 +24,14 @@
 namespace kaldi {
 
 SingleUtteranceNnet2Decoder::SingleUtteranceNnet2Decoder(
-    const OnlineNnet2DecodingConfig &config,
-    const TransitionModel &tmodel,
-    const nnet2::AmNnet &model,
-    const fst::Fst<fst::StdArc> &fst,
-    OnlineNnet2FeaturePipeline *feature_pipeline):
-    config_(config),
-    feature_pipeline_(feature_pipeline),
-    tmodel_(tmodel),
-    decodable_(model, tmodel, config.decodable_opts, feature_pipeline),
-    decoder_(fst, config.faster_decoder_opts) {
+    const OnlineNnet2DecodingConfig &config, const TransitionModel &tmodel,
+    const nnet2::AmNnet &model, const fst::Fst<fst::StdArc> &fst,
+    OnlineNnet2FeaturePipeline *feature_pipeline)
+    : config_(config),
+      feature_pipeline_(feature_pipeline),
+      tmodel_(tmodel),
+      decodable_(model, tmodel, config.decodable_opts, feature_pipeline),
+      decoder_(fst, config.faster_decoder_opts) {
   decoder_.InitDecoding();
 }
 
@@ -53,11 +51,12 @@ void SingleUtteranceNnet2Decoder::GetLattice(bool end_of_utterance,
   decoder_.GetRawLattice(&raw_lat, end_of_utterance);
 
   if (!config_.faster_decoder_opts.determinize_lattice)
-    KALDI_ERR << "--determinize-lattice=false option is not supported at the moment";
+    KALDI_ERR
+        << "--determinize-lattice=false option is not supported at the moment";
 
   BaseFloat lat_beam = config_.faster_decoder_opts.lattice_beam;
-  DeterminizeLatticePhonePrunedWrapper(
-      tmodel_, &raw_lat, lat_beam, clat, config_.faster_decoder_opts.det_opts);
+  DeterminizeLatticePhonePrunedWrapper(tmodel_, &raw_lat, lat_beam, clat,
+                                       config_.faster_decoder_opts.det_opts);
 }
 
 void SingleUtteranceNnet2Decoder::GetBestPath(bool end_of_utterance,
@@ -67,11 +66,8 @@ void SingleUtteranceNnet2Decoder::GetBestPath(bool end_of_utterance,
 
 bool SingleUtteranceNnet2Decoder::EndpointDetected(
     const OnlineEndpointConfig &config) {
-  return kaldi::EndpointDetected(config, tmodel_,
-                                 feature_pipeline_->FrameShiftInSeconds(),
-                                 decoder_);  
+  return kaldi::EndpointDetected(
+      config, tmodel_, feature_pipeline_->FrameShiftInSeconds(), decoder_);
 }
 
-
 }  // namespace kaldi
-

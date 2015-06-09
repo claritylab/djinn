@@ -23,7 +23,6 @@
 #include "nnet2/shrink-nnet.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -33,33 +32,35 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Using a validation set, compute optimal scaling parameters for each\n"
-        "class of neural network parameters (i.e. each updatable component), to\n"
+        "class of neural network parameters (i.e. each updatable component), "
+        "to\n"
         "maximize validation-set objective function.\n"
         "\n"
-        "Usage:  nnet-shrink [options] <model-in> <valid-examples-in> <model-out>\n"
+        "Usage:  nnet-shrink [options] <model-in> <valid-examples-in> "
+        "<model-out>\n"
         "\n"
         "e.g.:\n"
         " nnet-shrink 1.nnet ark:valid.egs 2.nnet\n";
-    
+
     bool binary_write = true;
     NnetShrinkConfig shrink_config;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    
+
     shrink_config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::string nnet_rxfilename = po.GetArg(1),
-        valid_examples_rspecifier = po.GetArg(2),
-        nnet_wxfilename = po.GetArg(3);
-    
+                valid_examples_rspecifier = po.GetArg(2),
+                nnet_wxfilename = po.GetArg(3);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -69,12 +70,11 @@ int main(int argc, char *argv[]) {
       am_nnet.Read(ki.Stream(), binary_read);
     }
 
-    std::vector<NnetExample> validation_set; // stores validation
+    std::vector<NnetExample> validation_set;  // stores validation
     // frames.
 
-    { // This block adds samples to "validation_set".
-      SequentialNnetExampleReader example_reader(
-          valid_examples_rspecifier);
+    {  // This block adds samples to "validation_set".
+      SequentialNnetExampleReader example_reader(valid_examples_rspecifier);
       for (; !example_reader.Done(); example_reader.Next())
         validation_set.push_back(example_reader.Value());
       KALDI_LOG << "Read " << validation_set.size() << " examples from the "
@@ -82,23 +82,19 @@ int main(int argc, char *argv[]) {
       KALDI_ASSERT(validation_set.size() > 0);
     }
 
-    ShrinkNnet(shrink_config,
-               validation_set,
-               &(am_nnet.GetNnet()));
-    
+    ShrinkNnet(shrink_config, validation_set, &(am_nnet.GetNnet()));
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_nnet.Write(ko.Stream(), binary_write);
     }
-    
+
     KALDI_LOG << "Finished shrinking neural net, wrote model to "
               << nnet_wxfilename;
     return (validation_set.size() == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

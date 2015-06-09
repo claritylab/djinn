@@ -21,14 +21,15 @@
 #include "cudamatrix/cu-device.h"
 
 int main(int argc, char *argv[]) {
-  const char *usage = "This program returns exit status 0 (success) if the code\n"
+  const char *usage =
+      "This program returns exit status 0 (success) if the code\n"
       "was compiled with CUDA support, and 1 otherwise.  To support CUDA, you\n"
       "must run 'configure' on a machine that has the CUDA compiler 'nvcc'\n"
       "available.\n";
   if (argc > 1) {
     std::cerr << usage << "\n";
   }
-#if HAVE_CUDA==1
+#if HAVE_CUDA == 1
   return 0;
 #else
   return 1;

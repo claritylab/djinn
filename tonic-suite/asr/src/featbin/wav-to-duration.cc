@@ -28,7 +28,8 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Read wav files and output an archive consisting of a single float:\n"
         "the duration of each one in seconds.\n"
-        "Usage:  wav-to-duration [options...] <wav-rspecifier> <duration-wspecifier>\n"
+        "Usage:  wav-to-duration [options...] <wav-rspecifier> "
+        "<duration-wspecifier>\n"
         "E.g.: wav-to-duration scp:wav.scp ark,t:-\n"
         "See also: wav-copy extract-segments feat-to-len\n";
 
@@ -42,13 +43,12 @@ int main(int argc, char *argv[]) {
     }
 
     std::string wav_rspecifier = po.GetArg(1),
-        duration_wspecifier = po.GetArg(2);
-
+                duration_wspecifier = po.GetArg(2);
 
     double sum_duration = 0.0,
-        min_duration = std::numeric_limits<BaseFloat>::infinity(),
-        max_duration = 0;
-    
+           min_duration = std::numeric_limits<BaseFloat>::infinity(),
+           max_duration = 0;
+
     SequentialTableReader<WaveHolder> wav_reader(wav_rspecifier);
     BaseFloatWriter duration_writer(duration_wspecifier);
 
@@ -72,9 +72,8 @@ int main(int argc, char *argv[]) {
                 << max_duration;
     }
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

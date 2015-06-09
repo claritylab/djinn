@@ -19,7 +19,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -27,17 +26,21 @@
 #include "gmm/mle-am-diag-gmm.h"
 #include "hmm/posterior.h"
 
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   try {
     const char *usage =
-        "Accumulate stats for GMM training, computing posteriors with one set of features\n"        
+        "Accumulate stats for GMM training, computing posteriors with one set "
+        "of features\n"
         "but accumulating statistics with another.\n"
-        "First features are used to get posteriors, second to accumulate stats\n"        
-        "Usage:  gmm-acc-stats-twofeats [options] <model-in> <feature1-rspecifier> <feature2-rspecifier> <posteriors-rspecifier> <stats-out>\n"
+        "First features are used to get posteriors, second to accumulate "
+        "stats\n"
+        "Usage:  gmm-acc-stats-twofeats [options] <model-in> "
+        "<feature1-rspecifier> <feature2-rspecifier> <posteriors-rspecifier> "
+        "<stats-out>\n"
         "e.g.: \n"
-        " gmm-acc-stats-twofeats 1.mdl 1.ali scp:train.scp scp:train_new.scp ark:1.ali 1.acc\n";
+        " gmm-acc-stats-twofeats 1.mdl 1.ali scp:train.scp scp:train_new.scp "
+        "ark:1.ali 1.acc\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -50,10 +53,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature1_rspecifier = po.GetArg(2),
-        feature2_rspecifier = po.GetArg(3),
-        posteriors_rspecifier = po.GetArg(4),
-        accs_wxfilename = po.GetArg(5);
+                feature1_rspecifier = po.GetArg(2),
+                feature2_rspecifier = po.GetArg(3),
+                posteriors_rspecifier = po.GetArg(4),
+                accs_wxfilename = po.GetArg(5);
 
     using namespace kaldi;
     typedef kaldi::int32 int32;
@@ -80,12 +83,14 @@ int main(int argc, char *argv[]) {
     RandomAccessBaseFloatMatrixReader feature2_reader(feature2_rspecifier);
     RandomAccessPosteriorReader posteriors_reader(posteriors_rspecifier);
 
-    int32 num_done = 0, num_no2ndfeats = 0, num_no_posterior = 0, num_other_error = 0;
+    int32 num_done = 0, num_no2ndfeats = 0, num_no_posterior = 0,
+          num_other_error = 0;
     for (; !feature1_reader.Done(); feature1_reader.Next()) {
       std::string key = feature1_reader.Key();
       if (!feature2_reader.HasKey(key)) {
-        KALDI_WARN << "For utterance " << key << ", second features not present.";
-        num_no2ndfeats ++;
+        KALDI_WARN << "For utterance " << key
+                   << ", second features not present.";
+        num_no2ndfeats++;
       } else if (!posteriors_reader.HasKey(key)) {
         num_no_posterior++;
       } else {
@@ -99,7 +104,8 @@ int main(int argc, char *argv[]) {
         const Posterior &posterior = posteriors_reader.Value(key);
 
         if (posterior.size() != mat1.NumRows()) {
-          KALDI_WARN << "Posteriors has wrong size "<< (posterior.size()) << " vs. "<< (mat1.NumRows());
+          KALDI_WARN << "Posteriors has wrong size " << (posterior.size())
+                     << " vs. " << (mat1.NumRows());
           num_other_error++;
           continue;
         }
@@ -111,22 +117,19 @@ int main(int argc, char *argv[]) {
         }
 
         num_done++;
-        BaseFloat tot_like_this_file = 0.0,
-            tot_weight_this_file = 0.0;
+        BaseFloat tot_like_this_file = 0.0, tot_weight_this_file = 0.0;
 
         Posterior pdf_posterior;
         ConvertPosteriorToPdfs(trans_model, posterior, &pdf_posterior);
         for (size_t i = 0; i < posterior.size(); i++) {
           // Accumulates for GMM.
-          for (size_t j = 0; j <pdf_posterior[i].size(); j++) {
+          for (size_t j = 0; j < pdf_posterior[i].size(); j++) {
             int32 pdf_id = pdf_posterior[i][j].first;
             BaseFloat weight = pdf_posterior[i][j].second;
-            tot_like_this_file += weight *
-                gmm_accs.AccumulateForGmmTwofeats(am_gmm,
-                                                  mat1.Row(i),
-                                                  mat2.Row(i),
-                                                  pdf_id,
-                                                  weight);
+            tot_like_this_file +=
+                weight *
+                gmm_accs.AccumulateForGmmTwofeats(am_gmm, mat1.Row(i),
+                                                  mat2.Row(i), pdf_id, weight);
             tot_weight_this_file += weight;
           }
 
@@ -138,12 +141,12 @@ int main(int argc, char *argv[]) {
           }
         }
         KALDI_LOG << "Average like for this file is "
-                  << (tot_like_this_file/tot_weight_this_file) << " over "
-                  << tot_weight_this_file <<" frames.";
+                  << (tot_like_this_file / tot_weight_this_file) << " over "
+                  << tot_weight_this_file << " frames.";
         tot_like += tot_like_this_file;
         tot_t += tot_weight_this_file;
         if (num_done % 10 == 0)
-          KALDI_LOG << "Avg like per frame so far is " << (tot_like/tot_t);
+          KALDI_LOG << "Avg like per frame so far is " << (tot_like / tot_t);
       }
     }
 
@@ -153,7 +156,7 @@ int main(int argc, char *argv[]) {
               << " with other errors.";
 
     KALDI_LOG << "Overall avg like per frame (Gaussian only) = "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
 
     {
       Output ko(accs_wxfilename, binary);
@@ -161,12 +164,12 @@ int main(int argc, char *argv[]) {
       gmm_accs.Write(ko.Stream(), binary);
     }
     KALDI_LOG << "Written accs.";
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

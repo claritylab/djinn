@@ -27,9 +27,7 @@ namespace kaldi {
 namespace nnet2 {
 
 void TransformTrainingExample(const Matrix<BaseFloat> &fmllr_mat,
-                              BaseFloat noise_factor,
-                              NnetExample *eg) {
-
+                              BaseFloat noise_factor, NnetExample *eg) {
   Matrix<BaseFloat> input_frames(eg->input_frames);
   Matrix<BaseFloat> transformed_frames(input_frames);
 
@@ -41,11 +39,8 @@ void TransformTrainingExample(const Matrix<BaseFloat> &fmllr_mat,
   input_frames.AddMat(noise_factor, transformed_frames);
   eg->input_frames.CopyFromMat(input_frames);
 }
-
 }
 }
-
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -55,52 +50,57 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int64 int64;
 
     const char *usage =
-        "Copy examples, perturbing them by multiplying by a randomly chosen fMLLR\n"
-        "transform from a fixed set.  The option --noise-factor interpolates the\n"
-        "un-transformed feature (times 1.0 - noise-factor) with the fMLLR feature\n"
+        "Copy examples, perturbing them by multiplying by a randomly chosen "
+        "fMLLR\n"
+        "transform from a fixed set.  The option --noise-factor interpolates "
+        "the\n"
+        "un-transformed feature (times 1.0 - noise-factor) with the fMLLR "
+        "feature\n"
         "(times noise-factor)\n"
         "\n"
-        "Usage:  nnet-perturb-egs-fmllr [options] <fmllr-rspecifier> <egs-rspecifier> <egs-wspecifier>\n"
+        "Usage:  nnet-perturb-egs-fmllr [options] <fmllr-rspecifier> "
+        "<egs-rspecifier> <egs-wspecifier>\n"
         "\n"
-        "nnet-perturb-egs-fmllr --noise-factor=0.2 'ark:cat exp/tri4_ali/trans.*|' ark:- ark:-\n";
-    
-        
+        "nnet-perturb-egs-fmllr --noise-factor=0.2 'ark:cat "
+        "exp/tri4_ali/trans.*|' ark:- ark:-\n";
+
     BaseFloat noise_factor = 0.1;
     int32 srand_seed = 0;
-    
+
     ParseOptions po(usage);
-    po.Register("noise-factor", &noise_factor, "Factor to interpolate fMLLR-projected "
+    po.Register("noise-factor", &noise_factor,
+                "Factor to interpolate fMLLR-projected "
                 "data with raw data (1.0 would be pure fMLLR)");
     po.Register("srand", &srand_seed, "Seed for random number generator ");
-    
+
     po.Read(argc, argv);
 
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string fmllr_rspecifier = po.GetArg(1),
-        examples_rspecifier = po.GetArg(2),
-        examples_wspecifier = po.GetArg(3);
+                examples_rspecifier = po.GetArg(2),
+                examples_wspecifier = po.GetArg(3);
 
-    std::vector<Matrix<BaseFloat>* > fmllr_transforms;
-    
+    std::vector<Matrix<BaseFloat> *> fmllr_transforms;
+
     SequentialBaseFloatMatrixReader transform_reader(fmllr_rspecifier);
     for (; !transform_reader.Done(); transform_reader.Next())
-      fmllr_transforms.push_back(new Matrix<BaseFloat>(transform_reader.Value()));
+      fmllr_transforms.push_back(
+          new Matrix<BaseFloat>(transform_reader.Value()));
 
     if (fmllr_transforms.empty()) {
       KALDI_ERR << "Read no fMLLR transforms";
     }
     KALDI_LOG << "Read " << fmllr_transforms.size() << " transforms.";
-    
+
     SequentialNnetExampleReader example_reader(examples_rspecifier);
     NnetExampleWriter example_writer(examples_wspecifier);
-    
-    
+
     int64 num_done = 0;
     for (; !example_reader.Done(); example_reader.Next(), num_done++) {
       std::string key = example_reader.Key();
@@ -115,14 +115,13 @@ int main(int argc, char *argv[]) {
       delete fmllr_transforms.back();
       fmllr_transforms.pop_back();
     }
-    
-    KALDI_LOG << "Perturbed " << num_done << " neural-network training examples "
+
+    KALDI_LOG << "Perturbed " << num_done
+              << " neural-network training examples "
               << "using fMLLR, with noise factor " << noise_factor;
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

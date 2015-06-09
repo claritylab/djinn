@@ -31,7 +31,6 @@
 #include "util/common-utils.h"
 #include "matrix/matrix-lib.h"
 
-
 namespace kaldi {
 /// @addtogroup  feat FeatureExtraction
 /// @{
@@ -42,30 +41,27 @@ struct MelBanksOptions;  // defined in feature-function.h
 
 class MelBanks {
  public:
-
   static inline BaseFloat InverseMelScale(BaseFloat mel_freq) {
-    return 700.0f * (expf (mel_freq / 1127.0f) - 1.0f);
+    return 700.0f * (expf(mel_freq / 1127.0f) - 1.0f);
   }
 
   static inline BaseFloat MelScale(BaseFloat freq) {
-    return 1127.0f * logf (1.0f + freq / 700.0f);
+    return 1127.0f * logf(1.0f + freq / 700.0f);
   }
 
-  static BaseFloat VtlnWarpFreq(BaseFloat vtln_low_cutoff,
-                                BaseFloat vtln_high_cutoff,  // discontinuities in warp func
-                                BaseFloat low_freq,
-                                BaseFloat high_freq,  // upper+lower frequency cutoffs in
-                                // the mel computation
-                                BaseFloat vtln_warp_factor,
-                                BaseFloat freq);
+  static BaseFloat VtlnWarpFreq(
+      BaseFloat vtln_low_cutoff,
+      BaseFloat vtln_high_cutoff,  // discontinuities in warp func
+      BaseFloat low_freq,
+      BaseFloat high_freq,  // upper+lower frequency cutoffs in
+      // the mel computation
+      BaseFloat vtln_warp_factor, BaseFloat freq);
 
   static BaseFloat VtlnWarpMelFreq(BaseFloat vtln_low_cutoff,
                                    BaseFloat vtln_high_cutoff,
-                                   BaseFloat low_freq,
-                                   BaseFloat high_freq,
+                                   BaseFloat low_freq, BaseFloat high_freq,
                                    BaseFloat vtln_warp_factor,
                                    BaseFloat mel_freq);
-
 
   MelBanks(const MelBanksOptions &opts,
            const FrameExtractionOptions &frame_opts,
@@ -95,17 +91,16 @@ class MelBanks {
   KALDI_DISALLOW_COPY_AND_ASSIGN(MelBanks);
 };
 
-
 // Compute liftering coefficients (scaling on cepstral coeffs)
 // coeffs are numbered slightly differently from HTK: the zeroth
 // index is C0, which is not affected.
 void ComputeLifterCoeffs(BaseFloat Q, VectorBase<BaseFloat> *coeffs);
 
-
 // Durbin's recursion - converts autocorrelation coefficients to the LPC
 // pTmp - temporal place [n]
 // pAC - autocorrelation coefficients [n + 1]
-// pLP - linear prediction coefficients [n] (predicted_sn = sum_1^P{a[i] * s[n-i]}})
+// pLP - linear prediction coefficients [n] (predicted_sn = sum_1^P{a[i] *
+// s[n-i]}})
 //       F(z) = 1 / (1 - A(z)), 1 is not stored in the demoninator
 BaseFloat Durbin(int n, const BaseFloat *pAC, BaseFloat *pLP, BaseFloat *pTmp);
 

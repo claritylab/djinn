@@ -32,7 +32,8 @@ int main(int argc, char *argv[]) {
 
     ParseOptions po(usage);
     bool add_to_features = true;
-    po.Register("add-to-features", &add_to_features, "If true, add original "
+    po.Register("add-to-features", &add_to_features,
+                "If true, add original "
                 "features to fMPE offsets (false useful for diagnostics)");
     // no non-default options.
     po.Read(argc, argv);
@@ -42,11 +43,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fmpe_rxfilename = po.GetArg(1),
-        feat_rspecifier = po.GetArg(2),
-        gselect_rspecifier = po.GetArg(3),
-        feat_wspecifier = po.GetArg(4);
-    
+    std::string fmpe_rxfilename = po.GetArg(1), feat_rspecifier = po.GetArg(2),
+                gselect_rspecifier = po.GetArg(3),
+                feat_wspecifier = po.GetArg(4);
+
     Fmpe fmpe;
     ReadKaldiObject(fmpe_rxfilename, &fmpe);
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     BaseFloatMatrixWriter feat_writer(feat_wspecifier);
 
     int32 num_done = 0, num_err = 0;
-    
+
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
       const Matrix<BaseFloat> feat_in(feat_reader.Value());
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
       }
       Matrix<BaseFloat> feat_out(feat_in.NumRows(), feat_in.NumCols());
       fmpe.ComputeFeatures(feat_in, gselect, &feat_out);
-      if (add_to_features) // feat_out += feat_in.
+      if (add_to_features)  // feat_out += feat_in.
         feat_out.AddMat(1.0, feat_in, kNoTrans);
 
       feat_writer.Write(key, feat_out);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << " Done " << num_done << " utterances, " << num_err
               << " had errors.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

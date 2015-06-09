@@ -23,14 +23,12 @@
 
 namespace kaldi {
 
-
-void InitRandomGmm (DiagGmm *gmm_in) {
-  int32 num_gauss = 5 + rand () % 4;
+void InitRandomGmm(DiagGmm *gmm_in) {
+  int32 num_gauss = 5 + rand() % 4;
   int32 dim = 10 + Rand() % 10;
   DiagGmm &gmm(*gmm_in);
   gmm.Resize(num_gauss, dim);
-  Matrix<BaseFloat> inv_vars(num_gauss, dim),
-      means(num_gauss, dim);
+  Matrix<BaseFloat> inv_vars(num_gauss, dim), means(num_gauss, dim);
   Vector<BaseFloat> weights(num_gauss);
   for (int32 i = 0; i < num_gauss; i++) {
     for (int32 j = 0; j < dim; j++) {
@@ -51,14 +49,14 @@ void UnitTestFmllrDiagGmm() {
   using namespace kaldi;
   DiagGmm gmm;
   InitRandomGmm(&gmm);
-  int32 dim =  gmm.Dim();
-  int32 npoints = dim*(dim+1)*5;
+  int32 dim = gmm.Dim();
+  int32 npoints = dim * (dim + 1) * 5;
   Matrix<BaseFloat> rand_points(npoints, dim);
   for (int32 i = 0; i < npoints; i++) {
     SubVector<BaseFloat> row(rand_points, i);
     gmm.Generate(&row);
   }
-  Matrix<BaseFloat> cur_xform(dim, dim+1);
+  Matrix<BaseFloat> cur_xform(dim, dim + 1);
   cur_xform.SetUnit();  // set diag to unit.
 
   int32 niters = 5;
@@ -82,40 +80,42 @@ void UnitTestFmllrDiagGmm() {
     {  // Test for ApplyFeatureTransformToStats:
       BaseFloat objf_change_tmp, count_tmp;
       ApplyFeatureTransformToStats(cur_xform, &stats);
-      Matrix<BaseFloat> mat(dim, dim+1);
+      Matrix<BaseFloat> mat(dim, dim + 1);
       mat.SetUnit();
       stats.Update(opts, &mat, &objf_change_tmp, &count_tmp);
       // After we apply this transform to the stats, there should
       // be nothing to gain from further transforming the data.
-      KALDI_ASSERT(objf_change_tmp/count_tmp < 0.01);
+      KALDI_ASSERT(objf_change_tmp / count_tmp < 0.01);
     }
     KALDI_LOG << "Objf change on iter " << j << " is " << objf_change;
     objf_change_tot += objf_change;
   }
   KALDI_ASSERT(ApproxEqual(count, npoints));
-  int32 num_params = dim*(dim+1);
+  int32 num_params = dim * (dim + 1);
   BaseFloat expected_objf_change = 0.5 * num_params;
-  KALDI_LOG << "Expected objf change is: not much more than " << expected_objf_change
-            <<", seen: " << objf_change_tot;
-  KALDI_ASSERT(objf_change_tot < 2.0 * expected_objf_change);  // or way too much.
-  // This test relies on statistical laws and if it fails it does not *necessarily*
+  KALDI_LOG << "Expected objf change is: not much more than "
+            << expected_objf_change << ", seen: " << objf_change_tot;
+  KALDI_ASSERT(objf_change_tot <
+               2.0 * expected_objf_change);  // or way too much.
+  // This test relies on statistical laws and if it fails it does not
+  // *necessarily*
   // mean that something is wrong.
 }
 
-
-// This is a test for the diagonal update and also of ApplyModelTransformToStats().
+// This is a test for the diagonal update and also of
+// ApplyModelTransformToStats().
 void UnitTestFmllrDiagGmmDiagonal() {
   using namespace kaldi;
   DiagGmm gmm;
   InitRandomGmm(&gmm);
-  int32 dim =  gmm.Dim();
-  int32 npoints = dim*(dim+1)*5;
+  int32 dim = gmm.Dim();
+  int32 npoints = dim * (dim + 1) * 5;
   Matrix<BaseFloat> rand_points(npoints, dim);
   for (int32 i = 0; i < npoints; i++) {
     SubVector<BaseFloat> row(rand_points, i);
     gmm.Generate(&row);
   }
-  Matrix<BaseFloat> cur_xform(dim, dim+1);
+  Matrix<BaseFloat> cur_xform(dim, dim + 1);
   cur_xform.SetUnit();  // set diag to unit.
 
   int32 niters = 2;
@@ -142,40 +142,42 @@ void UnitTestFmllrDiagGmmDiagonal() {
     {  // Test for ApplyModelTransformToStats:
       BaseFloat objf_change_tmp, count_tmp;
       ApplyModelTransformToStats(cur_xform, &stats);
-      Matrix<BaseFloat> mat(dim, dim+1);
+      Matrix<BaseFloat> mat(dim, dim + 1);
       mat.SetUnit();
       stats.Update(opts, &mat, &objf_change_tmp, &count_tmp);
       // After we apply this transform to the stats, there should
       // be nothing to gain from further transforming the data.
-      KALDI_ASSERT(objf_change_tmp/count_tmp < 0.01);
+      KALDI_ASSERT(objf_change_tmp / count_tmp < 0.01);
     }
     KALDI_LOG << "Objf change on iter " << j << " is " << objf_change;
     objf_change_tot += objf_change;
   }
   KALDI_ASSERT(ApproxEqual(count, npoints));
-  int32 num_params = dim*2;
+  int32 num_params = dim * 2;
   BaseFloat expected_objf_change = 0.5 * num_params;
-  KALDI_LOG << "Expected objf change is: not much more than " << expected_objf_change
-            <<", seen: " << objf_change_tot;
-  KALDI_ASSERT(objf_change_tot < 2.0 * expected_objf_change);  // or way too much.
-  // This test relies on statistical laws and if it fails it does not *necessarily*
+  KALDI_LOG << "Expected objf change is: not much more than "
+            << expected_objf_change << ", seen: " << objf_change_tot;
+  KALDI_ASSERT(objf_change_tot <
+               2.0 * expected_objf_change);  // or way too much.
+  // This test relies on statistical laws and if it fails it does not
+  // *necessarily*
   // mean that something is wrong.
 }
 
-
-// This is a test for the offset-only update and also of ApplyModelTransformToStats().
+// This is a test for the offset-only update and also of
+// ApplyModelTransformToStats().
 void UnitTestFmllrDiagGmmOffset() {
   using namespace kaldi;
   DiagGmm gmm;
   InitRandomGmm(&gmm);
-  int32 dim =  gmm.Dim();
-  int32 npoints = dim*(dim+1)*5;
+  int32 dim = gmm.Dim();
+  int32 npoints = dim * (dim + 1) * 5;
   Matrix<BaseFloat> rand_points(npoints, dim);
   for (int32 i = 0; i < npoints; i++) {
     SubVector<BaseFloat> row(rand_points, i);
     gmm.Generate(&row);
   }
-  Matrix<BaseFloat> cur_xform(dim, dim+1);
+  Matrix<BaseFloat> cur_xform(dim, dim + 1);
   cur_xform.SetUnit();  // set diag to unit.
 
   int32 niters = 2;
@@ -202,12 +204,12 @@ void UnitTestFmllrDiagGmmOffset() {
     {  // Test for ApplyModelTransformToStats:
       BaseFloat objf_change_tmp, count_tmp;
       ApplyModelTransformToStats(cur_xform, &stats);
-      Matrix<BaseFloat> mat(dim, dim+1);
+      Matrix<BaseFloat> mat(dim, dim + 1);
       mat.SetUnit();
       stats.Update(opts, &mat, &objf_change_tmp, &count_tmp);
       // After we apply this transform to the stats, there should
       // be nothing to gain from further transforming the data.
-      KALDI_ASSERT(objf_change_tmp/count_tmp < 0.01);
+      KALDI_ASSERT(objf_change_tmp / count_tmp < 0.01);
     }
     KALDI_LOG << "Objf change on iter " << j << " is " << objf_change;
     objf_change_tot += objf_change;
@@ -215,10 +217,12 @@ void UnitTestFmllrDiagGmmOffset() {
   KALDI_ASSERT(ApproxEqual(count, npoints));
   int32 num_params = dim;
   BaseFloat expected_objf_change = 0.5 * num_params;
-  KALDI_LOG << "Expected objf change is: not much more than " << expected_objf_change
-            <<", seen: " << objf_change_tot;
-  KALDI_ASSERT(objf_change_tot < 2.0 * expected_objf_change);  // or way too much.
-  // This test relies on statistical laws and if it fails it does not *necessarily*
+  KALDI_LOG << "Expected objf change is: not much more than "
+            << expected_objf_change << ", seen: " << objf_change_tot;
+  KALDI_ASSERT(objf_change_tot <
+               2.0 * expected_objf_change);  // or way too much.
+  // This test relies on statistical laws and if it fails it does not
+  // *necessarily*
   // mean that something is wrong.
 }
 
@@ -232,4 +236,3 @@ int main() {
   }
   std::cout << "Test OK.\n";
 }
-

@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -34,22 +33,20 @@
 
 using namespace kaldi;
 
-
 namespace kaldi {
-
 
 /*
  * Unit tests
  */
-      
-template<typename Real> 
+
+template <typename Real>
 static void UnitTestCuMathRandomize() {
   int32 M = 100 + Rand() % 200, N = 100 + Rand() % 200;
   CuMatrix<Real> src(M, N);
   CuMatrix<Real> tgt(M, N);
   CuArray<int32> copy_from_idx;
 
-  src.SetRandn(); 
+  src.SetRandn();
   int32 n_rows = src.NumRows();
   int32 n_columns = src.NumCols();
   std::vector<int32> copy_from_idx_vec;
@@ -59,7 +56,7 @@ static void UnitTestCuMathRandomize() {
   }
   copy_from_idx.CopyFromVec(copy_from_idx_vec);
   cu::Randomize(src, copy_from_idx, &tgt);
-  
+
   for (int32 i = 0; i < n_rows; i++) {
     for (int32 j = 0; j < n_columns; j++) {
       Real src_val = src(copy_from_idx_vec.at(i), j);
@@ -69,15 +66,14 @@ static void UnitTestCuMathRandomize() {
   }
 }
 
-
-template<typename Real> 
+template <typename Real>
 static void UnitTestCuMathCopy() {
   int32 M = 100 + Rand() % 200, N = 100 + Rand() % 200;
   CuMatrix<Real> src(M, N);
   CuMatrix<Real> tgt(M, N);
   CuArray<int32> copy_from_idx;
 
-  src.SetRandn(); 
+  src.SetRandn();
   int32 n_rows = src.NumRows();
   int32 n_columns = src.NumCols();
   std::vector<int32> copy_from_idx_vec;
@@ -87,7 +83,7 @@ static void UnitTestCuMathCopy() {
   }
   copy_from_idx.CopyFromVec(copy_from_idx_vec);
   cu::Copy(src, copy_from_idx, &tgt);
-  
+
   for (int32 i = 0; i < n_rows; i++) {
     for (int32 j = 0; j < n_columns; j++) {
       Real src_val = src(i, copy_from_idx_vec.at(j));
@@ -97,19 +93,19 @@ static void UnitTestCuMathCopy() {
   }
 }
 
-template<typename Real> 
+template <typename Real>
 static void UnitTestCuMathSplice() {
   int32 M = 100 + Rand() % 200, N = 100 + Rand() % 200;
   CuMatrix<Real> src(M, N);
   CuArray<int32> frame_offsets;
 
-  src.SetRandn(); 
+  src.SetRandn();
   int32 n_rows = src.NumRows();
   int32 n_columns = src.NumCols();
   std::vector<int32> frame_offsets_vec;
 
-  // The number of columns of tgt is rows(src) 
-  // times n_frame_offsets, so we keep n_frame_offsets 
+  // The number of columns of tgt is rows(src)
+  // times n_frame_offsets, so we keep n_frame_offsets
   // reasonably small (2 <= n <= 6).
   int32 n_frame_offsets = Rand() % 7 + 2;
   for (int32 i = 0; i < n_frame_offsets; i++) {
@@ -124,13 +120,13 @@ static void UnitTestCuMathSplice() {
   for (int32 i = 0; i < n_rows; i++) {
     for (int32 k = 0; k < n_frame_offsets; k++) {
       for (int32 j = 0; j < n_columns; j++) {
-        Real src_val; 
+        Real src_val;
         if (i + frame_offsets_vec.at(k) >= n_rows) {
-          src_val = src_copy(n_rows-1, j);
+          src_val = src_copy(n_rows - 1, j);
         } else if (i + frame_offsets_vec.at(k) <= 0) {
           src_val = src_copy(0, j);
         } else {
-          src_val = src_copy(i + frame_offsets_vec.at(k), j); 
+          src_val = src_copy(i + frame_offsets_vec.at(k), j);
         }
         Real tgt_val = tgt_copy(i, k * n_columns + j);
         AssertEqual(src_val, tgt_val);
@@ -139,30 +135,29 @@ static void UnitTestCuMathSplice() {
   }
 }
 
-template<typename Real> void CudaMathUnitTest() {
-  #if HAVE_CUDA == 1  
-    if (CuDevice::Instantiate().DoublePrecisionSupported())
-  #endif
-  UnitTestCuMathRandomize<Real>();
+template <typename Real>
+void CudaMathUnitTest() {
+#if HAVE_CUDA == 1
+  if (CuDevice::Instantiate().DoublePrecisionSupported())
+#endif
+    UnitTestCuMathRandomize<Real>();
   UnitTestCuMathSplice<Real>();
   UnitTestCuMathCopy<Real>();
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main() {
   for (int32 loop = 0; loop < 2; loop++) {
 #if HAVE_CUDA == 1
     if (loop == 0)
-      CuDevice::Instantiate().SelectGpuId("no"); // -1 means no GPU
+      CuDevice::Instantiate().SelectGpuId("no");  // -1 means no GPU
     else
-      CuDevice::Instantiate().SelectGpuId("yes"); // -2 .. automatic selection
+      CuDevice::Instantiate().SelectGpuId("yes");  // -2 .. automatic selection
 #endif
     srand(time(NULL));
     kaldi::CudaMathUnitTest<float>();
-    
+
 #if HAVE_CUDA == 1
     if (CuDevice::Instantiate().DoublePrecisionSupported()) {
       kaldi::CudaMathUnitTest<double>();
@@ -183,4 +178,3 @@ int main() {
 #endif
   return 0;
 }
-

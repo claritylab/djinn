@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/parse-options.h"
@@ -39,7 +38,6 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     RandFstOptions opts;
 
-
     kaldi::ParseOptions po(usage);
     po.Register("allow-empty", &opts.allow_empty,
                 "If true, we may generate an empty FST.");
@@ -51,14 +49,13 @@ int main(int argc, char *argv[]) {
 
     std::string fst_out_filename = po.GetOptArg(1);
 
-    VectorFst <StdArc> *rand_fst = RandFst<StdArc>(opts);
+    VectorFst<StdArc> *rand_fst = RandFst<StdArc>(opts);
 
     WriteFstKaldi(*rand_fst, fst_out_filename);
     delete rand_fst;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

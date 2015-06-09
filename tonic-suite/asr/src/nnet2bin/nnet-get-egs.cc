@@ -37,18 +37,14 @@ int32 GetCount(double expected_count) {
     ans++;
     expected_count--;
   }
-  if (WithProb(expected_count))
-    ans++;
+  if (WithProb(expected_count)) ans++;
   return ans;
 }
 
 static void ProcessFile(const MatrixBase<BaseFloat> &feats,
-                        const Posterior &pdf_post,
-                        int32 left_context,
-                        int32 right_context,
-                        int32 const_feat_dim,
-                        BaseFloat keep_proportion,
-                        int64 *num_frames_written,
+                        const Posterior &pdf_post, int32 left_context,
+                        int32 right_context, int32 const_feat_dim,
+                        BaseFloat keep_proportion, int64 *num_frames_written,
                         NnetExampleWriter *example_writer) {
   KALDI_ASSERT(feats.NumRows() == static_cast<int32>(pdf_post.size()));
   int32 feat_dim = feats.NumCols();
@@ -62,7 +58,7 @@ static void ProcessFile(const MatrixBase<BaseFloat> &feats,
   eg.left_context = left_context;
   eg.spk_info.Resize(const_feat_dim);
   for (int32 i = 0; i < feats.NumRows(); i++) {
-    int32 count = GetCount(keep_proportion); // number of times
+    int32 count = GetCount(keep_proportion);  // number of times
     // we'll write this out (1 by default).
     if (count > 0) {
       // Set up "input_frames".
@@ -78,24 +74,22 @@ static void ProcessFile(const MatrixBase<BaseFloat> &feats,
       eg.input_frames = input_frames;
       if (const_feat_dim > 0) {
         // we'll normally reach here if we're using online-estimated iVectors.
-        SubVector<BaseFloat> const_part(feats.Row(i),
-                                        basic_feat_dim, const_feat_dim);
+        SubVector<BaseFloat> const_part(feats.Row(i), basic_feat_dim,
+                                        const_feat_dim);
         eg.spk_info.CopyFromVec(const_part);
       }
       std::ostringstream os;
       os << ((*num_frames_written)++);
-      std::string key = os.str(); // key in the archive is the number of the
+      std::string key = os.str();  // key in the archive is the number of the
       // example.
 
-      for (int32 c = 0; c < count; c++)
-        example_writer->Write(key, eg);
+      for (int32 c = 0; c < count; c++) example_writer->Write(key, eg);
     }
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -116,52 +110,59 @@ int main(int argc, char *argv[]) {
         "\n"
         "An example [where $feats expands to the actual features]:\n"
         "nnet-get-egs --left-context=8 --right-context=8 \"$feats\" \\\n"
-        "  \"ark:gunzip -c exp/nnet/ali.1.gz | ali-to-pdf exp/nnet/1.nnet ark:- ark:- | ali-to-post ark:- ark:- |\" \\\n"
+        "  \"ark:gunzip -c exp/nnet/ali.1.gz | ali-to-pdf exp/nnet/1.nnet "
+        "ark:- ark:- | ali-to-post ark:- ark:- |\" \\\n"
         "   ark:- \n"
         "Note: the --left-context and --right-context would be derived from\n"
         "the output of nnet-info.";
-        
-    
+
     int32 left_context = 0, right_context = 0, const_feat_dim = 0;
     int32 srand_seed = 0;
     BaseFloat keep_proportion = 1.0;
-    
+
     ParseOptions po(usage);
-    po.Register("left-context", &left_context, "Number of frames of left context "
+    po.Register("left-context", &left_context,
+                "Number of frames of left context "
                 "the neural net requires.");
-    po.Register("right-context", &right_context, "Number of frames of right context "
+    po.Register("right-context", &right_context,
+                "Number of frames of right context "
                 "the neural net requires.");
-    po.Register("const-feat-dim", &const_feat_dim, "If specified, the last "
+    po.Register("const-feat-dim", &const_feat_dim,
+                "If specified, the last "
                 "const-feat-dim dimensions of the feature input are treated as "
                 "constant over the context window (so are not spliced)");
-    po.Register("keep-proportion", &keep_proportion, "If <1.0, this program will "
-                "randomly keep this proportion of the input samples.  If >1.0, it will "
-                "in expectation copy a sample this many times.  It will copy it a number "
-                "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
-    po.Register("srand", &srand_seed, "Seed for random number generator "
+    po.Register(
+        "keep-proportion", &keep_proportion,
+        "If <1.0, this program will "
+        "randomly keep this proportion of the input samples.  If >1.0, it will "
+        "in expectation copy a sample this many times.  It will copy it a "
+        "number "
+        "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
+    po.Register("srand", &srand_seed,
+                "Seed for random number generator "
                 "(only relevant if --keep-proportion != 1.0)");
-    
+
     po.Read(argc, argv);
 
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string feature_rspecifier = po.GetArg(1),
-        pdf_post_rspecifier = po.GetArg(2),
-        examples_wspecifier = po.GetArg(3);
+                pdf_post_rspecifier = po.GetArg(2),
+                examples_wspecifier = po.GetArg(3);
 
     // Read in all the training files.
     SequentialBaseFloatMatrixReader feat_reader(feature_rspecifier);
     RandomAccessPosteriorReader pdf_post_reader(pdf_post_rspecifier);
     NnetExampleWriter example_writer(examples_wspecifier);
-    
+
     int32 num_done = 0, num_err = 0;
     int64 num_frames_written = 0;
-    
+
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
       const Matrix<BaseFloat> &feats = feat_reader.Value();
@@ -176,9 +177,9 @@ int main(int argc, char *argv[]) {
           num_err++;
           continue;
         }
-        ProcessFile(feats, pdf_post,
-                    left_context, right_context, const_feat_dim,
-                    keep_proportion, &num_frames_written, &example_writer);
+        ProcessFile(feats, pdf_post, left_context, right_context,
+                    const_feat_dim, keep_proportion, &num_frames_written,
+                    &example_writer);
         num_done++;
       }
     }
@@ -188,7 +189,7 @@ int main(int argc, char *argv[]) {
               << " feature files, wrote " << num_frames_written << " examples, "
               << num_err << " files had errors.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

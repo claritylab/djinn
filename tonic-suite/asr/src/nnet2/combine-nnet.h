@@ -33,42 +33,47 @@ namespace nnet2 {
     combination of the different neural-net parameters.
  */
 struct NnetCombineConfig {
-  int32 initial_model; // If provided, the index of the initial model to start
+  int32 initial_model;  // If provided, the index of the initial model to start
   // the optimization from.
-  int32 num_bfgs_iters; // The dimension is small (e.g. 3 to 5 times the
+  int32 num_bfgs_iters;  // The dimension is small (e.g. 3 to 5 times the
   // number of neural nets we were given, e.g. 10) so we do
   // BFGS.  We actually implement this as L-BFGS but setting the number of
   // vectors to be the same as the dimension of the space.  Note: this
   // num-iters is in reality the number of function evaluations.
-  
+
   BaseFloat initial_impr;
   bool test_gradient;
-  NnetCombineConfig(): initial_model(-1), num_bfgs_iters(30),
-                       initial_impr(0.01),
-                       test_gradient(false) { }
-  
+  NnetCombineConfig()
+      : initial_model(-1),
+        num_bfgs_iters(30),
+        initial_impr(0.01),
+        test_gradient(false) {}
+
   void Register(OptionsItf *po) {
-    po->Register("initial-model", &initial_model, "Specifies where to start the "
-                 "optimization from.  If 0 ... #models-1, then specifies the model; "
-                 "if #models, then the average of all inputs; otherwise, chosen "
-                 "automatically from the previous options.");
-    po->Register("num-bfgs-iters", &num_bfgs_iters, "Maximum number of function "
-                 "evaluations for BFGS to use when optimizing combination weights");
-    po->Register("initial-impr", &initial_impr, "Amount of objective-function change "
+    po->Register(
+        "initial-model", &initial_model,
+        "Specifies where to start the "
+        "optimization from.  If 0 ... #models-1, then specifies the model; "
+        "if #models, then the average of all inputs; otherwise, chosen "
+        "automatically from the previous options.");
+    po->Register(
+        "num-bfgs-iters", &num_bfgs_iters,
+        "Maximum number of function "
+        "evaluations for BFGS to use when optimizing combination weights");
+    po->Register("initial-impr", &initial_impr,
+                 "Amount of objective-function change "
                  "we aim for on the first iteration.");
-    po->Register("test-gradient", &test_gradient, "If true, activate code that "
+    po->Register("test-gradient", &test_gradient,
+                 "If true, activate code that "
                  "tests the gradient is accurate.");
-  }  
+  }
 };
 
 void CombineNnets(const NnetCombineConfig &combine_config,
                   const std::vector<NnetExample> &validation_set,
-                  const std::vector<Nnet> &nnets_in,
-                  Nnet *nnet_out);
-  
+                  const std::vector<Nnet> &nnets_in, Nnet *nnet_out);
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

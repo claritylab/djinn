@@ -39,27 +39,26 @@ class DiscriminativeExamplesRepository {
   /// when we're done reading examples; it signals this way to this class
   /// that the stream is now empty
   void ExamplesDone();
-  
+
   /// This function is called by the code that does the training.  If there is
   /// an example available it will provide it, or it will sleep till one is
   /// available.  It returns NULL when there are no examples left and
   /// ExamplesDone() has been called.
   DiscriminativeNnetExample *ProvideExample();
 
-  DiscriminativeExamplesRepository(): buffer_size_(4),
-                                      empty_semaphore_(buffer_size_),
-                                      done_(false) { }
+  DiscriminativeExamplesRepository()
+      : buffer_size_(4), empty_semaphore_(buffer_size_), done_(false) {}
+
  private:
   int32 buffer_size_;
   Semaphore full_semaphore_;
   Semaphore empty_semaphore_;
-  Mutex examples_mutex_; // mutex we lock to modify examples_.
-  
-  std::deque<DiscriminativeNnetExample*> examples_;
+  Mutex examples_mutex_;  // mutex we lock to modify examples_.
+
+  std::deque<DiscriminativeNnetExample *> examples_;
   bool done_;
   KALDI_DISALLOW_COPY_AND_ASSIGN(DiscriminativeExamplesRepository);
 };
-
 
 void DiscriminativeExamplesRepository::AcceptExample(
     const DiscriminativeNnetExample &example) {
@@ -71,25 +70,23 @@ void DiscriminativeExamplesRepository::AcceptExample(
 }
 
 void DiscriminativeExamplesRepository::ExamplesDone() {
-  for (int32 i = 0; i < buffer_size_; i++)
-    empty_semaphore_.Wait();
-  examples_mutex_.Lock();  
+  for (int32 i = 0; i < buffer_size_; i++) empty_semaphore_.Wait();
+  examples_mutex_.Lock();
   KALDI_ASSERT(examples_.empty());
   examples_mutex_.Unlock();
   done_ = true;
   full_semaphore_.Signal();
 }
 
-DiscriminativeNnetExample*
-DiscriminativeExamplesRepository::ProvideExample() {
+DiscriminativeNnetExample *DiscriminativeExamplesRepository::ProvideExample() {
   full_semaphore_.Wait();
   if (done_) {
     KALDI_ASSERT(examples_.empty());
-    full_semaphore_.Signal(); // Increment the semaphore so
+    full_semaphore_.Signal();  // Increment the semaphore so
     // the call by the next thread will not block.
-    return NULL; // no examples to return-- all finished.
+    return NULL;  // no examples to return-- all finished.
   } else {
-    examples_mutex_.Lock();  
+    examples_mutex_.Lock();
     KALDI_ASSERT(!examples_.empty());
     DiscriminativeNnetExample *ans = examples_.front();
     examples_.pop_front();
@@ -99,33 +96,35 @@ DiscriminativeExamplesRepository::ProvideExample() {
   }
 }
 
-
-class DiscTrainParallelClass: public MultiThreadable {
+class DiscTrainParallelClass : public MultiThreadable {
  public:
   // This constructor is only called for a temporary object
   // that we pass to the RunMultiThreaded function.
-  DiscTrainParallelClass(const AmNnet &am_nnet,
-                         const TransitionModel &tmodel,
+  DiscTrainParallelClass(const AmNnet &am_nnet, const TransitionModel &tmodel,
                          const NnetDiscriminativeUpdateOptions &opts,
                          bool store_separate_gradients,
                          DiscriminativeExamplesRepository *repository,
-                         Nnet *nnet_to_update,
-                         NnetDiscriminativeStats *stats):
-      am_nnet_(am_nnet), tmodel_(tmodel), opts_(opts),
-      store_separate_gradients_(store_separate_gradients),
-      repository_(repository),
-      nnet_to_update_(nnet_to_update),
-      nnet_to_update_orig_(nnet_to_update),
-      stats_ptr_(stats) { }
-  
+                         Nnet *nnet_to_update, NnetDiscriminativeStats *stats)
+      : am_nnet_(am_nnet),
+        tmodel_(tmodel),
+        opts_(opts),
+        store_separate_gradients_(store_separate_gradients),
+        repository_(repository),
+        nnet_to_update_(nnet_to_update),
+        nnet_to_update_orig_(nnet_to_update),
+        stats_ptr_(stats) {}
+
   // The following constructor is called multiple times within
   // the RunMultiThreaded template function.
-  DiscTrainParallelClass(const DiscTrainParallelClass &other):
-  am_nnet_(other.am_nnet_), tmodel_(other.tmodel_), opts_(other.opts_),
-  store_separate_gradients_(other.store_separate_gradients_),
-  repository_(other.repository_), nnet_to_update_(other.nnet_to_update_),
-  nnet_to_update_orig_(other.nnet_to_update_orig_),
-  stats_ptr_(other.stats_ptr_) {
+  DiscTrainParallelClass(const DiscTrainParallelClass &other)
+      : am_nnet_(other.am_nnet_),
+        tmodel_(other.tmodel_),
+        opts_(other.opts_),
+        store_separate_gradients_(other.store_separate_gradients_),
+        repository_(other.repository_),
+        nnet_to_update_(other.nnet_to_update_),
+        nnet_to_update_orig_(other.nnet_to_update_orig_),
+        stats_ptr_(other.stats_ptr_) {
     if (store_separate_gradients_) {
       // To ensure correctness, we work on separate copies of the gradient
       // object, which we'll sum at the end.  This is used for exact gradient
@@ -137,40 +136,42 @@ class DiscTrainParallelClass: public MultiThreadable {
         // to zero we would end up adding multiple copies of the any initial
         // gradient that "nnet_to_update_" contained when we initialize
         // the first instance of the class.
-        nnet_to_update_->SetZero(true);      
-      } else { // support case where we don't really need a gradient.
+        nnet_to_update_->SetZero(true);
+      } else {  // support case where we don't really need a gradient.
         nnet_to_update_ = NULL;
       }
-    }    
+    }
   }
   // This does the main function of the class.
-  void operator () () {
+  void operator()() {
     DiscriminativeNnetExample *example;
     while ((example = repository_->ProvideExample()) != NULL) {
       // This is a function call to a function defined in
       // nnet-compute-discriminative.h
-      NnetDiscriminativeUpdate(am_nnet_, tmodel_, opts_,
-                               *example, nnet_to_update_, &stats_);
+      NnetDiscriminativeUpdate(am_nnet_, tmodel_, opts_, *example,
+                               nnet_to_update_, &stats_);
       delete example;
 
       if (GetVerboseLevel() > 3) {
         KALDI_VLOG(3) << "Printing local stats for thread " << thread_id_;
         stats_.Print(opts_.criterion);
       }
-    }    
+    }
   }
-  
+
   ~DiscTrainParallelClass() {
     if (nnet_to_update_orig_ != nnet_to_update_) {
       // This branch is only taken if this instance of the class is
       // one of the multiple instances allocated inside the RunMultiThreaded
-      // template function, *and* store_separate_gradients_ has been set to true.
+      // template function, *and* store_separate_gradients_ has been set to
+      // true.
       // In the typical hogwild case, we don't do this.
       nnet_to_update_orig_->AddNnet(1.0, *nnet_to_update_);
       delete nnet_to_update_;
     }
     stats_ptr_->Add(stats_);
   }
+
  private:
   const AmNnet &am_nnet_;
   const TransitionModel &tmodel_;
@@ -183,23 +184,17 @@ class DiscTrainParallelClass: public MultiThreadable {
   NnetDiscriminativeStats stats_;
 };
 
-
-
 void NnetDiscriminativeUpdateParallel(
-    const AmNnet &am_nnet,
-    const TransitionModel &tmodel,
-    const NnetDiscriminativeUpdateOptions &opts,
-    int32 num_threads,
+    const AmNnet &am_nnet, const TransitionModel &tmodel,
+    const NnetDiscriminativeUpdateOptions &opts, int32 num_threads,
     SequentialDiscriminativeNnetExampleReader *example_reader,
-    Nnet *nnet_to_update,
-    NnetDiscriminativeStats *stats) {
-  
+    Nnet *nnet_to_update, NnetDiscriminativeStats *stats) {
   DiscriminativeExamplesRepository repository;
-  
-  const bool store_separate_gradients = (nnet_to_update != &(am_nnet.GetNnet()));
-  
-  DiscTrainParallelClass c(am_nnet, tmodel, opts,
-                           store_separate_gradients,
+
+  const bool store_separate_gradients =
+      (nnet_to_update != &(am_nnet.GetNnet()));
+
+  DiscTrainParallelClass c(am_nnet, tmodel, opts, store_separate_gradients,
                            &repository, nnet_to_update, stats);
 
   {
@@ -215,7 +210,5 @@ void NnetDiscriminativeUpdateParallel(
   stats->Print(opts.criterion);
 }
 
-
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi

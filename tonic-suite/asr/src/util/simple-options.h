@@ -29,18 +29,16 @@
 
 namespace kaldi {
 
-
 /// The class SimpleOptions is an implementation of OptionsItf that allows
 /// setting and getting option values programmatically, i.e., via getter
-/// and setter methods. It doesn't provide any command line parsing functionality.
+/// and setter methods. It doesn't provide any command line parsing
+/// functionality.
 /// The class ParseOptions should be used for command-line options.
 class SimpleOptions : public OptionsItf {
  public:
-  SimpleOptions() {
-  }
+  SimpleOptions() {}
 
-  virtual ~SimpleOptions() {
-  }
+  virtual ~SimpleOptions() {}
 
   // Methods from the interface
   void Register(const std::string &name, bool *ptr, const std::string &doc);
@@ -58,7 +56,7 @@ class SimpleOptions : public OptionsItf {
   bool SetOption(const std::string &key, const float &value);
   bool SetOption(const std::string &key, const double &value);
   bool SetOption(const std::string &key, const std::string &value);
-  bool SetOption(const std::string &key, const char* value);
+  bool SetOption(const std::string &key, const char *value);
 
   // get option with the specified key and put to 'value',
   // return true if successful
@@ -69,19 +67,11 @@ class SimpleOptions : public OptionsItf {
   bool GetOption(const std::string &key, double *value);
   bool GetOption(const std::string &key, std::string *value);
 
-  enum OptionType {
-    kBool,
-    kInt32,
-    kUint32,
-    kFloat,
-    kDouble,
-    kString
-  };
+  enum OptionType { kBool, kInt32, kUint32, kFloat, kDouble, kString };
 
   struct OptionInfo {
-    OptionInfo(const std::string &doc, OptionType type) :
-      doc(doc), type(type) {
-    }
+    OptionInfo(const std::string &doc, OptionType type)
+        : doc(doc), type(type) {}
     std::string doc;
     OptionType type;
   };
@@ -95,16 +85,15 @@ class SimpleOptions : public OptionsItf {
   bool GetOptionType(const std::string &key, OptionType *type);
 
  private:
-
   std::vector<std::pair<std::string, OptionInfo> > option_info_list_;
 
   // maps for option variables
-  std::map<std::string, bool*> bool_map_;
-  std::map<std::string, int32*> int_map_;
-  std::map<std::string, uint32*> uint_map_;
-  std::map<std::string, float*> float_map_;
-  std::map<std::string, double*> double_map_;
-  std::map<std::string, std::string*> string_map_;
+  std::map<std::string, bool *> bool_map_;
+  std::map<std::string, int32 *> int_map_;
+  std::map<std::string, uint32 *> uint_map_;
+  std::map<std::string, float *> float_map_;
+  std::map<std::string, double *> double_map_;
+  std::map<std::string, std::string *> string_map_;
 };
 
 }  // namespace kaldi

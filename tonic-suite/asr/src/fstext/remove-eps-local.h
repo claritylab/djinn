@@ -20,12 +20,10 @@
 #ifndef KALDI_FSTEXT_REMOVE_EPS_LOCAL_H_
 #define KALDI_FSTEXT_REMOVE_EPS_LOCAL_H_
 
-
 #include <fst/fstlib.h>
 #include <fst/fst-decl.h>
 
 namespace fst {
-
 
 /// RemoveEpsLocal remove some (but not necessarily all) epsilons in an FST,
 /// using an algorithm that is guaranteed to never increase the number of arcs
@@ -41,13 +39,12 @@ namespace fst {
 /// be able to guarantee equivalence in the original semiring (this arises from
 /// what happens when we combine identical arcs).
 
-template<class Arc>
+template <class Arc>
 void RemoveEpsLocal(MutableFst<Arc> *fst);
 
 /// As RemoveEpsLocal but takes care to preserve stochasticity
 /// when cast to LogArc.
 inline void RemoveEpsLocalSpecial(MutableFst<StdArc> *fst);
-
 
 }  // namespace fst
 

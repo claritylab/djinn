@@ -17,16 +17,15 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/determinize-star.h"
 #include "fstext/fstext-utils.h"
 #ifndef _MSC_VER
-#include <signal.h> // Comment this line and the call to signal below if
+#include <signal.h>  // Comment this line and the call to signal below if
 // it causes compilation problems.  It is only to enable a debugging procedure
-// when determinization does not terminate.  
+// when determinization does not terminate.
 #endif
 
 /* some test  examples.
@@ -42,31 +41,29 @@ EOF
 
  ( echo "0 0 0 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
  ( echo "0 0 1 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
- ( echo "0 0 1 0"; echo "0 1 1 0"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
+ ( echo "0 0 1 0"; echo "0 1 1 0"; echo "0 0" ) | fstcompile |
+fstdeterminizestar | fstprint
  # this last one fails [correctly]:
  ( echo "0 0 0 1"; echo "0 0" ) | fstcompile | fstdeterminizestar | fstprint
 
   cd ~/tmpdir
   while true; do
     fstrand > 1.fst
-    fstpredeterminize out.lst 1.fst | fstdeterminizestar | fstrmsymbols out.lst > 2.fst
+    fstpredeterminize out.lst 1.fst | fstdeterminizestar | fstrmsymbols out.lst
+> 2.fst
     fstequivalent --random=true 1.fst 2.fst || echo "Test failed"
     echo -n "."
   done
 
  Test of debugging [with non-determinizable input]:
- ( echo " 0 0 1 0 1.0"; echo "0 1 1 0"; echo "1 1 1 0 0"; echo "0 2 2 0"; echo "2"; echo "1" ) | fstcompile | fstdeterminizestar
+ ( echo " 0 0 1 0 1.0"; echo "0 1 1 0"; echo "1 1 1 0 0"; echo "0 2 2 0"; echo
+"2"; echo "1" ) | fstcompile | fstdeterminizestar
   kill -SIGUSR1 [the process-id of fstdeterminizestar]
   # prints out a bunch of debugging output showing the mess it got itself into.
 */
 
-
 bool debug_location = false;
-void signal_handler(int) {
-  debug_location = true;
-}
-
-
+void signal_handler(int) { debug_location = true; }
 
 int main(int argc, char *argv[]) {
   try {
@@ -88,29 +85,23 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string phi_str = po.GetOptArg(1),
-        fst_in_str = po.GetOptArg(2),
-        fst_out_str = po.GetOptArg(3);
-    
+    std::string phi_str = po.GetOptArg(1), fst_in_str = po.GetOptArg(2),
+                fst_out_str = po.GetOptArg(3);
 
     int32 phi_label;
-    if (!ConvertStringToInteger(phi_str, &phi_label)
-        || phi_label < 0)
+    if (!ConvertStringToInteger(phi_str, &phi_label) || phi_label < 0)
       KALDI_ERR << "Bad phi label " << phi_label;
-    if (phi_label == 0)
-      KALDI_WARN  << "Phi_label == 0, may not be a good idea.";
-
+    if (phi_label == 0) KALDI_WARN << "Phi_label == 0, may not be a good idea.";
 
     VectorFst<StdArc> *fst = ReadFstKaldi(fst_in_str);
-    
+
     PropagateFinal(phi_label, fst);
-    
+
     WriteFstKaldi(*fst, fst_out_str);
     delete fst;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

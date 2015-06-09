@@ -22,7 +22,6 @@
 
 namespace kaldi {
 
-
 OnlineFeaturePipelineConfig::OnlineFeaturePipelineConfig(
     const OnlineFeaturePipelineCommandLineConfig &config) {
   if (config.feature_type == "mfcc" || config.feature_type == "plp" ||
@@ -53,7 +52,7 @@ OnlineFeaturePipelineConfig::OnlineFeaturePipelineConfig(
       KALDI_WARN << "--fbank-config option has no effect "
                  << "since feature type is set to " << feature_type << ".";
   }  // else use the defaults.
-  
+
   add_pitch = config.add_pitch;
   if (config.pitch_config != "") {
     ReadConfigFromFile(config.pitch_config, &pitch_opts);
@@ -100,47 +99,46 @@ OnlineFeaturePipelineConfig::OnlineFeaturePipelineConfig(
   lda_rxfilename = config.lda_rxfilename;
 }
 
-
 OnlineFeaturePipeline::OnlineFeaturePipeline(
-    const OnlineFeaturePipelineConfig &config,
-    const Matrix<BaseFloat> &lda_mat,
-    const Matrix<BaseFloat> &global_cmvn_stats):
-    config_(config), lda_mat_(lda_mat), global_cmvn_stats_(global_cmvn_stats) {
+    const OnlineFeaturePipelineConfig &config, const Matrix<BaseFloat> &lda_mat,
+    const Matrix<BaseFloat> &global_cmvn_stats)
+    : config_(config),
+      lda_mat_(lda_mat),
+      global_cmvn_stats_(global_cmvn_stats) {
   Init();
 }
 
-
 OnlineFeaturePipeline::OnlineFeaturePipeline(
-    const OnlineFeaturePipelineConfig &config):
-    config_(config) {
+    const OnlineFeaturePipelineConfig &config)
+    : config_(config) {
   if (config.lda_rxfilename != "")
     ReadKaldiObject(config.lda_rxfilename, &lda_mat_);
   if (config.global_cmvn_stats_rxfilename != "")
-    ReadKaldiObject(config.global_cmvn_stats_rxfilename,
-                    &global_cmvn_stats_);
+    ReadKaldiObject(config.global_cmvn_stats_rxfilename, &global_cmvn_stats_);
   Init();
 }
 
-OnlineFeaturePipeline* OnlineFeaturePipeline::New() const {
-  return new OnlineFeaturePipeline(config_, lda_mat_,
-                                   global_cmvn_stats_);
+OnlineFeaturePipeline *OnlineFeaturePipeline::New() const {
+  return new OnlineFeaturePipeline(config_, lda_mat_, global_cmvn_stats_);
 }
 
-OnlineFeatureInterface* OnlineFeaturePipeline::UnadaptedFeature() const {
-  if (lda_) return lda_;
-  else if (splice_or_delta_) return splice_or_delta_;
+OnlineFeatureInterface *OnlineFeaturePipeline::UnadaptedFeature() const {
+  if (lda_)
+    return lda_;
+  else if (splice_or_delta_)
+    return splice_or_delta_;
   else {
     KALDI_ASSERT(feature_ != NULL);
     return feature_;
   }
 }
 
-OnlineFeatureInterface* OnlineFeaturePipeline::AdaptedFeature() const {
-  if (fmllr_) return fmllr_;
+OnlineFeatureInterface *OnlineFeaturePipeline::AdaptedFeature() const {
+  if (fmllr_)
+    return fmllr_;
   else
     return UnadaptedFeature();
 }
-
 
 void OnlineFeaturePipeline::SetCmvnState(const OnlineCmvnState &cmvn_state) {
   cmvn_->SetState(cmvn_state);
@@ -151,7 +149,6 @@ void OnlineFeaturePipeline::GetCmvnState(OnlineCmvnState *cmvn_state) {
   // the following call will crash if no frames are ready.
   cmvn_->GetState(frame, cmvn_state);
 }
-
 
 // Init() is to be called from the constructor; it assumes the pointer
 // members are all uninitialized but config_ and lda_mat_ are
@@ -187,8 +184,7 @@ void OnlineFeaturePipeline::Init() {
 
   if (config_.add_pitch) {
     pitch_ = new OnlinePitchFeature(config_.pitch_opts);
-    pitch_feature_ = new OnlineProcessPitch(config_.pitch_process_opts,
-                                            pitch_);
+    pitch_feature_ = new OnlineProcessPitch(config_.pitch_process_opts, pitch_);
     feature_ = new OnlineAppendFeature(cmvn_, pitch_feature_);
   } else {
     pitch_ = NULL;
@@ -200,19 +196,16 @@ void OnlineFeaturePipeline::Init() {
     KALDI_ERR << "You cannot supply both --add-deltas and "
               << "--splice-feats options.";
   } else if (config_.splice_feats) {
-    splice_or_delta_ = new OnlineSpliceFrames(config_.splice_opts,
-                                              feature_);
+    splice_or_delta_ = new OnlineSpliceFrames(config_.splice_opts, feature_);
   } else if (config_.add_deltas) {
-    splice_or_delta_ = new OnlineDeltaFeature(config_.delta_opts,
-                                              feature_);
+    splice_or_delta_ = new OnlineDeltaFeature(config_.delta_opts, feature_);
   } else {
     splice_or_delta_ = NULL;
   }
 
   if (lda_mat_.NumRows() != 0) {
-    lda_ = new OnlineTransform(lda_mat_,
-                               (splice_or_delta_ != NULL ?
-                                splice_or_delta_ : feature_));
+    lda_ = new OnlineTransform(
+        lda_mat_, (splice_or_delta_ != NULL ? splice_or_delta_ : feature_));
   } else {
     lda_ = NULL;
   }
@@ -233,14 +226,11 @@ void OnlineFeaturePipeline::SetTransform(
   }
 }
 
-
 void OnlineFeaturePipeline::FreezeCmvn() {
   cmvn_->Freeze(cmvn_->NumFramesReady() - 1);
 }
 
-int32 OnlineFeaturePipeline::Dim() const {
-  return AdaptedFeature()->Dim();
-}
+int32 OnlineFeaturePipeline::Dim() const { return AdaptedFeature()->Dim(); }
 bool OnlineFeaturePipeline::IsLastFrame(int32 frame) const {
   return AdaptedFeature()->IsLastFrame(frame);
 }
@@ -248,8 +238,7 @@ int32 OnlineFeaturePipeline::NumFramesReady() const {
   return AdaptedFeature()->NumFramesReady();
 }
 
-void OnlineFeaturePipeline::GetFrame(int32 frame,
-                                     VectorBase<BaseFloat> *feat) {
+void OnlineFeaturePipeline::GetFrame(int32 frame, VectorBase<BaseFloat> *feat) {
   AdaptedFeature()->GetFrame(frame, feat);
 }
 
@@ -270,17 +259,14 @@ OnlineFeaturePipeline::~OnlineFeaturePipeline() {
 }
 
 void OnlineFeaturePipeline::AcceptWaveform(
-    BaseFloat sampling_rate,
-    const VectorBase<BaseFloat> &waveform) {
+    BaseFloat sampling_rate, const VectorBase<BaseFloat> &waveform) {
   base_feature_->AcceptWaveform(sampling_rate, waveform);
-  if (pitch_)
-    pitch_->AcceptWaveform(sampling_rate, waveform);
+  if (pitch_) pitch_->AcceptWaveform(sampling_rate, waveform);
 }
 
 void OnlineFeaturePipeline::InputFinished() {
   base_feature_->InputFinished();
-  if (pitch_)
-    pitch_->InputFinished();
+  if (pitch_) pitch_->InputFinished();
 }
 
 BaseFloat OnlineFeaturePipelineConfig::FrameShiftInSeconds() const {

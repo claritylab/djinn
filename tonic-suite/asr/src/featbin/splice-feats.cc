@@ -33,9 +33,10 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     int32 left_context = 4, right_context = 4;
 
-
-    po.Register("left-context", &left_context, "Number of frames of left context");
-    po.Register("right-context", &right_context, "Number of frames of right context");
+    po.Register("left-context", &left_context,
+                "Number of frames of left context");
+    po.Register("right-context", &right_context,
+                "Number of frames of right context");
 
     po.Read(argc, argv);
 
@@ -51,17 +52,12 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader kaldi_reader(rspecifier);
     for (; !kaldi_reader.Done(); kaldi_reader.Next()) {
       Matrix<BaseFloat> spliced;
-      SpliceFrames(kaldi_reader.Value(),
-                   left_context,
-                   right_context,
-                   &spliced);
+      SpliceFrames(kaldi_reader.Value(), left_context, right_context, &spliced);
       kaldi_writer.Write(kaldi_reader.Key(), spliced);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

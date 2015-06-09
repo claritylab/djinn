@@ -22,33 +22,35 @@
 
 namespace kaldi {
 
-
-bool ReadScriptFile(const std::string &rxfilename,
-                    bool warn,
-                    std::vector<std::pair<std::string, std::string> > *script_out) {
+bool ReadScriptFile(
+    const std::string &rxfilename, bool warn,
+    std::vector<std::pair<std::string, std::string> > *script_out) {
   bool is_binary;
   Input input;
 
   if (!input.Open(rxfilename, &is_binary)) {
-    if (warn) KALDI_WARN << "Error opening script file: " <<
-                 PrintableRxfilename(rxfilename);
+    if (warn)
+      KALDI_WARN << "Error opening script file: "
+                 << PrintableRxfilename(rxfilename);
     return false;
   }
   if (is_binary) {
-    if (warn) KALDI_WARN << "Error: script file appears to be binary: " <<
-                 PrintableRxfilename(rxfilename);
+    if (warn)
+      KALDI_WARN << "Error: script file appears to be binary: "
+                 << PrintableRxfilename(rxfilename);
     return false;
   }
 
   bool ans = ReadScriptFile(input.Stream(), warn, script_out);
   if (warn && !ans)
-    KALDI_WARN << "[script file was: " << PrintableRxfilename(rxfilename) << "]";
+    KALDI_WARN << "[script file was: " << PrintableRxfilename(rxfilename)
+               << "]";
   return ans;
 }
 
-bool ReadScriptFile(std::istream &is,
-                    bool warn,
-                    std::vector<std::pair<std::string, std::string> > *script_out) {
+bool ReadScriptFile(
+    std::istream &is, bool warn,
+    std::vector<std::pair<std::string, std::string> > *script_out) {
   KALDI_ASSERT(script_out != NULL);
   std::string line;
   int line_number = 0;
@@ -56,7 +58,8 @@ bool ReadScriptFile(std::istream &is,
     line_number++;
     const char *c = line.c_str();
     if (*c == '\0') {
-      if (warn) KALDI_WARN << "Empty "<<line_number<<"'th line in script file";
+      if (warn)
+        KALDI_WARN << "Empty " << line_number << "'th line in script file";
       return false;  // Empty line so invalid scp file format..
     }
 
@@ -64,21 +67,23 @@ bool ReadScriptFile(std::istream &is,
     SplitStringOnFirstSpace(line, &key, &rest);
 
     if (key.empty() || rest.empty()) {
-      if (warn) KALDI_WARN << "Invalid "<<line_number<<"'th line in script file"
-                          <<":\"" << line << '"';
+      if (warn)
+        KALDI_WARN << "Invalid " << line_number << "'th line in script file"
+                   << ":\"" << line << '"';
       return false;
     }
     // Not using push_back because who knows how many temp. variables
     // used there.
-    script_out->resize(script_out->size()+1);
+    script_out->resize(script_out->size() + 1);
     script_out->back().first = key;
     script_out->back().second = rest;
   }
   return true;
 }
 
-bool WriteScriptFile(std::ostream &os,
-                     const std::vector<std::pair<std::string, std::string> > &script) {
+bool WriteScriptFile(
+    std::ostream &os,
+    const std::vector<std::pair<std::string, std::string> > &script) {
   if (!os.good()) {
     KALDI_WARN << "WriteScriptFile: attempting to write to invalid stream.";
     return false;
@@ -86,14 +91,17 @@ bool WriteScriptFile(std::ostream &os,
   std::vector<std::pair<std::string, std::string> >::const_iterator iter;
   for (iter = script.begin(); iter != script.end(); iter++) {
     if (!IsToken(iter->first)) {
-      KALDI_WARN << "WriteScriptFile: using invalid token \"" << iter->first << '"';
+      KALDI_WARN << "WriteScriptFile: using invalid token \"" << iter->first
+                 << '"';
       return false;
     }
     if (iter->second.find('\n') != std::string::npos ||
-       (iter->second.length() != 0 &&
-        (isspace(iter->second[0]) || isspace(iter->second[iter->second.length()-1])))) {
+        (iter->second.length() != 0 &&
+         (isspace(iter->second[0]) ||
+          isspace(iter->second[iter->second.length() - 1])))) {
       // second part contains newline or leading or trailing space.
-      KALDI_WARN << "WriteScriptFile: attempting to write invalid line \"" << iter->second << '"';
+      KALDI_WARN << "WriteScriptFile: attempting to write invalid line \""
+                 << iter->second << '"';
       return false;
     }
     os << iter->first << ' ' << iter->second << '\n';
@@ -105,10 +113,12 @@ bool WriteScriptFile(std::ostream &os,
   return true;
 }
 
-bool WriteScriptFile(const std::string &wxfilename,
-                     const std::vector<std::pair<std::string, std::string> > &script) {
+bool WriteScriptFile(
+    const std::string &wxfilename,
+    const std::vector<std::pair<std::string, std::string> > &script) {
   Output output;
-  if (!output.Open(wxfilename, false, false)) {  // false, false means not binary,
+  if (!output.Open(wxfilename, false,
+                   false)) {  // false, false means not binary,
     // no binary-mode header.
     KALDI_ERR << "Error opening output stream for script file: "
               << PrintableWxfilename(wxfilename);
@@ -121,8 +131,6 @@ bool WriteScriptFile(const std::string &wxfilename,
   }
   return true;
 }
-
-
 
 WspecifierType ClassifyWspecifier(const std::string &wspecifier,
                                   std::string *archive_wxfilename,
@@ -146,22 +154,26 @@ WspecifierType ClassifyWspecifier(const std::string &wspecifier,
 
   size_t pos = wspecifier.find(':');
   if (pos == std::string::npos) return kNoWspecifier;
-  if (isspace(*(wspecifier.rbegin()))) return kNoWspecifier;  // Trailing space disallowed.
+  if (isspace(*(wspecifier.rbegin())))
+    return kNoWspecifier;  // Trailing space disallowed.
 
-  std::string before_colon(wspecifier, 0, pos), after_colon(wspecifier, pos+1);
+  std::string before_colon(wspecifier, 0, pos),
+      after_colon(wspecifier, pos + 1);
 
   std::vector<std::string> split_first_part;  // Split part before ':' on ', '.
-  SplitStringToVector(before_colon, ", ", false, &split_first_part);  // false== don't omit empty strings
+  SplitStringToVector(before_colon, ", ", false,
+                      &split_first_part);  // false== don't omit empty strings
   // between commas.
 
   WspecifierType ws = kNoWspecifier;
 
   if (opts != NULL)
-    *opts = WspecifierOptions(); // Make sure all the defaults are as in the
-                                 // default constructor of the options class.
-  
+    *opts = WspecifierOptions();  // Make sure all the defaults are as in the
+                                  // default constructor of the options class.
+
   for (size_t i = 0; i < split_first_part.size(); i++) {
-    const std::string &str = split_first_part[i];  // e.g. "b", "t", "f", "ark", "scp".
+    const std::string &str =
+        split_first_part[i];  // e.g. "b", "t", "f", "ark", "scp".
     const char *c = str.c_str();
     if (!strcmp(c, "b")) {
       if (opts) opts->binary = true;
@@ -174,12 +186,17 @@ WspecifierType ClassifyWspecifier(const std::string &wspecifier,
     } else if (!strcmp(c, "p")) {
       if (opts) opts->permissive = true;
     } else if (!strcmp(c, "ark")) {
-      if (ws == kNoWspecifier) ws = kArchiveWspecifier;
-      else return kNoWspecifier;  // We do not allow "scp, ark", only "ark, scp".
+      if (ws == kNoWspecifier)
+        ws = kArchiveWspecifier;
+      else
+        return kNoWspecifier;  // We do not allow "scp, ark", only "ark, scp".
     } else if (!strcmp(c, "scp")) {
-      if (ws == kNoWspecifier) ws = kScriptWspecifier;
-      else if (ws == kArchiveWspecifier) ws = kBothWspecifier;
-      else return kNoWspecifier;  // repeated "scp" option: invalid.
+      if (ws == kNoWspecifier)
+        ws = kScriptWspecifier;
+      else if (ws == kArchiveWspecifier)
+        ws = kBothWspecifier;
+      else
+        return kNoWspecifier;  // repeated "scp" option: invalid.
     } else {
       return kNoWspecifier;  // Could not interpret this option.
     }
@@ -187,12 +204,10 @@ WspecifierType ClassifyWspecifier(const std::string &wspecifier,
 
   switch (ws) {
     case kArchiveWspecifier:
-      if (archive_wxfilename)
-        *archive_wxfilename = after_colon;
+      if (archive_wxfilename) *archive_wxfilename = after_colon;
       break;
     case kScriptWspecifier:
-      if (script_wxfilename)
-        *script_wxfilename = after_colon;
+      if (script_wxfilename) *script_wxfilename = after_colon;
       break;
     case kBothWspecifier:
       pos = after_colon.find(',');  // first comma.
@@ -200,14 +215,14 @@ WspecifierType ClassifyWspecifier(const std::string &wspecifier,
       if (archive_wxfilename)
         *archive_wxfilename = std::string(after_colon, 0, pos);
       if (script_wxfilename)
-        *script_wxfilename = std::string(after_colon, pos+1);
+        *script_wxfilename = std::string(after_colon, pos + 1);
       break;
-    case kNoWspecifier: default: break;
+    case kNoWspecifier:
+    default:
+      break;
   }
   return ws;
 }
-
-
 
 RspecifierType ClassifyRspecifier(const std::string &rspecifier,
                                   std::string *wxfilename,
@@ -237,29 +252,34 @@ RspecifierType ClassifyRspecifier(const std::string &rspecifier,
   if (wxfilename) wxfilename->clear();
 
   if (opts != NULL)
-    *opts = RspecifierOptions(); // Make sure all the defaults are as in the
-                                 // default constructor of the options class.
-  
+    *opts = RspecifierOptions();  // Make sure all the defaults are as in the
+                                  // default constructor of the options class.
+
   size_t pos = rspecifier.find(':');
   if (pos == std::string::npos) return kNoRspecifier;
 
-  if (isspace(*(rspecifier.rbegin()))) return kNoRspecifier;  // Trailing space disallowed.
+  if (isspace(*(rspecifier.rbegin())))
+    return kNoRspecifier;  // Trailing space disallowed.
 
   std::string before_colon(rspecifier, 0, pos),
-      after_colon(rspecifier, pos+1);
+      after_colon(rspecifier, pos + 1);
 
   std::vector<std::string> split_first_part;  // Split part before ':' on ', '.
-  SplitStringToVector(before_colon, ", ", false, &split_first_part);  // false== don't omit empty strings
+  SplitStringToVector(before_colon, ", ", false,
+                      &split_first_part);  // false== don't omit empty strings
   // between commas.
 
   RspecifierType rs = kNoRspecifier;
 
   for (size_t i = 0; i < split_first_part.size(); i++) {
-    const std::string &str = split_first_part[i];  // e.g. "b", "t", "f", "ark", "scp".
+    const std::string &str =
+        split_first_part[i];  // e.g. "b", "t", "f", "ark", "scp".
     const char *c = str.c_str();
-    if (!strcmp(c, "b"));  // Ignore this option.  It's so we can use the same specifiers for
+    if (!strcmp(c, "b"))
+      ;  // Ignore this option.  It's so we can use the same specifiers for
     // rspecifiers and wspecifiers.
-    else if (!strcmp(c, "t"));  // Ignore this option too.
+    else if (!strcmp(c, "t"))
+      ;  // Ignore this option too.
     else if (!strcmp(c, "o")) {
       if (opts) opts->once = true;
     } else if (!strcmp(c, "no")) {
@@ -277,24 +297,25 @@ RspecifierType ClassifyRspecifier(const std::string &rspecifier,
     } else if (!strcmp(c, "ncs")) {
       if (opts) opts->called_sorted = false;
     } else if (!strcmp(c, "ark")) {
-      if (rs == kNoRspecifier) rs = kArchiveRspecifier;
-      else return kNoRspecifier;  // Repeated or combined ark and scp options invalid.
+      if (rs == kNoRspecifier)
+        rs = kArchiveRspecifier;
+      else
+        return kNoRspecifier;  // Repeated or combined ark and scp options
+                               // invalid.
     } else if (!strcmp(c, "scp")) {
-      if (rs == kNoRspecifier) rs = kScriptRspecifier;
-      else return kNoRspecifier;  // Repeated or combined ark and scp options invalid.
+      if (rs == kNoRspecifier)
+        rs = kScriptRspecifier;
+      else
+        return kNoRspecifier;  // Repeated or combined ark and scp options
+                               // invalid.
     } else {
       return kNoRspecifier;  // Could not interpret this option.
     }
   }
-  if ((rs == kArchiveRspecifier || rs == kScriptRspecifier)
-     && wxfilename != NULL)
+  if ((rs == kArchiveRspecifier || rs == kScriptRspecifier) &&
+      wxfilename != NULL)
     *wxfilename = after_colon;
   return rs;
 }
-
-
-
-
-
 
 }  // end namespace kaldi

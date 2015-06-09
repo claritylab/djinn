@@ -22,11 +22,7 @@
 namespace kaldi {
 namespace nnet2 {
 
-
-void AmNnet::Init(std::istream &config_is) {
-  nnet_.Init(config_is);
-}
-
+void AmNnet::Init(std::istream &config_is) { nnet_.Init(config_is); }
 
 void AmNnet::Write(std::ostream &os, bool binary) const {
   // We don't write any header or footer like <AmNnet> and </AmNnet> -- we just
@@ -43,13 +39,14 @@ void AmNnet::Read(std::istream &is, bool binary) {
 
 void AmNnet::SetPriors(const VectorBase<BaseFloat> &priors) {
   priors_ = priors;
-  if (priors_.Dim() > NumPdfs())    
+  if (priors_.Dim() > NumPdfs())
     KALDI_ERR << "Dimension of priors cannot exceed number of pdfs.";
 
   if (priors_.Dim() > 0 && priors_.Dim() < NumPdfs()) {
-    KALDI_WARN << "Dimension of priors is " << priors_.Dim() << " < "
-               << NumPdfs() << ": extending with zeros, in case you had "
-               << "unseen pdf's, but this possibly indicates a serious problem.";
+    KALDI_WARN
+        << "Dimension of priors is " << priors_.Dim() << " < " << NumPdfs()
+        << ": extending with zeros, in case you had "
+        << "unseen pdf's, but this possibly indicates a serious problem.";
     priors_.Resize(NumPdfs(), kCopyData);
   }
 }
@@ -73,6 +70,5 @@ void AmNnet::Init(const Nnet &nnet) {
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi

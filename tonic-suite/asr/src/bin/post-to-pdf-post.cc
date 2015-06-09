@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -30,11 +29,13 @@ int main(int argc, char *argv[]) {
   typedef kaldi::int32 int32;
   try {
     const char *usage =
-        "This program turns per-frame posteriors, which have transition-ids as\n"
+        "This program turns per-frame posteriors, which have transition-ids "
+        "as\n"
         "the integers, into pdf-level posteriors\n"
         "See also: post-to-phone-post, post-to-weights, get-post-on-ali\n"
         "\n"
-        "Usage:  post-to-pdf-post [options] <model-file> <posteriors-rspecifier> <posteriors-wspecifier>\n"
+        "Usage:  post-to-pdf-post [options] <model-file> "
+        "<posteriors-rspecifier> <posteriors-wspecifier>\n"
         "e.g.: post-to-pdf-post 1.mdl ark:- ark:-\n";
 
     ParseOptions po(usage);
@@ -47,10 +48,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_rxfilename = po.GetArg(1),
-        posteriors_rspecifier = po.GetArg(2),
-        posteriors_wspecifier = po.GetArg(3);
+                posteriors_rspecifier = po.GetArg(2),
+                posteriors_wspecifier = po.GetArg(3);
 
-    TransitionModel trans_model;    
+    TransitionModel trans_model;
     {
       bool binary_in;
       Input ki(model_rxfilename, &binary_in);
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
     int32 num_done = 0;
     SequentialPosteriorReader posterior_reader(posteriors_rspecifier);
     PosteriorWriter posterior_writer(posteriors_wspecifier);
-    
+
     for (; !posterior_reader.Done(); posterior_reader.Next()) {
       const kaldi::Posterior &posterior = posterior_reader.Value();
       kaldi::Posterior pdf_posterior;
@@ -71,10 +72,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done converting posteriors to pdf-level posteriors for "
               << num_done << " utterances.";
 
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

@@ -22,7 +22,6 @@
 #include "feat/feature-functions.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feat_reader(rspecifier);
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
-      const Matrix<BaseFloat> &feats  = feat_reader.Value();
+      const Matrix<BaseFloat> &feats = feat_reader.Value();
 
       if (feats.NumRows() == 0) {
         KALDI_WARN << "Empty feature matrix for key " << key;
@@ -57,10 +56,8 @@ int main(int argc, char *argv[]) {
       feat_writer.Write(key, new_feats);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

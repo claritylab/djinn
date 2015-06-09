@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_REGRESSION_TREE_H_
 #define KALDI_TRANSFORM_REGRESSION_TREE_H_
 
@@ -46,8 +45,7 @@ class RegressionTree {
   /// If sil_indices is nonempty, will put silence in a special class
   /// using a top-level split.
   void BuildTree(const Vector<BaseFloat> &state_occs,
-                 const std::vector<int32> &sil_indices,
-                 const AmDiagGmm &am,
+                 const std::vector<int32> &sil_indices, const AmDiagGmm &am,
                  int32 max_clusters);
 
   /// Parses the regression tree and finds the nodes whose occupancies (read
@@ -56,18 +54,19 @@ class RegressionTree {
   /// index for each baseclass. The stats_out vector has size equal to number
   /// of regression classes. Return value is true if at least one regression
   /// class passed the count cutoff, false otherwise.
-  bool GatherStats(const std::vector<AffineXformStats*> &stats_in,
-                   double min_count,
-                   std::vector<int32> *regclasses_out,
-                   std::vector<AffineXformStats*> *stats_out) const;
+  bool GatherStats(const std::vector<AffineXformStats *> &stats_in,
+                   double min_count, std::vector<int32> *regclasses_out,
+                   std::vector<AffineXformStats *> *stats_out) const;
 
   void Write(std::ostream &out, bool binary) const;
   void Read(std::istream &in, bool binary, const AmDiagGmm &am);
 
   /// Accessors (const)
   int32 NumBaseclasses() const { return num_baseclasses_; }
-  const std::vector< std::pair<int32, int32> >& GetBaseclass(int32 bclass)
-      const { return baseclasses_[bclass]; }
+  const std::vector<std::pair<int32, int32> > &GetBaseclass(
+      int32 bclass) const {
+    return baseclasses_[bclass];
+  }
   int32 Gauss2BaseclassId(size_t pdf_id, size_t gauss_id) const {
     return gauss2bclass_[pdf_id][gauss_id];
   }
@@ -83,15 +82,14 @@ class RegressionTree {
   int32 num_baseclasses_;  ///< Number of leaf nodes
   /// Each baseclass (leaf of regression tree) is a vector of Gaussian indices.
   /// Each Gaussian in the model is indexed by (pdf, gaussian) indices pair.
-  std::vector< std::vector< std::pair<int32, int32> > > baseclasses_;
+  std::vector<std::vector<std::pair<int32, int32> > > baseclasses_;
   /// Mapping from (pdf, gaussian) indices to baseclasses
-  std::vector< std::vector<int32> > gauss2bclass_;
+  std::vector<std::vector<int32> > gauss2bclass_;
 
   void MakeGauss2Bclass(const AmDiagGmm &am);
 
   // Cannot have copy constructor and assigment operator
   KALDI_DISALLOW_COPY_AND_ASSIGN(RegressionTree);
-
 };
 
 }  // namespace kaldi

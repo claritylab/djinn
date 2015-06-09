@@ -21,7 +21,6 @@
 #include "sgmm/estimate-am-sgmm.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
@@ -60,10 +59,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written stats to " << stats_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

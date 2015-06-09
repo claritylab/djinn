@@ -40,14 +40,12 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   for (size_t i = 0; i < gpost.size(); i++) {
     for (size_t j = 0; j < gpost[i].size(); j++) {
       int32 pdf_id = gpost[i][j].first;
-      const Vector<BaseFloat> & posterior(gpost[i][j].second);
-      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id),
-                                          feats.Row(i), posterior);
+      const Vector<BaseFloat> &posterior(gpost[i][j].second);
+      spk_stats->AccumulateFromPosteriors(am_gmm.GetPdf(pdf_id), feats.Row(i),
+                                          posterior);
     }
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -55,18 +53,23 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int32 int32;
     using namespace kaldi;
     const char *usage =
-        "Accumulate gradient scatter from training set, either per utterance or \n"
-        "for the supplied set of speakers (spk2utt option). Reads Gaussian-level \n"
-        "posterior to accumulate fMLLR stats for each speaker/utterance. Writes \n"
+        "Accumulate gradient scatter from training set, either per utterance "
+        "or \n"
+        "for the supplied set of speakers (spk2utt option). Reads "
+        "Gaussian-level \n"
+        "posterior to accumulate fMLLR stats for each speaker/utterance. "
+        "Writes \n"
         "gradient scatter matrix.\n"
-        "Usage: gmm-basis-fmllr-accs-gpost [options] <model-in> <feature-rspecifier>"
+        "Usage: gmm-basis-fmllr-accs-gpost [options] <model-in> "
+        "<feature-rspecifier>"
         "<post-rspecifier> <accs-wspecifier>\n";
 
     bool binary_write = true;
     string spk2utt_rspecifier;
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
 
     po.Read(argc, argv);
@@ -75,11 +78,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gpost_rspecifier = po.GetArg(3),
-        accs_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           gpost_rspecifier = po.GetArg(3), accs_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -138,8 +138,7 @@ int main(int argc, char *argv[]) {
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!gpost_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_no_post++;
           continue;
         }
@@ -147,8 +146,8 @@ int main(int argc, char *argv[]) {
         const GaussPost &gpost = gpost_reader.Value(utt);
 
         if (static_cast<int32>(gpost.size()) != feats.NumRows()) {
-          KALDI_WARN << "GaussPost has wrong size " << (gpost.size())
-                     << " vs. " << (feats.NumRows());
+          KALDI_WARN << "GaussPost has wrong size " << (gpost.size()) << " vs. "
+                     << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -158,7 +157,7 @@ int main(int argc, char *argv[]) {
         num_done++;
 
         basis_accs.AccuGradientScatter(utt_stats);
-      } // end looping over all utterances
+      }  // end looping over all utterances
     }
     // Write out accumulations
     {
@@ -169,9 +168,8 @@ int main(int argc, char *argv[]) {
               << " with no posts, " << num_other_error << " with other errors.";
     KALDI_LOG << "Written gradient scatter to " << accs_wspecifier;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

@@ -30,26 +30,28 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 /**
    It will help to first try to understand ./nnet-precondition.h before reading
    this comment and trying to understand what's going on here.  The motivation
    for this method was that the code in nnet-precondition.h was too slow when
-   implemented on CUDA cards, it was taking well over half the time.  The problem
+   implemented on CUDA cards, it was taking well over half the time.  The
+   problem
    is that algorithms like Cholesky decomposition and triangular solvers, that
    were used in that method, are not as parallelizable as matrix multiplication.
    The method in nnet-precondition.h involved inverting symmetric matrices whose
    dimension was the number of frames in a minibatch.
 
    Our method here aims to reduce the dimension in which we have to do things
-   like inversion.  (In fact, for CUDA implementation we'll deal with small matrices
-   like 10x10 for which it's faster to move them to the CPU and invert them there,
+   like inversion.  (In fact, for CUDA implementation we'll deal with small
+   matrices
+   like 10x10 for which it's faster to move them to the CPU and invert them
+   there,
    and then move them back).
-   
+
    Firstly, for each affine layer, we treat it for purposes of this code as
    a linear layer on an input that has been extended by a 1.  This code does not
    even see the bias as a separate thing.
-   
+
    The basic aim (just like nnet-precondition.h) is to deal with a factored form
    of a Fisher matrix (outer product of derivatives), where for each affine
    layer we have one such matrix that is in the space of the input to the layer
@@ -61,33 +63,43 @@ namespace nnet2 {
    factor so we still have a reasonable learning rate.
 
    In the previous code (nnet-precondition.h), we got the Fisher matrix from
-   the current minibatch.  In this case we estimate a low-rank plus scaled-identity
+   the current minibatch.  In this case we estimate a low-rank plus
+   scaled-identity
    approximation to the Fisher matrix, in an iterative approach where we update
    it on each minibatch.  This is more efficient, particularly with CUDA, where
    the relatively high-dimensional symmetric matrix inversion we previously did
    was becoming a bottleneck.
 */
 
-
 /*
-  We consider the problem of doing online estimation of a (scaled-identity plus low-rank)
-  approximation of a Fisher matrix... since the Fisher matrix is a scatter of vector-valued derivatives
-  and we will be given the derivatives (or at least terms in a factorization of the derivatives
-  which need not concern us right now), we can just think of the present task as being
-  the online accumulation of a (low-rank plus scaled-identity) approximation to a variance
+  We consider the problem of doing online estimation of a (scaled-identity plus
+ low-rank)
+  approximation of a Fisher matrix... since the Fisher matrix is a scatter of
+ vector-valued derivatives
+  and we will be given the derivatives (or at least terms in a factorization of
+ the derivatives
+  which need not concern us right now), we can just think of the present task as
+ being
+  the online accumulation of a (low-rank plus scaled-identity) approximation to
+ a variance
   of a distribution with mean zero.
-  
-  Later on we'll think about how to get easy access to the inverse of this approximate
+
+  Later on we'll think about how to get easy access to the inverse of this
+ approximate
   variance, which is what we really need.
 
-  Our approximation to the Fisher matrix (the scatter of derivatives) will be of the following form
-  (and just think of this as an approximate variance matrix of some arbitrary quantities).
+  Our approximation to the Fisher matrix (the scatter of derivatives) will be of
+ the following form
+  (and just think of this as an approximate variance matrix of some arbitrary
+ quantities).
 
      F_t =(def) X_t^T D_t X_t + \rho_t I
 
   (t is the minibatch index), where X_t is an R by D matrix with orthonormal
-  rows (1 <= R < D is our chosen rank), D_t is a positive-definite diagonal matrix, and
-  \rho_t > 0.  Suppose the dimension of F_t is D.  Let the vectors whose variance
+  rows (1 <= R < D is our chosen rank), D_t is a positive-definite diagonal
+ matrix, and
+  \rho_t > 0.  Suppose the dimension of F_t is D.  Let the vectors whose
+ variance
   we are approximating be provided in minibatches of size M (M can vary from
   iteration to iteration, but it won't vary in the normal case, so we omit the
   subscript t).  The batch of gradients is given as R_t \in Re^{M \times D},
@@ -95,7 +107,7 @@ namespace nnet2 {
   t'th iteration, define the scatter S_t of the input vectors R_t as:
 
      S_t =(def) 1/N R_t^T R_t           (eqn:St)
-     
+
   (where N is the minibatch size).  Be careful not to confuse the rank R with
   with input R_t (we would typeface R_t in bold if this were not plain text, to
   make the distinction clearer).  We want F_t to approach some kind of
@@ -109,7 +121,7 @@ namespace nnet2 {
 
   we'll use this in place of the observed scatter S_t, to slow down the update.
   Defining
-  
+
    Y_t =(def) X_t T_t
 
   which can be expanded as follows:
@@ -119,23 +131,26 @@ namespace nnet2 {
            = \eta X_t S_t + (1-\eta) (D_t + \rho_t I) X_t
 
   It is useful to think of Y_t as having each of the top eigenvectors of the
-  scatter scaled by the corresponding eigenvalue \lambda_i. 
+  scatter scaled by the corresponding eigenvalue \lambda_i.
   We compute the following R by R matrix:
     Z_t =(def) Y_t Y_t^T
   and do the symmetric eigenvalue decomposition
     Z_t = U_t C_t U_tT^
   where C_t is diagonal and U_t orthogonal; the diagonal elements of C_t will be
-  positive (since \rho_t > 0, T_t is positive definite; since X_t has full row rank
-  and T_t is positive definite, Y_t has full row rank; hence Z_t is positive definite).
-  The diagonal elements of C_t can be thought of as corresponding to the squares of
+  positive (since \rho_t > 0, T_t is positive definite; since X_t has full row
+ rank
+  and T_t is positive definite, Y_t has full row rank; hence Z_t is positive
+ definite).
+  The diagonal elements of C_t can be thought of as corresponding to the squares
+ of
   our current estimate of the top eigenvalues of the scatter matrix.
   [we should check that no element of C_t is <= 0.]
-  
+
   It is easy to show that C_t^{-0.5} U_t^T Z_t U_t C_t^{-0.5} = I, so
      (C_t^{-0.5} U_t^T Y_t) (Y_t^T U_t C_t^{-0.5}) = I.  Define
     X_{t+1} =(def) C_t^{-0.5} U_t^T Y_t
 
-  and it's clear that X_{t+1} X_{t+1}^T = I. 
+  and it's clear that X_{t+1} X_{t+1}^T = I.
   We will set
      D_{t+1} =(def) C_t^{0.5} - \rho_{t+1} I             (eqn:dt1)
 
@@ -146,22 +161,24 @@ namespace nnet2 {
   But a proper treatment of this would require convergence analysis that would
   get quite complicated.  We will choose \rho_{t+1} in order to ensure that
   tr(F_{t+1}) = tr(T_t).
-  
+
   For any t,
      tr(F_t) = D \rho_t + tr(D_t)
      tr(T_t) = \eta tr(S_t) + (1-\eta) tr(F_t)
              = \eta tr(S_t) + (1-\eta) (D \rho_t + tr(D_t))
   Expanding out D_{t+1} from (eqn:dt1) in the expression for tr(F_{t+1}) below:
-      tr(F_{t+1})  = D \rho_{t+1} +  tr(D_{t+1}) 
+      tr(F_{t+1})  = D \rho_{t+1} +  tr(D_{t+1})
       tr(F_{t+1})  = D \rho_{t+1} +  tr(C_t^{0.5} - \rho_{t+1} I)
                    = (D - R) \rho_{t+1} + tr(C_t^{0.5})
    and equating tr(F_{t+1}) with T_t (since F_{t+1} is supposed to be a low-rank
    approximation to T_t), we have
                           tr(F_{t+1}) = tr(T_t)
-  (D - R) \rho_{t+1} + tr(C_t^{0.5})  = \eta tr(S_t) + (1-\eta) (D \rho_t + tr(D_t))
+  (D - R) \rho_{t+1} + tr(C_t^{0.5})  = \eta tr(S_t) + (1-\eta) (D \rho_t +
+ tr(D_t))
 
   Solving for \rho_{t+1},
-       \rho_{t+1} = 1/(D - R) (\eta tr(S_t) + (1-\eta)(D \rho_t + tr(D_t)) - tr(C_t^{0.5})).   (eqn:rhot1)
+       \rho_{t+1} = 1/(D - R) (\eta tr(S_t) + (1-\eta)(D \rho_t + tr(D_t)) -
+ tr(C_t^{0.5})).   (eqn:rhot1)
 
   Note that it is technically possible that diagonal elements of
   of D_{t+1} may be negative, but we can stfill show that F_{t+1} is strictly
@@ -179,59 +196,71 @@ namespace nnet2 {
   the inverse of the Fisher matrix itself, but a version of the Fisher matrix
   that's smoothed with some constant times the identity.  Below, (\alpha is a
   configuration value, e.g. 4.0 seemed to work well).  The following formula is
-  designed to ensure that the smoothing varies proportionally with the scale of F_t:
+  designed to ensure that the smoothing varies proportionally with the scale of
+ F_t:
 
         G_t =(def) F_t +  \alpha/D tr(F_t) I
             =     X_t^T D_t X_t + (\rho_t + \alpha/D tr(F_t)) I
             =     X_t^T D_t X_t + \beta_t I
-  where            
+  where
     \beta_t =(def) \rho_t + \alpha/D tr(F_t)
             =      \rho_t(1+\alpha) + \alpha/D tr(D_t)       (eqn:betat2)
 
   Define
      P_t =(def)  \beta_t R_t G_t^{-1}.
-  the factor of \beta_t is inserted arbitrarily as it just happens to be convenient
-  to put unit scale on R_t in the formula for P_t; it will anyway be canceled out
+  the factor of \beta_t is inserted arbitrarily as it just happens to be
+ convenient
+  to put unit scale on R_t in the formula for P_t; it will anyway be canceled
+ out
   in the next step.  Then our final preconditioned minibatch of vectors is:
      Q_t = \gamma_t P_t
   where
      \gamma_t = sqrt(tr(R_t R_t^T)  / tr(P_t P_t^T).
   The factor of \gamma ensures that Q_t is scaled to have the same overall
-  2-norm as the input R_t.  We found in previous versions of this method that this
+  2-norm as the input R_t.  We found in previous versions of this method that
+ this
   rescaling was helpful, as otherwise there are certain situations (e.g. at the
-  start of training) where the preconditioned derivatives can get very large.  Note
+  start of training) where the preconditioned derivatives can get very large.
+ Note
   that this rescaling introduces a small bias into the training, because now the
   scale applied to a given sample depends on that sample itself, albeit in an
   increasingly diluted way as the minibatch size gets large.
 
   To efficiently compute G_t^{-1}, we will use the Woodbury matrix identity.
   Writing the Woodbury formula for the symmetric case,
-    (A + U D U^T)^{-1} = A^{-1} - A^{-1} U (D^{-1} + U^T A^{-1} U)^{-1} U^T A^{-1}
+    (A + U D U^T)^{-1} = A^{-1} - A^{-1} U (D^{-1} + U^T A^{-1} U)^{-1} U^T
+ A^{-1}
   Substituting A = \beta_t I, D = D_t and U = X_t^T, this becomes
-       G_t^{-1} = 1/\beta_t I - 1/\beta_t^2 X_t^T (D_t^{-1} + 1/\beta_t I)^{-1} X_t
+       G_t^{-1} = 1/\beta_t I - 1/\beta_t^2 X_t^T (D_t^{-1} + 1/\beta_t I)^{-1}
+ X_t
                 = 1/\beta_t (I - X_t^T E_t X_t)
   where
         E_t =(def)  1/\beta_t (D_t^{-1} + 1/\beta_t I)^{-1},         (eqn:etdef)
-  so       
+  so
     e_{tii} =   1/\beta_t * 1/(1/d_{tii} + 1/\beta_t)                (eqn:tii)
             =   1/(\beta_t/d_{tii} + 1)
 
-  We would like an efficient-to-compute expression for P_t, without too many separate
+  We would like an efficient-to-compute expression for P_t, without too many
+ separate
   invocations of kernels on the GPU.
      P_t = \beta_t R_t G_t^{-1}
          = R_t - R_t X_t^T E_t X_t
-  For efficient operation on the GPU, we want to reduce the number of high-dimensional
-  operations that we do (defining "high-dimension" as anything involving D or M, but not
+  For efficient operation on the GPU, we want to reduce the number of
+ high-dimensional
+  operations that we do (defining "high-dimension" as anything involving D or M,
+ but not
   R, since R is likely small, such as 20).  We define
      W_t =(def)  E_t^{0.5} X_t.
-  We will actually be storing W_t on the GPU rather than X_t, in order to reduce the
+  We will actually be storing W_t on the GPU rather than X_t, in order to reduce
+ the
   number of operations on the GPU.  We can now write:
 
         P_t = R_t - R_t W_t^T W_t       (eqn:pt2)
-  
-  The following, which we'll compute on the GPU, are going to be useful in computing
+
+  The following, which we'll compute on the GPU, are going to be useful in
+ computing
   quantities like Z_t:
-  
+
      H_t =(def) R_t W_t^T     (dim is N by R)
      J_t =(def) H_t^T R_t     (dim is R by D)
          =      W_t R_t^T R_t
@@ -246,7 +275,8 @@ namespace nnet2 {
      P_t = R_t - H_t W_t
 
   We need to determine how Y_t and Z_t relate to the quantities we just defined.
-  First, we'll expand out H_t, J_t, K_t and L_t in terms of the more fundamental quantities.
+  First, we'll expand out H_t, J_t, K_t and L_t in terms of the more fundamental
+ quantities.
      H_t = R_t X_t^T E_t^{0.5}
      J_t = E_t^{0.5} X_t R_t^T R_t
      K_t = E_t^{0.5} X_t R_t^T R_t R_t^T R_t X_t^T E_t^{0.5}
@@ -254,7 +284,7 @@ namespace nnet2 {
 
   we wrote above that
       Y_t = \eta X_t S_t + (1-\eta) (D_t + \rho_t I) X_t
-  so      
+  so
       Y_t = \eta/N X_t R_t^T R_t + (1-\eta) (D_t + \rho_t I) X_t
           = \eta/N E_t^{-0.5} J_t  + (1-\eta) (D_t + \rho_t I) X_t     (eqn:yt)
   We will expand Z_t using the expression for Y_t in the line above:
@@ -267,7 +297,8 @@ namespace nnet2 {
            +(\eta/N)(1-\eta) E_t^{-0.5} L_t E_t^{-0.5} (D_t + \rho_t I)
            +(\eta/N)(1-\eta) (D_t + \rho_t I) E_t^{-0.5} L_t E_t^{-0.5}
            +(1-\eta)^2 (D_t + \rho_t I)^2                              (eqn:Zt)
-  We compute Z_t on the CPU using the expression above, and then do the symmetric
+  We compute Z_t on the CPU using the expression above, and then do the
+ symmetric
   eigenvalue decomposition (also on the CPU):
       Z_t = U_t C_t U_t^T.
   and we make sure the eigenvalues are sorted from largest to smallest, for
@@ -277,7 +308,7 @@ namespace nnet2 {
   \rho_t^2, and since negative or zero elements of C_t would cause us a problem
   later, we floor C_t to this value.  (see below regarding how we ensure X_{t+1}
   has orthonormal rows).
-  
+
   We will continue the discussion below regarding what we do with C_t and U_t.
   Next, we need to digress briefly and describe how to compute
   tr(P_t P_t^T) and tr(R_t R_t^2), since these appear in expressions for
@@ -300,7 +331,8 @@ namespace nnet2 {
                   - 2 tr(W_t R_t^T R_t W_t^T)
                  = tr(R_t R_t^T) + tr(L_t W_t W_t^T) - 2 tr(L_t)
                  = tr(R_t R_t^T) + tr(L_t E_t) - 2 tr(L_t)
-  and all quantities have already been computed (or are quick to compute, such as
+  and all quantities have already been computed (or are quick to compute, such
+ as
   the small traces on the right), except tr(R_t R_t^T), so we can write
 
     tr(R_t R_t^T) = tr(P_t P_t^T) - tr(L_t E_t) + 2 tr(L_t)
@@ -313,22 +345,29 @@ namespace nnet2 {
   computed from P by \gamma_t^2.
 
   OK, the digression on how to compute \gamma_t and tr(R_t R_t^T) is over.
-  We now return to the computation of X_{t+1}, W_{t+1}, \rho_{t+1}, D_{t+1} and E_{t+1}.
+  We now return to the computation of X_{t+1}, W_{t+1}, \rho_{t+1}, D_{t+1} and
+ E_{t+1}.
 
   We found above in (eqn:rhot1)
-     \rho_{t+1} = 1/(D - R) (\eta tr(S_t) + (1-\eta)(D \rho_t + tr(D_t)) - tr(C_t^{0.5})).
+     \rho_{t+1} = 1/(D - R) (\eta tr(S_t) + (1-\eta)(D \rho_t + tr(D_t)) -
+ tr(C_t^{0.5})).
   Expanding out S_t from its definition in (eqn:St),
-     \rho_{t+1} = 1/(D - R) (\eta/N tr(R_t R_t^T) + (1-\eta)(D \rho_t + tr(D_t)) - tr(C_t^{0.5})).  
+     \rho_{t+1} = 1/(D - R) (\eta/N tr(R_t R_t^T) + (1-\eta)(D \rho_t + tr(D_t))
+ - tr(C_t^{0.5})).
   We can compute this directly as all the quantities involved are already known
   or easy to compute.
   Next, from (eqn:dt1), we compute
      D_{t+1} = C_t^{0.5} - \rho_{t+1} I
-  At this point if \rho_{t+1} is smaller than some small value \epsilon, e.g. 1.0e-10, we
-  set it to \epsilon; as mentioned, we do this to stop F_t approaching zero if all inputs
-  are zero.  Next, if any diagonal element D_{t+1,i,i} has absolute value less than \epsilon,
-  we set it to +\epsilon.  This is to ensure that diagonal elements of E are never zero, which
+  At this point if \rho_{t+1} is smaller than some small value \epsilon, e.g.
+ 1.0e-10, we
+  set it to \epsilon; as mentioned, we do this to stop F_t approaching zero if
+ all inputs
+  are zero.  Next, if any diagonal element D_{t+1,i,i} has absolute value less
+ than \epsilon,
+  we set it to +\epsilon.  This is to ensure that diagonal elements of E are
+ never zero, which
   would cause problems.
-  
+
   Next, we compute (from eqn:betat2, eqn:etdef, eqn:tii),
         \beta_{t+1} = \rho_{t+1} (1+\alpha) + \alpha/D tr(D_{t+1})
             E_{t+1} = 1/\beta_{t+1} (D_{t+1}^{-1} + 1/\beta_{t+1} I)^{-1},
@@ -339,26 +378,29 @@ namespace nnet2 {
   Before computing W_{t+1}, we need to find an expression for
      X_{t+1} = C_t^{-0.5} U_t^T Y_t
    Expanding out Y_t using the expression in (eqn:yt),
-     X_{t+1} = C_t^{-0.5} U_t^T  (\eta/N E_t^{-0.5} J_t  + (1-\eta) (D_t + \rho_t I) X_t)
+     X_{t+1} = C_t^{-0.5} U_t^T  (\eta/N E_t^{-0.5} J_t  + (1-\eta) (D_t +
+ \rho_t I) X_t)
              =  (\eta/N C_t^{-0.5} U_t^T E_t^{-0.5})  J_t
                +((1-\eta) C_t^{-0.5} U_t^T (D_t + \rho_t I) E_t^{-0.5}) W_t
 
    What we actually want is W_{t+1} = E_{t+1}^{0.5} X_{t+1}:
      W_{t+1} = (\eta/N E_{t+1}^{0.5} C_t^{-0.5} U_t^T E_t^{-0.5}) J_t
-              +((1-\eta) E_{t+1}^{0.5} C_t^{-0.5} U_t^T (D_t + \rho_t I) E_t^{-0.5}) W_t
-   and to minimize the number of matrix-matrix multiplies we can factorize this as:
+              +((1-\eta) E_{t+1}^{0.5} C_t^{-0.5} U_t^T (D_t + \rho_t I)
+ E_t^{-0.5}) W_t
+   and to minimize the number of matrix-matrix multiplies we can factorize this
+ as:
      W_{t+1} = A_t B_t
         A_t = (\eta/N) E_{t+1}^{0.5} C_t^{-0.5} U_t^T E_t^{-0.5}
         B_t = J_t + (1-\eta)/(\eta/N) (D_t + \rho_t I) W_t
    [note: we use the fact that (D_t + \rho_t I) and E_t^{-0.5} commute because
     they are diagonal].
-               
+
    The R by R matrix-valued expressions in the parentheses above would be
    computed on the CPU and transferred from there to the GPU, and the
    multiplications with J_t and W_t would be done on the GPU.
 
    * Keeping X_t orthogonal *
-   
+
    Our method requires the X_t matrices to be orthogonal (which we define to
    mean that X_t X_t^T = I).  If roundoff error causes this equality to be
    significantly violated, it could cause a problem for the stability of our
@@ -393,9 +435,9 @@ namespace nnet2 {
       W_t <-- (E_t^{0.5} C^{-1} E_t^{-0.5}) W_t,
    and the matrix in parentheses is computed on the CPU, transferred to the
    GPU, and the multiplication is done there.
- 
 
-   * Initialization *  
+
+   * Initialization *
 
    Now, a note on what we do on time t = 0, i.e. for the first minibatch.  We
    initialize X_0 to the top R eigenvectors of 1/N R_0 R_0^T, where N is the
@@ -418,8 +460,10 @@ namespace nnet2 {
    the parameters X_t, D_t, \rho_t and derived quantities):
 
     For time t > 0 (where the matrices are already initialized), before starting
-    the part of the computation that updates the parameters (X_t, D_t, \rho_t and
-    derived quantities), we try to lock a mutex that guards the OnlinePreconditioner.
+    the part of the computation that updates the parameters (X_t, D_t, \rho_t
+ and
+    derived quantities), we try to lock a mutex that guards the
+ OnlinePreconditioner.
     If we can lock it right away, we go ahead and do the update, but if not,
     we just abandon the attempt to update those quantities.
 
@@ -428,12 +472,12 @@ namespace nnet2 {
     being written by another thread).  This mutex will only be locked for short
     periods of time.
 
-   Note: it might be a good idea to make sure that the X_t still retain orthonormal
-   rows even in the presence of roundoff, without errors accumulating.  My instinct
+   Note: it might be a good idea to make sure that the X_t still retain
+ orthonormal
+   rows even in the presence of roundoff, without errors accumulating.  My
+ instinct
    is that this isn't going to be a problem.
  */
-
-
 
 class OnlinePreconditioner {
  public:
@@ -448,8 +492,7 @@ class OnlinePreconditioner {
   BaseFloat GetNumSamplesHistory() const { return num_samples_history_; }
   BaseFloat GetAlpha() const { return alpha_; }
   int32 GetRank() const { return rank_; }
-  
-  
+
   // The "R" pointer is both the input (R in the comment) and the output (P in
   // the comment; equal to the preconditioned directions before scaling by
   // gamma).  If the pointer "rprod" is supplied, it's set to the inner product
@@ -464,42 +507,34 @@ class OnlinePreconditioner {
   // Copy constructor.
   explicit OnlinePreconditioner(const OnlinePreconditioner &other);
   // Assignent operator
-  OnlinePreconditioner &operator = (const OnlinePreconditioner &other);
- private:
+  OnlinePreconditioner &operator=(const OnlinePreconditioner &other);
 
+ private:
   // This does the work of PreconditionDirections (the top-level
   // function handles some multithreading issues and then calls this function).
   // Note: WJKL_t (dimension 2*R by D + R) is [ W_t L_t; J_t K_t ].
-  void PreconditionDirectionsInternal(const int32 t,
-                                      const BaseFloat rho_t,
+  void PreconditionDirectionsInternal(const int32 t, const BaseFloat rho_t,
                                       const Vector<BaseFloat> &d_t,
                                       CuMatrixBase<BaseFloat> *WJKL_t,
                                       CuMatrixBase<BaseFloat> *R_t,
                                       CuVectorBase<BaseFloat> *row_prod,
                                       BaseFloat *scale);
 
-  void ComputeEt(const VectorBase<BaseFloat> &d_t,
-                 BaseFloat beta_t,
-                 VectorBase<BaseFloat> *e_t,
-                 VectorBase<BaseFloat> *sqrt_e_t,
+  void ComputeEt(const VectorBase<BaseFloat> &d_t, BaseFloat beta_t,
+                 VectorBase<BaseFloat> *e_t, VectorBase<BaseFloat> *sqrt_e_t,
                  VectorBase<BaseFloat> *inv_sqrt_e_t) const;
 
-  void ComputeZt(int32 N,
-                 BaseFloat rho_t,
-                 const VectorBase<BaseFloat> &d_t,
+  void ComputeZt(int32 N, BaseFloat rho_t, const VectorBase<BaseFloat> &d_t,
                  const VectorBase<BaseFloat> &inv_sqrt_e_t,
                  const MatrixBase<BaseFloat> &K_t,
                  const MatrixBase<BaseFloat> &L_t,
                  SpMatrix<BaseFloat> *Z_t) const;
   // Computes W_{t+1}.  Overwrites J_t.
-  void ComputeWt1(int32 N,
-                  const VectorBase<BaseFloat> &d_t,
-                  const VectorBase<BaseFloat> &d_t1,
-                  BaseFloat rho_t,
-                  BaseFloat rho_t1,
-                  const MatrixBase<BaseFloat> &U_t,
+  void ComputeWt1(int32 N, const VectorBase<BaseFloat> &d_t,
+                  const VectorBase<BaseFloat> &d_t1, BaseFloat rho_t,
+                  BaseFloat rho_t1, const MatrixBase<BaseFloat> &U_t,
                   const VectorBase<BaseFloat> &sqrt_c_t,
-                  const VectorBase<BaseFloat> &inv_sqrt_e_t,                                      
+                  const VectorBase<BaseFloat> &inv_sqrt_e_t,
                   const CuMatrixBase<BaseFloat> &W_t,
                   CuMatrixBase<BaseFloat> *J_t,
                   CuMatrixBase<BaseFloat> *W_t1) const;
@@ -507,8 +542,7 @@ class OnlinePreconditioner {
   // This function is called if C_t has high condition number; it makes sure
   // that X_{t+1} is orthogonal.  See the section in the extended comment above
   // on "keeping X_t orthogonal".
-  void ReorthogonalizeXt1(const VectorBase<BaseFloat> &d_t1,
-                          BaseFloat rho_t1,
+  void ReorthogonalizeXt1(const VectorBase<BaseFloat> &d_t1, BaseFloat rho_t1,
                           CuMatrixBase<BaseFloat> *W_t1,
                           CuMatrixBase<BaseFloat> *temp_W,
                           CuMatrixBase<BaseFloat> *temp_O);
@@ -521,7 +555,6 @@ class OnlinePreconditioner {
   // value returned depends on num_samples_history_.
   BaseFloat Eta(int32 N) const;
 
-  
   // Configuration values:
 
   // The rank of the correction to the unit matrix (e.g. 20).
@@ -531,13 +564,13 @@ class OnlinePreconditioner {
   // updating the Fisher-matrix parameters every "update_period_" minibatches;
   // this saves time.
   int32 update_period_;
-  
+
   // num_samples_history_ determines the value of eta, which in turn affects how
   // fast we update our estimate of the covariance matrix.  We've done it this
   // way in order to make it easy to have a single configuration value that
   // doesn't have to be changed when we change the minibatch size.
   BaseFloat num_samples_history_;
-  
+
   // alpha controls how much we smooth the Fisher matrix with the unit matrix.
   // e.g. alpha = 4.0.
   BaseFloat alpha_;
@@ -552,58 +585,55 @@ class OnlinePreconditioner {
   // Fisher estimate, which we set to 1.0e-05: this is relative to the largest
   // value of D_t.  It's needed to control roundoff error.
   BaseFloat delta_;
-  
+
   // t is a counter that measures how many updates we've done.
   int32 t_;
 
-  // This keeps track of how many minibatches we've skipped updating the parameters,
-  // since the most recent update; it's used in enforcing "update_period_", which
-  // is a mechanism to avoid spending too much time updating the subspace (which can
+  // This keeps track of how many minibatches we've skipped updating the
+  // parameters,
+  // since the most recent update; it's used in enforcing "update_period_",
+  // which
+  // is a mechanism to avoid spending too much time updating the subspace (which
+  // can
   // be wasteful).
   int32 num_updates_skipped_;
-  
+
   // If true, activates certain checks.
   bool self_debug_;
 
   CuMatrix<BaseFloat> W_t_;
   BaseFloat rho_t_;
   Vector<BaseFloat> d_t_;
- 
-  
+
   // Used to prevent parameters being read or written in an inconsistent state.
   Mutex read_write_mutex_;
 
   // This mutex is used to control which thread gets to update the
   // parameters, in multi-threaded code.
   Mutex update_mutex_;
-  
-
 };
 
-
 /*
-  This function finds the approximate top eigenvectors and eigenvalues of S = beta M
+  This function finds the approximate top eigenvectors and eigenvalues of S =
+  beta M
   M^T (if trans == kNoTrans) or S = beta M^T M (if trans == kTrans).
   Each row p of P will be set to an approximate
   eigenvector of M, and the corresponding value in s will exactly equal p^T S p.
-  (note: it will actually be those with the largest absolute value that we return,
+  (note: it will actually be those with the largest absolute value that we
+  return,
   which makes a difference only if S has negative eigenvalues).
   We do the eigenvalue computation on the CPU, mainly to avoid the hassle of
   coding a version of it for CUDA.
   Caution: most of the other eigenvalue or SVD code puts the eigenvalues in the
   columns, not the rows.
   This function is used by class OnlinePreconditioner; we declare it separately
-  for ease of testing.   
+  for ease of testing.
  */
 void ApproxEigsOfProduct(const CuMatrixBase<BaseFloat> &M,
-                         MatrixTransposeType trans,
-                         CuMatrixBase<BaseFloat> *P,
+                         MatrixTransposeType trans, CuMatrixBase<BaseFloat> *P,
                          CuVectorBase<BaseFloat> *s);
 
-
-
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

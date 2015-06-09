@@ -1,6 +1,7 @@
 // latbin/lattice-1best.cc
 
-// Copyright 2009-2012  Stefan Kombrink  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Stefan Kombrink  Johns Hopkins University (Author:
+// Daniel Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -16,7 +17,6 @@
 // MERCHANTABLITY OR NON-INFRINGEMENT.
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
-
 
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
@@ -40,14 +40,16 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage: lattice-1best [options] lattice-rspecifier lattice-wspecifier\n"
         " e.g.: lattice-1best --acoustic-scale=0.1 ark:1.lats ark:1best.lats\n";
-      
+
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 1.0;
     BaseFloat lm_scale = 1.0;
-    
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("lm-scale", &lm_scale, "Scaling factor for language mdoel scores.");
-    
+
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("lm-scale", &lm_scale,
+                "Scaling factor for language mdoel scores.");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -55,18 +57,18 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
 
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    
+
     // Write as compact lattice.
-    CompactLatticeWriter compact_1best_writer(lats_wspecifier); 
+    CompactLatticeWriter compact_1best_writer(lats_wspecifier);
 
     int32 n_done = 0, n_err = 0;
 
     if (acoustic_scale == 0.0 || lm_scale == 0.0)
-      KALDI_ERR << "Do not use exactly zero acoustic or LM scale (cannot be inverted)";
+      KALDI_ERR << "Do not use exactly zero acoustic or LM scale (cannot be "
+                   "inverted)";
     for (; !clat_reader.Done(); clat_reader.Next()) {
       std::string key = clat_reader.Key();
       CompactLattice clat = clat_reader.Value();
@@ -75,22 +77,23 @@ int main(int argc, char *argv[]) {
 
       CompactLattice best_path;
       CompactLatticeShortestPath(clat, &best_path);
-      
+
       if (best_path.Start() == fst::kNoStateId) {
         KALDI_WARN << "Possibly empty lattice for utterance-id " << key
                    << "(no output)";
         n_err++;
       } else {
-        fst::ScaleLattice(fst::LatticeScale(1.0 / lm_scale, 1.0/acoustic_scale),
-                          &best_path);
+        fst::ScaleLattice(
+            fst::LatticeScale(1.0 / lm_scale, 1.0 / acoustic_scale),
+            &best_path);
         compact_1best_writer.Write(key, best_path);
         n_done++;
       }
     }
-    KALDI_LOG << "Done converting " << n_done << " to best path, "
-              << n_err << " had errors.";
+    KALDI_LOG << "Done converting " << n_done << " to best path, " << n_err
+              << " had errors.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

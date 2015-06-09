@@ -17,23 +17,20 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "lat/kws-functions.h"
 #include "fstext/determinize-star.h"
 #include "fstext/epsilon-property.h"
 
 namespace kaldi {
 
-bool CompareInterval(const Interval &i1,
-                     const Interval &i2) {
-  return (i1.Start() < i2.Start() ? true :
-          i1.Start() > i2.Start() ? false:
-          i1.End() < i2.End() ? true: false);
-
+bool CompareInterval(const Interval &i1, const Interval &i2) {
+  return (i1.Start() < i2.Start() ? true : i1.Start() > i2.Start()
+                                               ? false
+                                               : i1.End() < i2.End() ? true
+                                                                     : false);
 }
 
-bool ClusterLattice(CompactLattice *clat, 
-                    const vector<int32> &state_times) {
+bool ClusterLattice(CompactLattice *clat, const vector<int32> &state_times) {
   using namespace fst;
   using std::tr1::unordered_map;
   typedef CompactLattice::StateId StateId;
@@ -43,22 +40,22 @@ bool ClusterLattice(CompactLattice *clat,
 
   // Step 1: Iterate over the lattice to get the arcs
   StateId max_id = 0;
-  for (StateIterator<CompactLattice> siter(*clat); !siter.Done(); siter.Next()) {
+  for (StateIterator<CompactLattice> siter(*clat); !siter.Done();
+       siter.Next()) {
     StateId state_id = siter.Value();
-    for (ArcIterator<CompactLattice> aiter(*clat, state_id); !aiter.Done(); aiter.Next()) {
+    for (ArcIterator<CompactLattice> aiter(*clat, state_id); !aiter.Done();
+         aiter.Next()) {
       CompactLatticeArc arc = aiter.Value();
       if (state_id >= state_times.size() || arc.nextstate >= state_times.size())
         return false;
-      if (state_id > max_id)
-        max_id = state_id;
-      if (arc.nextstate > max_id)
-        max_id = arc.nextstate;
-      head[arc.ilabel].push_back(Interval(state_times[state_id], state_times[arc.nextstate]));
+      if (state_id > max_id) max_id = state_id;
+      if (arc.nextstate > max_id) max_id = arc.nextstate;
+      head[arc.ilabel].push_back(
+          Interval(state_times[state_id], state_times[arc.nextstate]));
     }
   }
   // Check if alignments and the states match
-  if (state_times.size() != max_id+1)
-    return false;
+  if (state_times.size() != max_id + 1) return false;
 
   // Step 2: Iterates over the hashmap to get the cluster heads.
   //   We sort all the words on their start-time, and the process for getting
@@ -81,13 +78,14 @@ bool ClusterLattice(CompactLattice *clat,
   // Step 3: Cluster arcs according to the maximum overlap: attach
   //   each arc to the cluster-head (as identified in Step 2) which
   //   has the most temporal overlap with the current arc.
-  for (StateIterator<CompactLattice> siter(*clat); !siter.Done(); siter.Next()) {
+  for (StateIterator<CompactLattice> siter(*clat); !siter.Done();
+       siter.Next()) {
     CompactLatticeArc::StateId state_id = siter.Value();
-    for (MutableArcIterator<CompactLattice> aiter(clat, state_id); !aiter.Done(); aiter.Next()) {
+    for (MutableArcIterator<CompactLattice> aiter(clat, state_id);
+         !aiter.Done(); aiter.Next()) {
       CompactLatticeArc arc = aiter.Value();
       // We don't cluster the epsilon arcs
-      if (arc.ilabel == 0)
-        continue;
+      if (arc.ilabel == 0) continue;
       // We cluster the non-epsilon arcs
       Interval interval(state_times[state_id], state_times[arc.nextstate]);
       int32 max_overlap = 0;
@@ -96,7 +94,7 @@ bool ClusterLattice(CompactLattice *clat,
         int32 overlap = interval.Overlap(head[arc.ilabel][i]);
         if (overlap > max_overlap) {
           max_overlap = overlap;
-          olabel = i + 1; // need non-epsilon label.
+          olabel = i + 1;  // need non-epsilon label.
         }
       }
       arc.olabel = olabel;
@@ -116,7 +114,7 @@ bool ComputeCompactLatticeAlphas(const CompactLattice &clat,
   typedef Arc::Weight Weight;
   typedef Arc::StateId StateId;
 
-  //Make sure the lattice is topologically sorted.
+  // Make sure the lattice is topologically sorted.
   if (clat.Properties(fst::kTopSorted, true) == 0) {
     KALDI_WARN << "Input lattice must be topologically sorted.";
     return false;
@@ -135,10 +133,13 @@ bool ComputeCompactLatticeAlphas(const CompactLattice &clat,
   (*alpha)[0] = 0.0;
   for (StateId s = 0; s < num_states; s++) {
     double this_alpha = (*alpha)[s];
-    for (ArcIterator<CompactLattice> aiter(clat, s); !aiter.Done(); aiter.Next()) {
+    for (ArcIterator<CompactLattice> aiter(clat, s); !aiter.Done();
+         aiter.Next()) {
       const Arc &arc = aiter.Value();
-      double arc_like = -(arc.weight.Weight().Value1() + arc.weight.Weight().Value2());
-      (*alpha)[arc.nextstate] = LogAdd((*alpha)[arc.nextstate], this_alpha + arc_like);
+      double arc_like =
+          -(arc.weight.Weight().Value1() + arc.weight.Weight().Value2());
+      (*alpha)[arc.nextstate] =
+          LogAdd((*alpha)[arc.nextstate], this_alpha + arc_like);
     }
   }
 
@@ -170,12 +171,14 @@ bool ComputeCompactLatticeBetas(const CompactLattice &clat,
 
   // Now propagate betas backward. Note that beta[final_state] contains the
   // weight of the final state in the lattice -- compare that with alpha.
-  for (StateId s = num_states-1; s >= 0; s--) {
+  for (StateId s = num_states - 1; s >= 0; s--) {
     Weight f = clat.Final(s);
-    double this_beta = -(f.Weight().Value1()+f.Weight().Value2());
-    for (ArcIterator<CompactLattice> aiter(clat, s); !aiter.Done(); aiter.Next()) {
+    double this_beta = -(f.Weight().Value1() + f.Weight().Value2());
+    for (ArcIterator<CompactLattice> aiter(clat, s); !aiter.Done();
+         aiter.Next()) {
       const Arc &arc = aiter.Value();
-      double arc_like = -(arc.weight.Weight().Value1()+arc.weight.Weight().Value2());
+      double arc_like =
+          -(arc.weight.Weight().Value1() + arc.weight.Weight().Value2());
       double arc_beta = (*beta)[arc.nextstate] + arc_like;
       this_beta = LogAdd(this_beta, arc_beta);
     }
@@ -195,23 +198,26 @@ class CompactLatticeToKwsProductFstMapper {
   CompactLatticeToKwsProductFstMapper() {}
 
   ToArc operator()(const FromArc &arc) const {
-    return ToArc(arc.ilabel,
-                 arc.olabel,
-                 (arc.weight == FromWeight::Zero() ?
-                  ToWeight::Zero() :
-                  ToWeight(arc.weight.Weight().Value1()
-                           +arc.weight.Weight().Value2(),
-                           (arc.weight.Weight() == LatticeWeight::Zero() ?
-                            StdXStdprimeWeight::Zero() :
-                            StdXStdprimeWeight::One()))),
+    return ToArc(arc.ilabel, arc.olabel,
+                 (arc.weight == FromWeight::Zero()
+                      ? ToWeight::Zero()
+                      : ToWeight(arc.weight.Weight().Value1() +
+                                     arc.weight.Weight().Value2(),
+                                 (arc.weight.Weight() == LatticeWeight::Zero()
+                                      ? StdXStdprimeWeight::Zero()
+                                      : StdXStdprimeWeight::One()))),
                  arc.nextstate);
   }
 
   fst::MapFinalAction FinalAction() const { return fst::MAP_NO_SUPERFINAL; }
 
-  fst::MapSymbolsAction InputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS; }
+  fst::MapSymbolsAction InputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
-  fst::MapSymbolsAction OutputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS;}
+  fst::MapSymbolsAction OutputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
   uint64 Properties(uint64 props) const { return props; }
 };
@@ -226,29 +232,32 @@ class KwsProductFstToKwsLexicographicFstMapper {
   KwsProductFstToKwsLexicographicFstMapper() {}
 
   ToArc operator()(const FromArc &arc) const {
-    return ToArc(arc.ilabel, 
-                 arc.olabel, 
-                 (arc.weight == FromWeight::Zero() ?
-                  ToWeight::Zero() :
-                  ToWeight(arc.weight.Value1().Value(), 
-                           StdLStdWeight(arc.weight.Value2().Value1().Value(),
-                                         arc.weight.Value2().Value2().Value()))),
-                 arc.nextstate);
+    return ToArc(
+        arc.ilabel, arc.olabel,
+        (arc.weight == FromWeight::Zero()
+             ? ToWeight::Zero()
+             : ToWeight(arc.weight.Value1().Value(),
+                        StdLStdWeight(arc.weight.Value2().Value1().Value(),
+                                      arc.weight.Value2().Value2().Value()))),
+        arc.nextstate);
   }
 
   fst::MapFinalAction FinalAction() const { return fst::MAP_NO_SUPERFINAL; }
 
-  fst::MapSymbolsAction InputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS; }
+  fst::MapSymbolsAction InputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
-  fst::MapSymbolsAction OutputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS;}
+  fst::MapSymbolsAction OutputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
   uint64 Properties(uint64 props) const { return props; }
 };
 
-
 bool CreateFactorTransducer(const CompactLattice &clat,
                             const vector<int32> &state_times,
-                            int32 utterance_id, 
+                            int32 utterance_id,
                             KwsProductFst *factor_transducer) {
   using namespace fst;
   typedef KwsProductArc::StateId StateId;
@@ -259,8 +268,7 @@ bool CreateFactorTransducer(const CompactLattice &clat,
   vector<double> beta;
   success = ComputeCompactLatticeAlphas(clat, &alpha);
   success = success && ComputeCompactLatticeBetas(clat, &beta);
-  if (!success)
-    return false;
+  if (!success) return false;
 
   // Now we map the CompactLattice to VectorFst<KwsProductArc>. We drop the
   // alignment information and only keep the negated log-probs
@@ -273,11 +281,11 @@ bool CreateFactorTransducer(const CompactLattice &clat,
   // initial and remove the total weight, i.e., the sum of all the outgoing
   // transitions and final weight at any state is equal to One() (push only the
   // negated log-prob, not the alignments)
-  for (StateIterator<KwsProductFst> 
-       siter(*factor_transducer); !siter.Done(); siter.Next()) {
+  for (StateIterator<KwsProductFst> siter(*factor_transducer); !siter.Done();
+       siter.Next()) {
     KwsProductArc::StateId state_id = siter.Value();
-    for (MutableArcIterator<KwsProductFst> 
-         aiter(factor_transducer, state_id); !aiter.Done(); aiter.Next()) {
+    for (MutableArcIterator<KwsProductFst> aiter(factor_transducer, state_id);
+         !aiter.Done(); aiter.Next()) {
       KwsProductArc arc = aiter.Value();
       BaseFloat w = arc.weight.Value1().Value();
       w += beta[state_id] - beta[arc.nextstate];
@@ -290,7 +298,7 @@ bool CreateFactorTransducer(const CompactLattice &clat,
       BaseFloat w = factor_transducer->Final(state_id).Value1().Value();
       w += beta[state_id];
       KwsProductWeight weight(w, factor_transducer->Final(state_id).Value2());
-      factor_transducer->SetFinal(state_id, weight); 
+      factor_transducer->SetFinal(state_id, weight);
     }
   }
 
@@ -325,22 +333,34 @@ bool CreateFactorTransducer(const CompactLattice &clat,
   if (!has_epsilon_property) {
     KALDI_WARN << "Epsilon property does not hold, reverting to old behavior.";
   }
-  
+
   // OK, after the above preparation, we finally come to the factor generation
-  // step. 
-  StateId ns = factor_transducer->NumStates(); 
-  StateId ss = factor_transducer->AddState(); 
+  // step.
+  StateId ns = factor_transducer->NumStates();
+  StateId ss = factor_transducer->AddState();
   StateId fs = factor_transducer->AddState();
   factor_transducer->SetStart(ss);
   factor_transducer->SetFinal(fs, KwsProductWeight::One());
 
   for (StateId s = 0; s < ns; s++) {
     // Add arcs from initial state to current state
-    if (!has_epsilon_property || (state_properties[s] & kStateHasNonEpsilonArcsLeaving))
-      factor_transducer->AddArc(ss, KwsProductArc(0, 0, KwsProductWeight(-alpha[s], StdXStdprimeWeight(state_times[s], ArcticWeight::One())), s));
+    if (!has_epsilon_property ||
+        (state_properties[s] & kStateHasNonEpsilonArcsLeaving))
+      factor_transducer->AddArc(
+          ss, KwsProductArc(
+                  0, 0, KwsProductWeight(
+                            -alpha[s], StdXStdprimeWeight(state_times[s],
+                                                          ArcticWeight::One())),
+                  s));
     // Add arcs from current state to final state
-    if (!has_epsilon_property || (state_properties[s] & kStateHasNonEpsilonArcsEntering))
-      factor_transducer->AddArc(s, KwsProductArc(0, utterance_id, KwsProductWeight(0, StdXStdprimeWeight(TropicalWeight::One(), state_times[s])), fs));
+    if (!has_epsilon_property ||
+        (state_properties[s] & kStateHasNonEpsilonArcsEntering))
+      factor_transducer->AddArc(
+          s, KwsProductArc(
+                 0, utterance_id,
+                 KwsProductWeight(0, StdXStdprimeWeight(TropicalWeight::One(),
+                                                        state_times[s])),
+                 fs));
     // The old final state is not final any more
     if (factor_transducer->Final(s) != KwsProductWeight::Zero())
       factor_transducer->SetFinal(s, KwsProductWeight::Zero());
@@ -360,19 +380,17 @@ void RemoveLongSilences(int32 max_silence_frames,
   StateId bad_state = factor_transducer->AddState();
   for (StateId s = 0; s < ns; s++) {
     // Skip arcs start from the initial state
-    if (s == ss)
-      continue;
-    for (MutableArcIterator<KwsProductFst> 
-         aiter(factor_transducer, s); !aiter.Done(); aiter.Next()) {
+    if (s == ss) continue;
+    for (MutableArcIterator<KwsProductFst> aiter(factor_transducer, s);
+         !aiter.Done(); aiter.Next()) {
       KwsProductArc arc = aiter.Value();
       // Skip arcs end with the final state
       if (factor_transducer->Final(arc.nextstate) != KwsProductWeight::Zero())
         continue;
       // Non-silence arcs
-      if (arc.ilabel != 0)
-        continue;
+      if (arc.ilabel != 0) continue;
       // Short silence arcs
-      if (state_times[arc.nextstate]-state_times[s] <= max_silence_frames)
+      if (state_times[arc.nextstate] - state_times[s] <= max_silence_frames)
         continue;
       // The rest are the long silence arcs, we point their nextstate to
       // bad_state
@@ -385,8 +403,7 @@ void RemoveLongSilences(int32 max_silence_frames,
   Connect(factor_transducer);
 }
 
-
-template<class Arc>
+template <class Arc>
 static void DifferenceWrapper(const fst::VectorFst<Arc> &fst1,
                               const fst::VectorFst<Arc> &fst2,
                               fst::VectorFst<Arc> *difference) {
@@ -401,13 +418,12 @@ static void DifferenceWrapper(const fst::VectorFst<Arc> &fst1,
     DifferenceWrapper(fst1_copy, fst2_copy, difference);
     Decode(difference, encoder);
   } else {
-    VectorFst<Arc> fst2_copy(fst2);    
-    RmEpsilon(&fst2_copy); // or Difference will crash.
-    RemoveWeights(&fst2_copy); // or Difference will crash.
+    VectorFst<Arc> fst2_copy(fst2);
+    RmEpsilon(&fst2_copy);      // or Difference will crash.
+    RemoveWeights(&fst2_copy);  // or Difference will crash.
     Difference(fst1, fst2_copy, difference);
   }
 }
-                       
 
 void MaybeDoSanityCheck(const KwsLexicographicFst &index_transducer) {
   typedef KwsLexicographicFst::Arc::Label Label;
@@ -418,12 +434,11 @@ void MaybeDoSanityCheck(const KwsLexicographicFst &index_transducer) {
   KwsLexicographicWeight weight;
   GetLinearSymbolSequence(temp_transducer, &isymbols, &osymbols, &weight);
   std::ostringstream os;
-  for (size_t i = 0; i < isymbols.size(); i++)
-    os << isymbols[i] << ' ';
+  for (size_t i = 0; i < isymbols.size(); i++) os << isymbols[i] << ' ';
   BaseFloat best_cost = weight.Value1().Value();
-  KALDI_VLOG(3) << "Best path: " << isymbols.size() << " isymbols " << ", "
-                << osymbols.size() << " osymbols, isymbols are " << os.str()
-                << ", best cost is " << best_cost;
+  KALDI_VLOG(3) << "Best path: " << isymbols.size() << " isymbols "
+                << ", " << osymbols.size() << " osymbols, isymbols are "
+                << os.str() << ", best cost is " << best_cost;
 
   // Now get second-best path.  This will exclude the best path, which
   // will generally correspond to the empty word sequence (there will
@@ -432,34 +447,32 @@ void MaybeDoSanityCheck(const KwsLexicographicFst &index_transducer) {
   // into a transducer).
   KwsLexicographicFst difference_transducer;
   DifferenceWrapper(index_transducer, temp_transducer, &difference_transducer);
-  ShortestPath(difference_transducer, &temp_transducer);  
+  ShortestPath(difference_transducer, &temp_transducer);
 
   GetLinearSymbolSequence(temp_transducer, &isymbols, &osymbols, &weight);
   std::ostringstream os2;
-  for (size_t i = 0; i < isymbols.size(); i++)
-    os2 << isymbols[i] << ' ';
+  for (size_t i = 0; i < isymbols.size(); i++) os2 << isymbols[i] << ' ';
   BaseFloat second_best_cost = weight.Value1().Value();
-  KALDI_VLOG(3) << "Second-best path: " << isymbols.size() << " isymbols " << ", "
-                << osymbols.size() << " osymbols, isymbols are " << os2.str()
-                << ", second-best cost is " << second_best_cost;
+  KALDI_VLOG(3) << "Second-best path: " << isymbols.size() << " isymbols "
+                << ", " << osymbols.size() << " osymbols, isymbols are "
+                << os2.str() << ", second-best cost is " << second_best_cost;
   if (second_best_cost < -0.01) {
     KALDI_WARN << "Negative second-best cost found " << second_best_cost;
   }
 }
-  
 
 void MaybeDoSanityCheck(const KwsProductFst &product_transducer) {
   typedef KwsProductFst::Arc::Label Label;
   if (GetVerboseLevel() < 2) return;
   KwsLexicographicFst index_transducer;
-  Map(product_transducer, &index_transducer, KwsProductFstToKwsLexicographicFstMapper());
+  Map(product_transducer, &index_transducer,
+      KwsProductFstToKwsLexicographicFstMapper());
   MaybeDoSanityCheck(index_transducer);
 }
 
-
 // This function replaces a symbol with epsilon wherever it appears
 // (fst must be an acceptor).
-template<class Arc>
+template <class Arc>
 static void ReplaceSymbolWithEpsilon(typename Arc::Label symbol,
                                      fst::VectorFst<Arc> *fst) {
   typedef typename Arc::StateId StateId;
@@ -475,8 +488,7 @@ static void ReplaceSymbolWithEpsilon(typename Arc::Label symbol,
       }
     }
   }
-}  
-
+}
 
 void DoFactorMerging(KwsProductFst *factor_transducer,
                      KwsLexicographicFst *index_transducer) {
@@ -487,7 +499,6 @@ void DoFactorMerging(KwsProductFst *factor_transducer,
   EncodeMapper<KwsProductArc> encoder(kEncodeLabels, ENCODE);
   Encode(factor_transducer, &encoder);
 
-
   // We want DeterminizeStar to remove epsilon arcs, so turn whatever it encoded
   // epsilons as, into actual epsilons.
   {
@@ -495,7 +506,6 @@ void DoFactorMerging(KwsProductFst *factor_transducer,
     Label epsilon_label = encoder(epsilon_arc).ilabel;
     ReplaceSymbolWithEpsilon(epsilon_label, factor_transducer);
   }
-    
 
   MaybeDoSanityCheck(*factor_transducer);
 
@@ -510,10 +520,11 @@ void DoFactorMerging(KwsProductFst *factor_transducer,
   Minimize(&dest_transducer);
 
   MaybeDoSanityCheck(dest_transducer);
-  
+
   Decode(&dest_transducer, encoder);
 
-  Map(dest_transducer, index_transducer, KwsProductFstToKwsLexicographicFstMapper());
+  Map(dest_transducer, index_transducer,
+      KwsProductFstToKwsLexicographicFstMapper());
 }
 
 void DoFactorDisambiguation(KwsLexicographicFst *index_transducer) {
@@ -522,10 +533,11 @@ void DoFactorDisambiguation(KwsLexicographicFst *index_transducer) {
 
   StateId ns = index_transducer->NumStates();
   for (StateId s = 0; s < ns; s++) {
-    for (MutableArcIterator<KwsLexicographicFst> 
-         aiter(index_transducer, s); !aiter.Done(); aiter.Next()) {
+    for (MutableArcIterator<KwsLexicographicFst> aiter(index_transducer, s);
+         !aiter.Done(); aiter.Next()) {
       KwsLexicographicArc arc = aiter.Value();
-      if (index_transducer->Final(arc.nextstate) != KwsLexicographicWeight::Zero())
+      if (index_transducer->Final(arc.nextstate) !=
+          KwsLexicographicWeight::Zero())
         arc.ilabel = s;
       else
         arc.olabel = 0;
@@ -535,8 +547,7 @@ void DoFactorDisambiguation(KwsLexicographicFst *index_transducer) {
 }
 
 void OptimizeFactorTransducer(KwsLexicographicFst *index_transducer,
-                              int32 max_states,
-                              bool allow_partial) {
+                              int32 max_states, bool allow_partial) {
   using namespace fst;
   KwsLexicographicFst ifst = *index_transducer;
   EncodeMapper<KwsLexicographicArc> encoder(kEncodeLabels, ENCODE);
@@ -545,19 +556,16 @@ void OptimizeFactorTransducer(KwsLexicographicFst *index_transducer,
   if (allow_partial) {
     DeterminizeStar(ifst, index_transducer, kDelta, NULL, max_states, true);
   } else {
-      try {
-        DeterminizeStar(ifst, index_transducer, kDelta, NULL, max_states,
-                        false);
-      } catch(const std::exception &e) {
-        KALDI_WARN << e.what();
-        *index_transducer = ifst;
-      }
+    try {
+      DeterminizeStar(ifst, index_transducer, kDelta, NULL, max_states, false);
+    } catch (const std::exception &e) {
+      KALDI_WARN << e.what();
+      *index_transducer = ifst;
+    }
   }
   KALDI_VLOG(2) << "OptimizeFactorTransducer: minimization...";
   Minimize(index_transducer);
   Decode(index_transducer, encoder);
 }
 
-
-
-} // end namespace kaldi
+}  // end namespace kaldi

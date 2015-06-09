@@ -34,4 +34,3 @@
 #include "matrix/optimization.h"
 
 #endif
-

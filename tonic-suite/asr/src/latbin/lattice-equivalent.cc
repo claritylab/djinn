@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -33,24 +32,27 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Test whether sets of lattices are equivalent (return with status 0 if\n"
+        "Test whether sets of lattices are equivalent (return with status 0 "
+        "if\n"
         "all were equivalent, 1 otherwise, -1 on error)\n"
-        "Usage: lattice-equivalent [options] lattice-rspecifier1 lattice-rspecifier2\n"
+        "Usage: lattice-equivalent [options] lattice-rspecifier1 "
+        "lattice-rspecifier2\n"
         " e.g.: lattice-equivalent ark:1.lats ark:2.lats\n";
-        
+
     ParseOptions po(usage);
-    BaseFloat delta = 0.1; // Use a relatively high delta as for long paths, the absolute
+    BaseFloat delta =
+        0.1;  // Use a relatively high delta as for long paths, the absolute
     // scores can be quite large.
     int32 num_paths = 20;
     BaseFloat max_error_proportion = 0.0;
-    po.Register("delta", &delta,
-                "Delta parameter for equivalence test");
-    po.Register("num-paths", &num_paths,
-                "Number of paths per lattice for testing randomized equivalence");
+    po.Register("delta", &delta, "Delta parameter for equivalence test");
+    po.Register(
+        "num-paths", &num_paths,
+        "Number of paths per lattice for testing randomized equivalence");
     po.Register("max-error-proportion", &max_error_proportion,
                 "Maximum proportion of missing 2nd lattices, or inequivalent "
                 "lattices, we allow before returning nonzero status");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -59,16 +61,15 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_ASSERT(max_error_proportion >= 0.0 && max_error_proportion <= 1.0);
-    
+
     std::string lats_rspecifier1 = po.GetArg(1),
-        lats_rspecifier2 = po.GetArg(2);
+                lats_rspecifier2 = po.GetArg(2);
 
     // Read as regular lattice-- this is more efficient for testing
     // equivalence, I tihnk.
     SequentialLatticeReader lattice_reader1(lats_rspecifier1);
 
     RandomAccessLatticeReader lattice_reader2(lats_rspecifier2);
-    
 
     int32 n_equivalent = 0, n_inequivalent = 0, n_no2nd = 0;
 
@@ -91,14 +92,17 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Done " << (n_equivalent + n_inequivalent) << " lattices, "
               << n_equivalent << " were equivalent, " << n_inequivalent
-              << " were not; for " << n_no2nd << ", could not find 2nd lattice."; 
+              << " were not; for " << n_no2nd
+              << ", could not find 2nd lattice.";
 
     int32 num_inputs = n_equivalent + n_inequivalent + n_no2nd;
     int32 max_bad = max_error_proportion * num_inputs;
-                
-    if (n_no2nd > max_bad) return -1; // treat this as error.
-    else return (n_inequivalent > max_bad ? 1 : 0);
-  } catch(const std::exception &e) {
+
+    if (n_no2nd > max_bad)
+      return -1;  // treat this as error.
+    else
+      return (n_inequivalent > max_bad ? 1 : 0);
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

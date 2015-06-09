@@ -26,8 +26,7 @@
 #include "decoder/faster-decoder.h"
 #include "decoder/training-graph-compiler.h"
 #include "sgmm/decodable-am-sgmm.h"
-#include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
-
+#include "lat/kaldi-lattice.h"  // for {Compact}LatticeArc
 
 int main(int argc, char *argv[]) {
   try {
@@ -41,7 +40,8 @@ int main(int argc, char *argv[]) {
         "Align features given [SGMM-based] models.\n"
         "Usage: sgmm-align-compiled [options] model-in graphs-rspecifier "
         "feature-rspecifier alignments-wspecifier\n"
-        "e.g.: sgmm-align-compiled 1.mdl ark:graphs.fsts scp:train.scp ark:1.ali\n";
+        "e.g.: sgmm-align-compiled 1.mdl ark:graphs.fsts scp:train.scp "
+        "ark:1.ali\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -51,30 +51,37 @@ int main(int argc, char *argv[]) {
     BaseFloat transition_scale = 1.0;
     BaseFloat self_loop_scale = 1.0;
     BaseFloat log_prune = 5.0;
-    
+
     std::string gselect_rspecifier, spkvecs_rspecifier, utt2spk_rspecifier;
     SgmmGselectConfig sgmm_opts;
 
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("beam", &beam, "Decoding beam");
-    po.Register("retry-beam", &retry_beam, "Decoding beam for second try "
+    po.Register("retry-beam", &retry_beam,
+                "Decoding beam for second try "
                 "at alignment");
-    po.Register("log-prune", &log_prune, "Pruning beam used to reduce number "
+    po.Register("log-prune", &log_prune,
+                "Pruning beam used to reduce number "
                 "of exp() evaluations.");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors (rspecifier)");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors (rspecifier)");
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic "
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic "
                 "likelihoods");
-    po.Register("transition-scale", &transition_scale, "Scaling factor for "
+    po.Register("transition-scale", &transition_scale,
+                "Scaling factor for "
                 "some transition probabilities [see also self-loop-scale].");
-    po.Register("self-loop-scale", &self_loop_scale, "Scaling factor for "
+    po.Register("self-loop-scale", &self_loop_scale,
+                "Scaling factor for "
                 "self-loop versus non-self-loop probability mass [controls "
                 "most transition probabilities.]");
-    po.Register("gselect", &gselect_rspecifier, "Precomputed Gaussian indices "
+    po.Register("gselect", &gselect_rspecifier,
+                "Precomputed Gaussian indices "
                 "(rspecifier)");
     sgmm_opts.Register(&po);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -82,8 +89,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     if (retry_beam != 0 && retry_beam <= beam)
-      KALDI_WARN << "Beams do not make sense: beam " << beam
-                 << ", retry-beam " << retry_beam;
+      KALDI_WARN << "Beams do not make sense: beam " << beam << ", retry-beam "
+                 << retry_beam;
 
     FasterDecoderOptions decode_opts;
     decode_opts.beam = beam;  // Don't set the other options.
@@ -117,7 +124,8 @@ int main(int argc, char *argv[]) {
 
     for (; !fst_reader.Done(); fst_reader.Next()) {
       std::string utt = fst_reader.Key();
-      if (!feature_reader.HasKey(utt)) num_no_feat++;
+      if (!feature_reader.HasKey(utt))
+        num_no_feat++;
       else {
         VectorFst<StdArc> decode_fst(fst_reader.Value());
         // stops copy-on-write of the fst by deleting the fst inside the reader,
@@ -143,9 +151,9 @@ int main(int argc, char *argv[]) {
           }
         }  // else spk_vars is "empty"
 
-        bool have_gselect  = !gselect_rspecifier.empty()
-            && gselect_reader.HasKey(utt)
-            && gselect_reader.Value(utt).size() == features.NumRows();
+        bool have_gselect =
+            !gselect_rspecifier.empty() && gselect_reader.HasKey(utt) &&
+            gselect_reader.Value(utt).size() == features.NumRows();
         if (!gselect_rspecifier.empty() && !have_gselect)
           KALDI_WARN << "No Gaussian-selection info available for utterance "
                      << utt << " (or wrong size)";
@@ -158,32 +166,32 @@ int main(int argc, char *argv[]) {
           num_other_error++;
           continue;
         }
-        
-        {  // Add transition-probs to the FST.
+
+        {                                    // Add transition-probs to the FST.
           std::vector<int32> disambig_syms;  // empty.
-          AddTransitionProbs(trans_model, disambig_syms,
-                             transition_scale, self_loop_scale,
-                             &decode_fst);
+          AddTransitionProbs(trans_model, disambig_syms, transition_scale,
+                             self_loop_scale, &decode_fst);
         }
 
         FasterDecoder decoder(decode_fst, decode_opts);
 
-        DecodableAmSgmmScaled sgmm_decodable(sgmm_opts, am_sgmm, spk_vars, trans_model,
-                                             features, *gselect, log_prune, acoustic_scale);
+        DecodableAmSgmmScaled sgmm_decodable(sgmm_opts, am_sgmm, spk_vars,
+                                             trans_model, features, *gselect,
+                                             log_prune, acoustic_scale);
 
         decoder.Decode(&sgmm_decodable);
-        
-        VectorFst<LatticeArc> decoded;  // linear FST.
-        bool ans = decoder.ReachedFinal() // consider only final states.
-            && decoder.GetBestPath(&decoded);  
+
+        VectorFst<LatticeArc> decoded;     // linear FST.
+        bool ans = decoder.ReachedFinal()  // consider only final states.
+                   && decoder.GetBestPath(&decoded);
         if (!ans && retry_beam != 0.0) {
           KALDI_WARN << "Retrying utterance " << utt << " with beam "
                      << retry_beam;
           decode_opts.beam = retry_beam;
           decoder.SetOptions(decode_opts);
           decoder.Decode(&sgmm_decodable);
-          ans = decoder.ReachedFinal() // consider only final states.
-              && decoder.GetBestPath(&decoded);
+          ans = decoder.ReachedFinal()  // consider only final states.
+                && decoder.GetBestPath(&decoded);
           decode_opts.beam = beam;
           decoder.SetOptions(decode_opts);
         }
@@ -194,19 +202,20 @@ int main(int argc, char *argv[]) {
           frame_count += features.NumRows();
 
           GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
-          BaseFloat like = (-weight.Value1() -weight.Value2()) / acoustic_scale;
+          BaseFloat like =
+              (-weight.Value1() - weight.Value2()) / acoustic_scale;
           tot_like += like;
           alignment_writer.Write(utt, alignment);
-          num_success ++;
-          if (num_success % 50  == 0) {
+          num_success++;
+          if (num_success % 50 == 0) {
             KALDI_LOG << "Processed " << num_success << " utterances, "
                       << "log-like per frame for " << utt << " is "
                       << (like / features.NumRows()) << " over "
                       << features.NumRows() << " frames.";
           }
         } else {
-          KALDI_WARN << "Did not successfully decode file " << utt << ", len = "
-                     << (features.NumRows());
+          KALDI_WARN << "Did not successfully decode file " << utt
+                     << ", len = " << (features.NumRows());
           num_other_error++;
         }
       }
@@ -214,13 +223,12 @@ int main(int argc, char *argv[]) {
 
     KALDI_LOG << "Done " << num_success << ", could not find features for "
               << num_no_feat << ", other errors on " << num_other_error;
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count)
-              << " over " << frame_count << " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

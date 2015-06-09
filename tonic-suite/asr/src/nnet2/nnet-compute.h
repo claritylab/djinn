@@ -30,7 +30,6 @@ namespace nnet2 {
    code in nnet-update.h is designed for sample-by-sample computation.
 */
 
-
 /**
   Does the basic neural net computation, on a sequence of data (e.g.
   an utterance).  If pad_input==true we'll pad the input with enough
@@ -44,7 +43,7 @@ namespace nnet2 {
 void NnetComputation(const Nnet &nnet,
                      const CuMatrixBase<BaseFloat> &input,  // features
                      bool pad_input,
-                     CuMatrixBase<BaseFloat> *output); // posteriors.
+                     CuMatrixBase<BaseFloat> *output);  // posteriors.
 
 /** Does the neural net computation and backprop, given input and labels.
     Note: if pad_input==true the number of rows of input should be the
@@ -58,14 +57,11 @@ void NnetComputation(const Nnet &nnet,
 */
 BaseFloat NnetGradientComputation(const Nnet &nnet,
                                   const MatrixBase<BaseFloat> &input,
-                                  bool pad_input,
-                                  BaseFloat utterance_weight,
+                                  bool pad_input, BaseFloat utterance_weight,
                                   const std::vector<int32> &labels,
                                   Nnet *nnet_to_update);
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_NNET_COMPUTE_H_
+#endif  // KALDI_NNET2_NNET_COMPUTE_H_

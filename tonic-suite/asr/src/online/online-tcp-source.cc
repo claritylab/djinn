@@ -1,6 +1,7 @@
 // online/online-audio-source.cc
 
-// Copyright 2013 Polish-Japanese Institute of Information Technology (author: Danijel Korzinek)
+// Copyright 2013 Polish-Japanese Institute of Information Technology (author:
+// Danijel Korzinek)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -43,12 +44,8 @@ OnlineTcpVectorSource::~OnlineTcpVectorSource() {
   delete[] frame;
 }
 
-size_t OnlineTcpVectorSource::SamplesProcessed() {
-  return samples_processed;
-}
-void OnlineTcpVectorSource::ResetSamples() {
-  samples_processed = 0;
-}
+size_t OnlineTcpVectorSource::SamplesProcessed() { return samples_processed; }
+void OnlineTcpVectorSource::ResetSamples() { samples_processed = 0; }
 
 bool OnlineTcpVectorSource::ReadFull(char* buf, int32 len) {
   int32 to_read = len;
@@ -70,8 +67,7 @@ bool OnlineTcpVectorSource::ReadFull(char* buf, int32 len) {
 
 int OnlineTcpVectorSource::GetNextPack() {
   int32 size = 0;
-  if (!ReadFull((char*) &size, 4))
-    return 0;
+  if (!ReadFull((char*)&size, 4)) return 0;
 
   if (size % 2 != 0) {
     KALDI_ERR << "TCPVectorSource: Pack size must be even!";
@@ -84,8 +80,7 @@ int OnlineTcpVectorSource::GetNextPack() {
     pack = new char[pack_size];
   }
 
-  if (!ReadFull(pack, size))
-    return 0;
+  if (!ReadFull(pack, size)) return 0;
 
   return size;
 }
@@ -106,8 +101,7 @@ int OnlineTcpVectorSource::FillFrame(int32 get_size) {
   while (get_size > 0) {
     int32 ret = GetNextPack();
 
-    if (ret == 0)
-      return frame_offset;
+    if (ret == 0) return frame_offset;
 
     int32 size = ret < get_size ? ret : get_size;
 
@@ -122,9 +116,8 @@ int OnlineTcpVectorSource::FillFrame(int32 get_size) {
   return frame_offset;
 }
 
-bool OnlineTcpVectorSource::Read(Vector<BaseFloat> *data) {
-  if (!connected)
-    return false;
+bool OnlineTcpVectorSource::Read(Vector<BaseFloat>* data) {
+  if (!connected) return false;
 
   int32 n_elem = static_cast<uint32>(data->Dim());
 
@@ -139,19 +132,16 @@ bool OnlineTcpVectorSource::Read(Vector<BaseFloat> *data) {
   int32 b_read = FillFrame(n_bytes);
   int32 n_read = b_read / 2;
 
-  short* s_frame = (short*) frame;
-  for (int32 i = 0; i < n_read; i++)
-    (*data)(i) = s_frame[i];
+  short* s_frame = (short*)frame;
+  for (int32 i = 0; i < n_read; i++) (*data)(i) = s_frame[i];
 
   samples_processed += n_read;
 
   return (n_read == n_elem);
 }
 
-bool OnlineTcpVectorSource::IsConnected() {
-  return connected;
-}
+bool OnlineTcpVectorSource::IsConnected() { return connected; }
 
 }  // namespace kaldi
 
-#endif // !defined(_MSC_VER)
+#endif  // !defined(_MSC_VER)

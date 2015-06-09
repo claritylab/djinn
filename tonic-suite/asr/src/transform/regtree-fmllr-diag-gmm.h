@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_REGTREE_FMLLR_DIAG_GMM_H_
 #define KALDI_TRANSFORM_REGTREE_FMLLR_DIAG_GMM_H_
 
@@ -33,21 +32,25 @@
 
 namespace kaldi {
 
-
 ///  Configuration variables for FMLLR transforms
 struct RegtreeFmllrOptions {
   std::string update_type;  ///< "full", "diag", "offset", "none"
-  BaseFloat min_count;  ///< Minimum occupancy for computing a transform
-  int32 num_iters;      ///< Number of iterations (if using an iterative update)
-  bool use_regtree;     ///< If 'true', find transforms to generate using regression tree.
-                        ///< If 'false', generate transforms for each baseclass.
+  BaseFloat min_count;      ///< Minimum occupancy for computing a transform
+  int32 num_iters;   ///< Number of iterations (if using an iterative update)
+  bool use_regtree;  ///< If 'true', find transforms to generate using
+                     ///regression tree.
+                     ///< If 'false', generate transforms for each baseclass.
 
-  RegtreeFmllrOptions(): update_type("full"), min_count(1000.0),
-                         num_iters(10), use_regtree(true) { }
-  
+  RegtreeFmllrOptions()
+      : update_type("full"),
+        min_count(1000.0),
+        num_iters(10),
+        use_regtree(true) {}
+
   void Register(OptionsItf *po) {
-    po->Register("fmllr-update-type", &update_type,
-                 "Update type for fMLLR (\"full\"|\"diag\"|\"offset\"|\"none\")");
+    po->Register(
+        "fmllr-update-type", &update_type,
+        "Update type for fMLLR (\"full\"|\"diag\"|\"offset\"|\"none\")");
     po->Register("fmllr-min-count", &min_count,
                  "Minimum count to estimate an fMLLR transform.");
     po->Register("fmllr-num-iters", &num_iters,
@@ -56,7 +59,6 @@ struct RegtreeFmllrOptions {
                  "Use a regression-class tree for fMLLR.");
   }
 };
-
 
 /** An FMLLR (feature-space MLLR) transformation, also called CMLLR
  *  (constrained MLLR) is an affine transformation of the feature vectors.
@@ -70,8 +72,10 @@ class RegtreeFmllrDiagGmm {
  public:
   RegtreeFmllrDiagGmm() : dim_(-1), num_xforms_(-1), valid_logdet_(false) {}
   explicit RegtreeFmllrDiagGmm(const RegtreeFmllrDiagGmm &other)
-      : dim_(other.dim_), num_xforms_(other.num_xforms_),
-        xform_matrices_(other.xform_matrices_), logdet_(other.logdet_),
+      : dim_(other.dim_),
+        num_xforms_(other.num_xforms_),
+        xform_matrices_(other.xform_matrices_),
+        logdet_(other.logdet_),
         valid_logdet_(other.valid_logdet_),
         bclass2xforms_(other.bclass2xforms_) {}
   ~RegtreeFmllrDiagGmm() {}
@@ -84,7 +88,7 @@ class RegtreeFmllrDiagGmm {
   void ComputeLogDets();
   /// Get the transformed features for each of the transforms.
   void TransformFeature(const VectorBase<BaseFloat> &in,
-                        std::vector< Vector<BaseFloat> > *out) const;
+                        std::vector<Vector<BaseFloat> > *out) const;
   void Write(std::ostream &out_stream, bool binary) const;
   void Read(std::istream &in_stream, bool binary);
 
@@ -101,29 +105,29 @@ class RegtreeFmllrDiagGmm {
   void set_bclass2xforms(const std::vector<int32> &in) { bclass2xforms_ = in; }
 
  private:
-  int32 dim_;             ///< Dimension of feature vectors
-  int32 num_xforms_;            ///< Number of transform matrices
-  std::vector< Matrix<BaseFloat> > xform_matrices_;  ///< Transform matrices
-  Vector<BaseFloat> logdet_;    ///< Log-determinants of the Jacobians
-  bool valid_logdet_;           ///< Whether logdets are for current transforms
+  int32 dim_;         ///< Dimension of feature vectors
+  int32 num_xforms_;  ///< Number of transform matrices
+  std::vector<Matrix<BaseFloat> > xform_matrices_;  ///< Transform matrices
+  Vector<BaseFloat> logdet_;  ///< Log-determinants of the Jacobians
+  bool valid_logdet_;         ///< Whether logdets are for current transforms
   /// For each baseclass index of which transform to use; -1 => no xform
   std::vector<int32> bclass2xforms_;
 
-  void operator = (const RegtreeFmllrDiagGmm&);  // Disallow assignment operator
+  void operator=(const RegtreeFmllrDiagGmm &);  // Disallow assignment operator
 };
 
 inline void RegtreeFmllrDiagGmm::GetXformMatrix(int32 xform_index,
-                                              Matrix<BaseFloat> *out) const {
+                                                Matrix<BaseFloat> *out) const {
   if (xform_index >= num_xforms_) {
     KALDI_ERR << "Index (" << xform_index << ") out of range [0, "
-        << num_xforms_ << "]";
+              << num_xforms_ << "]";
   }
   out->Resize(dim_, dim_ + 1);
   out->CopyFromMat(xform_matrices_[xform_index], kNoTrans);
 }
 
 inline void RegtreeFmllrDiagGmm::SetParameters(const MatrixBase<BaseFloat> &mat,
-                                        size_t regclass) {
+                                               size_t regclass) {
   xform_matrices_[regclass].CopyFromMat(mat, kNoTrans);
   valid_logdet_ = false;
 }
@@ -133,12 +137,14 @@ inline void RegtreeFmllrDiagGmm::GetLogDets(VectorBase<BaseFloat> *out) const {
   out->CopyFromVec(logdet_);
 }
 
-typedef TableWriter< KaldiObjectHolder<RegtreeFmllrDiagGmm> >  RegtreeFmllrDiagGmmWriter;
-typedef RandomAccessTableReader< KaldiObjectHolder<RegtreeFmllrDiagGmm> >
-            RandomAccessRegtreeFmllrDiagGmmReader;
-typedef RandomAccessTableReaderMapped< KaldiObjectHolder<RegtreeFmllrDiagGmm> >
-            RandomAccessRegtreeFmllrDiagGmmReaderMapped;
-typedef SequentialTableReader< KaldiObjectHolder<RegtreeFmllrDiagGmm> >  RegtreeFmllrDiagGmmSeqReader;  
+typedef TableWriter<KaldiObjectHolder<RegtreeFmllrDiagGmm> >
+    RegtreeFmllrDiagGmmWriter;
+typedef RandomAccessTableReader<KaldiObjectHolder<RegtreeFmllrDiagGmm> >
+    RandomAccessRegtreeFmllrDiagGmmReader;
+typedef RandomAccessTableReaderMapped<KaldiObjectHolder<RegtreeFmllrDiagGmm> >
+    RandomAccessRegtreeFmllrDiagGmmReaderMapped;
+typedef SequentialTableReader<KaldiObjectHolder<RegtreeFmllrDiagGmm> >
+    RegtreeFmllrDiagGmmSeqReader;
 
 /** \class RegtreeFmllrDiagGmmAccs
  *  Class for computing the accumulators needed for the maximum-likelihood
@@ -155,14 +161,12 @@ class RegtreeFmllrDiagGmmAccs {
 
   /// Accumulate stats for a single GMM in the model; returns log likelihood.
   /// This does not work with multiple feature transforms.
-  BaseFloat AccumulateForGmm(const RegressionTree &regtree,
-                             const AmDiagGmm &am,
+  BaseFloat AccumulateForGmm(const RegressionTree &regtree, const AmDiagGmm &am,
                              const VectorBase<BaseFloat> &data,
                              size_t pdf_index, BaseFloat weight);
 
   /// Accumulate stats for a single Gaussian component in the model.
-  void AccumulateForGaussian(const RegressionTree &regtree,
-                             const AmDiagGmm &am,
+  void AccumulateForGaussian(const RegressionTree &regtree, const AmDiagGmm &am,
                              const VectorBase<BaseFloat> &data,
                              size_t pdf_index, size_t gauss_index,
                              BaseFloat weight);
@@ -177,13 +181,13 @@ class RegtreeFmllrDiagGmmAccs {
   /// Accessors
   int32 Dim() const { return dim_; }
   int32 NumBaseClasses() const { return num_baseclasses_; }
-  const std::vector<AffineXformStats*> &baseclass_stats() const {
+  const std::vector<AffineXformStats *> &baseclass_stats() const {
     return baseclass_stats_;
   }
 
  private:
   /// Per-baseclass stats; used for accumulation
-  std::vector<AffineXformStats*> baseclass_stats_;
+  std::vector<AffineXformStats *> baseclass_stats_;
   /// Number of baseclasses
   int32 num_baseclasses_;
   /// Dimension of feature vectors
@@ -192,9 +196,6 @@ class RegtreeFmllrDiagGmmAccs {
   // Cannot have copy constructor and assigment operator
   KALDI_DISALLOW_COPY_AND_ASSIGN(RegtreeFmllrDiagGmmAccs);
 };
-
-
-
 
 }  // namespace kaldi
 

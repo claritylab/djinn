@@ -17,14 +17,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_LAT_KALDI_LATTICE_H_
 #define KALDI_LAT_KALDI_LATTICE_H_
 
 #include "fstext/fstext-lib.h"
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
-
 
 namespace kaldi {
 // will import some things above...
@@ -35,7 +33,7 @@ typedef fst::LatticeWeightTpl<BaseFloat> LatticeWeight;
 typedef fst::CompactLatticeWeightTpl<LatticeWeight, int32> CompactLatticeWeight;
 
 typedef fst::CompactLatticeWeightCommonDivisorTpl<LatticeWeight, int32>
-  CompactLatticeWeightCommonDivisor;
+    CompactLatticeWeightCommonDivisor;
 
 typedef fst::ArcTpl<LatticeWeight> LatticeArc;
 
@@ -53,18 +51,14 @@ typedef fst::VectorFst<CompactLatticeArc> CompactLattice;
 
 bool WriteCompactLattice(std::ostream &os, bool binary,
                          const CompactLattice &clat);
-bool WriteLattice(std::ostream &os, bool binary,
-                  const Lattice &lat);
+bool WriteLattice(std::ostream &os, bool binary, const Lattice &lat);
 
 // the following function requires that *clat be
 // NULL when called.
-bool ReadCompactLattice(std::istream &is, bool binary,
-                        CompactLattice **clat);
+bool ReadCompactLattice(std::istream &is, bool binary, CompactLattice **clat);
 // the following function requires that *lat be
 // NULL when called.
-bool ReadLattice(std::istream &is, bool binary,
-                 Lattice **lat);
-
+bool ReadLattice(std::istream &is, bool binary, Lattice **lat);
 
 class CompactLatticeHolder {
  public:
@@ -86,9 +80,14 @@ class CompactLatticeHolder {
   const T &Value() const {
     KALDI_ASSERT(t_ != NULL && "Called Value() on empty CompactLatticeHolder");
     return *t_;
-  } 
+  }
 
-  void Clear() { if (t_) { delete t_; t_ = NULL; } }
+  void Clear() {
+    if (t_) {
+      delete t_;
+      t_ = NULL;
+    }
+  }
 
   ~CompactLatticeHolder() { Clear(); }
 
@@ -116,9 +115,14 @@ class LatticeHolder {
   const T &Value() const {
     KALDI_ASSERT(t_ != NULL && "Called Value() on empty LatticeHolder");
     return *t_;
-  } 
+  }
 
-  void Clear() { if (t_) { delete t_; t_ = NULL; } }
+  void Clear() {
+    if (t_) {
+      delete t_;
+      t_ = NULL;
+    }
+  }
 
   ~LatticeHolder() { Clear(); }
 
@@ -131,10 +135,11 @@ typedef SequentialTableReader<LatticeHolder> SequentialLatticeReader;
 typedef RandomAccessTableReader<LatticeHolder> RandomAccessLatticeReader;
 
 typedef TableWriter<CompactLatticeHolder> CompactLatticeWriter;
-typedef SequentialTableReader<CompactLatticeHolder> SequentialCompactLatticeReader;
-typedef RandomAccessTableReader<CompactLatticeHolder> RandomAccessCompactLatticeReader;
+typedef SequentialTableReader<CompactLatticeHolder>
+    SequentialCompactLatticeReader;
+typedef RandomAccessTableReader<CompactLatticeHolder>
+    RandomAccessCompactLatticeReader;
 
-
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_LAT_KALDI_LATTICE_H_

@@ -17,26 +17,21 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 #ifndef KALDI_CUDAMATRIX_CU_RAND_H_
 #define KALDI_CUDAMATRIX_CU_RAND_H_
-
 
 #include "cudamatrix/cu-matrix.h"
 #include "base/kaldi-math.h"
 
 namespace kaldi {
 
-
-template<typename Real> 
+template <typename Real>
 class CuRand {
  public:
-
-  CuRand(): z1_(NULL), z2_(NULL), z3_(NULL), z4_(NULL), state_size_(0) { }
+  CuRand() : z1_(NULL), z2_(NULL), z3_(NULL), z4_(NULL), state_size_(0) {}
 
   ~CuRand();
-  
+
   /// on demand seeding of all the buffers
   void SeedGpu(MatrixIndexT state_size);
 
@@ -55,27 +50,23 @@ class CuRand {
   /// seed one buffer on the GPU.  If state_size == 0, just frees any
   /// existing buffers.
   void SeedBuffer(MatrixIndexT state_size, uint32 **tgt);
-   
- private:
 
-  // CANNOT DEFINE CuMatrix<uint32>, 
-  // CuMatrix has back-off Matrix which cannot hold integers. 
-  // The inner state of random number generator will be in 
-  // a raw buffer with the size of the current matrix. 
+ private:
+  // CANNOT DEFINE CuMatrix<uint32>,
+  // CuMatrix has back-off Matrix which cannot hold integers.
+  // The inner state of random number generator will be in
+  // a raw buffer with the size of the current matrix.
   //
-  // On-demand seeding is used to get the correct size 
+  // On-demand seeding is used to get the correct size
   // of the state buffer z1,z2,z3,z4
-  
+
   /// Inner state of the ``grid-like'' random number generator
-  uint32 *z1_, *z2_, *z3_, *z4_; 
-  int32 state_size_; ///< size of the buffers
-  
-  CuMatrix<Real> tmp_; ///< auxiliary matrix
+  uint32 *z1_, *z2_, *z3_, *z4_;
+  int32 state_size_;  ///< size of the buffers
+
+  CuMatrix<Real> tmp_;  ///< auxiliary matrix
 };
 
-
-} // namsepace
+}  // namsepace
 
 #endif
-
-

@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -34,15 +33,16 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
     typedef StdArc::StateId StateId;
-    
+
     const char *usage =
-        "Compute the lattice depths in terms of the average number of arcs that\n"
+        "Compute the lattice depths in terms of the average number of arcs "
+        "that\n"
         "cross a frame.  See also lattice-depth-per-frame\n"
         "Usage: lattice-depth <lattice-rspecifier> [<depth-wspecifier>]\n"
         "E.g.: lattice-depth ark:- ark,t:-\n";
 
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() < 1 || po.NumArgs() > 2) {
@@ -63,12 +63,11 @@ int main(int argc, char *argv[]) {
       std::string key = clat_reader.Key();
 
       TopSortCompactLatticeIfNeeded(&clat);
-      
+
       int32 t;
       BaseFloat depth = CompactLatticeDepth(clat, &t);
 
-      if (depth_wspecifier != "")
-        lats_depth_writer.Write(key, depth);
+      if (depth_wspecifier != "") lats_depth_writer.Write(key, depth);
 
       sum_depth += depth * t;
       total_t += t;
@@ -78,8 +77,10 @@ int main(int argc, char *argv[]) {
     // Warning: the script egs/s5/*/steps/oracle_wer.sh parses the next line.
     KALDI_LOG << "Overall density is " << (sum_depth / total_t) << " over "
               << total_t << " frames.";
-    if (num_done != 0) return 0;
-    else return 1;
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
   } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;

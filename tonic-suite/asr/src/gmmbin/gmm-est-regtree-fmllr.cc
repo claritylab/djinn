@@ -36,14 +36,17 @@ int main(int argc, char *argv[]) {
     using namespace kaldi;
     const char *usage =
         "Compute FMLLR transforms per-utterance (default) or per-speaker for "
-        "the supplied set of speakers (spk2utt option).  Note: writes RegtreeFmllrDiagGmm objects\n"
-        "Usage: gmm-est-regtree-fmllr  [options] <model-in> <feature-rspecifier> "
+        "the supplied set of speakers (spk2utt option).  Note: writes "
+        "RegtreeFmllrDiagGmm objects\n"
+        "Usage: gmm-est-regtree-fmllr  [options] <model-in> "
+        "<feature-rspecifier> "
         "<posteriors-rspecifier> <regression-tree> <transforms-wspecifier>\n";
 
     ParseOptions po(usage);
     string spk2utt_rspecifier;
     bool binary = true;
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
     po.Register("binary", &binary, "Write output in binary mode");
     // register other modules
@@ -57,11 +60,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        regtree_filename = po.GetArg(4),
-        xforms_wspecifier = po.GetArg(5);
+    string model_filename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           posteriors_rspecifier = po.GetArg(3),
+           regtree_filename = po.GetArg(4), xforms_wspecifier = po.GetArg(5);
 
     RandomAccessPosteriorReader posteriors_reader(posteriors_rspecifier);
     RegtreeFmllrDiagGmmWriter fmllr_writer(xforms_wspecifier);
@@ -97,14 +98,14 @@ int main(int argc, char *argv[]) {
         fmllr_accs.SetZero();
         const vector<string> &uttlist = spk2utt_reader.Value();
         for (vector<string>::const_iterator utt_itr = uttlist.begin(),
-            itr_end = uttlist.end(); utt_itr != itr_end; ++utt_itr) {
+                                            itr_end = uttlist.end();
+             utt_itr != itr_end; ++utt_itr) {
           if (!feature_reader.HasKey(*utt_itr)) {
             KALDI_WARN << "Did not find features for utterance " << *utt_itr;
             continue;
           }
           if (!posteriors_reader.HasKey(*utt_itr)) {
-            KALDI_WARN << "Did not find posteriors for utterance "
-                << *utt_itr;
+            KALDI_WARN << "Did not find posteriors for utterance " << *utt_itr;
             num_no_posterior++;
             continue;
           }
@@ -112,7 +113,7 @@ int main(int argc, char *argv[]) {
           const Posterior &posterior = posteriors_reader.Value(*utt_itr);
           if (static_cast<int32>(posterior.size()) != feats.NumRows()) {
             KALDI_WARN << "Posteriors has wrong size " << (posterior.size())
-                << " vs. " << (feats.NumRows());
+                       << " vs. " << (feats.NumRows());
             num_other_error++;
             continue;
           }
@@ -124,14 +125,14 @@ int main(int argc, char *argv[]) {
             for (size_t j = 0; j < pdf_posterior[i].size(); j++) {
               int32 pdf_id = pdf_posterior[i][j].first;
               BaseFloat prob = pdf_posterior[i][j].second;
-              file_like += fmllr_accs.AccumulateForGmm(regtree, am_gmm,
-                                                       feats.Row(i), pdf_id,
-                                                       prob);
+              file_like += fmllr_accs.AccumulateForGmm(
+                  regtree, am_gmm, feats.Row(i), pdf_id, prob);
               file_t += prob;
             }
           }
-          KALDI_VLOG(2) << "Average like for this file is " << (file_like/file_t)
-                        << " over " << file_t << " frames.";
+          KALDI_VLOG(2) << "Average like for this file is "
+                        << (file_like / file_t) << " over " << file_t
+                        << " frames.";
           tot_like += file_like;
           tot_t += file_t;
           num_done++;
@@ -142,19 +143,18 @@ int main(int argc, char *argv[]) {
         BaseFloat objf_impr, t;
         fmllr_accs.Update(regtree, opts, &fmllr_xforms, &objf_impr, &t);
         KALDI_LOG << "fMLLR objf improvement for speaker " << spk << " is "
-                  << (objf_impr/(t+1.0e-10)) << " per frame over " << t
+                  << (objf_impr / (t + 1.0e-10)) << " per frame over " << t
                   << " frames.";
         tot_objf_impr += objf_impr;
         tot_t_objf += t;
         fmllr_writer.Write(spk, fmllr_xforms);
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string key = feature_reader.Key();
         if (!posteriors_reader.HasKey(key)) {
-          KALDI_WARN << "Did not find posteriors for utterance "
-              << key;
+          KALDI_WARN << "Did not find posteriors for utterance " << key;
           num_no_posterior++;
           continue;
         }
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
 
         if (static_cast<int32>(posterior.size()) != feats.NumRows()) {
           KALDI_WARN << "Posteriors has wrong size " << (posterior.size())
-              << " vs. " << (feats.NumRows());
+                     << " vs. " << (feats.NumRows());
           num_other_error++;
           continue;
         }
@@ -177,14 +177,14 @@ int main(int argc, char *argv[]) {
           for (size_t j = 0; j < pdf_posterior[i].size(); j++) {
             int32 pdf_id = pdf_posterior[i][j].first;
             BaseFloat prob = pdf_posterior[i][j].second;
-            file_like += fmllr_accs.AccumulateForGmm(regtree, am_gmm,
-                                                     feats.Row(i), pdf_id,
-                                                     prob);
+            file_like += fmllr_accs.AccumulateForGmm(
+                regtree, am_gmm, feats.Row(i), pdf_id, prob);
             file_t += prob;
           }
         }
-        KALDI_VLOG(2) << "Average like for this file is " << (file_like/file_t)
-                      << " over " << file_t << " frames.";
+        KALDI_VLOG(2) << "Average like for this file is "
+                      << (file_like / file_t) << " over " << file_t
+                      << " frames.";
         tot_like += file_like;
         tot_t += file_t;
         if (num_done % 10 == 0)
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
         BaseFloat objf_impr, t;
         fmllr_accs.Update(regtree, opts, &fmllr_xforms, &objf_impr, &t);
         KALDI_LOG << "fMLLR objf improvement for utterance " << key << " is "
-                  << (objf_impr/(t+1.0e-10)) << " per frame over " << t
+                  << (objf_impr / (t + 1.0e-10)) << " per frame over " << t
                   << " frames.";
         tot_objf_impr += objf_impr;
         tot_t_objf += t;
@@ -203,14 +203,14 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done " << num_done << " files, " << num_no_posterior
               << " with no posteriors, " << num_other_error
               << " with other errors.";
-    KALDI_LOG << "Overall objf improvement from MLLR is " << (tot_objf_impr/tot_t_objf)
-              << " per frame " << " over " << tot_t_objf << " frames.";
-    KALDI_LOG << "Overall acoustic likelihood was " << (tot_like/tot_t)
+    KALDI_LOG << "Overall objf improvement from MLLR is "
+              << (tot_objf_impr / tot_t_objf) << " per frame "
+              << " over " << tot_t_objf << " frames.";
+    KALDI_LOG << "Overall acoustic likelihood was " << (tot_like / tot_t)
               << " over " << tot_t << " frames.";
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

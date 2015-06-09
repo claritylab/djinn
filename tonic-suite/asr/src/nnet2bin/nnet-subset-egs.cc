@@ -33,34 +33,37 @@ int main(int argc, char *argv[]) {
         "Creates a random subset of the input examples, of a specified size.\n"
         "Uses no more memory than the size of the subset.\n"
         "\n"
-        "Usage:  nnet-subset-egs [options] <egs-rspecifier> [<egs-wspecifier2> ...]\n"
+        "Usage:  nnet-subset-egs [options] <egs-rspecifier> [<egs-wspecifier2> "
+        "...]\n"
         "\n"
         "e.g.\n"
-        "nnet-subset-egs [args] ark:- | nnet-subset-egs --n=1000 ark:- ark:subset.egs\n";
-    
+        "nnet-subset-egs [args] ark:- | nnet-subset-egs --n=1000 ark:- "
+        "ark:subset.egs\n";
+
     int32 srand_seed = 0;
     int32 n = 1000;
     bool randomize_order = true;
     ParseOptions po(usage);
     po.Register("srand", &srand_seed, "Seed for random number generator ");
     po.Register("n", &n, "Number of examples to output");
-    po.Register("randomize-order", &randomize_order, "If true, randomize the order "
+    po.Register("randomize-order", &randomize_order,
+                "If true, randomize the order "
                 "of the output");
-    
+
     po.Read(argc, argv);
-    
+
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string examples_rspecifier = po.GetArg(1),
-        examples_wspecifier = po.GetArg(2);
+                examples_wspecifier = po.GetArg(2);
 
     std::vector<NnetExample> egs;
-    
+
     SequentialNnetExampleReader example_reader(examples_rspecifier);
 
     int64 num_read = 0;
@@ -70,13 +73,12 @@ int main(int argc, char *argv[]) {
         egs.push_back(example_reader.Value());
       else {
         BaseFloat keep_prob = n / static_cast<BaseFloat>(num_read);
-        if (WithProb(keep_prob)) { // With probability "keep_prob"
-          egs[RandInt(0, n-1)] = example_reader.Value();
+        if (WithProb(keep_prob)) {  // With probability "keep_prob"
+          egs[RandInt(0, n - 1)] = example_reader.Value();
         }
       }
     }
-    if (randomize_order)
-      std::random_shuffle(egs.begin(), egs.end());
+    if (randomize_order) std::random_shuffle(egs.begin(), egs.end());
 
     NnetExampleWriter writer(examples_wspecifier);
     for (size_t i = 0; i < egs.size(); i++) {
@@ -84,15 +86,13 @@ int main(int argc, char *argv[]) {
       key << i;
       writer.Write(key.str(), egs[i]);
     }
-    
+
     KALDI_LOG << "Selected a subset of " << egs.size() << " out of " << num_read
               << " neural-network training examples ";
-    
+
     return (num_read != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

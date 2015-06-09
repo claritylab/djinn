@@ -28,21 +28,20 @@
 
 namespace kaldi {
 
-
 MelBanks::MelBanks(const MelBanksOptions &opts,
                    const FrameExtractionOptions &frame_opts,
-                   BaseFloat vtln_warp_factor):
-    htk_mode_(opts.htk_mode) {
+                   BaseFloat vtln_warp_factor)
+    : htk_mode_(opts.htk_mode) {
   int32 num_bins = opts.num_bins;
   if (num_bins < 3) KALDI_ERR << "Must have at least 3 mel bins";
   BaseFloat sample_freq = frame_opts.samp_freq;
-  int32 window_length = static_cast<int32>(frame_opts.samp_freq*0.001*frame_opts.frame_length_ms);
-  int32 window_length_padded =
-      (frame_opts.round_to_power_of_two ?
-       RoundUpToNearestPowerOfTwo(window_length) :
-       window_length);
+  int32 window_length = static_cast<int32>(frame_opts.samp_freq * 0.001 *
+                                           frame_opts.frame_length_ms);
+  int32 window_length_padded = (frame_opts.round_to_power_of_two
+                                    ? RoundUpToNearestPowerOfTwo(window_length)
+                                    : window_length);
   KALDI_ASSERT(window_length_padded % 2 == 0);
-  int32 num_fft_bins = window_length_padded/2;
+  int32 num_fft_bins = window_length_padded / 2;
   BaseFloat nyquist = 0.5 * sample_freq;
 
   BaseFloat low_freq = opts.low_freq, high_freq;
@@ -51,13 +50,11 @@ MelBanks::MelBanks(const MelBanksOptions &opts,
   else
     high_freq = nyquist + opts.high_freq;
 
-  if (low_freq < 0.0 || low_freq >= nyquist
-      || high_freq <= 0.0 || high_freq > nyquist
-      || high_freq <= low_freq)
+  if (low_freq < 0.0 || low_freq >= nyquist || high_freq <= 0.0 ||
+      high_freq > nyquist || high_freq <= low_freq)
     KALDI_ERR << "Bad values in options: low-freq " << low_freq
-              << " and high-freq " << high_freq << " vs. nyquist "
-              << nyquist;
-  
+              << " and high-freq " << high_freq << " vs. nyquist " << nyquist;
+
   BaseFloat fft_bin_width = sample_freq / window_length_padded;
   // fft-bin width [think of it as Nyquist-freq / half-window-length]
 
@@ -68,35 +65,31 @@ MelBanks::MelBanks(const MelBanksOptions &opts,
 
   // divide by num_bins+1 in next line because of end-effects where the bins
   // spread out to the sides.
-  BaseFloat mel_freq_delta = (mel_high_freq - mel_low_freq) / (num_bins+1);
+  BaseFloat mel_freq_delta = (mel_high_freq - mel_low_freq) / (num_bins + 1);
 
-  BaseFloat vtln_low = opts.vtln_low,
-      vtln_high = opts.vtln_high;
+  BaseFloat vtln_low = opts.vtln_low, vtln_high = opts.vtln_high;
   if (vtln_high < 0.0) vtln_high += nyquist;
-  
+
   if (vtln_warp_factor != 1.0 &&
-      (vtln_low < 0.0 || vtln_low <= low_freq
-       || vtln_low >= high_freq
-       || vtln_high <= 0.0 || vtln_high >= high_freq
-       || vtln_high <= vtln_low))
+      (vtln_low < 0.0 || vtln_low <= low_freq || vtln_low >= high_freq ||
+       vtln_high <= 0.0 || vtln_high >= high_freq || vtln_high <= vtln_low))
     KALDI_ERR << "Bad values in options: vtln-low " << vtln_low
               << " and vtln-high " << vtln_high << ", versus "
-              << "low-freq " << low_freq << " and high-freq "
-              << high_freq;
+              << "low-freq " << low_freq << " and high-freq " << high_freq;
 
   bins_.resize(num_bins);
   center_freqs_.Resize(num_bins);
 
   for (int32 bin = 0; bin < num_bins; bin++) {
     BaseFloat left_mel = mel_low_freq + bin * mel_freq_delta,
-        center_mel = mel_low_freq + (bin + 1) * mel_freq_delta,
-        right_mel = mel_low_freq + (bin + 2) * mel_freq_delta;
+              center_mel = mel_low_freq + (bin + 1) * mel_freq_delta,
+              right_mel = mel_low_freq + (bin + 2) * mel_freq_delta;
 
     if (vtln_warp_factor != 1.0) {
       left_mel = VtlnWarpMelFreq(vtln_low, vtln_high, low_freq, high_freq,
                                  vtln_warp_factor, left_mel);
       center_mel = VtlnWarpMelFreq(vtln_low, vtln_high, low_freq, high_freq,
-                                 vtln_warp_factor, center_mel);
+                                   vtln_warp_factor, center_mel);
       right_mel = VtlnWarpMelFreq(vtln_low, vtln_high, low_freq, high_freq,
                                   vtln_warp_factor, right_mel);
     }
@@ -113,16 +106,15 @@ MelBanks::MelBanks(const MelBanksOptions &opts,
         if (mel <= center_mel)
           weight = (mel - left_mel) / (center_mel - left_mel);
         else
-         weight = (right_mel-mel) / (right_mel-center_mel);
+          weight = (right_mel - mel) / (right_mel - center_mel);
         this_bin(i) = weight;
-        if (first_index == -1)
-          first_index = i;
+        if (first_index == -1) first_index = i;
         last_index = i;
       }
     }
-    KALDI_ASSERT(first_index != -1 && last_index >= first_index
-                 && "You may have set --num-mel-bins too large.");
-                 
+    KALDI_ASSERT(first_index != -1 && last_index >= first_index &&
+                 "You may have set --num-mel-bins too large.");
+
     bins_[bin].first = first_index;
     int32 size = last_index + 1 - first_index;
     bins_[bin].second.Resize(size);
@@ -131,7 +123,6 @@ MelBanks::MelBanks(const MelBanksOptions &opts,
     // Replicate a bug in HTK, for testing purposes.
     if (opts.htk_mode && bin == 0 && mel_low_freq != 0.0)
       bins_[bin].second(0) = 0.0;
-    
   }
   if (debug_) {
     for (size_t i = 0; i < bins_.size(); i++) {
@@ -141,17 +132,17 @@ MelBanks::MelBanks(const MelBanksOptions &opts,
   }
 }
 
-BaseFloat MelBanks::VtlnWarpFreq(BaseFloat vtln_low_cutoff,  // upper+lower frequency cutoffs for VTLN.
-                                 BaseFloat vtln_high_cutoff,
-                                 BaseFloat low_freq,  // upper+lower frequency cutoffs in mel computation
-                                 BaseFloat high_freq,
-                                 BaseFloat vtln_warp_factor,
-                                 BaseFloat freq) {
+BaseFloat MelBanks::VtlnWarpFreq(
+    BaseFloat vtln_low_cutoff,  // upper+lower frequency cutoffs for VTLN.
+    BaseFloat vtln_high_cutoff,
+    BaseFloat low_freq,  // upper+lower frequency cutoffs in mel computation
+    BaseFloat high_freq, BaseFloat vtln_warp_factor, BaseFloat freq) {
   /// This computes a VTLN warping function that is not the same as HTK's one,
   /// but has similar inputs (this function has the advantage of never producing
   /// empty bins).
 
-  /// This function computes a warp function F(freq), defined between low_freq and
+  /// This function computes a warp function F(freq), defined between low_freq
+  /// and
   /// high_freq inclusive, with the following properties:
   ///  F(low_freq) == low_freq
   ///  F(high_freq) == high_freq
@@ -173,14 +164,15 @@ BaseFloat MelBanks::VtlnWarpFreq(BaseFloat vtln_low_cutoff,  // upper+lower freq
   ///   This implies that l = vtln_low_cutoff / min(1, 1/vtln_warp_factor)
   ///                       = vtln_low_cutoff * max(1, vtln_warp_factor)
 
-
-  if (freq < low_freq || freq > high_freq) return freq;  // in case this gets called
+  if (freq < low_freq || freq > high_freq)
+    return freq;  // in case this gets called
   // for out-of-range frequencies, just return the freq.
 
   KALDI_ASSERT(vtln_low_cutoff > low_freq &&
                "be sure to set the --vtln-low option higher than --low-freq");
   KALDI_ASSERT(vtln_high_cutoff < high_freq &&
-               "be sure to set the --vtln-high option lower than --high-freq [or negative]");
+               "be sure to set the --vtln-high option lower than --high-freq "
+               "[or negative]");
   BaseFloat one = 1.0;
   BaseFloat l = vtln_low_cutoff * std::max(one, vtln_warp_factor);
   BaseFloat h = vtln_high_cutoff * std::min(one, vtln_warp_factor);
@@ -204,33 +196,30 @@ BaseFloat MelBanks::VtlnWarpFreq(BaseFloat vtln_low_cutoff,  // upper+lower freq
   }
 }
 
-BaseFloat MelBanks::VtlnWarpMelFreq(BaseFloat vtln_low_cutoff,  // upper+lower frequency cutoffs for VTLN.
-                                    BaseFloat vtln_high_cutoff,
-                                    BaseFloat low_freq,  // upper+lower frequency cutoffs in mel computation
-                                    BaseFloat high_freq,
-                                    BaseFloat vtln_warp_factor,
-                                    BaseFloat mel_freq) {
-  return MelScale(VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff,
-                               low_freq, high_freq,
-                               vtln_warp_factor, InverseMelScale(mel_freq)));
+BaseFloat MelBanks::VtlnWarpMelFreq(
+    BaseFloat vtln_low_cutoff,  // upper+lower frequency cutoffs for VTLN.
+    BaseFloat vtln_high_cutoff,
+    BaseFloat low_freq,  // upper+lower frequency cutoffs in mel computation
+    BaseFloat high_freq, BaseFloat vtln_warp_factor, BaseFloat mel_freq) {
+  return MelScale(VtlnWarpFreq(vtln_low_cutoff, vtln_high_cutoff, low_freq,
+                               high_freq, vtln_warp_factor,
+                               InverseMelScale(mel_freq)));
 }
-
 
 // "power_spectrum" contains fft energies.
 void MelBanks::Compute(const VectorBase<BaseFloat> &power_spectrum,
                        Vector<BaseFloat> *mel_energies_out) const {
   int32 num_bins = bins_.size();
-  if (mel_energies_out->Dim() != num_bins)
-    mel_energies_out->Resize(num_bins);
+  if (mel_energies_out->Dim() != num_bins) mel_energies_out->Resize(num_bins);
 
   for (int32 i = 0; i < num_bins; i++) {
     int32 offset = bins_[i].first;
     const Vector<BaseFloat> &v(bins_[i].second);
     BaseFloat energy = VecVec(v, power_spectrum.Range(offset, v.Dim()));
     // HTK-like flooring- for testing purposes (we prefer dither)
-    if (htk_mode_ && energy < 1.0) energy = 1.0; 
+    if (htk_mode_ && energy < 1.0) energy = 1.0;
     (*mel_energies_out)(i) = energy;
-    
+
     // The following assert was added due to a problem with OpenBlas that
     // we had at one point (it was a bug in that library).  Just to detect
     // it early.
@@ -250,17 +239,17 @@ void ComputeLifterCoeffs(BaseFloat Q, VectorBase<BaseFloat> *coeffs) {
   // coeffs are numbered slightly differently from HTK: the zeroth
   // index is C0, which is not affected.
   for (int32 i = 0; i < coeffs->Dim(); i++)
-    (*coeffs)(i) = 1.0 + 0.5 * Q * sin (M_PI * i / Q);
+    (*coeffs)(i) = 1.0 + 0.5 * Q * sin(M_PI * i / Q);
 }
-
 
 // Durbin's recursion - converts autocorrelation coefficients to the LPC
 // pTmp - temporal place [n]
 // pAC - autocorrelation coefficients [n + 1]
-// pLP - linear prediction coefficients [n] (predicted_sn = sum_1^P{a[i] * s[n-i]}})
+// pLP - linear prediction coefficients [n] (predicted_sn = sum_1^P{a[i] *
+// s[n-i]}})
 //       F(z) = 1 / (1 - A(z)), 1 is not stored in the demoninator
 BaseFloat Durbin(int n, const BaseFloat *pAC, BaseFloat *pLP, BaseFloat *pTmp) {
-  BaseFloat ki;                // reflection coefficient
+  BaseFloat ki;  // reflection coefficient
   int i;
   int j;
 
@@ -269,28 +258,24 @@ BaseFloat Durbin(int n, const BaseFloat *pAC, BaseFloat *pLP, BaseFloat *pTmp) {
   for (i = 0; i < n; i++) {
     // next reflection coefficient
     ki = pAC[i + 1];
-    for (j = 0; j < i; j++)
-      ki += pLP[j] * pAC[i - j];
+    for (j = 0; j < i; j++) ki += pLP[j] * pAC[i - j];
     ki = ki / E;
 
     // new error
     BaseFloat c = 1 - ki * ki;
-    if (c < 1.0e-5) // remove NaNs for constan signal
+    if (c < 1.0e-5)  // remove NaNs for constan signal
       c = 1.0e-5;
     E *= c;
 
     // new LP coefficients
     pTmp[i] = -ki;
-    for (j = 0; j < i; j++)
-      pTmp[j] = pLP[j] - ki * pLP[i - j - 1];
+    for (j = 0; j < i; j++) pTmp[j] = pLP[j] - ki * pLP[i - j - 1];
 
-    for (j = 0; j <= i; j++)
-      pLP[j] = pTmp[j];
+    for (j = 0; j <= i; j++) pLP[j] = pTmp[j];
   }
 
   return E;
 }
-
 
 void Lpc2Cepstrum(int n, const BaseFloat *pLPC, BaseFloat *pCepst) {
   for (int32 i = 0; i < n; i++) {
@@ -302,6 +287,5 @@ void Lpc2Cepstrum(int n, const BaseFloat *pLPC, BaseFloat *pCepst) {
     pCepst[i] = -pLPC[i] - sum / static_cast<BaseFloat>(i + 1);
   }
 }
-
 
 }  // namespace kaldi

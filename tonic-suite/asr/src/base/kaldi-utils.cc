@@ -26,8 +26,8 @@ std::string CharToString(const char &c) {
   if (std::isprint(c))
     sprintf(buf, "\'%c\'", c);
   else
-    sprintf(buf, "[character %d]", (int) c);
-  return (std::string) buf;
+    sprintf(buf, "[character %d]", (int)c);
+  return (std::string)buf;
 }
 
 }  // end namespace kaldi

@@ -31,8 +31,8 @@ void rand_posdef_spmatrix(size_t dim, SpMatrix<BaseFloat> *matrix,
     tmp.SetRandn();
     if (tmp.Cond() < 100) break;
     std::cout << "Condition number of random matrix large "
-      << static_cast<float>(tmp.Cond()) << ", trying again (this is normal)"
-      << '\n';
+              << static_cast<float>(tmp.Cond())
+              << ", trying again (this is normal)" << '\n';
   }
   // tmp * tmp^T will give positive definite matrix
   matrix->AddMat2(1.0, tmp, kNoTrans, 0.0);
@@ -45,8 +45,7 @@ void rand_posdef_spmatrix(size_t dim, SpMatrix<BaseFloat> *matrix,
   }
 }
 
-void
-test_io(const LdaEstimate &lda_est, bool binary) {
+void test_io(const LdaEstimate &lda_est, bool binary) {
   std::cout << "Testing I/O, binary = " << binary << '\n';
 
   size_t dim = lda_est.Dim();
@@ -57,32 +56,29 @@ test_io(const LdaEstimate &lda_est, bool binary) {
   LdaEstimate lda_est2;
   lda_est2.Init(lda_est.NumClasses(), lda_est.Dim());
   Input ki("tmp_stats", &binary_in);
-  lda_est2.Read(ki.Stream(),
-                binary_in, false);  // not adding
+  lda_est2.Read(ki.Stream(), binary_in, false);  // not adding
 
   Input ki2("tmp_stats", &binary_in);
-  lda_est2.Read(ki2.Stream(),
-                binary_in, true);  // adding
+  lda_est2.Read(ki2.Stream(), binary_in, true);  // adding
 
   lda_est2.Scale(0.5);
   // 0.5 -> make it same as what it would have been if we read just once.
 
   Matrix<BaseFloat> m1;
   Matrix<BaseFloat> m2;
-  
+
   LdaEstimateOptions opts;
   opts.dim = dim;
   lda_est.Estimate(opts, &m1);
   lda_est2.Estimate(opts, &m2);
-  
+
   m1.AddMat(-1.0, m2, kNoTrans);
   KALDI_ASSERT(m1.IsZero(1.0e-02));
 
   unlink("tmp_stats");
 }
 
-void
-UnitTestEstimateLda() {
+void UnitTestEstimateLda() {
   // using namespace kaldi;
 
   // dimension of the gmm
@@ -91,8 +87,8 @@ UnitTestEstimateLda() {
   // number of mixtures in the data
   size_t num_class = dim + kaldi::RandInt(1, 10);  // must be at least dim + 1
 
-  std::cout << "Running test with " << num_class << " classes and "
-    << dim << " dimensional vectors" << '\n';
+  std::cout << "Running test with " << num_class << " classes and " << dim
+            << " dimensional vectors" << '\n';
 
   // generate random feature vectors
   // first, generate parameters of vectors distribution
@@ -141,14 +137,15 @@ UnitTestEstimateLda() {
     total_mean.AddVec(1.0, tmp_vec_d);
     total_covar.AddVec2(1.0, tmp_vec_d);
   }
-  total_mean.Scale(1/static_cast<double>(counter));
-  total_covar.Scale(1/static_cast<double>(counter));
+  total_mean.Scale(1 / static_cast<double>(counter));
+  total_covar.Scale(1 / static_cast<double>(counter));
   total_covar.AddVec2(-1.0, total_mean);
   // Compute between-class covar.
   SpMatrix<double> bc_covar(dim);
   for (size_t c = 0; c < num_class; c++) {
-    class_mean.Row(c).Scale(1/static_cast<double>(vec_count));
-    bc_covar.AddVec2(static_cast<double>(vec_count)/counter, class_mean.Row(c));
+    class_mean.Row(c).Scale(1 / static_cast<double>(vec_count));
+    bc_covar.AddVec2(static_cast<double>(vec_count) / counter,
+                     class_mean.Row(c));
   }
   bc_covar.AddVec2(-1.0, total_mean);
   // Compute within-class covar.
@@ -165,8 +162,7 @@ UnitTestEstimateLda() {
   LdaEstimateOptions opts;
   opts.dim = dim;
 
-  Matrix<BaseFloat> lda_mat_bf,
-      lda_mat_bf_mean_remove;
+  Matrix<BaseFloat> lda_mat_bf, lda_mat_bf_mean_remove;
   lda_est.Estimate(opts, &lda_mat_bf);
   opts.remove_offset = true;
   lda_est.Estimate(opts, &lda_mat_bf_mean_remove);
@@ -179,22 +175,24 @@ UnitTestEstimateLda() {
     zero.AddMatVec(1.0, lda_mat_bf_mean_remove, kNoTrans, mean_ext, 0.0);
     KALDI_ASSERT(zero.IsZero(0.001));
   }
-  
+
   // Check lda_mat
   Matrix<double> lda_mat(lda_mat_bf);
   Matrix<double> tmp_mat(dim, dim);
   Matrix<double> wc_covar_mat(wc_covar);
   Matrix<double> bc_covar_mat(bc_covar);
   // following product should give unit matrix
-  tmp_mat.AddMatMatMat(1.0, lda_mat, kNoTrans, wc_covar_mat, kNoTrans,
-    lda_mat, kTrans, 0.0);
+  tmp_mat.AddMatMatMat(1.0, lda_mat, kNoTrans, wc_covar_mat, kNoTrans, lda_mat,
+                       kTrans, 0.0);
   KALDI_ASSERT(tmp_mat.IsUnit());
   // following product should give diagonal matrix with ordered diagonal (desc)
-  tmp_mat.AddMatMatMat(1.0, lda_mat, kNoTrans, bc_covar_mat, kNoTrans,
-    lda_mat, kTrans, 0.0);
+  tmp_mat.AddMatMatMat(1.0, lda_mat, kNoTrans, bc_covar_mat, kNoTrans, lda_mat,
+                       kTrans, 0.0);
   KALDI_ASSERT(tmp_mat.IsDiagonal());
   for (int32 i = 1; i < static_cast<int32>(dim); i++) {
-    if (tmp_mat(i, i) < 1.0e-10) { tmp_mat(i, i) = 0.0; }
+    if (tmp_mat(i, i) < 1.0e-10) {
+      tmp_mat(i, i) = 0.0;
+    }
     KALDI_ASSERT(tmp_mat(i - 1, i - 1) >= tmp_mat(i, i));
   }
 
@@ -203,10 +201,8 @@ UnitTestEstimateLda() {
   test_io(lda_est, true);
 }
 
-int
-main() {
+int main() {
   // repeat the test X times
-  for (int i = 0; i < 2; i++)
-    UnitTestEstimateLda();
+  for (int i = 0; i < 2; i++) UnitTestEstimateLda();
   std::cout << "Test OK.\n";
 }

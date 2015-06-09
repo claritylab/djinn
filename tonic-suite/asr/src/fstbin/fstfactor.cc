@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/kaldi-io.h"
 #include "util/parse-options.h"
@@ -25,7 +24,6 @@
 #include "fst/fstlib.h"
 #include "fstext/table-matcher.h"
 #include "fstext/fstext-utils.h"
-
 
 /*
   cd ~/tmpdir
@@ -51,8 +49,10 @@ int main(int argc, char *argv[]) {
       input symbols in in.fst, as special symbols that will be on the output
       of out1.fst (and the input of out2.fst).
 
-      out1.fst has a simple structure with a loop-state that's initial and final,
-      and output symbols leading to linear chains of input symbols that come back
+      out1.fst has a simple structure with a loop-state that's initial and
+      final,
+      and output symbols leading to linear chains of input symbols that come
+      back
       to the loop state.
     */
 
@@ -75,19 +75,18 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
     std::string fst_in_filename = po.GetArg(1),
-        fst1_out_filename = po.GetArg(2),
-        fst2_out_filename = po.GetArg(3);
+                fst1_out_filename = po.GetArg(2),
+                fst2_out_filename = po.GetArg(3);
 
     VectorFst<StdArc> *fst = ReadFstKaldi(fst_in_filename);
 
     if (push) {
-      KALDI_VLOG(1) <<  "Pushing symbols\n";
+      KALDI_VLOG(1) << "Pushing symbols\n";
       VectorFst<StdArc> fst_pushed;
       Push<StdArc, REWEIGHT_TO_INITIAL>(*fst, &fst_pushed, kPushLabels, kDelta);
       *fst = fst_pushed;
-      KALDI_VLOG(1) <<  "Factoring\n";
+      KALDI_VLOG(1) << "Factoring\n";
     }
 
     VectorFst<StdArc> fst1, fst2;
@@ -98,9 +97,8 @@ int main(int argc, char *argv[]) {
     WriteFstKaldi(fst1, fst1_out_filename);
     WriteFstKaldi(fst2, fst2_out_filename);
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

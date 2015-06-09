@@ -24,36 +24,36 @@ namespace nnet2 {
 
 static BaseFloat ComputeObjfAndGradient(
     const std::vector<NnetExample> &validation_set,
-    const Vector<double> &log_scale_params,
-    const Nnet &nnet,
+    const Vector<double> &log_scale_params, const Nnet &nnet,
     Vector<double> *gradient) {
   Vector<BaseFloat> scale_params(log_scale_params);
   scale_params.ApplyExp();
   Nnet nnet_scaled(nnet);
   nnet_scaled.ScaleComponents(scale_params);
-  
+
   Nnet nnet_gradient(nnet);
   bool is_gradient = true;
   nnet_gradient.SetZero(is_gradient);
 
   // note: "ans" is normalized by the total weight of validation frames.
   int32 batch_size = 1024;
-  BaseFloat ans = ComputeNnetGradient(nnet_scaled,
-                                      validation_set,
-                                      batch_size,
+  BaseFloat ans = ComputeNnetGradient(nnet_scaled, validation_set, batch_size,
                                       &nnet_gradient);
 
   BaseFloat tot_count = validation_set.size();
-  int32 i = 0; // index into log_scale_params.
+  int32 i = 0;  // index into log_scale_params.
   for (int32 j = 0; j < nnet_scaled.NumComponents(); j++) {
-    const UpdatableComponent *uc =
-        dynamic_cast<const UpdatableComponent*>(&(nnet.GetComponent(j))),
-        *uc_gradient =
-        dynamic_cast<const UpdatableComponent*>(&(nnet_gradient.GetComponent(j)));
+    const UpdatableComponent *uc = dynamic_cast<const UpdatableComponent *>(
+                                 &(nnet.GetComponent(j))),
+                             *uc_gradient =
+                                 dynamic_cast<const UpdatableComponent *>(
+                                     &(nnet_gradient.GetComponent(j)));
     if (uc != NULL) {
       BaseFloat dotprod = uc->DotProduct(*uc_gradient) / tot_count;
-      (*gradient)(i) = dotprod * scale_params(i); // gradient w.r.t log of scaling factor.
-      // We multiply by scale_params(i) to take into account d/dx exp(x); "gradient"
+      (*gradient)(i) =
+          dotprod * scale_params(i);  // gradient w.r.t log of scaling factor.
+      // We multiply by scale_params(i) to take into account d/dx exp(x);
+      // "gradient"
       // is the gradient w.r.t. the log of the scale_params.
       i++;
     }
@@ -61,34 +61,27 @@ static BaseFloat ComputeObjfAndGradient(
   KALDI_ASSERT(i == log_scale_params.Dim());
   return ans;
 }
-                                   
 
 void ShrinkNnet(const NnetShrinkConfig &shrink_config,
-                const std::vector<NnetExample> &validation_set,
-                Nnet *nnet) {
-
+                const std::vector<NnetExample> &validation_set, Nnet *nnet) {
   int32 dim = nnet->NumUpdatableComponents();
   KALDI_ASSERT(dim > 0);
-  Vector<double> log_scale(dim), gradient(dim); // will be zero.
-  
+  Vector<double> log_scale(dim), gradient(dim);  // will be zero.
+
   // Get initial gradient.
   double objf, initial_objf;
 
-
   LbfgsOptions lbfgs_options;
-  lbfgs_options.minimize = false; // We're maximizing.
-  lbfgs_options.m = dim; // Store the same number of vectors as the dimension
+  lbfgs_options.minimize = false;  // We're maximizing.
+  lbfgs_options.m = dim;  // Store the same number of vectors as the dimension
   // itself, so this is BFGS.
   lbfgs_options.first_step_length = shrink_config.initial_step;
-  
-  OptimizeLbfgs<double> lbfgs(log_scale,
-                              lbfgs_options);
-  
+
+  OptimizeLbfgs<double> lbfgs(log_scale, lbfgs_options);
+
   for (int32 i = 0; i < shrink_config.num_bfgs_iters; i++) {
     log_scale.CopyFromVec(lbfgs.GetProposedValue());
-    objf = ComputeObjfAndGradient(validation_set, log_scale,
-                                  *nnet,
-                                  &gradient);
+    objf = ComputeObjfAndGradient(validation_set, log_scale, *nnet, &gradient);
 
     KALDI_VLOG(2) << "log-scale = " << log_scale << ", objf = " << objf
                   << ", gradient = " << gradient;
@@ -102,11 +95,10 @@ void ShrinkNnet(const NnetShrinkConfig &shrink_config,
   Vector<BaseFloat> scale(log_scale);
   scale.ApplyExp();
   KALDI_LOG << "Shrinking nnet, validation objf per frame changed from "
-            << initial_objf << " to " << objf << ", scale factors per layer are "
-            << scale;
+            << initial_objf << " to " << objf
+            << ", scale factors per layer are " << scale;
   nnet->ScaleComponents(scale);
 }
- 
-  
-} // namespace nnet2
-} // namespace kaldi
+
+}  // namespace nnet2
+}  // namespace kaldi

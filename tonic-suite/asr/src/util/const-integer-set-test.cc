@@ -17,37 +17,38 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "util/const-integer-set.h"
 #include "util/kaldi-io.h"
-#include <set> // for baseline.
+#include <set>  // for baseline.
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
 
 namespace kaldi {
 
-template<class Int> void TestSetOfNumbers(bool binary) {
+template <class Int>
+void TestSetOfNumbers(bool binary) {
   std::set<Int> baseline_set;
   size_t n_in_set = (Rand() % 3) * 50 + (Rand() % 4);  // may be less than this.
-  size_t max = (Int) (Rand() % 100) + 1;
+  size_t max = (Int)(Rand() % 100) + 1;
   for (size_t i = 0; i < n_in_set; i++) {
-    Int to_add  ((Int) (Rand() % max));
+    Int to_add((Int)(Rand() % max));
     baseline_set.insert(to_add);
   }
 
   std::vector<Int> vector_set;
   for (typename std::set<Int>::iterator iter = baseline_set.begin();
-       iter!= baseline_set.end();iter++)
+       iter != baseline_set.end(); iter++)
     vector_set.push_back(*iter);
   if (vector_set.size() != 0) {
-    for (size_t i = 0;i < 10;i++) // randomize order.
-      std::swap(vector_set[Rand()%vector_set.size()],  vector_set[Rand()%vector_set.size()]);
+    for (size_t i = 0; i < 10; i++)  // randomize order.
+      std::swap(vector_set[Rand() % vector_set.size()],
+                vector_set[Rand() % vector_set.size()]);
   }
 
   ConstIntegerSet<Int> my_set1(baseline_set);
 
-  ConstIntegerSet<Int> my_set2(vector_set) ;
+  ConstIntegerSet<Int> my_set2(vector_set);
 
   ConstIntegerSet<Int> my_set3;
   my_set3.Init(baseline_set);
@@ -55,9 +56,7 @@ template<class Int> void TestSetOfNumbers(bool binary) {
   ConstIntegerSet<Int> my_set4;
   my_set4.Init(vector_set);
 
-  {
-    my_set4.Write(Output("tmpf", binary).Stream(), binary);
-  }
+  { my_set4.Write(Output("tmpf", binary).Stream(), binary); }
 
   ConstIntegerSet<Int> my_set5;
   {
@@ -66,16 +65,15 @@ template<class Int> void TestSetOfNumbers(bool binary) {
     my_set5.Read(ki.Stream(), binary_in);
   }
 
-
   // if (enable_iterators) {
   size_t sz = baseline_set.size(), sz1 = my_set1.size(), sz2 = my_set2.size(),
-      sz3 = my_set3.size(), sz4 = my_set4.size(), sz5 = my_set5.size();
-  KALDI_ASSERT(sz == sz1 && sz == sz2 && sz == sz3 && sz == sz4 && sz==sz5);
+         sz3 = my_set3.size(), sz4 = my_set4.size(), sz5 = my_set5.size();
+  KALDI_ASSERT(sz == sz1 && sz == sz2 && sz == sz3 && sz == sz4 && sz == sz5);
   // }
-  for (size_t i = 0;i < 100;i++) {
+  for (size_t i = 0; i < 100; i++) {
     Int some_int;
-    if (i%2 == 0 && vector_set.size() != 0)
-      some_int = vector_set[Rand()%vector_set.size()];
+    if (i % 2 == 0 && vector_set.size() != 0)
+      some_int = vector_set[Rand() % vector_set.size()];
     else
       some_int = Rand() % max;
     bool in_baseline = (baseline_set.count(some_int) != 0);
@@ -86,9 +84,11 @@ template<class Int> void TestSetOfNumbers(bool binary) {
     bool in_my_set5 = (my_set5.count(some_int) != 0);
 
     if (in_baseline) {
-      KALDI_ASSERT(in_my_set1&&in_my_set2&&in_my_set3&&in_my_set4&&in_my_set5);
+      KALDI_ASSERT(in_my_set1 && in_my_set2 && in_my_set3 && in_my_set4 &&
+                   in_my_set5);
     } else {
-      KALDI_ASSERT(!in_my_set1&&!in_my_set2&&!in_my_set3&&!in_my_set4&&!in_my_set5);
+      KALDI_ASSERT(!in_my_set1 && !in_my_set2 && !in_my_set3 && !in_my_set4 &&
+                   !in_my_set5);
     }
   }
 
@@ -125,19 +125,17 @@ template<class Int> void TestSetOfNumbers(bool binary) {
   // }
 }
 
-} // end namespace kaldi
-
-
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;
-  for (size_t i = 0;i < 10;i++) {
-    TestSetOfNumbers<int>(Rand()%2);
-    TestSetOfNumbers<unsigned int>(Rand()%2);
-    TestSetOfNumbers<short int>(Rand()%2);
-    TestSetOfNumbers<short unsigned int>(Rand()%2);
-    TestSetOfNumbers<char>(Rand()%2);
-    TestSetOfNumbers<unsigned char>(Rand()%2);
+  for (size_t i = 0; i < 10; i++) {
+    TestSetOfNumbers<int>(Rand() % 2);
+    TestSetOfNumbers<unsigned int>(Rand() % 2);
+    TestSetOfNumbers<short int>(Rand() % 2);
+    TestSetOfNumbers<short unsigned int>(Rand() % 2);
+    TestSetOfNumbers<char>(Rand() % 2);
+    TestSetOfNumbers<unsigned char>(Rand() % 2);
   }
   std::cout << "Test OK.\n";
 }

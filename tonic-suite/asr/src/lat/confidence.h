@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_LAT_CONFIDENCE_H_
 #define KALDI_LAT_CONFIDENCE_H_
 
@@ -42,7 +41,8 @@ namespace kaldi {
 /// equivalent to the empty FST (no successful paths), or infinity if there
 /// was only one path in "clat".  It will output to "num_paths" (if non-NULL)
 /// a number n = 0, 1 or 2 saying how many n-best paths (up to two) were found.
-/// If n >= 1 it outputs to "best_sentence" (if non-NULL) the best word-sequence;
+/// If n >= 1 it outputs to "best_sentence" (if non-NULL) the best
+/// word-sequence;
 /// if n == 2 it outputs to "second_best_sentence" (if non-NULL) the second best
 /// word-sequence (this may be useful for testing whether the two best word
 /// sequences are somehow equivalent for the task at hand).  If you need more
@@ -54,23 +54,18 @@ namespace kaldi {
 /// has this property.
 /// This function assumes that any acoustic scaling you want to apply,
 /// has already been applied.
-BaseFloat SentenceLevelConfidence(const CompactLattice &clat,
-                                  int32 *num_paths,
+BaseFloat SentenceLevelConfidence(const CompactLattice &clat, int32 *num_paths,
                                   std::vector<int32> *best_sentence,
                                   std::vector<int32> *second_best_sentence);
 
-
-/// This version of SentenceLevelConfidence takes as input a state-level lattice.
-/// It needs to determinize it first, but it does so in a "smart" way that only generates
+/// This version of SentenceLevelConfidence takes as input a state-level
+/// lattice.
+/// It needs to determinize it first, but it does so in a "smart" way that only
+/// generates
 /// about as many output paths as it needs.
-BaseFloat SentenceLevelConfidence(const Lattice &lat,
-                                  int32 *num_paths,
+BaseFloat SentenceLevelConfidence(const Lattice &lat, int32 *num_paths,
                                   std::vector<int32> *best_sentence,
                                   std::vector<int32> *second_best_sentence);
-
-
-
-
 
 }  // namespace kaldi
 

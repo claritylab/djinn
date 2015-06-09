@@ -21,7 +21,6 @@
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 
-
 int main(int argc, char *argv[]) {
 #ifdef _MSC_VER
   if (0) {
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     po.Read(argc, argv);
 
-    if (po.NumArgs() <1 || po.NumArgs() > 2) {
+    if (po.NumArgs() < 1 || po.NumArgs() > 2) {
       po.PrintUsage();
       exit(1);
     }
@@ -56,15 +55,16 @@ int main(int argc, char *argv[]) {
     TransitionModel trans_model;
     ReadKaldiObject(trans_model_filename, &trans_model);
 
-    fst::VectorFst<fst::StdArc> *fst = GetPdfToTransitionIdTransducer(trans_model);
+    fst::VectorFst<fst::StdArc> *fst =
+        GetPdfToTransitionIdTransducer(trans_model);
 
     if (!fst->Write(fst_out_filename))
       KALDI_ERR << "Error writing fst to "
-                << (fst_out_filename == "" ? "standard output" : fst_out_filename);
+                << (fst_out_filename == "" ? "standard output"
+                                           : fst_out_filename);
     delete fst;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

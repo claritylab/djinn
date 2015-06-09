@@ -17,21 +17,20 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "ivector/logistic-regression.h"
 
 using namespace kaldi;
 
-int ComputeLogPosteriors(ParseOptions &po, const LogisticRegressionConfig &config) {
-  std::string model = po.GetArg(1),
-      vector_rspecifier = po.GetArg(2),
-      log_posteriors_wspecifier = po.GetArg(3);
-  
+int ComputeLogPosteriors(ParseOptions &po,
+                         const LogisticRegressionConfig &config) {
+  std::string model = po.GetArg(1), vector_rspecifier = po.GetArg(2),
+              log_posteriors_wspecifier = po.GetArg(3);
+
   LogisticRegression classifier;
   ReadKaldiObject(model, &classifier);
-  
+
   std::vector<Vector<BaseFloat> > vectors;
   SequentialBaseFloatVectorReader vector_reader(vector_rspecifier);
   BaseFloatVectorWriter posterior_writer(log_posteriors_wspecifier);
@@ -51,10 +50,8 @@ int ComputeLogPosteriors(ParseOptions &po, const LogisticRegressionConfig &confi
 }
 
 int32 ComputeScores(ParseOptions &po, const LogisticRegressionConfig &config) {
-  std::string model_rspecifier = po.GetArg(1),
-      trials_rspecifier = po.GetArg(2),
-      vector_rspecifier = po.GetArg(3),
-      scores_out = po.GetArg(4);
+  std::string model_rspecifier = po.GetArg(1), trials_rspecifier = po.GetArg(2),
+              vector_rspecifier = po.GetArg(3), scores_out = po.GetArg(4);
 
   SequentialInt32Reader class_reader(trials_rspecifier);
   LogisticRegression classifier = LogisticRegression();
@@ -85,23 +82,23 @@ int32 ComputeScores(ParseOptions &po, const LogisticRegressionConfig &config) {
     KALDI_WARN << "Read no input";
     return 1;
   }
-  
+
   Matrix<BaseFloat> xs(vectors.size(), vectors[0].Dim());
   for (int i = 0; i < vectors.size(); i++) {
     xs.Row(i).CopyFromVec(vectors[i]);
   }
- 
+
   Matrix<BaseFloat> log_posteriors;
   classifier.GetLogPosteriors(xs, &log_posteriors);
 
   bool binary = false;
   Output ko(scores_out.c_str(), binary);
-  
+
   for (int i = 0; i < ys.size(); i++) {
-    ko.Stream() << utt_list[i] << " " << ys[i] << " " << log_posteriors(i, ys[i]) << std::endl;
+    ko.Stream() << utt_list[i] << " " << ys[i] << " "
+                << log_posteriors(i, ys[i]) << std::endl;
   }
-  KALDI_LOG << "Calculated scores for " << num_utt_done 
-            << " vectors with "
+  KALDI_LOG << "Calculated scores for " << num_utt_done << " vectors with "
             << num_utt_err << " missing. ";
   return (num_utt_done == 0 ? 1 : 0);
 }
@@ -115,26 +112,26 @@ int main(int argc, char *argv[]) {
         "log posterior probabilities or scores.\n"
         "Usage1: logistic-regression-eval <model> <input-vectors-rspecifier>\n"
         "                                <output-log-posteriors-wspecifier>\n"
-        "Usage2: logistic-regression-eval <model> <trials-file> <input-vectors-rspecifier>\n"
+        "Usage2: logistic-regression-eval <model> <trials-file> "
+        "<input-vectors-rspecifier>\n"
         "                                <output-scores-file>\n";
-    
-  ParseOptions po(usage);
 
-  bool binary = false;
-  LogisticRegressionConfig config;
-  config.Register(&po);
-  po.Register("binary", &binary, "Write output in binary mode");
-  po.Read(argc, argv);
+    ParseOptions po(usage);
 
-  if (po.NumArgs() != 3 && po.NumArgs() != 4) {
-    po.PrintUsage();
-    exit(1);
-  }
-  
-  return (po.NumArgs() == 4) ?
-      ComputeScores(po, config) :
-      ComputeLogPosteriors(po, config);
-  } catch(const std::exception &e) {
+    bool binary = false;
+    LogisticRegressionConfig config;
+    config.Register(&po);
+    po.Register("binary", &binary, "Write output in binary mode");
+    po.Read(argc, argv);
+
+    if (po.NumArgs() != 3 && po.NumArgs() != 4) {
+      po.PrintUsage();
+      exit(1);
+    }
+
+    return (po.NumArgs() == 4) ? ComputeScores(po, config)
+                               : ComputeLogPosteriors(po, config);
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

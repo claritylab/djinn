@@ -32,7 +32,7 @@ namespace kaldi {
 /// its gradient using some parameter
 /// that has to be optimized on data
 /// could inherit from it.
-template<class Real>
+template <class Real>
 class OptimizableInterface {
  public:
   /// computes gradient for a parameter params and returns it
@@ -46,6 +46,6 @@ class OptimizableInterface {
   virtual ~OptimizableInterface() {}
 };
 /// @} end of "Interfaces"
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #endif

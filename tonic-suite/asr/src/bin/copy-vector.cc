@@ -23,27 +23,30 @@
 #include "matrix/kaldi-vector.h"
 #include "transform/transform-common.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
-        "Copy vectors, or archives of vectors (e.g. transition-accs; speaker vectors)\n"
+        "Copy vectors, or archives of vectors (e.g. transition-accs; speaker "
+        "vectors)\n"
         "\n"
-        "Usage: copy-vector [options] (<vector-in-rspecifier>|<vector-in-rxfilename>) (<vector-out-wspecifier>|<vector-out-wxfilename>)\n"
+        "Usage: copy-vector [options] "
+        "(<vector-in-rspecifier>|<vector-in-rxfilename>) "
+        "(<vector-out-wspecifier>|<vector-out-wxfilename>)\n"
         " e.g.: copy-vector --binary=false 1.mat -\n"
         "   copy-vector ark:2.trans ark,t:-\n";
-    
+
     bool binary = true;
     int32 change_dim = -1;
     ParseOptions po(usage);
 
-    po.Register("binary", &binary, "Write in binary mode (only "
+    po.Register("binary", &binary,
+                "Write in binary mode (only "
                 "relevant if output is a wxfilename)");
     po.Register("change_dim", &change_dim,
                 "Use this option to truncate or zero-pad the vectors.");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -51,22 +54,18 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
-    std::string vector_in_fn = po.GetArg(1),
-        vector_out_fn = po.GetArg(2);
+    std::string vector_in_fn = po.GetArg(1), vector_out_fn = po.GetArg(2);
 
     // all these "fn"'s are either rspecifiers or filenames.
 
     bool in_is_rspecifier =
-        (ClassifyRspecifier(vector_in_fn, NULL, NULL)
-         != kNoRspecifier),
-        out_is_wspecifier =
-        (ClassifyWspecifier(vector_out_fn, NULL, NULL, NULL)
-         != kNoWspecifier);
+             (ClassifyRspecifier(vector_in_fn, NULL, NULL) != kNoRspecifier),
+         out_is_wspecifier = (ClassifyWspecifier(vector_out_fn, NULL, NULL,
+                                                 NULL) != kNoWspecifier);
 
     if (in_is_rspecifier != out_is_wspecifier)
       KALDI_ERR << "Cannot mix archives with regular files (copying vectors)";
-    
+
     if (!in_is_rspecifier) {
       Vector<BaseFloat> vec;
       ReadKaldiObject(vector_in_fn, &vec);
@@ -85,7 +84,7 @@ int main(int argc, char *argv[]) {
         KALDI_LOG << "Copied " << num_done << " vectors.";
       } else {
         for (; !reader.Done(); reader.Next(), num_done++) {
-          Vector<BaseFloat> vec (reader.Value());
+          Vector<BaseFloat> vec(reader.Value());
           vec.Resize(change_dim, kCopyData);
           writer.Write(reader.Key(), reader.Value());
         }
@@ -94,10 +93,8 @@ int main(int argc, char *argv[]) {
       }
       return (num_done != 0 ? 0 : 1);
     }
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

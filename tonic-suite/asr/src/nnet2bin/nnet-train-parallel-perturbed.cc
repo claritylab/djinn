@@ -37,32 +37,37 @@ int main(int argc, char *argv[]) {
         "perturbs the input features by going a certain distance down the\n"
         "gradient obtained by backprop (can help for small datasets)\n"
         "\n"
-        "Usage:  nnet-train-parallel-perturbed [options] <model-in> <training-examples-in> <model-out>\n"
+        "Usage:  nnet-train-parallel-perturbed [options] <model-in> "
+        "<training-examples-in> <model-out>\n"
         "\n"
         "e.g.:\n"
         "nnet-train-parallel-pertured \\\n"
-        " --within-covar=within.spmat --num-threads=8 --target-objf-change=0.2 1.nnet ark:1.egs 2.nnet\n";
-    
+        " --within-covar=within.spmat --num-threads=8 --target-objf-change=0.2 "
+        "1.nnet ark:1.egs 2.nnet\n";
+
     bool binary_write = true;
     bool zero_stats = true;
     int32 srand_seed = 0;
     std::string within_covar_rxfilename;
     NnetPerturbedTrainerConfig train_config;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("within-covar", &within_covar_rxfilename,
                 "rxfilename of within-class covariance-matrix, written as "
                 "SpMatrix.  Must be specified.");
-    po.Register("zero-stats", &zero_stats, "If true, zero stats "
+    po.Register("zero-stats", &zero_stats,
+                "If true, zero stats "
                 "stored with the neural net (only affects mixing up).");
     po.Register("srand", &srand_seed,
                 "Seed for random number generator (e.g., for dropout)");
-    po.Register("num-threads", &g_num_threads, "Number of training threads to use "
-                "in the parallel update. [Note: if you use a parallel "
-                "implementation of BLAS, the actual number of threads may be larger.]");
+    po.Register(
+        "num-threads", &g_num_threads,
+        "Number of training threads to use "
+        "in the parallel update. [Note: if you use a parallel "
+        "implementation of BLAS, the actual number of threads may be larger.]");
     train_config.Register(&po);
-    
+
     po.Read(argc, argv);
     srand(srand_seed);
 
@@ -70,15 +75,15 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::string nnet_rxfilename = po.GetArg(1),
-        examples_rspecifier = po.GetArg(2),
-        nnet_wxfilename = po.GetArg(3);
+                examples_rspecifier = po.GetArg(2),
+                nnet_wxfilename = po.GetArg(3);
 
     if (within_covar_rxfilename == "") {
       KALDI_ERR << "The option --within-covar is required.";
     }
-    
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -92,35 +97,28 @@ int main(int argc, char *argv[]) {
 
     SpMatrix<BaseFloat> within_covar;
     ReadKaldiObject(within_covar_rxfilename, &within_covar);
-    
+
     if (zero_stats) am_nnet.GetNnet().ZeroStats();
 
     SequentialNnetExampleReader example_reader(examples_rspecifier);
-    
-    
+
     double tot_objf_orig, tot_objf_perturbed, tot_weight;
     // logging info will be printed from within the next call.
-    DoBackpropPerturbedParallel(train_config,
-                                within_covar,
-                                &example_reader,
-                                &tot_objf_orig,
-                                &tot_objf_perturbed,
-                                &tot_weight,
-                                &(am_nnet.GetNnet()));
+    DoBackpropPerturbedParallel(train_config, within_covar, &example_reader,
+                                &tot_objf_orig, &tot_objf_perturbed,
+                                &tot_weight, &(am_nnet.GetNnet()));
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_nnet.Write(ko.Stream(), binary_write);
     }
-    
+
     KALDI_LOG << "Finished training, processed " << tot_weight
               << " training examples (weighted).  Wrote model to "
               << nnet_wxfilename;
     return (tot_weight == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

@@ -19,7 +19,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 
 #include "base/kaldi-math.h"
@@ -30,13 +29,12 @@
 #include "sys/types.h"
 #include "base/timer.h"
 
-
 namespace kaldi {
 
 std::string ConvertIntToString(const int &number) {
   std::stringstream ss;  // create a stringstream
-  ss << number;  // add number to the stream
-  return ss.str();  // return a string with the contents of the stream
+  ss << number;          // add number to the stream
+  return ss.str();       // return a string with the contents of the stream
 }
 bool DirExist(const std::string &dirname) {
   struct stat st;
@@ -62,7 +60,6 @@ static void UnitTestSimple() {
   ComputeAndProcessKaldiPitch(op1, op2, v, &m1);
   KALDI_LOG << "Test passed :)";
 }
-
 
 // Make sure that doing a calculation on the whole waveform gives
 // the same results as doing on the waveform broken into pieces.
@@ -100,7 +97,7 @@ static void UnitTestPieces() {
 
     Matrix<BaseFloat> m2, m2p;
 
-    { // compute it online with multiple pieces.
+    {  // compute it online with multiple pieces.
       OnlinePitchFeature pitch_extractor(op1);
       OnlineProcessPitch process_pitch(op2, &pitch_extractor);
       int32 start_samp = 0;
@@ -137,12 +134,15 @@ static void UnitTestDelay() {
     // the parametrization object
     PitchExtractionOptions ext_opt;
     ProcessPitchOptions pro_opt1, pro_opt2;
-    pro_opt1.delta_pitch_noise_stddev = 0.0;  // to avoid mismatch of delta_log_pitch
-                                              // brought by rand noise.
-    pro_opt2.delta_pitch_noise_stddev = 0.0;  // to avoid mismatch of delta_log_pitch
-                                              // brought by rand noise.
+    pro_opt1.delta_pitch_noise_stddev =
+        0.0;  // to avoid mismatch of delta_log_pitch
+              // brought by rand noise.
+    pro_opt2.delta_pitch_noise_stddev =
+        0.0;  // to avoid mismatch of delta_log_pitch
+              // brought by rand noise.
     pro_opt2.delay = rand() % 50;
-    ext_opt.nccf_ballast_online = true;  // this is necessary for the computation
+    ext_opt.nccf_ballast_online =
+        true;  // this is necessary for the computation
     // to be identical regardless how many pieces we break the signal into.
 
     int32 size = 10000 + rand() % 50000;
@@ -197,7 +197,7 @@ static void UnitTestDelay() {
   }
 }
 
-extern bool pitch_use_naive_search; // was declared in pitch-functions.cc
+extern bool pitch_use_naive_search;  // was declared in pitch-functions.cc
 
 // Make sure that doing a calculation on the whole waveform gives
 // the same results as doing on the waveform broken into pieces.
@@ -249,32 +249,33 @@ static void UnitTestComputeGPE() {
     if (i < 6) {
       num = "f" + ConvertIntToString(i) + "nw0000";
     } else {
-      num = "m" + ConvertIntToString(i-5) + "nw0000";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
     }
     Matrix<BaseFloat> gross_pitch;
-    std::string pitchfile = "keele/keele-true-lags/"+num+".txt";
+    std::string pitchfile = "keele/keele-true-lags/" + num + ".txt";
     std::ifstream pitch(pitchfile.c_str());
     gross_pitch.Read(pitch, false);
     Matrix<BaseFloat> kaldi_pitch;
-    std::string kfile = "keele/tmp/+"+num+"-kaldi.txt";
+    std::string kfile = "keele/tmp/+" + num + "-kaldi.txt";
     std::ifstream kpitch(kfile.c_str());
     kaldi_pitch.Read(kpitch, false);
-    num_frames = std::min(kaldi_pitch.NumRows(),gross_pitch.NumRows());
+    num_frames = std::min(kaldi_pitch.NumRows(), gross_pitch.NumRows());
     for (int32 j = 1; j < num_frames; j++) {
-      if (gross_pitch(j,0) > 0.0) {
+      if (gross_pitch(j, 0) > 0.0) {
         tot_voiced++;
-        real_pitch = 20000.0/gross_pitch(j,0);
-        if (fabs((real_pitch - kaldi_pitch(j,1))/real_pitch) > tol)
+        real_pitch = 20000.0 / gross_pitch(j, 0);
+        if (fabs((real_pitch - kaldi_pitch(j, 1)) / real_pitch) > tol)
           wrong_pitch++;
-      } else if (gross_pitch(j,0) == 0.0 && gross_pitch(j-1,0) == 0.0) {
+      } else if (gross_pitch(j, 0) == 0.0 && gross_pitch(j - 1, 0) == 0.0) {
         tot_unvoiced++;
-        avg_d_kpitch += fabs(kaldi_pitch(j,1) - kaldi_pitch(j-1,1));
+        avg_d_kpitch += fabs(kaldi_pitch(j, 1) - kaldi_pitch(j - 1, 1));
       }
     }
   }
   BaseFloat GPE = 1.0 * wrong_pitch / tot_voiced;
   KALDI_LOG << " Gross Pitch Error with Rel.Error " << tol << " is " << GPE;
-  KALDI_LOG << "Average Kaldi delta_pitch for unvoiced regions " << avg_d_kpitch/tot_unvoiced;
+  KALDI_LOG << "Average Kaldi delta_pitch for unvoiced regions "
+            << avg_d_kpitch / tot_unvoiced;
 }
 
 // Compare pitch using Kaldi pitch tracker on KEELE corpora
@@ -285,10 +286,10 @@ static void UnitTestKeele() {
     std::string num;
     if (i < 6) {
       num = "f" + ConvertIntToString(i) + "nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      wavefile = "keele/16kHz/" + num + ".wav";
     } else {
-      num = "m" + ConvertIntToString(i-5) + "nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     }
     KALDI_LOG << "--- " << wavefile << " ---";
     std::ifstream is(wavefile.c_str());
@@ -303,7 +304,7 @@ static void UnitTestKeele() {
     // compute pitch.
     Matrix<BaseFloat> m;
     ComputeKaldiPitch(op, waveform, &m);
-    std::string outfile = "keele/tmp/+"+num+"-kaldi.txt";
+    std::string outfile = "keele/tmp/+" + num + "-kaldi.txt";
     std::ofstream os(outfile.c_str());
     m.Write(os, false);
   }
@@ -316,11 +317,11 @@ static void UnitTestPenaltyFactor() {
       std::string wavefile;
       std::string num;
       if (i < 6) {
-        num = "f"+ConvertIntToString(i)+"nw0000";
-        wavefile = "keele/16kHz/"+num+".wav";
+        num = "f" + ConvertIntToString(i) + "nw0000";
+        wavefile = "keele/16kHz/" + num + ".wav";
       } else {
-        num = "m"+ConvertIntToString(i-5)+"nw0000";
-        wavefile = "keele/16kHz/"+num+".wav";
+        num = "m" + ConvertIntToString(i - 5) + "nw0000";
+        wavefile = "keele/16kHz/" + num + ".wav";
       }
       KALDI_LOG << "--- " << wavefile << " ---";
       std::ifstream is(wavefile.c_str());
@@ -336,7 +337,8 @@ static void UnitTestPenaltyFactor() {
       Matrix<BaseFloat> m;
       ComputeKaldiPitch(op, waveform, &m);
       std::string penaltyfactor = ConvertIntToString(k);
-      std::string outfile = "keele/tmp/+"+num+"-kaldi-penalty-"+penaltyfactor+".txt";
+      std::string outfile =
+          "keele/tmp/+" + num + "-kaldi-penalty-" + penaltyfactor + ".txt";
       std::ofstream os(outfile.c_str());
       m.Write(os, false);
     }
@@ -349,11 +351,11 @@ static void UnitTestKeeleNccfBallast() {
       std::string wavefile;
       std::string num;
       if (i < 6) {
-        num = "f"+ConvertIntToString(i)+"nw0000";
-        wavefile = "keele/16kHz/"+num+".wav";
+        num = "f" + ConvertIntToString(i) + "nw0000";
+        wavefile = "keele/16kHz/" + num + ".wav";
       } else {
-        num = "m"+ConvertIntToString(i-5)+"nw0000";
-        wavefile = "keele/16kHz/"+num+".wav";
+        num = "m" + ConvertIntToString(i - 5) + "nw0000";
+        wavefile = "keele/16kHz/" + num + ".wav";
       }
       KALDI_LOG << "--- " << wavefile << " ---";
       std::ifstream is(wavefile.c_str());
@@ -369,8 +371,8 @@ static void UnitTestKeeleNccfBallast() {
       Matrix<BaseFloat> m;
       ComputeKaldiPitch(op, waveform, &m);
       std::string nccfballast = ConvertIntToString(op.nccf_ballast);
-      std::string outfile = "keele/tmp/+"+num
-        +"-kaldi-nccf-ballast-"+nccfballast+".txt";
+      std::string outfile =
+          "keele/tmp/+" + num + "-kaldi-nccf-ballast-" + nccfballast + ".txt";
       std::ofstream os(outfile.c_str());
       m.Write(os, false);
     }
@@ -387,11 +389,11 @@ static void UnitTestPitchExtractionSpeed() {
     std::string wavefile;
     std::string num;
     if (i < 6) {
-      num = "f"+ConvertIntToString(i)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "f" + ConvertIntToString(i) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     } else {
-      num = "m"+ConvertIntToString(i-5)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     }
     KALDI_LOG << "--- " << wavefile << " ---";
     std::ifstream is(wavefile.c_str());
@@ -403,10 +405,9 @@ static void UnitTestPitchExtractionSpeed() {
     int test_num = 10;
     Matrix<BaseFloat> m;
     Timer timer;
-    for (int32 t = 0; t < test_num; t++)
-      ComputeKaldiPitch(op, waveform, &m);
+    for (int32 t = 0; t < test_num; t++) ComputeKaldiPitch(op, waveform, &m);
     double tot_time = timer.Elapsed(),
-        speech_time = test_num * waveform.Dim() / wave.SampFreq();
+           speech_time = test_num * waveform.Dim() / wave.SampFreq();
     KALDI_LOG << " Pitch extraction time per second of speech is "
               << (tot_time / speech_time) << " seconds " << std::endl;
   }
@@ -420,22 +421,22 @@ static void UnitTestPitchExtractorCompareKeele() {
     std::string wavefile;
     std::string num;
     if (i < 6) {
-      num = "f"+ConvertIntToString(i)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "f" + ConvertIntToString(i) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     } else {
-      num = "m"+ConvertIntToString(i-5)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     }
     KALDI_LOG << "--- " << wavefile << " ---";
     std::ifstream is(wavefile.c_str());
     WaveData wave;
     wave.Read(is);
     KALDI_ASSERT(wave.Data().NumRows() == 1);
-    SubVector<BaseFloat>  waveform(wave.Data(), 0);
+    SubVector<BaseFloat> waveform(wave.Data(), 0);
     // compute pitch.
     Matrix<BaseFloat> m;
     ComputeKaldiPitch(op, waveform, &m);
-    std::string outfile = "keele/tmp/+"+num+"-speedup-kaldi1.txt";
+    std::string outfile = "keele/tmp/+" + num + "-speedup-kaldi1.txt";
     std::ofstream os(outfile.c_str());
     m.Write(os, false);
   }
@@ -449,16 +450,16 @@ void UnitTestDiffSampleRate() {
   op.samp_freq = static_cast<double>(sample_rate);
   op.lowpass_cutoff = 1000;
   op.max_f0 = 400;
-  std::string samp_rate = ConvertIntToString(sample_rate/1000);
+  std::string samp_rate = ConvertIntToString(sample_rate / 1000);
   for (int32 i = 1; i < 11; i++) {
     std::string wavefile;
     std::string num;
     if (i < 6) {
-      num = "f"+ConvertIntToString(i)+"nw0000";
-      wavefile = "keele/"+samp_rate+"kHz/"+num+".wav";
+      num = "f" + ConvertIntToString(i) + "nw0000";
+      wavefile = "keele/" + samp_rate + "kHz/" + num + ".wav";
     } else {
-      num = "m"+ConvertIntToString(i-5)+"nw0000";
-      wavefile = "keele/"+samp_rate+"kHz/"+num+".wav";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
+      wavefile = "keele/" + samp_rate + "kHz/" + num + ".wav";
     }
     KALDI_LOG << "--- " << wavefile << " ---";
     std::ifstream is(wavefile.c_str());
@@ -468,7 +469,8 @@ void UnitTestDiffSampleRate() {
     SubVector<BaseFloat> waveform(wave.Data(), 0);
     Matrix<BaseFloat> m;
     ComputeKaldiPitch(op, waveform, &m);
-    std::string outfile = "keele/tmp/+"+num+"-kaldi-samp-freq-"+samp_rate+"kHz.txt";
+    std::string outfile =
+        "keele/tmp/+" + num + "-kaldi-samp-freq-" + samp_rate + "kHz.txt";
     std::ofstream os(outfile.c_str());
     m.Write(os, false);
   }
@@ -478,11 +480,11 @@ void UnitTestProcess() {
     std::string wavefile;
     std::string num;
     if (i < 6) {
-      num = "f"+ConvertIntToString(i)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "f" + ConvertIntToString(i) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     } else {
-      num = "m"+ConvertIntToString(i-5)+"nw0000";
-      wavefile = "keele/16kHz/"+num+".wav";
+      num = "m" + ConvertIntToString(i - 5) + "nw0000";
+      wavefile = "keele/16kHz/" + num + ".wav";
     }
     KALDI_LOG << "--- " << wavefile << " ---";
     std::ifstream is(wavefile.c_str());
@@ -502,7 +504,7 @@ void UnitTestProcess() {
     postprop_op.delta_pitch_noise_stddev = 0.0;
     ProcessPitch(postprop_op, m, &m2);
 
-    std::string outfile = "keele/tmp/+"+num+"-processed-kaldi.txt";
+    std::string outfile = "keele/tmp/+" + num + "-processed-kaldi.txt";
     std::ofstream os(outfile.c_str());
     m2.Write(os, false);
   }
@@ -539,20 +541,25 @@ int main() {
     } else {
       KALDI_LOG
           << "Not running tests that require the Keele database, "
-          << "please ask g.meyer@liverpool.ac.uk for the database if you need it.\n"
-          << "Once you have the keele/ subdirectory, containing *.{pel,pet,pev,raw,wav}, do this:\n"
+          << "please ask g.meyer@liverpool.ac.uk for the database if you need "
+             "it.\n"
+          << "Once you have the keele/ subdirectory, containing "
+             "*.{pel,pet,pev,raw,wav}, do this:\n"
           << "cd keele; mkdir -p 16kHz; mkdir -p tmp; for x in *.wav; do \n"
           << "sox $x -r 16000 16kHz/$x; done  \n"
           << "mkdir -p keele-true-lags; for f in *.pev; do \n"
-          << "out_f=keele-true-lags/$(echo $f | sed s:pev:txt:); ( echo ' ['; len=`cat $f | wc -l`; \n"
-          << "head -n $(($len-1)) $f | tail -n $(($len-14)) ; echo -n ']') >$out_f; done \n"
+          << "out_f=keele-true-lags/$(echo $f | sed s:pev:txt:); ( echo ' ['; "
+             "len=`cat $f | wc -l`; \n"
+          << "head -n $(($len-1)) $f | tail -n $(($len-14)) ; echo -n ']') "
+             ">$out_f; done \n"
           << "\n"
-          << "Note: the GPE reported in paper is computed using pseudo-ground-truth pitch obtained\n"
+          << "Note: the GPE reported in paper is computed using "
+             "pseudo-ground-truth pitch obtained\n"
           << "by voting among the pitch trackers mentioned in the paper.\n";
     }
     KALDI_LOG << "Tests succeeded.";
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     KALDI_ERR << e.what();
     return 1;
   }

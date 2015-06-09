@@ -29,41 +29,38 @@ namespace kaldi {
 // We define an exponential transform as a transform of the form
 // W_s = D_s exp(t_s A) B, which takes x^+ -> x (where ^+ is adding a one);
 // only t_s and D_s are speaker-specific. It is roughly analogous to th elog
-// of the vtln warp factor.  
+// of the vtln warp factor.
 // D_s is either a diagonal or an offset-only fMLLR matrix (or just
 // the "default" transform [ I ; 0 ]), depending on options.
-// "exp" here is matrix exponential, defined by exp(A) = I + A + 1/2! A A + 1/3! A A A + ...
+// "exp" here is matrix exponential, defined by exp(A) = I + A + 1/2! A A + 1/3!
+// A A A + ...
 // note that the last row of A is 0 0 0 ...  and the last row of B is
 // 0 0 0 ... 0 1.  The "globally trained" things are A and B.
 // We train A and B on separate iterations.
 
-
-enum EtNormalizeType {
-  kEtNormalizeOffset,
-  kEtNormalizeDiag,
-  kEtNormalizeNone
-};
+enum EtNormalizeType { kEtNormalizeOffset, kEtNormalizeDiag, kEtNormalizeNone };
 
 // Note: Revision 121 corresponds to the submitted version of the ASRU paper.
 // There has been a correction to the update for A since then.
 class ExponentialTransformAccsA;
 
-
-// Class ExponentialTransform holds just the globally shared parts of the exponential
+// Class ExponentialTransform holds just the globally shared parts of the
+// exponential
 // transform, i.e. A_ and B_.
 class ExponentialTransform {
  public:
-  ExponentialTransform() { } // typically use this constructor only prior to
+  ExponentialTransform() {}  // typically use this constructor only prior to
   // calling Read().
 
   ExponentialTransform(int32 dim, EtNormalizeType norm_type, int32 seed = 0) {
     Init(dim, norm_type, seed);
   }
 
-  void Init(int32 dim,
-            EtNormalizeType norm_type,
-            int32 seed = 0);  // Initializes A to a pseudo-random unit-norm matrix
-  // (with last row zero), and B to unity.  "dim" is the feature dim, so both A and B
+  void Init(
+      int32 dim, EtNormalizeType norm_type,
+      int32 seed = 0);  // Initializes A to a pseudo-random unit-norm matrix
+  // (with last row zero), and B to unity.  "dim" is the feature dim, so both A
+  // and B
   // are of dimension dim+1
 
   // SetNormalizeType sets the normalization type to this.  But it only allows
@@ -71,13 +68,15 @@ class ExponentialTransform {
   // or Offset->Diag
   void SetNormalizeType(EtNormalizeType norm_type);
 
-  // ComputeTransform does not attempt to work out the objective function change,
+  // ComputeTransform does not attempt to work out the objective function
+  // change,
   // because of possible confusion about what the correct baseline should be.
   // You can use FmllrAuxFuncDiagGmm to measure the change.
   void ComputeTransform(const FmllrDiagGmmAccs &accs,
-                        MatrixBase<BaseFloat> *Ws,  // output fMLLR transform, should be size dim x dim+1
-                        BaseFloat *t,
-                        MatrixBase<BaseFloat> *Ds,
+                        MatrixBase<BaseFloat> *Ws,  // output fMLLR transform,
+                                                    // should be size dim x
+                                                    // dim+1
+                        BaseFloat *t, MatrixBase<BaseFloat> *Ds,
                         BaseFloat *objf_impr = NULL,  // versus just B
                         BaseFloat *count = NULL);
 
@@ -93,7 +92,8 @@ class ExponentialTransform {
 
   void Read(std::istream &is, bool binary);
 
-  /// Returns B minus its last row, which is the closest thing to a "default transform"
+  /// Returns B minus its last row, which is the closest thing to a "default
+  /// transform"
   /// that we have.
   void GetDefaultTransform(Matrix<BaseFloat> *transform) const;
 
@@ -104,9 +104,8 @@ class ExponentialTransform {
   /// Make B unit; this can be useful for combining the B part of the
   /// transform with MLLT.
   void MakeBUnit() { B_.SetUnit(); }
-  
-  void ComputeDs(const MatrixBase<BaseFloat> &Ws,
-                 BaseFloat t,
+
+  void ComputeDs(const MatrixBase<BaseFloat> &Ws, BaseFloat t,
                  MatrixBase<BaseFloat> *Ds) const;  // Computes the D_s matrix,
   // given W_s and  the value of t.
 
@@ -118,30 +117,32 @@ class ExponentialTransform {
 
   friend class ExponentialTransformAccsA;
   friend class ExponentialTransformAccsANew;
+
  protected:
-  Matrix<BaseFloat> A_;  // d+1 by d+1 matrix; last row 0 0 0 .. 0 0.
-  Matrix<BaseFloat> B_;  // d+1 by d+1 matrix; last row 0 0 0 .. 0 1.
+  Matrix<BaseFloat> A_;        // d+1 by d+1 matrix; last row 0 0 0 .. 0 0.
+  Matrix<BaseFloat> B_;        // d+1 by d+1 matrix; last row 0 0 0 .. 0 1.
   EtNormalizeType norm_type_;  // tells us how to train D_s.
  private:
   static void ComposeAffineTransforms(const MatrixBase<BaseFloat> &A,
                                       const MatrixBase<BaseFloat> &B,
                                       MatrixBase<BaseFloat> *C);
-
-
 };
-
-
 
 struct ExponentialTransformUpdateAOptions {
   BaseFloat learning_rate;
-  bool renormalize;  // renormalize A and recenter the warp factors on each iteration...
-  ExponentialTransformUpdateAOptions(): learning_rate(1.0), renormalize(true) { }
+  bool renormalize;  // renormalize A and recenter the warp factors on each
+                     // iteration...
+  ExponentialTransformUpdateAOptions()
+      : learning_rate(1.0), renormalize(true) {}
   void Register(OptionsItf *po) {
-    po->Register("learning-rate", &learning_rate, "Learning rate for updating A (make <1 if instability suspected)\n");
-    po->Register("renormalize", &renormalize, "True if you want to renormalize the warp factors on each iteration of update (recommended).");
+    po->Register(
+        "learning-rate", &learning_rate,
+        "Learning rate for updating A (make <1 if instability suspected)\n");
+    po->Register("renormalize", &renormalize,
+                 "True if you want to renormalize the warp factors on each "
+                 "iteration of update (recommended).");
   }
 };
-
 
 class ExponentialTransformAccsA {
  public:
@@ -153,10 +154,10 @@ class ExponentialTransformAccsA {
   // un-transformed data.
   void AccumulateForSpeaker(const FmllrDiagGmmAccs &accs,
                             const ExponentialTransform &et,
-                            const MatrixBase<BaseFloat> &Ds,
-                            BaseFloat t);
+                            const MatrixBase<BaseFloat> &Ds, BaseFloat t);
 
-  ExponentialTransformAccsA() { } // typically use this constructor prior to Read().
+  ExponentialTransformAccsA() {
+  }  // typically use this constructor prior to Read().
 
   ExponentialTransformAccsA(int32 dim) { Init(dim); }
 
@@ -168,12 +169,10 @@ class ExponentialTransformAccsA {
 
   // Updates the matrix A (also changes B as a side effect).
   void Update(const ExponentialTransformUpdateAOptions &opts,
-              ExponentialTransform *et,
-              BaseFloat *objf_impr,
-              BaseFloat *count);
+              ExponentialTransform *et, BaseFloat *objf_impr, BaseFloat *count);
 
  private:
-  double beta_;  // sum of speaker betas.  for diagnostics.
+  double beta_;    // sum of speaker betas.  for diagnostics.
   double beta_t_;  // sum of speaker betas times T.  for log-det term.
   std::vector<SpMatrix<double> > G_;  // Like the G stats of
   // fMLLR, taken after the B transform.  Summed over speakers and
@@ -182,14 +181,8 @@ class ExponentialTransformAccsA {
   Matrix<double> Ahat_;  // local gradient w.r.t. the first d rows of A.
                          // note, \hat{A} in the paper has an extra row;
                          // this is never used.
-
 };
-
-
-
-
 
 }  // End namespace kaldi
 
 #endif  // KALDI_TRANSFORM_LDA_ESTIMATE_H_
-

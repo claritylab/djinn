@@ -23,23 +23,22 @@
 
 #include "base/kaldi-utils.h"
 
-namespace kaldi
-{
+namespace kaldi {
 
 class Timer {
  public:
   Timer() { Reset(); }
-  void Reset() {
-    QueryPerformanceCounter(&time_start_);
-  }
+  void Reset() { QueryPerformanceCounter(&time_start_); }
   double Elapsed() {
     LARGE_INTEGER time_end;
     LARGE_INTEGER freq;
     QueryPerformanceCounter(&time_end);
-    if (QueryPerformanceFrequency(&freq) == 0) return 0.0;  // Hardware does not support this.
+    if (QueryPerformanceFrequency(&freq) == 0)
+      return 0.0;  // Hardware does not support this.
     return ((double)time_end.QuadPart - (double)time_start_.QuadPart) /
-        ((double)freq.QuadPart);
+           ((double)freq.QuadPart);
   }
+
  private:
   LARGE_INTEGER time_start_;
 };
@@ -47,12 +46,10 @@ class Timer {
 
 #else
 
-# include <sys/time.h>
-# include <unistd.h>
-namespace kaldi
-{
-class Timer
-{
+#include <sys/time.h>
+#include <unistd.h>
+namespace kaldi {
+class Timer {
  public:
   Timer() { Reset(); }
 
@@ -63,10 +60,10 @@ class Timer
     struct timeval time_end;
     gettimeofday(&time_end, &time_zone_);
     double t1, t2;
-    t1 =  (double)time_start_.tv_sec +
-        (double)time_start_.tv_usec/(1000*1000);
-    t2 =  (double)time_end.tv_sec + (double)time_end.tv_usec/(1000*1000);
-    return t2-t1;
+    t1 = (double)time_start_.tv_sec +
+         (double)time_start_.tv_usec / (1000 * 1000);
+    t2 = (double)time_end.tv_sec + (double)time_end.tv_usec / (1000 * 1000);
+    return t2 - t1;
   }
 
  private:
@@ -76,6 +73,5 @@ class Timer
 }
 
 #endif
-
 
 #endif

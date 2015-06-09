@@ -37,11 +37,10 @@ void TestUpdateAndAccsIO(const AmSgmm &sgmm,
   kaldi::SgmmUpdateFlagsType flags = kaldi::kSgmmAll;
   kaldi::SgmmPerFrameDerivedVars frame_vars;
   kaldi::SgmmPerSpkDerivedVars empty;
-  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(),
-                    sgmm.PhoneSpaceDim());
+  frame_vars.Resize(sgmm.NumGauss(), sgmm.FeatureDim(), sgmm.PhoneSpaceDim());
   kaldi::SgmmGselectConfig sgmm_config;
-  sgmm_config.full_gmm_nbest = std::min(sgmm_config.full_gmm_nbest,
-                                        sgmm.NumGauss());
+  sgmm_config.full_gmm_nbest =
+      std::min(sgmm_config.full_gmm_nbest, sgmm.NumGauss());
   MleAmSgmmAccs accs(sgmm, flags);
   BaseFloat loglike = 0.0;
   Vector<BaseFloat> empty_spk;
@@ -54,7 +53,7 @@ void TestUpdateAndAccsIO(const AmSgmm &sgmm,
   accs.CommitStatsForSpk(sgmm, empty_spk);
 
   kaldi::MleAmSgmmOptions update_opts;
-  update_opts.check_v = (Rand()%2 == 0);
+  update_opts.check_v = (Rand() % 2 == 0);
   AmSgmm *sgmm1 = new AmSgmm();
   sgmm1->CopyFromSgmm(sgmm, false);
   kaldi::MleAmSgmmUpdater updater(update_opts);
@@ -101,8 +100,8 @@ void TestUpdateAndAccsIO(const AmSgmm &sgmm,
 
   // Testing the MAP update of M
   update_opts.tau_map_M = 100;
-  update_opts.full_col_cov = (RandUniform() > 0.5)? true : false;
-  update_opts.full_row_cov = (RandUniform() > 0.5)? true : false;
+  update_opts.full_col_cov = (RandUniform() > 0.5) ? true : false;
+  update_opts.full_row_cov = (RandUniform() > 0.5) ? true : false;
   kaldi::MleAmSgmmUpdater updater_map(update_opts);
   BaseFloat impr = updater_map.Update(*accs2, sgmm3, flags);
   KALDI_ASSERT(impr >= 0);
@@ -116,7 +115,7 @@ void TestUpdateAndAccsIO(const AmSgmm &sgmm,
 }
 
 void UnitTestEstimateSgmm() {
-  int32 dim = 1 + kaldi::RandInt(0, 9);  // random dimension of the gmm
+  int32 dim = 1 + kaldi::RandInt(0, 9);       // random dimension of the gmm
   int32 num_comp = 2 + kaldi::RandInt(0, 9);  // random mixture size
   kaldi::FullGmm full_gmm;
   ut::InitRandFullGmm(dim, num_comp, &full_gmm);
@@ -124,17 +123,18 @@ void UnitTestEstimateSgmm() {
   int32 num_states = 1;
   AmSgmm sgmm;
   kaldi::SgmmGselectConfig config;
-  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim+1, dim);
+  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim + 1, dim);
   sgmm.ComputeNormalizers();
 
   kaldi::Matrix<BaseFloat> feats;
 
   {  // First, generate random means and variances
-    int32 num_feat_comp = num_comp + kaldi::RandInt(-num_comp/2, num_comp/2);
+    int32 num_feat_comp =
+        num_comp + kaldi::RandInt(-num_comp / 2, num_comp / 2);
     kaldi::Matrix<BaseFloat> means(num_feat_comp, dim),
         vars(num_feat_comp, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      for (int32 d= 0; d < dim; d++) {
+      for (int32 d = 0; d < dim; d++) {
         means(m, d) = kaldi::RandGauss();
         vars(m, d) = exp(kaldi::RandGauss()) + 1e-2;
       }
@@ -142,7 +142,7 @@ void UnitTestEstimateSgmm() {
     // Now generate random features with those means and variances.
     feats.Resize(num_feat_comp * 200, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      kaldi::SubMatrix<BaseFloat> tmp(feats, m*200, 200, 0, dim);
+      kaldi::SubMatrix<BaseFloat> tmp(feats, m * 200, 200, 0, dim);
       ut::RandDiagGaussFeatures(200, means.Row(m), vars.Row(m), &tmp);
     }
   }
@@ -150,8 +150,7 @@ void UnitTestEstimateSgmm() {
 }
 
 int main() {
-  for (int i = 0; i < 10; i++)
-    UnitTestEstimateSgmm();
+  for (int i = 0; i < 10; i++) UnitTestEstimateSgmm();
   std::cout << "Test OK.\n";
   return 0;
 }

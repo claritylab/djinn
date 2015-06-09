@@ -34,9 +34,9 @@ int main(int argc, char *argv[]) {
         "Usage:  raw-nnet-info [options] <nnet-in>\n"
         "e.g.:\n"
         " raw-nnet-info 1.nnet\n";
-        
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1) {
@@ -45,19 +45,15 @@ int main(int argc, char *argv[]) {
     }
 
     std::string raw_nnet_rxfilename = po.GetArg(1);
-    
+
     Nnet nnet;
     ReadKaldiObject(raw_nnet_rxfilename, &nnet);
-    
+
     std::cout << nnet.Info();
-    
+
     KALDI_LOG << "Printed info about " << raw_nnet_rxfilename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-
-
-

@@ -24,27 +24,26 @@ namespace kaldi {
 namespace nnet2 {
 
 void UnitTestPreconditionDirections() {
-  MatrixIndexT N = 2 + Rand() % 30,
-               D = 1 + Rand() % 20;
+  MatrixIndexT N = 2 + Rand() % 30, D = 1 + Rand() % 20;
   BaseFloat lambda = 0.1;
   CuMatrix<BaseFloat> R(N, D), P(N, D);
   R.SetRandn();
-  P.SetRandn(); // contents should be overwritten.
+  P.SetRandn();  // contents should be overwritten.
 
   PreconditionDirections(R, lambda, &P);
   // The rest of this function will do the computation the function is doing in
   // a different, less efficient way and compare with the function call.
-  
+
   CuSpMatrix<BaseFloat> G(D);
   G.SetUnit();
   G.ScaleDiag(lambda);
   // G += R^T R.
-  G.AddMat2(1.0/(N-1), R, kTrans, 1.0);
-  
+  G.AddMat2(1.0 / (N - 1), R, kTrans, 1.0);
+
   for (int32 n = 0; n < N; n++) {
     CuSubVector<BaseFloat> rn(R, n);
     CuSpMatrix<BaseFloat> Gn(G);
-    Gn.AddVec2(-1.0/(N-1), rn); // subtract the
+    Gn.AddVec2(-1.0 / (N - 1), rn);  // subtract the
     // outer product of "this" vector.
     Gn.Invert();
     CuSubVector<BaseFloat> pn(P, n);
@@ -54,14 +53,11 @@ void UnitTestPreconditionDirections() {
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
   using namespace kaldi::nnet2;
-  for (int32 i = 0; i < 10; i++)
-    UnitTestPreconditionDirections();
+  for (int32 i = 0; i < 10; i++) UnitTestPreconditionDirections();
 }

@@ -1,3 +1,1 @@
-input/a0046.wav
-input/a0048.wav
-input/a0049.wav
+input/a0045.wav

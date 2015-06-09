@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ITF_CONTEXT_DEP_ITF_H_
 #define KALDI_ITF_CONTEXT_DEP_ITF_H_
 #include "base/kaldi-common.h"
@@ -33,11 +32,13 @@ namespace kaldi {
 /// phone-in-context to a sequence of integer leaf-ids.
 class ContextDependencyInterface {
  public:
-  /// ContextWidth() returns the value N (e.g. 3 for triphone models) that says how many phones
+  /// ContextWidth() returns the value N (e.g. 3 for triphone models) that says
+  /// how many phones
   ///   are considered for computing context.
   virtual int ContextWidth() const = 0;
 
-  /// Central position P of the phone context, in 0-based numbering, e.g. P = 1 for typical
+  /// Central position P of the phone context, in 0-based numbering, e.g. P = 1
+  /// for typical
   /// triphone system.  We have to see if we can do without this function.
   virtual int CentralPosition() const = 0;
 
@@ -60,21 +61,20 @@ class ContextDependencyInterface {
   virtual bool Compute(const std::vector<int32> &phoneseq, int32 pdf_class,
                        int32 *pdf_id) const = 0;
 
-
-
-  /// NumPdfs() returns the number of acoustic pdfs (they are numbered 0.. NumPdfs()-1).
+  /// NumPdfs() returns the number of acoustic pdfs (they are numbered 0..
+  /// NumPdfs()-1).
   virtual int32 NumPdfs() const = 0;
 
-  virtual ~ContextDependencyInterface() {};
+  virtual ~ContextDependencyInterface(){};
   ContextDependencyInterface() {}
 
   /// Returns pointer to new object which is copy of current one.
   virtual ContextDependencyInterface *Copy() const = 0;
+
  private:
   KALDI_DISALLOW_COPY_AND_ASSIGN(ContextDependencyInterface);
 };
 /// @}
 }  // namespace Kaldi
-
 
 #endif

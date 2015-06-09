@@ -1,6 +1,7 @@
 // kwsbin/kws-search.cc
 
-// Copyright 2012-2013  Johns Hopkins University (Authors: Guoguo Chen, Daniel Povey)
+// Copyright 2012-2013  Johns Hopkins University (Authors: Guoguo Chen, Daniel
+// Povey)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -17,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-utils.h"
@@ -29,15 +29,13 @@ typedef KwsLexicographicArc Arc;
 typedef Arc::Weight Weight;
 typedef Arc::StateId StateId;
 
-uint64 EncodeLabel(StateId ilabel,
-                   StateId olabel) {
-  return (((int64)olabel)<<32)+((int64)ilabel);
-
+uint64 EncodeLabel(StateId ilabel, StateId olabel) {
+  return (((int64)olabel) << 32) + ((int64)ilabel);
 }
 
 StateId DecodeLabelUid(uint64 osymbol) {
   // We only need the utterance id
-  return ((StateId)(osymbol>>32));
+  return ((StateId)(osymbol >> 32));
 }
 
 class VectorFstToKwsLexicographicFstMapper {
@@ -50,24 +48,25 @@ class VectorFstToKwsLexicographicFstMapper {
   VectorFstToKwsLexicographicFstMapper() {}
 
   ToArc operator()(const FromArc &arc) const {
-    return ToArc(arc.ilabel, 
-                 arc.olabel,
-                 (arc.weight == FromWeight::Zero() ?
-                  ToWeight::Zero() :
-                  ToWeight(arc.weight.Value(),
-                           StdLStdWeight::One())),
+    return ToArc(arc.ilabel, arc.olabel,
+                 (arc.weight == FromWeight::Zero()
+                      ? ToWeight::Zero()
+                      : ToWeight(arc.weight.Value(), StdLStdWeight::One())),
                  arc.nextstate);
   }
 
   fst::MapFinalAction FinalAction() const { return fst::MAP_NO_SUPERFINAL; }
 
-  fst::MapSymbolsAction InputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS; }
+  fst::MapSymbolsAction InputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
-  fst::MapSymbolsAction OutputSymbolsAction() const { return fst::MAP_COPY_SYMBOLS;}
+  fst::MapSymbolsAction OutputSymbolsAction() const {
+    return fst::MAP_COPY_SYMBOLS;
+  }
 
   uint64 Properties(uint64 props) const { return props; }
 };
-
 }
 
 int main(int argc, char *argv[]) {
@@ -82,14 +81,17 @@ int main(int argc, char *argv[]) {
     typedef Arc::StateId StateId;
 
     const char *usage =
-        "Search the keywords over the index. This program can be executed parallely, either\n"
-        "on the index side or the keywords side; we use a script to combine the final search\n"
+        "Search the keywords over the index. This program can be executed "
+        "parallely, either\n"
+        "on the index side or the keywords side; we use a script to combine "
+        "the final search\n"
         "results. Note that the index archive has a only key \"global\".\n"
         "The output file is in the format:\n"
         "kw utterance_id beg_frame end_frame negated_log_probs\n"
         " e.g.: KW1 1 23 67 0.6074219\n"
         "\n"
-        "Usage: kws-search [options]  index-rspecifier keywords-rspecifier results-wspecifier\n"
+        "Usage: kws-search [options]  index-rspecifier keywords-rspecifier "
+        "results-wspecifier\n"
         " e.g.: kws-search ark:index.idx ark:keywords.fsts ark:results\n";
 
     ParseOptions po(usage);
@@ -99,28 +101,31 @@ int main(int argc, char *argv[]) {
     bool strict = true;
     double negative_tolerance = -0.1;
     double keyword_beam = -1;
-    
+
     po.Register("nbest", &n_best, "Return the best n hypotheses.");
-    po.Register("keyword-nbest", &keyword_nbest,
-                "Pick the best n keywords if the FST contains multiple keywords.");
+    po.Register(
+        "keyword-nbest", &keyword_nbest,
+        "Pick the best n keywords if the FST contains multiple keywords.");
     po.Register("strict", &strict, "Affects the return status of the program.");
-    po.Register("negative-tolerance", &negative_tolerance, 
-                "The program will print a warning if we get negative score smaller "
-                "than this tolerance.");
+    po.Register(
+        "negative-tolerance", &negative_tolerance,
+        "The program will print a warning if we get negative score smaller "
+        "than this tolerance.");
     po.Register("keyword-beam", &keyword_beam,
-                "Prune the FST with the given beam if the FST contains multiple keywords.");
+                "Prune the FST with the given beam if the FST contains "
+                "multiple keywords.");
 
     if (n_best < 0 && n_best != -1) {
       KALDI_ERR << "Bad number for nbest";
-      exit (1);
+      exit(1);
     }
     if (keyword_nbest < 0 && keyword_nbest != -1) {
       KALDI_ERR << "Bad number for keyword-nbest";
-      exit (1);
+      exit(1);
     }
     if (keyword_beam < 0 && keyword_beam != -1) {
       KALDI_ERR << "Bad number for keyword-beam";
-      exit (1);
+      exit(1);
     }
 
     po.Read(argc, argv);
@@ -131,16 +136,17 @@ int main(int argc, char *argv[]) {
     }
 
     std::string index_rspecifier = po.GetArg(1),
-        keyword_rspecifier = po.GetOptArg(2),
-        result_wspecifier = po.GetOptArg(3);
+                keyword_rspecifier = po.GetOptArg(2),
+                result_wspecifier = po.GetOptArg(3);
 
-    RandomAccessTableReader< VectorFstTplHolder<KwsLexicographicArc> > index_reader(index_rspecifier);
+    RandomAccessTableReader<VectorFstTplHolder<KwsLexicographicArc> >
+        index_reader(index_rspecifier);
     SequentialTableReader<VectorFstHolder> keyword_reader(keyword_rspecifier);
-    TableWriter< BasicVectorHolder<double> > result_writer(result_wspecifier);
+    TableWriter<BasicVectorHolder<double> > result_writer(result_wspecifier);
 
     // Index has key "global"
     KwsLexicographicFst index = index_reader.Value("global");
-    
+
     // First we have to remove the disambiguation symbols. But rather than
     // removing them totally, we actually move them from input side to output
     // side, making the output symbol a "combined" symbol of the disambiguation
@@ -152,14 +158,14 @@ int main(int argc, char *argv[]) {
     int32 label_count = 1;
     std::tr1::unordered_map<uint64, uint32> label_encoder;
     std::tr1::unordered_map<uint32, uint64> label_decoder;
-    for (StateIterator<KwsLexicographicFst> siter(index); !siter.Done(); siter.Next()) {
+    for (StateIterator<KwsLexicographicFst> siter(index); !siter.Done();
+         siter.Next()) {
       StateId state_id = siter.Value();
-      for (MutableArcIterator<KwsLexicographicFst> 
-           aiter(&index, state_id); !aiter.Done(); aiter.Next()) {
+      for (MutableArcIterator<KwsLexicographicFst> aiter(&index, state_id);
+           !aiter.Done(); aiter.Next()) {
         Arc arc = aiter.Value();
         // Skip the non-final arcs
-        if (index.Final(arc.nextstate) == Weight::Zero())
-          continue;
+        if (index.Final(arc.nextstate) == Weight::Zero()) continue;
         // Encode the input and output label of the final arc, and this is the
         // new output label for this arc; set the input label to <epsilon>
         uint64 osymbol = EncodeLabel(arc.ilabel, arc.olabel);
@@ -169,14 +175,14 @@ int main(int argc, char *argv[]) {
           label_encoder[osymbol] = label_count;
           label_decoder[label_count] = osymbol;
           label_count++;
-        } else { 
+        } else {
           arc.olabel = label_encoder[osymbol];
         }
         aiter.SetValue(arc);
       }
     }
     ArcSort(&index, fst::ILabelCompare<KwsLexicographicArc>());
-    
+
     int32 n_done = 0;
     int32 n_fail = 0;
     for (; !keyword_reader.Done(); keyword_reader.Next()) {
@@ -204,19 +210,20 @@ int main(int argc, char *argv[]) {
       RmEpsilon(&result_fst);
 
       // No result found
-      if (result_fst.Start() == kNoStateId)
-        continue;
+      if (result_fst.Start() == kNoStateId) continue;
 
       // Got something here
       double score;
       int32 tbeg, tend, uid;
-      for (ArcIterator<KwsLexicographicFst> 
-           aiter(result_fst, result_fst.Start()); !aiter.Done(); aiter.Next()) {
+      for (ArcIterator<KwsLexicographicFst> aiter(result_fst,
+                                                  result_fst.Start());
+           !aiter.Done(); aiter.Next()) {
         const Arc &arc = aiter.Value();
 
         // We're expecting a two-state FST
         if (result_fst.Final(arc.nextstate) != Weight::One()) {
-          KALDI_WARN << "The resulting FST does not have the expected structure for key " << key;
+          KALDI_WARN << "The resulting FST does not have the expected "
+                        "structure for key " << key;
           n_fail++;
           continue;
         }
@@ -249,7 +256,7 @@ int main(int argc, char *argv[]) {
       return (n_done != 0 ? 0 : 1);
     else
       return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     std::string model_in_filename = po.GetArg(1),
-        ubm_out_filename = po.GetArg(2);
+                ubm_out_filename = po.GetArg(2);
 
     AmSgmm am_sgmm;
     TransitionModel trans_model;
@@ -59,13 +58,11 @@ int main(int argc, char *argv[]) {
       Output ko(ubm_out_filename, binary_write);
       am_sgmm.full_ubm().Write(ko.Stream(), binary_write);
     }
-    
+
     KALDI_LOG << "Written UBM to " << ubm_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

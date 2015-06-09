@@ -17,13 +17,14 @@ void SENNA_fseek(FILE *stream, long offset, int whence);
 long SENNA_ftell(FILE *stream);
 void SENNA_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 void SENNA_fread_tensor_1d(float **ptr, int *n_row, FILE *stream);
-void SENNA_fread_tensor_2d(float **ptr, int *n_row, int *n_column, FILE *stream);
-char* SENNA_fgetline(char *str, int size, FILE *stream);
+void SENNA_fread_tensor_2d(float **ptr, int *n_row, int *n_column,
+                           FILE *stream);
+char *SENNA_fgetline(char *str, int size, FILE *stream);
 void SENNA_fclose(FILE *stream);
 
 /* memory */
-void* SENNA_malloc(size_t size, size_t nitems);
-void* SENNA_realloc(void *ptr, size_t size, size_t nitems);
+void *SENNA_malloc(size_t size, size_t nitems);
+void *SENNA_realloc(void *ptr, size_t size, size_t nitems);
 void SENNA_free(void *ptr);
 
 /* debug */

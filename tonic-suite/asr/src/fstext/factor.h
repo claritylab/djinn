@@ -31,13 +31,11 @@
    one; this enables certain optimizations later on.
 */
 
-
 #include <fst/fstlib.h>
 #include <fst/fst-decl.h>
 #include "util/const-integer-set.h"
 
 namespace fst {
-
 
 /**
    Factor identifies linear chains of states with an olabel (if any)
@@ -50,7 +48,7 @@ namespace fst {
    As a side effect it also sorts the FST in depth-first order.  Factor will
    usually do the best job when the olabels have been pushed to the left,
    i.e. if you make a call like
-   
+
      Push<Arc, REWEIGHT_TO_INITIAL>(fsta, &fstb, kPushLabels);
 
    This is because it only creates a chain with olabels on the first arc of the
@@ -61,95 +59,92 @@ namespace fst {
    would produce something equivalent to fst.
 */
 
-template<class Arc, class I>
+template <class Arc, class I>
 void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst,
             vector<vector<I> > *symbols);
 
-
 /// This is a more conventional interface of Factor that outputs
 /// the result as two FSTs.
-template<class Arc>
+template <class Arc>
 void Factor(const Fst<Arc> &fst, MutableFst<Arc> *ofst1,
             MutableFst<Arc> *ofst2);
-
-
 
 /// ExpandInputSequences expands out the input symbols into sequences of input
 /// symbols.  It creates linear chains of states for each arc that had >1
 /// augmented symbol on it.  It also sets the input symbol table to NULL, since
 /// in case you did have a symbol table there it would no longer be valid.  It
 /// leaves any weight and output symbols on the first arc of the chain.
-template<class Arc, class I>
+template <class Arc, class I>
 void ExpandInputSequences(const vector<vector<I> > &sequences,
                           MutableFst<Arc> *fst);
 
-
 /// The function CreateFactorFst will create an FST that expands out the
-/// "factors" that are the indices of the "sequences" array, into linear sequences
+/// "factors" that are the indices of the "sequences" array, into linear
+/// sequences
 /// of symbols.  There is a single start and end state (state 0), and for each
-/// nonzero index i into the array "sequences", there is an arc from state 0 that
-/// has output-label i, and enters a chain of states with output epsilons and input
+/// nonzero index i into the array "sequences", there is an arc from state 0
+/// that
+/// has output-label i, and enters a chain of states with output epsilons and
+/// input
 /// labels corresponding to the remaining elements of the sequences, terminating
 /// again in state 0.  This FST is output-deterministic and sorted on olabel.
 /// Composing an FST on the left with the output of this function, should be the
-/// same as calling "ExpandInputSequences".  Use TableCompose (see table-matcher.h)
+/// same as calling "ExpandInputSequences".  Use TableCompose (see
+/// table-matcher.h)
 /// for efficiency.
-template<class Arc, class I>
-void CreateFactorFst(const vector<vector<I> > &sequences,  
-                     MutableFst<Arc> *fst);
-
+template <class Arc, class I>
+void CreateFactorFst(const vector<vector<I> > &sequences, MutableFst<Arc> *fst);
 
 /// CreateMapFst will create an FST representing this symbol_map.  The
 /// FST has a single loop state with single-arc loops with
 /// isymbol = symbol_map[i], osymbol = i.  The resulting FST applies this
 /// map to the input symbols of something we compose with it on the right.
 /// Must have symbol_map[0] == 0.
-template<class Arc, class I>
-void CreateMapFst(const vector<I> &symbol_map,
-                  MutableFst<Arc> *fst);
+template <class Arc, class I>
+void CreateMapFst(const vector<I> &symbol_map, MutableFst<Arc> *fst);
 
-
-enum  StatePropertiesEnum
-{ kStateFinal = 0x1,
+enum StatePropertiesEnum {
+  kStateFinal = 0x1,
   kStateInitial = 0x2,
   kStateArcsIn = 0x4,
   kStateMultipleArcsIn = 0x8,
   kStateArcsOut = 0x10,
   kStateMultipleArcsOut = 0x20,
   kStateOlabelsOut = 0x40,
-  kStateIlabelsOut = 0x80 }; 
+  kStateIlabelsOut = 0x80
+};
 
 typedef unsigned char StatePropertiesType;
 
 /**
    This function works out various properties of the states in the
    FST, using the bit properties defined in StatePropertiesEnum. */
-template<class Arc>
-void GetStateProperties(const Fst<Arc> &fst,
-                        typename Arc::StateId max_state,
+template <class Arc>
+void GetStateProperties(const Fst<Arc> &fst, typename Arc::StateId max_state,
                         vector<StatePropertiesType> *props);
 
-
-
-template<class Arc>
+template <class Arc>
 class DfsOrderVisitor {
   // visitor class that gives the user the dfs order,
   // c.f. dfs-visit.h.  Used in factor-fst-impl.h
   typedef typename Arc::StateId StateId;
+
  public:
-  DfsOrderVisitor(vector<StateId> *order): order_(order) { order->clear(); }
+  DfsOrderVisitor(vector<StateId> *order) : order_(order) { order->clear(); }
   void InitVisit(const Fst<Arc> &fst) {}
-  bool InitState(StateId s, StateId) { order_->push_back(s); return true; }
-  bool TreeArc(StateId, const Arc&) { return true; }
-  bool BackArc(StateId, const Arc&) { return true; }
-  bool ForwardOrCrossArc(StateId, const Arc&) { return true; }
-  void FinishState(StateId, StateId, const Arc *) { }
-  void FinishVisit() { }
+  bool InitState(StateId s, StateId) {
+    order_->push_back(s);
+    return true;
+  }
+  bool TreeArc(StateId, const Arc &) { return true; }
+  bool BackArc(StateId, const Arc &) { return true; }
+  bool ForwardOrCrossArc(StateId, const Arc &) { return true; }
+  void FinishState(StateId, StateId, const Arc *) {}
+  void FinishVisit() {}
+
  private:
   vector<StateId> *order_;
 };
-
-
 
 }  // namespace fst
 

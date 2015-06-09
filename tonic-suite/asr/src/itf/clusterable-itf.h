@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ITF_CLUSTERABLE_ITF_H_
 #define KALDI_ITF_CLUSTERABLE_ITF_H_ 1
 
@@ -26,14 +25,11 @@
 
 namespace kaldi {
 
-
 /** \addtogroup clustering_group
  @{
   A virtual class for clusterable objects; see \ref clustering for an
   explanation if its function.
 */
-
-
 
 class Clusterable {
  public:
@@ -58,7 +54,7 @@ class Clusterable {
     KALDI_ERR << "This Clusterable object does not implement Scale().";
   }
 
-  /// Return a string that describes the inherited type. 
+  /// Return a string that describes the inherited type.
   virtual std::string Type() const = 0;
 
   /// Write data to stream.
@@ -67,7 +63,7 @@ class Clusterable {
   /// Read data from a stream and return the corresponding object (const
   /// function; it's a class member because we need access to the vtable
   /// so generic code can read derived types).
-  virtual Clusterable* ReadNew(std::istream &os, bool binary) const = 0;
+  virtual Clusterable *ReadNew(std::istream &os, bool binary) const = 0;
 
   virtual ~Clusterable() {}
 
@@ -87,11 +83,9 @@ class Clusterable {
   /// clusters, negated to be a positive number (or zero).
   virtual BaseFloat Distance(const Clusterable &other) const;
   /// @}
-
 };
 /// @} end of "ingroup clustering_group"
 
 }  // end namespace kaldi
 
 #endif  // KALDI_ITF_CLUSTERABLE_ITF_H_
-

@@ -29,16 +29,16 @@
 using namespace kaldi;
 
 void RandPosdefSpMatrix(size_t dim, SpMatrix<BaseFloat> *matrix,
-                          TpMatrix<BaseFloat> *matrix_sqrt = NULL,
-                          BaseFloat *logdet = NULL) {
+                        TpMatrix<BaseFloat> *matrix_sqrt = NULL,
+                        BaseFloat *logdet = NULL) {
   // generate random (non-singular) matrix
   Matrix<BaseFloat> tmp(dim, dim);
   while (1) {
     tmp.SetRandn();
     if (tmp.Cond() < 100) break;
     std::cout << "Condition number of random matrix large "
-      << static_cast<float>(tmp.Cond()) << ", trying again (this is normal)"
-      << '\n';
+              << static_cast<float>(tmp.Cond())
+              << ", trying again (this is normal)" << '\n';
   }
   // tmp * tmp^T will give positive definite matrix
   matrix->AddMat2(1.0, tmp, kNoTrans, 0.0);
@@ -59,7 +59,7 @@ void init_rand_diag_gmm(DiagGmm *gmm) {
   BaseFloat tot_weight = 0.0;
   for (size_t m = 0; m < num_comp; m++) {
     weights(m) = kaldi::RandUniform();
-    for (size_t d= 0; d < dim; d++) {
+    for (size_t d = 0; d < dim; d++) {
       means(m, d) = kaldi::RandGauss();
       vars(m, d) = exp(kaldi::RandGauss()) + 1e-5;
     }
@@ -96,23 +96,21 @@ void UnitTestFullGmmEst() {
 
   MleFullGmmUpdate(opts, acc, kGmmAll, &fgmm, &objf_change, &count);
   BaseFloat change = objf_change / count,
-      num_params = (num_comp * (dim + 1 + (dim*(dim+1)/2))),
-      predicted_change = 0.5 * num_params / num_frames; // Was there
+            num_params = (num_comp * (dim + 1 + (dim * (dim + 1) / 2))),
+            predicted_change = 0.5 * num_params / num_frames;  // Was there
   KALDI_LOG << "Objf change per frame was " << change << " vs. predicted "
             << predicted_change;
   KALDI_ASSERT(change < 2.0 * predicted_change && change > 0.0)
 }
 
-
-void
-UnitTestFullGmm() {
+void UnitTestFullGmm() {
   // random dimension of the gmm
   size_t dim = 1 + kaldi::RandInt(0, 9);
   // random number of mixtures
   size_t nMix = 1 + kaldi::RandInt(0, 9);
 
-  std::cout << "Testing NumGauss: " << nMix << ", " << "Dim: " << dim
-    << '\n';
+  std::cout << "Testing NumGauss: " << nMix << ", "
+            << "Dim: " << dim << '\n';
 
   // generate random feature vector and
   // random mean vectors and covariance matrices
@@ -151,16 +149,14 @@ UnitTestFullGmm() {
   // compute loglike for feature vector
   float loglike = 0.0;
   for (size_t m = 0; m < nMix; m++) {
-    loglikes(m) += -0.5 * (M_LOG_2PI * dim
-      + covars_logdet(m)
-      + VecSpVec(means.Row(m), invcovars[m], means.Row(m))
-      + VecSpVec(feat, invcovars[m], feat))
-      + VecSpVec(means.Row(m), invcovars[m], feat);
+    loglikes(m) += -0.5 * (M_LOG_2PI * dim + covars_logdet(m) +
+                           VecSpVec(means.Row(m), invcovars[m], means.Row(m)) +
+                           VecSpVec(feat, invcovars[m], feat)) +
+                   VecSpVec(means.Row(m), invcovars[m], feat);
     loglikes(m) += log(weights(m));
   }
 
   loglike = loglikes.LogSumExp();
-
 
   // new GMM
   FullGmm *gmm = new FullGmm();
@@ -210,13 +206,11 @@ UnitTestFullGmm() {
     }
     {
       std::vector<int32> indices;
-      for (int32 i = 0; i < gmm2.NumGauss(); i++)
-        indices.push_back(i);
+      for (int32 i = 0; i < gmm2.NumGauss(); i++) indices.push_back(i);
       Vector<BaseFloat> loglikes;
       gmm2.LogLikelihoodsPreselect(feat, indices, &loglikes);
       AssertEqual(loglikes.LogSumExp(), loglike_gmm2);
     }
-
 
     // single component mean accessor + mutator
     FullGmm gmm3;
@@ -248,7 +242,7 @@ UnitTestFullGmm() {
 
   }  // Test various accessors / mutators end
 
-   // First, non-binary write
+  // First, non-binary write
   gmm->Write(Output("tmpf", false).Stream(), false);
 
   {  // I/O tests
@@ -329,8 +323,7 @@ UnitTestFullGmm() {
   unlink("tmpfb");
 }
 
-int
-main() {
+int main() {
   // repeat the test ten times
   for (int i = 0; i < 2; i++) {
     UnitTestFullGmm();

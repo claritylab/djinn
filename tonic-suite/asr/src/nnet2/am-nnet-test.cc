@@ -23,27 +23,24 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 void UnitTestAmNnet() {
   std::vector<int32> phones;
   phones.push_back(1);
   for (int32 i = 2; i < 20; i++)
-    if (rand() % 2 == 0)
-      phones.push_back(i);
-  int32 N = 2 + rand() % 2, // context-size N is 2 or 3.
-      P = rand() % N;  // Central-phone is random on [0, N)
+    if (rand() % 2 == 0) phones.push_back(i);
+  int32 N = 2 + rand() % 2,  // context-size N is 2 or 3.
+      P = rand() % N;        // Central-phone is random on [0, N)
 
   std::vector<int32> num_pdf_classes;
 
   ContextDependency *ctx_dep =
-      GenRandContextDependencyLarge(phones, N, P,
-                                    true, &num_pdf_classes);
-  
+      GenRandContextDependencyLarge(phones, N, P, true, &num_pdf_classes);
+
   HmmTopology topo = GetDefaultTopology(phones);
-  
+
   TransitionModel trans_model(*ctx_dep, topo);
-  
-  delete ctx_dep; // We won't need this further.
+
+  delete ctx_dep;  // We won't need this further.
   ctx_dep = NULL;
 
   int32 input_dim = 40, output_dim = trans_model.NumPdfs();
@@ -58,7 +55,7 @@ void UnitTestAmNnet() {
   priors.Scale(1.0 / priors.Sum());
 
   am_nnet.SetPriors(priors);
-  
+
   bool binary = (rand() % 2 == 0);
   std::ostringstream os;
   am_nnet.Write(os, binary);
@@ -72,9 +69,8 @@ void UnitTestAmNnet() {
   KALDI_ASSERT(os2.str() == os.str());
 }
 
-} // namespace nnet2
-} // namespace kaldi
-
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
@@ -83,4 +79,3 @@ int main() {
   UnitTestAmNnet();
   return 0;
 }
-  

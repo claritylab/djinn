@@ -21,9 +21,8 @@
 
 namespace kaldi {
 
-
 void TestVectorToPosteriorEntry() {
-  int32 n = 10 + rand () % 50, gselect = 1 + rand() % 5;
+  int32 n = 10 + rand() % 50, gselect = 1 + rand() % 5;
   BaseFloat min_post = 0.1 + 0.8 * RandUniform();
 
   Vector<BaseFloat> loglikes(n);
@@ -32,7 +31,8 @@ void TestVectorToPosteriorEntry() {
 
   std::vector<std::pair<int32, BaseFloat> > post_entry;
 
-  BaseFloat ans = VectorToPosteriorEntry(loglikes, gselect, min_post, &post_entry);
+  BaseFloat ans =
+      VectorToPosteriorEntry(loglikes, gselect, min_post, &post_entry);
 
   KALDI_ASSERT(post_entry.size() <= gselect);
 
@@ -44,12 +44,10 @@ void TestVectorToPosteriorEntry() {
   KALDI_ASSERT(post_entry.back().second <= post_entry.front().second);
 
   BaseFloat sum = 0.0;
-  for (size_t i = 0; i < post_entry.size(); i++)
-    sum += post_entry[i].second;
+  for (size_t i = 0; i < post_entry.size(); i++) sum += post_entry[i].second;
   KALDI_ASSERT(fabs(sum - 1.0) < 0.01);
   KALDI_ASSERT(ans >= max_val);
 }
-
 }
 
 int main() {
@@ -59,4 +57,3 @@ int main() {
   }
   std::cout << "Test OK.\n";
 }
-

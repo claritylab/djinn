@@ -26,7 +26,6 @@
 namespace kaldi {
 namespace nnet1 {
 
-
 struct NnetTrainOptions {
   // option declaration
   BaseFloat learn_rate;
@@ -34,20 +33,18 @@ struct NnetTrainOptions {
   BaseFloat l2_penalty;
   BaseFloat l1_penalty;
   // default values
-  NnetTrainOptions() : learn_rate(0.008),
-                       momentum(0.0),
-                       l2_penalty(0.0),
-                       l1_penalty(0.0) 
-                       { }
+  NnetTrainOptions()
+      : learn_rate(0.008), momentum(0.0), l2_penalty(0.0), l1_penalty(0.0) {}
   // register options
-  void Register(OptionsItf *po) {
+  void Register(OptionsItf* po) {
     po->Register("learn-rate", &learn_rate, "Learning rate");
     po->Register("momentum", &momentum, "Momentum");
     po->Register("l2-penalty", &l2_penalty, "L2 penalty (weight decay)");
     po->Register("l1-penalty", &l1_penalty, "L1 penalty (promote sparsity)");
   }
   // print for debug purposes
-  friend std::ostream& operator<<(std::ostream& os, const NnetTrainOptions& opts) {
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const NnetTrainOptions& opts) {
     os << "RbmTrainOptions : "
        << "learn_rate" << opts.learn_rate << ", "
        << "momentum" << opts.momentum << ", "
@@ -56,7 +53,6 @@ struct NnetTrainOptions {
     return os;
   }
 };
-
 
 struct RbmTrainOptions {
   // option declaration
@@ -67,31 +63,34 @@ struct RbmTrainOptions {
   int32 momentum_step_period;
   BaseFloat l2_penalty;
   // default values
-  RbmTrainOptions() : learn_rate(0.4),
-                      momentum(0.5),
-                      momentum_max(0.9),
-                      momentum_steps(40),
-                      momentum_step_period(500000),
-                        // 500000 * 40 = 55h of linear increase of momentum 
-                      l2_penalty(0.0002)
-                      { }
+  RbmTrainOptions()
+      : learn_rate(0.4),
+        momentum(0.5),
+        momentum_max(0.9),
+        momentum_steps(40),
+        momentum_step_period(500000),
+        // 500000 * 40 = 55h of linear increase of momentum
+        l2_penalty(0.0002) {}
   // register options
-  void Register(OptionsItf *po) {
+  void Register(OptionsItf* po) {
     po->Register("learn-rate", &learn_rate, "Learning rate");
 
-    po->Register("momentum", &momentum, "Initial momentum for linear scheduling");
-    po->Register("momentum-max", &momentum_max, "Final momentum for linear scheduling");
-    po->Register("momentum-steps", &momentum_steps, 
+    po->Register("momentum", &momentum,
+                 "Initial momentum for linear scheduling");
+    po->Register("momentum-max", &momentum_max,
+                 "Final momentum for linear scheduling");
+    po->Register("momentum-steps", &momentum_steps,
                  "Number of steps of linear momentum scheduling");
-    po->Register("momentum-step-period", &momentum_step_period, 
+    po->Register("momentum-step-period", &momentum_step_period,
                  "Number of datapoints per single momentum increase step");
 
-    po->Register("l2-penalty", &l2_penalty, 
+    po->Register("l2-penalty", &l2_penalty,
                  "L2 penalty (weight decay, increases mixing-rate)");
   }
   // print for debug purposes
-  friend std::ostream& operator<<(std::ostream& os, const RbmTrainOptions& opts) {
-    os << "RbmTrainOptions : "       
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const RbmTrainOptions& opts) {
+    os << "RbmTrainOptions : "
        << "learn_rate" << opts.learn_rate << ", "
        << "momentum" << opts.momentum << ", "
        << "momentum_max" << opts.momentum_max << ", "
@@ -102,8 +101,7 @@ struct RbmTrainOptions {
   }
 };
 
-
-}//namespace nnet1
-}//namespace kaldi
+}  // namespace nnet1
+}  // namespace kaldi
 
 #endif

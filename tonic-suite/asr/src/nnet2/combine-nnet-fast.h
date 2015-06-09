@@ -25,7 +25,6 @@
 #include "util/parse-options.h"
 #include "itf/options-itf.h"
 
-
 // Compare with combine-nnet.h.  What we're doing is taking
 // a set of neural nets, and combining them with combination weights
 // (separate weights for each updatable layer), and optimizing
@@ -48,65 +47,82 @@ namespace nnet2 {
     combination of the different neural-net parameters.
  */
 struct NnetCombineFastConfig {
-  int32 initial_model; // If provided, the index of the initial model to start
+  int32 initial_model;  // If provided, the index of the initial model to start
   // the optimization from.
-  int32 num_lbfgs_iters; 
+  int32 num_lbfgs_iters;
   int32 num_threads;
   BaseFloat initial_impr;
-  BaseFloat fisher_floor; // Flooring value we use for Fisher matrix (mainly
-                          // makes a difference in pnorm systems, where there
-                          // are don't-care directions in parameter space.
-  BaseFloat alpha; // A smoothing value we use in getting the Fisher matrix.
-  int32 fisher_minibatch_size; // e.g. 64; a relatively small minibatch size we
-  // use in the Fisher matrix computation (smaller will generally mean more accurate
+  BaseFloat fisher_floor;  // Flooring value we use for Fisher matrix (mainly
+                           // makes a difference in pnorm systems, where there
+                           // are don't-care directions in parameter space.
+  BaseFloat alpha;  // A smoothing value we use in getting the Fisher matrix.
+  int32 fisher_minibatch_size;  // e.g. 64; a relatively small minibatch size we
+  // use in the Fisher matrix computation (smaller will generally mean more
+  // accurate
   // preconditioning but will slow down the computation).
-  int32 minibatch_size; // e.g. 1028; a larger minibatch size we use in
+  int32 minibatch_size;  // e.g. 1028; a larger minibatch size we use in
   // the gradient computation.
   int32 max_lbfgs_dim;
   BaseFloat regularizer;
-  
-  NnetCombineFastConfig(): initial_model(-1), num_lbfgs_iters(10),
-                           num_threads(1), initial_impr(0.01), fisher_floor(1.0e-20),
-                           alpha(0.01), fisher_minibatch_size(64), minibatch_size(1024),
-                           max_lbfgs_dim(10), regularizer(0.0) {}
-  
+
+  NnetCombineFastConfig()
+      : initial_model(-1),
+        num_lbfgs_iters(10),
+        num_threads(1),
+        initial_impr(0.01),
+        fisher_floor(1.0e-20),
+        alpha(0.01),
+        fisher_minibatch_size(64),
+        minibatch_size(1024),
+        max_lbfgs_dim(10),
+        regularizer(0.0) {}
+
   void Register(OptionsItf *po) {
-    po->Register("initial-model", &initial_model, "Specifies where to start the "
-                 "optimization from.  If 0 ... #models-1, then specifies the model; "
-                 "if >= #models, then the average of all inputs; if <0, chosen "
-                 "automatically from the previous options.");
-    po->Register("num-lbfgs-iters", &num_lbfgs_iters, "Maximum number of function "
-                 "evaluations for L-BFGS to use when optimizing combination weights");
-    po->Register("initial-impr", &initial_impr, "Amount of objective-function change "
+    po->Register(
+        "initial-model", &initial_model,
+        "Specifies where to start the "
+        "optimization from.  If 0 ... #models-1, then specifies the model; "
+        "if >= #models, then the average of all inputs; if <0, chosen "
+        "automatically from the previous options.");
+    po->Register(
+        "num-lbfgs-iters", &num_lbfgs_iters,
+        "Maximum number of function "
+        "evaluations for L-BFGS to use when optimizing combination weights");
+    po->Register("initial-impr", &initial_impr,
+                 "Amount of objective-function change "
                  "We aim for on the first iteration.");
-    po->Register("num-threads", &num_threads, "Number of threads to use in "
+    po->Register("num-threads", &num_threads,
+                 "Number of threads to use in "
                  "multi-core computation");
-    po->Register("fisher-floor", &fisher_floor,
-                 "Floor for diagonal of Fisher matrix (used in preconditioning)");
-    po->Register("alpha", &alpha, "Value we use in smoothing the Fisher matrix "
+    po->Register(
+        "fisher-floor", &fisher_floor,
+        "Floor for diagonal of Fisher matrix (used in preconditioning)");
+    po->Register("alpha", &alpha,
+                 "Value we use in smoothing the Fisher matrix "
                  "with its diagonal, in preconditioning the update.");
-    po->Register("fisher-minibatch-size", &fisher_minibatch_size, "Size of minibatch "
+    po->Register("fisher-minibatch-size", &fisher_minibatch_size,
+                 "Size of minibatch "
                  "used in computation of Fisher matrix (smaller -> better "
                  "preconditioning");
-    po->Register("minibatch-size", &minibatch_size, "Minibatch size used in computing "
+    po->Register("minibatch-size", &minibatch_size,
+                 "Minibatch size used in computing "
                  "gradients (only affects speed)");
-    po->Register("max-lbfgs-dim", &max_lbfgs_dim, "Maximum dimension to use in "
+    po->Register("max-lbfgs-dim", &max_lbfgs_dim,
+                 "Maximum dimension to use in "
                  "L-BFGS (will not get higher than this even if the dimension "
                  "of the space gets higher.)");
-    po->Register("regularizer", &regularizer, "Add to the objective "
+    po->Register("regularizer", &regularizer,
+                 "Add to the objective "
                  "function (which is average log-like per frame), -0.5 * "
                  "regularizer * square of parameters.");
-  }  
+  }
 };
 
 void CombineNnetsFast(const NnetCombineFastConfig &combine_config,
                       const std::vector<NnetExample> &validation_set,
-                      const std::vector<Nnet> &nnets_in,
-                      Nnet *nnet_out);
-  
+                      const std::vector<Nnet> &nnets_in, Nnet *nnet_out);
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

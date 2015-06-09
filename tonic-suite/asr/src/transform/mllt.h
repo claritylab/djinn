@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_TRANSFORM_MLLT_H_
 #define KALDI_TRANSFORM_MLLT_H_
 
@@ -30,10 +29,7 @@
 #include "util/kaldi-table.h"
 #include "util/kaldi-holder.h"
 
-
-
 namespace kaldi {
-
 
 /** A class for estimating Maximum Likelihood Linear Transform, also known
     as global Semi-tied Covariance (STC), for GMMs.
@@ -41,7 +37,7 @@ namespace kaldi {
 */
 class MlltAccs {
  public:
-  MlltAccs(): rand_prune_(0.0), beta_(0.0) { }
+  MlltAccs() : rand_prune_(0.0), beta_(0.0) {}
 
   /// Need rand_prune >= 0.
   /// The larger it is, the faster it will be.  Zero is exact.
@@ -61,25 +57,23 @@ class MlltAccs {
 
   /// The Update function does the ML update; it requires that M has the
   /// right size.
-  ///  @param [in, out] M  The output transform, will be of dimension Dim() x Dim().
-  ///                   At input, should be the unit transform (the objective function
+  ///  @param [in, out] M  The output transform, will be of dimension Dim() x
+  ///  Dim().
+  ///                   At input, should be the unit transform (the objective
+  ///                   function
   ///                   improvement is measured relative to this value).
   ///  @param [out] objf_impr_out  The objective function improvement
   ///  @param [out] count_out  The data-count
-  void Update(MatrixBase<BaseFloat> *M,
-              BaseFloat *objf_impr_out,
+  void Update(MatrixBase<BaseFloat> *M, BaseFloat *objf_impr_out,
               BaseFloat *count_out) const {
     Update(beta_, G_, M, objf_impr_out, count_out);
   }
 
   // A static version of the Update function, so it can
   // be called externally, given the right stats.
-  static void Update(double beta,
-                     const std::vector<SpMatrix<double> > &G,
-                     MatrixBase<BaseFloat> *M,
-                     BaseFloat *objf_impr_out,
+  static void Update(double beta, const std::vector<SpMatrix<double> > &G,
+                     MatrixBase<BaseFloat> *M, BaseFloat *objf_impr_out,
                      BaseFloat *count_out);
-
 
   void AccumulateFromPosteriors(const DiagGmm &gmm,
                                 const VectorBase<BaseFloat> &data,
@@ -95,7 +89,6 @@ class MlltAccs {
                                        const VectorBase<BaseFloat> &data,
                                        BaseFloat weight);  // e.g. weight = 1.0
 
-  
   // premultiplies the means of the model by M.  typically called
   // after update.
   // removed since we now do this using different code.
@@ -106,9 +99,10 @@ class MlltAccs {
   /// more pruning we do.  Typical value is 0.1.
   BaseFloat rand_prune_;
   double beta_;  // count.
-  std::vector<SpMatrix<double> > G_;  // the G matrices (d matrices of size d x d)
+  std::vector<SpMatrix<double> >
+      G_;  // the G matrices (d matrices of size d x d)
 };
 
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_TRANSFORM_MLLT_H_

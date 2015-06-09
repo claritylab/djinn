@@ -1,6 +1,7 @@
 // sgmm2bin/sgmm2-est-fmllr.cc
 
-// Copyright 2009-2012  Saarland University   Microsoft Corporation  Johns Hopkins University (Author: Daniel Povey)
+// Copyright 2009-2012  Saarland University   Microsoft Corporation  Johns
+// Hopkins University (Author: Daniel Povey)
 //                2014  Guoguo Chen
 
 // See ../../COPYING for clarification regarding multiple authors
@@ -32,15 +33,13 @@ using std::vector;
 
 namespace kaldi {
 
-void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
-                            const Matrix<BaseFloat> &transformed_feats, // if already fMLLR
-                            const std::vector<std::vector<int32> > &gselect,
-                            const Posterior &post,
-                            const TransitionModel &trans_model,
-                            const AmSgmm2 &am_sgmm,
-                            BaseFloat logdet,
-                            Sgmm2PerSpkDerivedVars *spk_vars,
-                            FmllrSgmm2Accs *spk_stats) {
+void AccumulateForUtterance(
+    const Matrix<BaseFloat> &feats,
+    const Matrix<BaseFloat> &transformed_feats,  // if already fMLLR
+    const std::vector<std::vector<int32> > &gselect, const Posterior &post,
+    const TransitionModel &trans_model, const AmSgmm2 &am_sgmm,
+    BaseFloat logdet, Sgmm2PerSpkDerivedVars *spk_vars,
+    FmllrSgmm2Accs *spk_stats) {
   kaldi::Sgmm2PerFrameDerivedVars per_frame_vars;
 
   Posterior pdf_post;
@@ -48,15 +47,14 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   for (size_t t = 0; t < post.size(); t++) {
     // per-frame vars only used for computing posteriors... use the
     // transformed feats for this, if available.
-    am_sgmm.ComputePerFrameVars(transformed_feats.Row(t), gselect[t],
-                                *spk_vars, &per_frame_vars);
-    
+    am_sgmm.ComputePerFrameVars(transformed_feats.Row(t), gselect[t], *spk_vars,
+                                &per_frame_vars);
 
     for (size_t j = 0; j < pdf_post[t].size(); j++) {
       int32 pdf_id = pdf_post[t][j].first;
       Matrix<BaseFloat> posteriors;
-      am_sgmm.ComponentPosteriors(per_frame_vars, pdf_id,
-                                  spk_vars, &posteriors);
+      am_sgmm.ComponentPosteriors(per_frame_vars, pdf_id, spk_vars,
+                                  &posteriors);
       posteriors.Scale(pdf_post[t][j].second);
       spk_stats->AccumulateFromPosteriors(am_sgmm, *spk_vars, feats.Row(t),
                                           gselect[t], posteriors, pdf_id);
@@ -77,13 +75,13 @@ int main(int argc, char *argv[]) {
         "--gselect option is mandatory.\n"
         "Usage: sgmm2-est-fmllr [options] <model-in> <feature-rspecifier> "
         "<post-rspecifier> <mats-wspecifier>\n";
-    
+
     ParseOptions po(usage);
     string spk2utt_rspecifier, spkvecs_rspecifier, fmllr_rspecifier,
         gselect_rspecifier;
     BaseFloat min_count = 100;
     Sgmm2FmllrConfig fmllr_opts;
-    
+
     po.Register("spk2utt", &spk2utt_rspecifier,
                 "File to read speaker to utterance-list map from.");
     po.Register("spkvec-min-count", &min_count,
@@ -103,10 +101,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        post_rspecifier = po.GetArg(3),
-        fmllr_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           post_rspecifier = po.GetArg(3), fmllr_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm2 am_sgmm;
@@ -118,9 +114,8 @@ int main(int argc, char *argv[]) {
       am_sgmm.Read(ki.Stream(), binary);
       fmllr_globals.Read(ki.Stream(), binary);
     }
-    if (gselect_rspecifier == "")
-      KALDI_ERR << "--gselect option is required.";
-    
+    if (gselect_rspecifier == "") KALDI_ERR << "--gselect option is required.";
+
     RandomAccessPosteriorReader post_reader(post_rspecifier);
     RandomAccessBaseFloatVectorReader spkvecs_reader(spkvecs_rspecifier);
     RandomAccessInt32VectorVectorReader gselect_reader(gselect_rspecifier);
@@ -197,18 +192,18 @@ int main(int argc, char *argv[]) {
           }
           const std::vector<std::vector<int32> > &gselect =
               gselect_reader.Value(utt);
-          
+
           Matrix<BaseFloat> transformed_feats(feats);
           for (int32 r = 0; r < transformed_feats.NumRows(); r++) {
             SubVector<BaseFloat> row(transformed_feats, r);
             ApplyAffineTransform(fmllr_xform, &row);
           }
-          AccumulateForUtterance(feats, transformed_feats, gselect,
-                                 post, trans_model, am_sgmm,
-                                 logdet, &spk_vars, &spk_stats);
+          AccumulateForUtterance(feats, transformed_feats, gselect, post,
+                                 trans_model, am_sgmm, logdet, &spk_vars,
+                                 &spk_stats);
           num_done++;
         }  // end looping over all utterances of the current speaker
-        
+
         BaseFloat impr, spk_frame_count;
         // Compute the FMLLR transform and write it out.
         spk_stats.Update(am_sgmm, fmllr_globals, fmllr_opts, &fmllr_xform,
@@ -216,7 +211,7 @@ int main(int argc, char *argv[]) {
         fmllr_writer.Write(spk, fmllr_xform);
         tot_impr += impr;
         tot_t += spk_frame_count;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -240,7 +235,7 @@ int main(int argc, char *argv[]) {
         }
         const std::vector<std::vector<int32> > &gselect =
             gselect_reader.Value(utt);
-        
+
         if (fmllr_reader.IsOpen()) {
           if (fmllr_reader.HasKey(utt)) {
             fmllr_xform.CopyFromMat(fmllr_reader.Value(utt));
@@ -254,13 +249,13 @@ int main(int argc, char *argv[]) {
           fmllr_xform.SetUnit();
           logdet = 0.0;
         }
-        
+
         Matrix<BaseFloat> transformed_feats(feats);
         for (int32 r = 0; r < transformed_feats.NumRows(); r++) {
           SubVector<BaseFloat> row(transformed_feats, r);
           ApplyAffineTransform(fmllr_xform, &row);
         }
-        
+
         Sgmm2PerSpkDerivedVars spk_vars;
         if (spkvecs_reader.IsOpen()) {
           if (spkvecs_reader.HasKey(utt)) {
@@ -275,11 +270,11 @@ int main(int argc, char *argv[]) {
 
         spk_stats.SetZero();
 
-        AccumulateForUtterance(feats, transformed_feats, gselect,
-                               post, trans_model, am_sgmm,
-                               logdet, &spk_vars, &spk_stats);
+        AccumulateForUtterance(feats, transformed_feats, gselect, post,
+                               trans_model, am_sgmm, logdet, &spk_vars,
+                               &spk_stats);
         num_done++;
-        
+
         BaseFloat impr, spk_frame_count;
         // Compute the FMLLR transform and write it out.
         spk_stats.Update(am_sgmm, fmllr_globals, fmllr_opts, &fmllr_xform,
@@ -290,13 +285,13 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    KALDI_LOG << "Done " << num_done << " files, " << num_err << " with errors.";
+    KALDI_LOG << "Done " << num_done << " files, " << num_err
+              << " with errors.";
     KALDI_LOG << "Overall auxf impr per frame is " << (tot_impr / tot_t)
               << " per frame, over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

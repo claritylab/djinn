@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "sgmm/am-sgmm.h"
@@ -28,18 +27,22 @@ int main(int argc, char *argv[]) {
     using namespace kaldi;
     const char *usage =
         "Precompute Gaussian indices for SGMM training "
-        "Usage: sgmm-gselect [options] <model-in> <feature-rspecifier> <gselect-wspecifier>\n"
+        "Usage: sgmm-gselect [options] <model-in> <feature-rspecifier> "
+        "<gselect-wspecifier>\n"
         "e.g.: sgmm-gselect 1.sgmm \"ark:feature-command |\" ark:1.gs\n"
-        "Note: you can do the same thing by combining the programs sgmm-write-ubm, fgmm-global-to-gmm,\n"
+        "Note: you can do the same thing by combining the programs "
+        "sgmm-write-ubm, fgmm-global-to-gmm,\n"
         "gmm-gselect and fgmm-gselect\n";
 
     ParseOptions po(usage);
     kaldi::SgmmGselectConfig sgmm_opts;
     std::string preselect_rspecifier;
     std::string likelihood_wspecifier;
-    po.Register("preselect", &preselect_rspecifier, "Rspecifier for sets of Gaussians to "
+    po.Register("preselect", &preselect_rspecifier,
+                "Rspecifier for sets of Gaussians to "
                 "limit gselect to (e.g. for gender dependent systems)");
-    po.Register("write-likes", &likelihood_wspecifier, "Wspecifier for likelihoods per "
+    po.Register("write-likes", &likelihood_wspecifier,
+                "Wspecifier for likelihoods per "
                 "utterance");
     sgmm_opts.Register(&po);
     po.Read(argc, argv);
@@ -50,8 +53,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gselect_wspecifier = po.GetArg(3);
+                feature_rspecifier = po.GetArg(2),
+                gselect_wspecifier = po.GetArg(3);
 
     using namespace kaldi;
     typedef kaldi::int32 int32;
@@ -75,12 +78,13 @@ int main(int argc, char *argv[]) {
 
     int32 num_done = 0, num_err = 0;
     for (; !feature_reader.Done(); feature_reader.Next()) {
-      int32 tot_t_this_file = 0; double tot_like_this_file = 0;
+      int32 tot_t_this_file = 0;
+      double tot_like_this_file = 0;
       std::string utt = feature_reader.Key();
       const Matrix<BaseFloat> &mat = feature_reader.Value();
       std::vector<std::vector<int32> > gselect_vec(mat.NumRows());
       tot_t_this_file += mat.NumRows();
-      if(preselect_rspecifier != "") { // e.g. gender dependent.        
+      if (preselect_rspecifier != "") {  // e.g. gender dependent.
         if (!preselect_reader.HasKey(utt)) {
           KALDI_WARN << "No preselect information for utterance " << utt;
           num_err++;
@@ -89,37 +93,36 @@ int main(int argc, char *argv[]) {
         const std::vector<int32> &preselect = preselect_reader.Value(utt);
         KALDI_ASSERT(!preselect.empty());
         for (int32 i = 0; i < mat.NumRows(); i++)
-          tot_like_this_file +=
-              am_sgmm.GaussianSelectionPreselect(sgmm_opts, mat.Row(i),
-                                                 preselect, &(gselect_vec[i]));
+          tot_like_this_file += am_sgmm.GaussianSelectionPreselect(
+              sgmm_opts, mat.Row(i), preselect, &(gselect_vec[i]));
       } else {
         for (int32 i = 0; i < mat.NumRows(); i++)
-          tot_like_this_file += am_sgmm.GaussianSelection(sgmm_opts, mat.Row(i), &(gselect_vec[i]));
+          tot_like_this_file += am_sgmm.GaussianSelection(sgmm_opts, mat.Row(i),
+                                                          &(gselect_vec[i]));
       }
       gselect_writer.Write(utt, gselect_vec);
       if (num_done % 10 == 0)
-        KALDI_LOG << "For " << num_done << "'th file, average UBM likelihood over "
-                  << tot_t_this_file << " frames is "
-                  << (tot_like_this_file/tot_t_this_file);
+        KALDI_LOG << "For " << num_done
+                  << "'th file, average UBM likelihood over " << tot_t_this_file
+                  << " frames is " << (tot_like_this_file / tot_t_this_file);
       tot_t += tot_t_this_file;
       tot_like += tot_like_this_file;
 
-      if(likelihood_wspecifier != "")
+      if (likelihood_wspecifier != "")
         likelihood_writer.Write(utt, tot_like_this_file);
       num_done++;
     }
 
     KALDI_LOG << "Done " << num_done << " files, " << num_err
               << " with errors, average UBM log-likelihood is "
-              << (tot_like/tot_t) << " over " << tot_t << " frames.";
+              << (tot_like / tot_t) << " over " << tot_t << " frames.";
 
-
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

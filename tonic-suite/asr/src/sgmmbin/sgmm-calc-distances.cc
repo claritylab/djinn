@@ -21,7 +21,6 @@
 #include "sgmm/am-sgmm.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -42,9 +41,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        occs_in_filename = po.GetArg(2),
-        distances_out_filename = po.GetArg(3);
-    
+                occs_in_filename = po.GetArg(2),
+                distances_out_filename = po.GetArg(3);
 
     AmSgmm am_sgmm;
     {
@@ -54,7 +52,7 @@ int main(int argc, char *argv[]) {
       trans_model.Read(ki.Stream(), binary);
       am_sgmm.Read(ki.Stream(), binary);
     }
-    
+
     Vector<BaseFloat> occs;
     ReadKaldiObject(occs_in_filename, &occs);
 
@@ -65,10 +63,8 @@ int main(int argc, char *argv[]) {
     dists.Write(ko.Stream(), binary);
 
     KALDI_LOG << "Wrote distances to " << distances_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

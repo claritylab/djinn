@@ -23,7 +23,6 @@
 #include "nnet2/train-nnet.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -32,26 +31,30 @@ int main(int argc, char *argv[]) {
     typedef kaldi::int64 int64;
 
     const char *usage =
-        "Computes and prints the average log-prob per frame of the given data with a\n"
+        "Computes and prints the average log-prob per frame of the given data "
+        "with a\n"
         "neural net.  The input of this is the output of e.g. nnet-get-egs\n"
-        "Aside from the logging output, which goes to the standard error, this program\n"
+        "Aside from the logging output, which goes to the standard error, this "
+        "program\n"
         "prints the average log-prob per frame to the standard output.\n"
-        "Also see nnet-logprob, which produces a matrix of log-probs for each utterance.\n"
+        "Also see nnet-logprob, which produces a matrix of log-probs for each "
+        "utterance.\n"
         "\n"
-        "Usage:  nnet-compute-prob [options] <model-in> <training-examples-in>\n"
+        "Usage:  nnet-compute-prob [options] <model-in> "
+        "<training-examples-in>\n"
         "e.g.: nnet-compute-prob 1.nnet ark:valid.egs\n";
-    
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::string nnet_rxfilename = po.GetArg(1),
-        examples_rspecifier = po.GetArg(2);
+                examples_rspecifier = po.GetArg(2);
 
     TransitionModel trans_model;
     AmNnet am_nnet;
@@ -61,7 +64,6 @@ int main(int argc, char *argv[]) {
       trans_model.Read(ki.Stream(), binary_read);
       am_nnet.Read(ki.Stream(), binary_read);
     }
-
 
     std::vector<NnetExample> examples;
     double tot_weight = 0.0, tot_like = 0.0, tot_accuracy = 0.0;
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
     if (!examples.empty()) {
       double accuracy;
       tot_like += ComputeNnetObjf(am_nnet.GetNnet(), examples, &accuracy);
-      tot_accuracy += accuracy;      
+      tot_accuracy += accuracy;
       tot_weight += TotalNnetTrainingWeight(examples);
     }
 
@@ -92,13 +94,11 @@ int main(int argc, char *argv[]) {
               << "probability is " << (tot_like / tot_weight)
               << " and accuracy is " << (tot_accuracy / tot_weight) << " with "
               << "total weight " << tot_weight;
-    
+
     std::cout << (tot_like / tot_weight) << "\n";
     return (num_examples == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

@@ -28,70 +28,75 @@ namespace nnet2 {
 /* This program computes various statistics from a neural net.  These are
    summaries of certain quantities already present in the network as
    stored on disk, especially regarding certain average values and
-   derivatives of the sigmoids.   
+   derivatives of the sigmoids.
 */
 
-struct NnetStatsConfig {  
+struct NnetStatsConfig {
   BaseFloat bucket_width;
-  NnetStatsConfig(): bucket_width(0.025) { }
-  
+  NnetStatsConfig() : bucket_width(0.025) {}
+
   void Register(OptionsItf *po) {
-    po->Register("bucket-width", &bucket_width, "Width of bucket in average-derivative "
+    po->Register("bucket-width", &bucket_width,
+                 "Width of bucket in average-derivative "
                  "stats for analysis.");
   }
 };
 
 class NnetStats {
  public:
-  NnetStats(int32 affine_component_index, BaseFloat bucket_width):
-      affine_component_index_(affine_component_index),
-      bucket_width_(bucket_width), global_(0, -1) { }
-  
+  NnetStats(int32 affine_component_index, BaseFloat bucket_width)
+      : affine_component_index_(affine_component_index),
+        bucket_width_(bucket_width),
+        global_(0, -1) {}
+
   // Use default copy constructor and assignment operator.
-  
+
   void AddStats(BaseFloat avg_deriv, BaseFloat avg_value);
 
   void AddStatsFromNnet(const Nnet &nnet);
-  
-  void PrintStats(std::ostream &os);  
+
+  void PrintStats(std::ostream &os);
+
  private:
-
   struct StatsElement {
-    BaseFloat deriv_begin; // avg-deriv, beginning of bucket.
-    BaseFloat deriv_end;   // avg-deriv, end of bucket.
-    BaseFloat deriv_sum;   // sum of avg-deriv within bucket.
-    BaseFloat deriv_sumsq;   // Sum-squared of avg-deriv within bucket.
-    BaseFloat abs_value_sum; // Sum of abs(avg-value).  Tells us whether it's
+    BaseFloat deriv_begin;    // avg-deriv, beginning of bucket.
+    BaseFloat deriv_end;      // avg-deriv, end of bucket.
+    BaseFloat deriv_sum;      // sum of avg-deriv within bucket.
+    BaseFloat deriv_sumsq;    // Sum-squared of avg-deriv within bucket.
+    BaseFloat abs_value_sum;  // Sum of abs(avg-value).  Tells us whether it's
     // saturating at one or both ends.
-    BaseFloat abs_value_sumsq; // Sum-squared of abs(avg-value).
-    int32 count;      // Number of nonlinearities in this bucket.
+    BaseFloat abs_value_sumsq;  // Sum-squared of abs(avg-value).
+    int32 count;                // Number of nonlinearities in this bucket.
 
-    StatsElement(BaseFloat deriv_begin,
-                 BaseFloat deriv_end):
-        deriv_begin(deriv_begin), deriv_end(deriv_end), deriv_sum(0.0),
-        deriv_sumsq(0.0), abs_value_sum(0.0), abs_value_sumsq(0.0), count(0) { }
+    StatsElement(BaseFloat deriv_begin, BaseFloat deriv_end)
+        : deriv_begin(deriv_begin),
+          deriv_end(deriv_end),
+          deriv_sum(0.0),
+          deriv_sumsq(0.0),
+          abs_value_sum(0.0),
+          abs_value_sumsq(0.0),
+          count(0) {}
     void AddStats(BaseFloat avg_deriv, BaseFloat avg_value);
     // Outputs stats for this bucket; no newline
-    void PrintStats(std::ostream &os); 
+    void PrintStats(std::ostream &os);
   };
-  int32 BucketFor(BaseFloat avg_deriv); // returns the bucket
+  int32 BucketFor(BaseFloat avg_deriv);  // returns the bucket
   // for this avg-derivative value, and makes sure it is allocated.
-  
-  int32 affine_component_index_; // Component index of the affine component
-                                // associated with this nonlinearity.
-  BaseFloat bucket_width_; // width of buckets of stats we store (in derivative values).
-  
-  std::vector<StatsElement> buckets_; // Stats divided into buckets by avg_deriv.
-  StatsElement global_; // All the stats.
-  
+
+  int32 affine_component_index_;  // Component index of the affine component
+                                  // associated with this nonlinearity.
+  BaseFloat bucket_width_;  // width of buckets of stats we store (in derivative
+                            // values).
+
+  std::vector<StatsElement>
+      buckets_;          // Stats divided into buckets by avg_deriv.
+  StatsElement global_;  // All the stats.
 };
 
-void GetNnetStats(const NnetStatsConfig &config,
-                  const Nnet &nnet,
+void GetNnetStats(const NnetStatsConfig &config, const Nnet &nnet,
                   std::vector<NnetStats> *stats);
 
+}  // namespace nnet2
+}  // namespace kaldi
 
-} // namespace nnet2
-} // namespace kaldi
-
-#endif // KALDI_NNET2_NNET_STATS_H_
+#endif  // KALDI_NNET2_NNET_STATS_H_

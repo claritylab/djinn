@@ -24,7 +24,6 @@
 #include "nnet2/train-nnet.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -37,7 +36,8 @@ int main(int argc, char *argv[]) {
         "are followed by pnorm and then renormalize layers. Then it rescales\n"
         "those layers such that the parameter stddev is 1.0 after scaling.\n"
         "If you supply the option --stddev-from=<model-filename>, it rescales\n"
-        "those layers to match the standard deviation of those in the specified\n"
+        "those layers to match the standard deviation of those in the "
+        "specified\n"
         "model.\n"
         "\n"
         "Usage: nnet-normalize-stddev [options] <model-in> <model-out>\n"
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
     bool binary_write = true;
     std::string reference_model_filename;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("stddev-from", &reference_model_filename, "Reference model");
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string nnet_rxfilename = po.GetArg(1),
-        normalized_nnet_rxfilename = po.GetArg(2);
+                normalized_nnet_rxfilename = po.GetArg(2);
 
     TransitionModel trans_model;
     AmNnet am_nnet;
@@ -80,33 +80,28 @@ int main(int argc, char *argv[]) {
       // PreconditionedAffineComponentOnline, since they are child classes of
       // AffineComponent.
       Component *component = &(am_nnet.GetNnet().GetComponent(c));
-      AffineComponent *ac = dynamic_cast<AffineComponent*>(component);
+      AffineComponent *ac = dynamic_cast<AffineComponent *>(component);
       BlockAffineComponent *bac =
-        dynamic_cast<BlockAffineComponent*>(component);
-      if (ac == NULL && bac == NULL)
-        continue;
-      
+          dynamic_cast<BlockAffineComponent *>(component);
+      if (ac == NULL && bac == NULL) continue;
+
       // Checks if the next layer is a pnorm layer.
       component = &(am_nnet.GetNnet().GetComponent(c + 1));
-      PnormComponent *pc = dynamic_cast<PnormComponent*>(component);
-      if (pc == NULL)
-        continue;
+      PnormComponent *pc = dynamic_cast<PnormComponent *>(component);
+      if (pc == NULL) continue;
 
       // Checks if the layer after the pnorm layer is a NormalizeComponent
       // or a PowerComponent followed by a NormalizeComponent
       component = &(am_nnet.GetNnet().GetComponent(c + 2));
-      NormalizeComponent *nc = dynamic_cast<NormalizeComponent*>(component);
-      PowerComponent *pwc = dynamic_cast<PowerComponent*>(component);          
-      if (nc == NULL && pwc == NULL)
-        continue;
+      NormalizeComponent *nc = dynamic_cast<NormalizeComponent *>(component);
+      PowerComponent *pwc = dynamic_cast<PowerComponent *>(component);
+      if (nc == NULL && pwc == NULL) continue;
       if (pwc != NULL) {  // verify it's PowerComponent followed by
-                         // NormalizeComponent.
-        if (c + 3 >= am_nnet.GetNnet().NumComponents())
-          continue;
+                          // NormalizeComponent.
+        if (c + 3 >= am_nnet.GetNnet().NumComponents()) continue;
         component = &(am_nnet.GetNnet().GetComponent(c + 3));
-        nc = dynamic_cast<NormalizeComponent*>(component);
-        if (nc == NULL)
-          continue;
+        nc = dynamic_cast<NormalizeComponent *>(component);
+        if (nc == NULL) continue;
       }
       // This is the layer that we would like to normalize.
       identified_components.push_back(c);
@@ -118,10 +113,11 @@ int main(int argc, char *argv[]) {
       Input ki(reference_model_filename, &binary_read);
       trans_model.Read(ki.Stream(), binary_read);
       am_nnet_ref.Read(ki.Stream(), binary_read);
-      KALDI_ASSERT(am_nnet_ref.GetNnet().NumComponents() == am_nnet.GetNnet().NumComponents());
+      KALDI_ASSERT(am_nnet_ref.GetNnet().NumComponents() ==
+                   am_nnet.GetNnet().NumComponents());
     }
 
-    BaseFloat ref_stddev =0.0;
+    BaseFloat ref_stddev = 0.0;
 
     // Normalizes the identified layers.
     for (int32 c = 0; c < identified_components.size(); c++) {
@@ -129,30 +125,30 @@ int main(int argc, char *argv[]) {
       if (!reference_model_filename.empty()) {
         Component *component =
             &(am_nnet_ref.GetNnet().GetComponent(identified_components[c]));
-        UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(component);
+        UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(component);
         KALDI_ASSERT(uc != NULL);
         Vector<BaseFloat> params(uc->GetParameterDim());
         uc->Vectorize(&params);
-        BaseFloat params_average = params.Sum()
-            / static_cast<BaseFloat>(params.Dim());
+        BaseFloat params_average =
+            params.Sum() / static_cast<BaseFloat>(params.Dim());
         params.Add(-1.0 * params_average);
-        ref_stddev = sqrt(VecVec(params, params)
-            / static_cast<BaseFloat>(params.Dim()));
+        ref_stddev =
+            sqrt(VecVec(params, params) / static_cast<BaseFloat>(params.Dim()));
       }
 
-      Component *component = 
+      Component *component =
           &(am_nnet.GetNnet().GetComponent(identified_components[c]));
-      UpdatableComponent *uc = dynamic_cast<UpdatableComponent*>(component);
+      UpdatableComponent *uc = dynamic_cast<UpdatableComponent *>(component);
       KALDI_ASSERT(uc != NULL);
       Vector<BaseFloat> params(uc->GetParameterDim());
       uc->Vectorize(&params);
-      BaseFloat params_average = params.Sum() 
-          / static_cast<BaseFloat>(params.Dim());
+      BaseFloat params_average =
+          params.Sum() / static_cast<BaseFloat>(params.Dim());
       params.Add(-1.0 * params_average);
-      BaseFloat params_stddev = sqrt(VecVec(params, params)
-          / static_cast<BaseFloat>(params.Dim()));
+      BaseFloat params_stddev =
+          sqrt(VecVec(params, params) / static_cast<BaseFloat>(params.Dim()));
       if (params_stddev > 0.0) {
-        if(ref_stddev > 0.0)
+        if (ref_stddev > 0.0)
           uc->Scale(ref_stddev / params_stddev);
         else
           uc->Scale(1.0 / params_stddev);
@@ -166,7 +162,7 @@ int main(int argc, char *argv[]) {
     am_nnet.Write(ko.Stream(), binary_write);
 
     return ret;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

@@ -31,27 +31,29 @@ using std::vector;
 #include "transform/fmllr-diag-gmm.h"
 #include "hmm/posterior.h"
 
-
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
     using namespace kaldi;
     const char *usage =
-        "Estimate global fMLLR transforms, either per utterance or for the supplied\n"
-        "set of speakers (spk2utt option).  This version is for when you have a single\n"
+        "Estimate global fMLLR transforms, either per utterance or for the "
+        "supplied\n"
+        "set of speakers (spk2utt option).  This version is for when you have "
+        "a single\n"
         "global GMM, e.g. a UBM.  Writes to a table of matrices.\n"
         "Usage: gmm-est-fmllr-global [options] <gmm-in> <feature-rspecifier> "
         "<transform-wspecifier>\n"
         "e.g.: gmm-est-fmllr-global 1.ubm scp:feats.scp ark:trans.1\n";
-    
+
     ParseOptions po(usage);
     FmllrOptions fmllr_opts;
     string spk2utt_rspecifier;
     string gselect_rspecifier;
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
-    po.Register("gselect", &gselect_rspecifier, "rspecifier for "
+    po.Register("gselect", &gselect_rspecifier,
+                "rspecifier for "
                 "Gaussian-selection information");
     fmllr_opts.Register(&po);
 
@@ -62,9 +64,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string gmm_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        trans_wspecifier = po.GetArg(3);
+    string gmm_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           trans_wspecifier = po.GetArg(3);
 
     DiagGmm gmm;
     ReadKaldiObject(gmm_rxfilename, &gmm);
@@ -106,24 +107,24 @@ int main(int argc, char *argv[]) {
             const std::vector<std::vector<int32> > &gselect =
                 gselect_reader.Value(utt);
             for (size_t i = 0; i < feats.NumRows(); i++)
-              spk_stats.AccumulateForGmmPreselect(gmm, gselect[i],
-                                                  feats.Row(i), 1.0);
+              spk_stats.AccumulateForGmmPreselect(gmm, gselect[i], feats.Row(i),
+                                                  1.0);
           }
           num_done++;
         }  // end looping over all utterances of the current speaker
 
         BaseFloat impr, spk_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(gmm.Dim(), gmm.Dim()+1);
+          Matrix<BaseFloat> transform(gmm.Dim(), gmm.Dim() + 1);
           transform.SetUnit();
           spk_stats.Update(fmllr_opts, &transform, &impr, &spk_tot_t);
           transform_writer.Write(spk, transform);
         }
         KALDI_LOG << "For speaker " << spk << ", auxf-impr from fMLLR is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+                  << (impr / spk_tot_t) << ", over " << spk_tot_t << " frames.";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -148,30 +149,29 @@ int main(int argc, char *argv[]) {
           const std::vector<std::vector<int32> > &gselect =
               gselect_reader.Value(utt);
           for (size_t i = 0; i < feats.NumRows(); i++)
-            spk_stats.AccumulateForGmmPreselect(gmm, gselect[i],
-                                                feats.Row(i), 1.0);
+            spk_stats.AccumulateForGmmPreselect(gmm, gselect[i], feats.Row(i),
+                                                1.0);
         }
         BaseFloat impr, utt_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(gmm.Dim(), gmm.Dim()+1);
+          Matrix<BaseFloat> transform(gmm.Dim(), gmm.Dim() + 1);
           transform.SetUnit();
           spk_stats.Update(fmllr_opts, &transform, &impr, &utt_tot_t);
           transform_writer.Write(utt, transform);
         }
         KALDI_LOG << "For utterance " << utt << ", auxf-impr from fMLLR is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_impr += impr;
         tot_t += utt_tot_t;
       }
     }
-    KALDI_LOG << "Done " << num_done << " files, " 
-              << num_err << " with errors.";
-    KALDI_LOG << "Overall fMLLR auxf impr per frame is "
-              << (tot_impr / tot_t) << " over " << tot_t << " frames.";
+    KALDI_LOG << "Done " << num_done << " files, " << num_err
+              << " with errors.";
+    KALDI_LOG << "Overall fMLLR auxf impr per frame is " << (tot_impr / tot_t)
+              << " over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

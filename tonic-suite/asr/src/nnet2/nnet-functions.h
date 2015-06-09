@@ -30,14 +30,12 @@
 #include <sstream>
 #include <vector>
 
-
 namespace kaldi {
 namespace nnet2 {
 
 // Here we declare various functions for manipulating the neural net,
 // such as adding new hidden layers; we'll add things like "mixing up"
 // to here.
-
 
 /// If "nnet" has exactly one softmax layer, this function will return
 /// its index; otherwise it will return -1.
@@ -48,23 +46,16 @@ int32 IndexOfSoftmaxLayer(const Nnet &nnet);
    other one.  This is useful for adding hidden layers to a neural net.  Inserts
    the components of "src_nnet" before component index c of "dest_nnet".
 */
-void InsertComponents(const Nnet &src_nnet,
-                      int32 c,
-                      Nnet *dest_nnet);
+void InsertComponents(const Nnet &src_nnet, int32 c, Nnet *dest_nnet);
 
 /**
    Removes the last "num_to_remove" components and
    adds the components from "src_nnet".
  */
-void ReplaceLastComponents(const Nnet &src_nnet,
-                           int32 num_to_remove,
+void ReplaceLastComponents(const Nnet &src_nnet, int32 num_to_remove,
                            Nnet *dest_nnet);
 
-
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif
-
-

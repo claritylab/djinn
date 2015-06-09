@@ -33,8 +33,7 @@ using kaldi::Matrix;
 namespace ut = kaldi::unittest;
 
 void ApplyFmllrXform(const kaldi::VectorBase<BaseFloat> &in,
-                     const Matrix<BaseFloat> &xf,
-                     Vector<BaseFloat> *out) {
+                     const Matrix<BaseFloat> &xf, Vector<BaseFloat> *out) {
   int32 dim = in.Dim();
   KALDI_ASSERT(xf.NumRows() == dim && xf.NumCols() == dim + 1);
   Vector<BaseFloat> tmp(dim + 1);
@@ -57,8 +56,8 @@ void TestSgmmFmllrAccsIO(const AmSgmm &sgmm,
   kaldi::SgmmGselectConfig sgmm_config;
 
   frame_vars.Resize(sgmm.NumGauss(), dim, sgmm.PhoneSpaceDim());
-  sgmm_config.full_gmm_nbest = std::min(sgmm_config.full_gmm_nbest,
-                                        sgmm.NumGauss());
+  sgmm_config.full_gmm_nbest =
+      std::min(sgmm_config.full_gmm_nbest, sgmm.NumGauss());
   kaldi::Vector<BaseFloat> occs(sgmm.NumPdfs());
   occs.Set(feats.NumRows());
   sgmm.ComputeFmllrPreXform(occs, &fmllr_globals.pre_xform_,
@@ -70,8 +69,8 @@ void TestSgmmFmllrAccsIO(const AmSgmm &sgmm,
     return;
   }
 
-//  std::cout << "Pre-Xform = " << fmllr_globals.pre_xform_;
-//  std::cout << "Inv-Xform = " << fmllr_globals.inv_xform_;
+  //  std::cout << "Pre-Xform = " << fmllr_globals.pre_xform_;
+  //  std::cout << "Inv-Xform = " << fmllr_globals.inv_xform_;
 
   FmllrSgmmAccs accs;
   accs.Init(sgmm.FeatureDim(), sgmm.NumGauss());
@@ -85,8 +84,8 @@ void TestSgmmFmllrAccsIO(const AmSgmm &sgmm,
   }
 
   kaldi::SgmmFmllrConfig update_opts;
-//  update_opts.fmllr_min_count = 100;
-  kaldi::Matrix<BaseFloat> xform_mat(dim, dim+1);
+  //  update_opts.fmllr_min_count = 100;
+  kaldi::Matrix<BaseFloat> xform_mat(dim, dim + 1);
   xform_mat.SetUnit();
   BaseFloat frames, impr;
   accs.Update(sgmm, fmllr_globals, update_opts, &xform_mat, &frames, &impr);
@@ -138,7 +137,7 @@ void TestSgmmFmllrAccsIO(const AmSgmm &sgmm,
 }
 
 void TestSgmmFmllrSubspace(const AmSgmm &sgmm,
-                         const kaldi::Matrix<BaseFloat> &feats) {
+                           const kaldi::Matrix<BaseFloat> &feats) {
   KALDI_LOG << "Test Subspace start.";
   using namespace kaldi;
   int32 dim = sgmm.FeatureDim();
@@ -148,8 +147,8 @@ void TestSgmmFmllrSubspace(const AmSgmm &sgmm,
   kaldi::SgmmGselectConfig sgmm_config;
 
   frame_vars.Resize(sgmm.NumGauss(), dim, sgmm.PhoneSpaceDim());
-  sgmm_config.full_gmm_nbest = std::min(sgmm_config.full_gmm_nbest,
-                                        sgmm.NumGauss());
+  sgmm_config.full_gmm_nbest =
+      std::min(sgmm_config.full_gmm_nbest, sgmm.NumGauss());
   kaldi::Vector<BaseFloat> occs(sgmm.NumPdfs());
   occs.Set(feats.NumRows());
   sgmm.ComputeFmllrPreXform(occs, &fmllr_globals.pre_xform_,
@@ -172,13 +171,13 @@ void TestSgmmFmllrSubspace(const AmSgmm &sgmm,
     loglike += accs.Accumulate(sgmm, empty, feats.Row(i), frame_vars, 0, 1.0);
   }
 
-  SpMatrix<double> grad_scatter(dim * (dim+1));
+  SpMatrix<double> grad_scatter(dim * (dim + 1));
   accs.AccumulateForFmllrSubspace(sgmm, fmllr_globals, &grad_scatter);
   kaldi::SgmmFmllrConfig update_opts;
   EstimateSgmmFmllrSubspace(grad_scatter, update_opts.num_fmllr_bases, dim,
                             &fmllr_globals);
-//  update_opts.fmllr_min_count = 100;
-  kaldi::Matrix<BaseFloat> xform_mat(dim, dim+1);
+  //  update_opts.fmllr_min_count = 100;
+  kaldi::Matrix<BaseFloat> xform_mat(dim, dim + 1);
   xform_mat.SetUnit();
   accs.Update(sgmm, fmllr_globals, update_opts, &xform_mat, NULL, NULL);
   KALDI_LOG << "Test Subspace end.";
@@ -186,7 +185,7 @@ void TestSgmmFmllrSubspace(const AmSgmm &sgmm,
 
 void TestSgmmFmllr() {
   // srand(time(NULL));
-  int32 dim = 1 + kaldi::RandInt(0, 9);  // random dimension of the gmm
+  int32 dim = 1 + kaldi::RandInt(0, 9);       // random dimension of the gmm
   int32 num_comp = 2 + kaldi::RandInt(0, 9);  // random number of mixtures
   kaldi::FullGmm full_gmm;
   ut::InitRandFullGmm(dim, num_comp, &full_gmm);
@@ -194,17 +193,18 @@ void TestSgmmFmllr() {
   int32 num_states = 1;
   AmSgmm sgmm;
   kaldi::SgmmGselectConfig config;
-  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim+1, dim);
+  sgmm.InitializeFromFullGmm(full_gmm, num_states, dim + 1, dim);
   sgmm.ComputeNormalizers();
 
   kaldi::Matrix<BaseFloat> feats;
 
   {  // First, generate random means and variances
-    int32 num_feat_comp = num_comp + kaldi::RandInt(-num_comp/2, num_comp/2);
+    int32 num_feat_comp =
+        num_comp + kaldi::RandInt(-num_comp / 2, num_comp / 2);
     kaldi::Matrix<BaseFloat> means(num_feat_comp, dim),
         vars(num_feat_comp, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      for (int32 d= 0; d < dim; d++) {
+      for (int32 d = 0; d < dim; d++) {
         means(m, d) = kaldi::RandGauss();
         vars(m, d) = exp(kaldi::RandGauss()) + 1e-2;
       }
@@ -212,7 +212,7 @@ void TestSgmmFmllr() {
     // Now generate random features with those means and variances.
     feats.Resize(num_feat_comp * 200, dim);
     for (int32 m = 0; m < num_feat_comp; m++) {
-      kaldi::SubMatrix<BaseFloat> tmp(feats, m*200, 200, 0, dim);
+      kaldi::SubMatrix<BaseFloat> tmp(feats, m * 200, 200, 0, dim);
       ut::RandDiagGaussFeatures(200, means.Row(m), vars.Row(m), &tmp);
     }
   }
@@ -223,8 +223,7 @@ void TestSgmmFmllr() {
 int main() {
   std::srand(1000);
   kaldi::g_kaldi_verbose_level = 5;
-  for (int i = 0; i < 10; i++)
-    TestSgmmFmllr();
+  for (int i = 0; i < 10; i++) TestSgmmFmllr();
   std::cout << "Test OK.\n";
   return 0;
 }

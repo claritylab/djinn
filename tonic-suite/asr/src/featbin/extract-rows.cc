@@ -27,27 +27,36 @@ int main(int argc, char *argv[]) {
     using namespace std;
 
     const char *usage =
-        "Extract certain row ranges of matrices.  This is most useful to extract segments\n"
-        "from feature files, for example to modify segmentations or to extract features\n"
-        "corresponding to certain alignments.  The program expects a segments file in the\n"
+        "Extract certain row ranges of matrices.  This is most useful to "
+        "extract segments\n"
+        "from feature files, for example to modify segmentations or to extract "
+        "features\n"
+        "corresponding to certain alignments.  The program expects a segments "
+        "file in the\n"
         "form of\n"
         "  segment-name utterance-id start end\n"
-        "where the segment-name is chosen by the user and utterance-id indexes the input matrices.\n"
-        "By default, 'start' and 'end' are row numbers (zero-based), but if you specify the --frame-shift\n"
-        "option (e.g. --frame-shift=0.01), then they represent a time in seconds, which are converted\n"
+        "where the segment-name is chosen by the user and utterance-id indexes "
+        "the input matrices.\n"
+        "By default, 'start' and 'end' are row numbers (zero-based), but if "
+        "you specify the --frame-shift\n"
+        "option (e.g. --frame-shift=0.01), then they represent a time in "
+        "seconds, which are converted\n"
         "to integers by dividing by frame-shift.\n"
         "\n"
-        "Usage: extract-rows [options] <segments-file> <features-rspecifier> <features-wspecifier>\n"
-        "  e.g. extract-rows --frame-shift=0.01 segments ark:feats-in.ark ark:feats-out.ark\n"
+        "Usage: extract-rows [options] <segments-file> <features-rspecifier> "
+        "<features-wspecifier>\n"
+        "  e.g. extract-rows --frame-shift=0.01 segments ark:feats-in.ark "
+        "ark:feats-out.ark\n"
         "See also: select-feats, subset-feats, subsample-feats\n";
-    
+
     ParseOptions po(usage);
 
     float frame_shift = 0;
 
-    po.Register("frame-shift", &frame_shift,
-                "Frame shift in sec (e.g. 0.01), if segment files contains times "
-                "instead of frames");
+    po.Register(
+        "frame-shift", &frame_shift,
+        "Frame shift in sec (e.g. 0.01), if segment files contains times "
+        "instead of frames");
 
     po.Read(argc, argv);
 
@@ -79,10 +88,8 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      string segment = split_line[0],
-        utt = split_line[1],
-        start_str = split_line[2],
-        end_str = split_line[3];
+      string segment = split_line[0], utt = split_line[1],
+             start_str = split_line[2], end_str = split_line[3];
 
       // if the segments are in time, we need to convert them to frame numbers
       int32 start = 0;
@@ -100,8 +107,8 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        start = (int) (t1 / frame_shift);
-        end = (int) (t2 / frame_shift);
+        start = (int)(t1 / frame_shift);
+        end = (int)(t2 / frame_shift);
       } else {
         if (!ConvertStringToInteger(start_str, &start)) {
           KALDI_ERR << "Invalid line in segments file [bad start]: " << line;
@@ -114,30 +121,30 @@ int main(int argc, char *argv[]) {
       }
 
       if (start < 0 || end - start <= 0) {
-        KALDI_WARN << "Invalid line in segments file [less than one frame]: " << line;
+        KALDI_WARN << "Invalid line in segments file [less than one frame]: "
+                   << line;
         continue;
       }
 
       if (reader.HasKey(utt)) {
         Matrix<BaseFloat> feats = reader.Value(utt);
 
-        if (feats.NumRows() < end)
-          end = feats.NumRows();
+        if (feats.NumRows() < end) end = feats.NumRows();
 
-        Matrix<BaseFloat> to_write(feats.RowRange(start, (end-start)));
+        Matrix<BaseFloat> to_write(feats.RowRange(start, (end - start)));
         writer.Write(segment, to_write);
       } else {
         KALDI_WARN << "Missing requested utterance " << utt;
         num_missing += 1;
       }
-
     }
 
-    KALDI_LOG << "processed " << num_lines << " segments, " << (num_lines - num_missing)
-              << " successful, " << num_missing << " had invalid utterances";
+    KALDI_LOG << "processed " << num_lines << " segments, "
+              << (num_lines - num_missing) << " successful, " << num_missing
+              << " had invalid utterances";
 
     return ((num_lines - num_missing) > 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -20,12 +20,9 @@
 #include "base/timer.h"
 #include "base/kaldi-common.h"
 
-
-
 namespace kaldi {
 
 void TimerTest() {
-
   Timer timer;
 #if defined(_MSC_VER) || defined(MINGW)
   Sleep(1000);
@@ -36,11 +33,6 @@ void TimerTest() {
   std::cout << "time is " << f;
   KALDI_ASSERT(fabs(1.0 - f) < 0.1);
 }
-
 }
 
-
-int main() {
-  kaldi::TimerTest();
-}
-
+int main() { kaldi::TimerTest(); }

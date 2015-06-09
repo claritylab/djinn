@@ -21,7 +21,6 @@
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -34,7 +33,7 @@ int main(int argc, char *argv[]) {
         "Usage: feat-to-len [options] <in-rspecifier> [<out-wspecifier>]\n"
         "e.g.: feat-to-len scp:feats.scp ark,t:feats.lengths\n"
         "or: feat-to-len scp:feats.scp\n";
-    
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -52,7 +51,8 @@ int main(int argc, char *argv[]) {
 
       SequentialBaseFloatMatrixReader matrix_reader(rspecifier);
       for (; !matrix_reader.Done(); matrix_reader.Next())
-        length_writer.Write(matrix_reader.Key(), matrix_reader.Value().NumRows());
+        length_writer.Write(matrix_reader.Key(),
+                            matrix_reader.Value().NumRows());
     } else {
       int64 tot = 0;
       std::string rspecifier = po.GetArg(1);
@@ -62,10 +62,8 @@ int main(int argc, char *argv[]) {
       std::cout << tot << std::endl;
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

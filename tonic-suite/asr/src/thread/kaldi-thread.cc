@@ -28,6 +28,4 @@ MultiThreadable::~MultiThreadable() {
   // default implementation does nothing
 }
 
-
-
 }  // end namespace kaldi

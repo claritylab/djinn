@@ -17,14 +17,12 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "gmm/mle-am-diag-gmm.h"
 #include "hmm/posterior.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -42,25 +40,25 @@ int main(int argc, char *argv[]) {
 
     ParseOptions po(usage);
     bool binary = true;
-    std::string update_flags_str = "mvwt"; // note: t is ignored, we acc
+    std::string update_flags_str = "mvwt";  // note: t is ignored, we acc
     // transition stats regardless.
     po.Register("binary", &binary, "Write stats in binary mode");
-    po.Register("update-flags", &update_flags_str, "Which GMM parameters to "
+    po.Register("update-flags", &update_flags_str,
+                "Which GMM parameters to "
                 "update: subset of mvwt.");
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 5) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        posteriors_rspecifier = po.GetArg(3),
-        num_accs_wxfilename = po.GetArg(4),
-        den_accs_wxfilename = po.GetArg(5);
+                feature_rspecifier = po.GetArg(2),
+                posteriors_rspecifier = po.GetArg(3),
+                num_accs_wxfilename = po.GetArg(4),
+                den_accs_wxfilename = po.GetArg(5);
 
-    
     AmDiagGmm am_gmm;
     TransitionModel trans_model;
     {
@@ -69,7 +67,7 @@ int main(int argc, char *argv[]) {
       trans_model.Read(ki.Stream(), binary);
       am_gmm.Read(ki.Stream(), binary);
     }
-    
+
     Vector<double> num_trans_accs, den_trans_accs;
     trans_model.InitStats(&num_trans_accs);
     trans_model.InitStats(&den_trans_accs);
@@ -80,13 +78,12 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     RandomAccessPosteriorReader posteriors_reader(posteriors_rspecifier);
 
-
     BaseFloat tot_like = 0.0, tot_weight = 0.0;
     // tot_like is total weighted likelihood (note: weighted
     // by both +ve and -ve numbers)
     // tot_t is total weight in posteriors (will often be about zero).
-    int64 tot_frames = 0.0; 
-    
+    int64 tot_frames = 0.0;
+
     int32 num_done = 0, num_err = 0;
     for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string key = feature_reader.Key();
@@ -97,9 +94,8 @@ int main(int argc, char *argv[]) {
         const Posterior &posterior = posteriors_reader.Value(key);
 
         if (static_cast<int32>(posterior.size()) != mat.NumRows()) {
-          KALDI_WARN << "Posterior vector has wrong size " 
-                     << (posterior.size()) << " vs. "
-                     << (mat.NumRows());
+          KALDI_WARN << "Posterior vector has wrong size " << (posterior.size())
+                     << " vs. " << (mat.NumRows());
           num_err++;
           continue;
         }
@@ -110,14 +106,15 @@ int main(int argc, char *argv[]) {
         for (size_t i = 0; i < posterior.size(); i++) {
           for (size_t j = 0; j < posterior[i].size(); j++) {
             int32 tid = posterior[i][j].first,
-                pdf_id = trans_model.TransitionIdToPdf(tid);
+                  pdf_id = trans_model.TransitionIdToPdf(tid);
             BaseFloat weight = posterior[i][j].second;
-            trans_model.Accumulate(fabs(weight), tid,
-                                   (weight > 0.0 ?
-                                    &num_trans_accs : &den_trans_accs));
-            tot_like_this_file +=
-                (weight > 0.0 ? &num_gmm_accs : &den_gmm_accs) ->
-                AccumulateForGmm(am_gmm, mat.Row(i), pdf_id, fabs(weight)) * weight;
+            trans_model.Accumulate(
+                fabs(weight), tid,
+                (weight > 0.0 ? &num_trans_accs : &den_trans_accs));
+            tot_like_this_file += (weight > 0.0 ? &num_gmm_accs : &den_gmm_accs)
+                                      ->AccumulateForGmm(am_gmm, mat.Row(i),
+                                                         pdf_id, fabs(weight)) *
+                                  weight;
             tot_weight_this_file += weight;
           }
         }
@@ -127,11 +124,10 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    KALDI_LOG << "Done " << num_done << " files, " << num_err
-              << " had errors.";
-    
+    KALDI_LOG << "Done " << num_done << " files, " << num_err << " had errors.";
+
     KALDI_LOG << "Overall weighted acoustic likelihood per frame was "
-              << (tot_like/tot_frames) << " over " << tot_frames << " frames;"
+              << (tot_like / tot_frames) << " over " << tot_frames << " frames;"
               << " average weight per frame was " << (tot_weight / tot_frames);
 
     {
@@ -146,7 +142,7 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Written accs.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

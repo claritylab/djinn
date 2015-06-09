@@ -24,23 +24,19 @@
 
 namespace kaldi {
 
-template<typename Real>
+template <typename Real>
 inline CuSubMatrix<Real>::CuSubMatrix(const CuMatrixBase<Real> &mat,
                                       const MatrixIndexT row_offset,
                                       const MatrixIndexT num_rows,
                                       const MatrixIndexT col_offset,
-                                      const MatrixIndexT num_cols):
-    CuMatrixBase<Real>(mat.data_ + (row_offset * mat.stride_) + col_offset,
-                       num_rows,
-                       num_cols,
-                       mat.stride_) {
+                                      const MatrixIndexT num_cols)
+    : CuMatrixBase<Real>(mat.data_ + (row_offset * mat.stride_) + col_offset,
+                         num_rows, num_cols, mat.stride_) {
   KALDI_ASSERT(row_offset >= 0 && col_offset >= 0 &&
                row_offset + num_rows <= mat.num_rows_ &&
                col_offset + num_cols <= mat.num_cols_);
 }
-  
-} // namespace kaldi
+
+}  // namespace kaldi
 
 #endif
-
-  

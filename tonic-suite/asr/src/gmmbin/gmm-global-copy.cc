@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_in_filename = po.GetArg(1),
-        model_out_filename = po.GetArg(2);
+                model_out_filename = po.GetArg(2);
 
     DiagGmm gmm;
     {
@@ -54,10 +54,8 @@ int main(int argc, char *argv[]) {
     WriteKaldiObject(gmm, model_out_filename, binary_write);
 
     KALDI_LOG << "Written model to " << model_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

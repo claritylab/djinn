@@ -39,15 +39,13 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
   kaldi::Sgmm2PerFrameDerivedVars per_frame_vars;
 
   for (size_t i = 0; i < gpost.size(); i++) {
-    am_sgmm.ComputePerFrameVars(feats.Row(i),
-                                gpost[i].gselect, *spk_vars,
+    am_sgmm.ComputePerFrameVars(feats.Row(i), gpost[i].gselect, *spk_vars,
                                 &per_frame_vars);
 
     for (size_t j = 0; j < gpost[i].tids.size(); j++) {
       int32 pdf_id = trans_model.TransitionIdToPdf(gpost[i].tids[j]);
-      spk_stats->AccumulateFromPosteriors(am_sgmm, per_frame_vars,
-                                          gpost[i].posteriors[j], pdf_id,
-                                          spk_vars);
+      spk_stats->AccumulateFromPosteriors(
+          am_sgmm, per_frame_vars, gpost[i].posteriors[j], pdf_id, spk_vars);
     }
   }
 }
@@ -62,7 +60,8 @@ int main(int argc, char *argv[]) {
         "Estimate SGMM speaker vectors, either per utterance or for the "
         "supplied set of speakers (with spk2utt option).\n"
         "Reads Gaussian-level posteriors. Writes to a table of vectors.\n"
-        "Usage: sgmm2-est-spkvecs-gpost [options] <model-in> <feature-rspecifier> "
+        "Usage: sgmm2-est-spkvecs-gpost [options] <model-in> "
+        "<feature-rspecifier> "
         "<gpost-rspecifier> <vecs-wspecifier>\n";
 
     ParseOptions po(usage);
@@ -71,11 +70,13 @@ int main(int argc, char *argv[]) {
     BaseFloat rand_prune = 1.0e-05;
 
     po.Register("spk2utt", &spk2utt_rspecifier,
-        "File to read speaker to utterance-list map from.");
+                "File to read speaker to utterance-list map from.");
     po.Register("spkvec-min-count", &min_count,
-        "Minimum count needed to estimate speaker vectors");
-    po.Register("rand-prune", &rand_prune, "Randomized pruning parameter for posteriors (more->faster).");
-    po.Register("spk-vecs", &spkvecs_rspecifier, "Speaker vectors to use during aligment (rspecifier)");
+                "Minimum count needed to estimate speaker vectors");
+    po.Register("rand-prune", &rand_prune,
+                "Randomized pruning parameter for posteriors (more->faster).");
+    po.Register("spk-vecs", &spkvecs_rspecifier,
+                "Speaker vectors to use during aligment (rspecifier)");
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -83,10 +84,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string model_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        gpost_rspecifier = po.GetArg(3),
-        vecs_wspecifier = po.GetArg(4);
+    string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(2),
+           gpost_rspecifier = po.GetArg(3), vecs_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmSgmm2 am_sgmm;
@@ -141,9 +140,9 @@ int main(int argc, char *argv[]) {
             continue;
           }
           const Sgmm2GauPost &gpost = gpost_reader.Value(utt);
-          
-          AccumulateForUtterance(feats, gpost, trans_model, am_sgmm,
-                                 &spk_vars, &spk_stats);
+
+          AccumulateForUtterance(feats, gpost, trans_model, am_sgmm, &spk_vars,
+                                 &spk_stats);
           num_done++;
         }  // end looping over all utterances of the current speaker
 
@@ -155,11 +154,12 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(am_sgmm, min_count, &spk_vec, &impr, &spk_tot_t);
           vecs_writer.Write(spk, spk_vec);
         }
-        KALDI_LOG << "For speaker " << spk << ", auxf-impr from speaker vector is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.\n";
+        KALDI_LOG << "For speaker " << spk
+                  << ", auxf-impr from speaker vector is " << (impr / spk_tot_t)
+                  << ", over " << spk_tot_t << " frames.\n";
         tot_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -167,8 +167,7 @@ int main(int argc, char *argv[]) {
         const Matrix<BaseFloat> &feats = feature_reader.Value();
         if (!gpost_reader.HasKey(utt) ||
             gpost_reader.Value(utt).size() != feats.NumRows()) {
-          KALDI_WARN << "Did not find posts for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posts for utterance " << utt;
           num_err++;
           continue;
         }
@@ -183,12 +182,12 @@ int main(int argc, char *argv[]) {
             KALDI_WARN << "Cannot find speaker vector for " << utt;
           }
         }  // else spk_vars is "empty"
-        
+
         num_done++;
         spk_stats.Clear();
 
-        AccumulateForUtterance(feats, gpost, trans_model, am_sgmm,
-                               &spk_vars, &spk_stats);
+        AccumulateForUtterance(feats, gpost, trans_model, am_sgmm, &spk_vars,
+                               &spk_stats);
 
         BaseFloat impr, utt_tot_t;
         {  // Compute the spk_vec and write it out.
@@ -198,8 +197,9 @@ int main(int argc, char *argv[]) {
           spk_stats.Update(am_sgmm, min_count, &spk_vec, &impr, &utt_tot_t);
           vecs_writer.Write(utt, spk_vec);
         }
-        KALDI_LOG << "For utterance " << utt << ", auxf-impr from speaker vectors is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+        KALDI_LOG << "For utterance " << utt
+                  << ", auxf-impr from speaker vectors is "
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_impr += impr;
         tot_t += utt_tot_t;
       }
@@ -210,9 +210,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Overall auxf impr per frame is " << (tot_impr / tot_t)
               << " over " << tot_t << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

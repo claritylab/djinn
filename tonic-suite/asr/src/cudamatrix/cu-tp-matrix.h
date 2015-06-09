@@ -31,9 +31,10 @@
 
 namespace kaldi {
 
-template<typename Real> class CuTpMatrix;
+template <typename Real>
+class CuTpMatrix;
 
-template<typename Real>
+template <typename Real>
 class CuTpMatrix : public CuPackedMatrix<Real> {
   friend class CuMatrixBase<float>;
   friend class CuMatrixBase<double>;
@@ -42,6 +43,7 @@ class CuTpMatrix : public CuPackedMatrix<Real> {
   friend class CuRand<Real>;
   friend class CuTpMatrix<float>;
   friend class CuTpMatrix<double>;
+
  public:
   CuTpMatrix() : CuPackedMatrix<Real>() {}
   explicit CuTpMatrix(MatrixIndexT r, MatrixResizeType resize_type = kSetZero)
@@ -53,7 +55,6 @@ class CuTpMatrix : public CuPackedMatrix<Real> {
   explicit CuTpMatrix<Real>(const CuMatrixBase<Real> &orig,
                             MatrixTransposeType trans = kNoTrans);
 
-  
   ~CuTpMatrix() {}
 
   void CopyFromMat(const CuMatrixBase<Real> &M,
@@ -64,20 +65,19 @@ class CuTpMatrix : public CuPackedMatrix<Real> {
   }
   void CopyFromTp(const TpMatrix<Real> &other) {
     CuPackedMatrix<Real>::CopyFromPacked(other);
-  }  
-  void Cholesky(const CuSpMatrix<Real>& Orig);
+  }
+  void Cholesky(const CuSpMatrix<Real> &Orig);
   void Invert();
 
  protected:
   inline const TpMatrix<Real> &Mat() const {
-    return *(reinterpret_cast<const TpMatrix<Real>* >(this));
+    return *(reinterpret_cast<const TpMatrix<Real> *>(this));
   }
   inline TpMatrix<Real> &Mat() {
-    return *(reinterpret_cast<TpMatrix<Real>* >(this));
+    return *(reinterpret_cast<TpMatrix<Real> *>(this));
   }
-  
 };
 
-} // namespace
+}  // namespace
 
 #endif

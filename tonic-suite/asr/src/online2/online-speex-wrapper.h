@@ -17,15 +17,14 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ONLINE2_SPEEX_WRAPPER_H_
 #define KALDI_ONLINE2_SPEEX_WRAPPER_H_
 
 #ifdef HAVE_SPEEX
-  #include <speex/speex.h>
-  typedef SpeexBits SPEEXBITS;
+#include <speex/speex.h>
+typedef SpeexBits SPEEXBITS;
 #else
-  typedef char SPEEXBITS;
+typedef char SPEEXBITS;
 #endif
 
 #include "matrix/kaldi-vector.h"
@@ -56,13 +55,15 @@ struct SpeexOptions {
   /// The Speex toolkit uses a 20ms long window by default
   int32 speex_wave_frame_size;
 
-  SpeexOptions(): sample_rate(16000.0),
-                  speex_quality(10),
-                  speex_bits_frame_size(106),
-                  speex_wave_frame_size(320) { }
+  SpeexOptions()
+      : sample_rate(16000.0),
+        speex_quality(10),
+        speex_bits_frame_size(106),
+        speex_wave_frame_size(320) {}
 
   void Register(OptionsItf *po) {
-    po->Register("sample-rate", &sample_rate, "Sample frequency of the waveform.");
+    po->Register("sample-rate", &sample_rate,
+                 "Sample frequency of the waveform.");
     po->Register("speex-quality", &speex_quality, "Speex speech quality.");
     po->Register("speex-bits-frame-size", &speex_bits_frame_size,
                  "#bytes of each Speex compressed frame.");
@@ -72,64 +73,71 @@ struct SpeexOptions {
 };
 
 class OnlineSpeexEncoder {
-  public:
-    OnlineSpeexEncoder(const SpeexOptions &config);
-    ~OnlineSpeexEncoder();
+ public:
+  OnlineSpeexEncoder(const SpeexOptions &config);
+  ~OnlineSpeexEncoder();
 
-    void AcceptWaveform(int32 sample_rate,
-           const VectorBase<BaseFloat> &waveform);
+  void AcceptWaveform(int32 sample_rate, const VectorBase<BaseFloat> &waveform);
 
-    void InputFinished();
+  void InputFinished();
 
-    void GetSpeexBits(std::vector<char> *spx_bits) {  // call it after AcceptWaveform
-      *spx_bits = speex_encoded_char_bits_;
-      speex_encoded_char_bits_.clear();
-    }
-  private:
-    int32 speex_frame_size_;  // in bytes, will be different according to the quality
-    int32 speex_encoded_frame_size_;  // in samples, typically 320 in wideband mode, 16kHz
+  void GetSpeexBits(
+      std::vector<char> *spx_bits) {  // call it after AcceptWaveform
+    *spx_bits = speex_encoded_char_bits_;
+    speex_encoded_char_bits_.clear();
+  }
 
-    void *speex_state_;  // Holds the state of the speex encoder
-    SPEEXBITS speex_bits_;
+ private:
+  int32 speex_frame_size_;  // in bytes, will be different according to the
+                            // quality
+  int32 speex_encoded_frame_size_;  // in samples, typically 320 in wideband
+                                    // mode, 16kHz
 
-    Vector<BaseFloat> waveform_remainder_;      // Holds the waveform that have not been processed
+  void *speex_state_;  // Holds the state of the speex encoder
+  SPEEXBITS speex_bits_;
 
-    // Holds the Speex-encoded char bits, will be peaked by GetSpeexBits().
-    // We use a vector container rather than a char-type pointer because
-    // it's a little easier to expand.
-    std::vector<char> speex_encoded_char_bits_;
+  Vector<BaseFloat>
+      waveform_remainder_;  // Holds the waveform that have not been processed
 
-    BaseFloat sample_rate_;
-    bool input_finished_;
+  // Holds the Speex-encoded char bits, will be peaked by GetSpeexBits().
+  // We use a vector container rather than a char-type pointer because
+  // it's a little easier to expand.
+  std::vector<char> speex_encoded_char_bits_;
 
-    void Encode(const VectorBase<BaseFloat> &wave,
-                std::vector<char> *speex_encoder_bits) ;
+  BaseFloat sample_rate_;
+  bool input_finished_;
+
+  void Encode(const VectorBase<BaseFloat> &wave,
+              std::vector<char> *speex_encoder_bits);
 };
 
 class OnlineSpeexDecoder {
-  public:
-    OnlineSpeexDecoder(const SpeexOptions &config);
-    ~OnlineSpeexDecoder();
+ public:
+  OnlineSpeexDecoder(const SpeexOptions &config);
+  ~OnlineSpeexDecoder();
 
-    void AcceptSpeexBits(const std::vector<char> &spx_enc_bits);
+  void AcceptSpeexBits(const std::vector<char> &spx_enc_bits);
 
-    void GetWaveform(Vector<BaseFloat> *waveform) {  // call it after AcceptSpeexBits
-      *waveform = waveform_;
-      waveform_.Resize(0);
-    }
-  private:
-    int32 speex_frame_size_;  // in bytes, will be different according to the quality
-    int32 speex_decoded_frame_size_;  // in samples, typically 320 in wideband mode, 16kHz
+  void GetWaveform(
+      Vector<BaseFloat> *waveform) {  // call it after AcceptSpeexBits
+    *waveform = waveform_;
+    waveform_.Resize(0);
+  }
 
-    void *speex_state_;  // Holds the state of the speex decoder
-    SPEEXBITS speex_bits_;
+ private:
+  int32 speex_frame_size_;  // in bytes, will be different according to the
+                            // quality
+  int32 speex_decoded_frame_size_;  // in samples, typically 320 in wideband
+                                    // mode, 16kHz
 
+  void *speex_state_;  // Holds the state of the speex decoder
+  SPEEXBITS speex_bits_;
 
-    Vector<BaseFloat> waveform_;  // Holds the waveform decoded from speex bits
-    std::vector<char> speex_bits_remainder_;
+  Vector<BaseFloat> waveform_;  // Holds the waveform decoded from speex bits
+  std::vector<char> speex_bits_remainder_;
 
-    void Decode(const std::vector<char> &speex_char_bits,
-                Vector<BaseFloat> *decoded_wav) ;
+  void Decode(const std::vector<char> &speex_char_bits,
+              Vector<BaseFloat> *decoded_wav);
 };
 
 }  // namespace kaldi

@@ -20,12 +20,11 @@
 #include "util/common-utils.h"
 #include "ivector/ivector-extractor.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     typedef kaldi::int32 int32;
     using namespace kaldi;
-    
+
     const char *usage =
         "Sum accumulators for training of iVector extractor\n"
         "Usage: ivector-extractor-sum-accs [options] <stats-in1> "
@@ -35,10 +34,11 @@ int main(int argc, char *argv[]) {
     bool parallel = false;
     kaldi::ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("parallel", &parallel, "If true, the program makes sure to "
+    po.Register("parallel", &parallel,
+                "If true, the program makes sure to "
                 "open all filehandles before reading for any (useful when "
                 "summing accs from long processes)");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() < 2) {
@@ -51,19 +51,19 @@ int main(int argc, char *argv[]) {
     IvectorExtractorStats stats;
 
     if (parallel) {
-      std::vector<kaldi::Input*> inputs(po.NumArgs() - 1);
+      std::vector<kaldi::Input *> inputs(po.NumArgs() - 1);
       for (int i = 1; i < po.NumArgs(); i++) {
         std::string stats_in_filename = po.GetArg(i);
-        inputs[i-1] = new kaldi::Input(stats_in_filename); // Don't try
+        inputs[i - 1] = new kaldi::Input(stats_in_filename);  // Don't try
         // to work out binary status yet; this would cause us to wait
         // for the output of that process.  We delay it till later.
       }
       for (size_t i = 1; i < po.NumArgs(); i++) {
         bool b;
-        kaldi::InitKaldiInputStream(inputs[i-1]->Stream(), &b);
+        kaldi::InitKaldiInputStream(inputs[i - 1]->Stream(), &b);
         bool add = true;
-        stats.Read(inputs[i-1]->Stream(), b, add);
-        delete inputs[i-1];
+        stats.Read(inputs[i - 1]->Stream(), b, add);
+        delete inputs[i - 1];
       }
     } else {
       for (int32 i = 1; i < po.NumArgs(); i++) {
@@ -74,16 +74,14 @@ int main(int argc, char *argv[]) {
         bool add = true;
         stats.Read(ki.Stream(), binary_in, add);
       }
-    }    
+    }
     WriteKaldiObject(stats, stats_wxfilename, binary);
-    
+
     KALDI_LOG << "Wrote summed stats to " << stats_wxfilename;
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

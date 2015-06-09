@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 
 #include "feat/feature-fbank.h"
@@ -27,10 +26,7 @@
 
 using namespace kaldi;
 
-
-
 static void UnitTestReadWave() {
-
   std::cout << "=== UnitTestReadWave() ===\n";
 
   Vector<BaseFloat> v, v2;
@@ -47,15 +43,15 @@ static void UnitTestReadWave() {
     v.CopyFromVec(data.Row(0));
   }
 
-  std::cout << "<<<=== Reading Vector<BaseFloat> waveform, prepared by matlab\n";
-  std::ifstream input(
-    "test_data/test_matlab.ascii"
-  );
+  std::cout
+      << "<<<=== Reading Vector<BaseFloat> waveform, prepared by matlab\n";
+  std::ifstream input("test_data/test_matlab.ascii");
   KALDI_ASSERT(input.good());
   v2.Read(input, false);
   input.close();
 
-  std::cout << "<<<=== Comparing freshly read waveform to 'libsndfile' waveform\n";
+  std::cout
+      << "<<<=== Comparing freshly read waveform to 'libsndfile' waveform\n";
   KALDI_ASSERT(v.Dim() == v2.Dim());
   for (int32 i = 0; i < v.Dim(); i++) {
     KALDI_ASSERT(v(i) == v2(i));
@@ -66,10 +62,7 @@ static void UnitTestReadWave() {
   // std::cout << v;
 
   std::cout << "Test passed :)\n\n";
-
 }
-
-
 
 /**
  */
@@ -81,7 +74,7 @@ static void UnitTestSimple() {
 
   // init with noise
   for (int32 i = 0; i < v.Dim(); i++) {
-    v(i) = (abs( i * 433024253 ) % 65535) - (65535 / 2);
+    v(i) = (abs(i * 433024253) % 65535) - (65535 / 2);
   }
 
   std::cout << "<<<=== Just make sure it runs... Nothing is compared\n";
@@ -107,7 +100,6 @@ static void UnitTestSimple() {
   //   std::cout << "== Output features == \n" << m;
   std::cout << "Test passed :)\n\n";
 }
-
 
 static void UnitTestHTKCompare1() {
   std::cout << "=== UnitTestHTKCompare1() ===\n";
@@ -145,7 +137,6 @@ static void UnitTestHTKCompare1() {
   Matrix<BaseFloat> kaldi_features;
   fbank.Compute(waveform, 1.0, &kaldi_features, NULL);
 
-
   std::cout << "<<<=== Compare with HTK features...\n";
   // compare the results
   bool passed = true;
@@ -154,41 +145,44 @@ static void UnitTestHTKCompare1() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       /// THE FEATURES ARE ALMOST IDENTICAL WITH HTK!!! (SEE THE TOLERANCE!)
       if ((std::abs(b - a)) > 0.001) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    000007  // FBANK
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      000007  // FBANK
   };
   {
     std::ofstream os("tmp.test.wav.fbank_kaldi.1",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fbank_kaldi.1");
 }
-
 
 static void UnitTestHTKCompare2() {
   std::cout << "=== UnitTestHTKCompare2() ===\n";
@@ -226,7 +220,6 @@ static void UnitTestHTKCompare2() {
   Matrix<BaseFloat> kaldi_features;
   fbank.Compute(waveform, 1.0, &kaldi_features, NULL);
 
-
   std::cout << "<<<=== Compare with HTK features...\n";
   // compare the results
   bool passed = true;
@@ -235,38 +228,42 @@ static void UnitTestHTKCompare2() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       /// THE FEATURES ARE ALMOST IDENTICAL WITH HTK!!! (SEE THE TOLERANCE!)
       if ((std::abs(b - a)) > 0.001) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    000007  // FBANK
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      000007  // FBANK
   };
   {
     std::ofstream os("tmp.test.wav.fbank_kaldi.1",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fbank_kaldi.1");
 }
 
@@ -310,7 +307,6 @@ static void UnitTestHTKCompare3() {
   Matrix<BaseFloat> kaldi_features;
   fbank.Compute(waveform, vtln_warp, &kaldi_features, NULL);
 
-
   std::cout << "<<<=== Compare with HTK features...\n";
   // compare the results
   bool passed = true;
@@ -319,42 +315,49 @@ static void UnitTestHTKCompare3() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       /// THE FEATURES ARE ALMOST IDENTICAL WITH HTK!!! (SEE THE TOLERANCE!)
       if ((std::abs(b - a)) > 0.001) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
-        if (j < 20) passed = false; // We know the last couple of filterbanks differ.  We let this slide.
-        else KALDI_WARN << "Ignoring difference in last fbanks, we know the algorithms differ.";
-  }}}
+        if (j < 20)
+          passed = false;  // We know the last couple of filterbanks differ.  We
+                           // let this slide.
+        else
+          KALDI_WARN << "Ignoring difference in last fbanks, we know the "
+                        "algorithms differ.";
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    000007  // FBANK
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      000007  // FBANK
   };
   {
     std::ofstream os("tmp.test.wav.fbank_kaldi.1",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fbank_kaldi.1");
 }
-
 
 static void UnitTestHTKCompare4() {
   std::cout << "=== UnitTestHTKCompare4() ===\n";
@@ -396,7 +399,6 @@ static void UnitTestHTKCompare4() {
   Matrix<BaseFloat> kaldi_features;
   fbank.Compute(waveform, vtln_warp, &kaldi_features, NULL);
 
-
   std::cout << "<<<=== Compare with HTK features...\n";
   // compare the results
   bool passed = true;
@@ -405,43 +407,44 @@ static void UnitTestHTKCompare4() {
   KALDI_ASSERT(kaldi_features.NumCols() == htk_features.NumCols());
   // Ignore ends-- we make slightly different choices than
   // HTK about how to treat the deltas at the ends.
-  for (int32 i = 10; i+10 < kaldi_features.NumRows(); i++) {
+  for (int32 i = 10; i + 10 < kaldi_features.NumRows(); i++) {
     for (int32 j = 0; j < kaldi_features.NumCols(); j++) {
       BaseFloat a = kaldi_features(i, j), b = htk_features(i, j);
       /// THE FEATURES ARE ALMOST IDENTICAL WITH HTK!!! (SEE THE TOLERANCE!)
       if ((std::abs(b - a)) > 0.01) {  //<< TOLERANCE TO DIFFERENCES!!!!!
         // print the non-matching data only once per-line
         if (i_old != i) {
-          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i) << "\n";
-          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i) << "\n\n\n";
+          std::cout << "\n\n\n[HTK-row: " << i << "] " << htk_features.Row(i)
+                    << "\n";
+          std::cout << "[Kaldi-row: " << i << "] " << kaldi_features.Row(i)
+                    << "\n\n\n";
           i_old = i;
         }
         // print indices of non-matching cells
         std::cout << "[" << i << ", " << j << "]";
         passed = false;
-  }}}
+      }
+    }
+  }
   if (!passed) KALDI_ERR << "Test failed";
 
   // write the htk features for later inspection
   HtkHeader header = {
-    kaldi_features.NumRows(),
-    100000,  // 10ms
-    static_cast<int16>(sizeof(float)*kaldi_features.NumCols()),
-    000007  // FBANK
+      kaldi_features.NumRows(),
+      100000,  // 10ms
+      static_cast<int16>(sizeof(float) * kaldi_features.NumCols()),
+      000007  // FBANK
   };
   {
     std::ofstream os("tmp.test.wav.fbank_kaldi.1",
-                     std::ios::out|std::ios::binary);
+                     std::ios::out | std::ios::binary);
     WriteHtk(os, kaldi_features, header);
   }
 
   std::cout << "Test passed :)\n\n";
-  
+
   unlink("tmp.test.wav.fbank_kaldi.1");
 }
-
-
-
 
 static void UnitTestFeat() {
   UnitTestReadWave();
@@ -452,13 +455,9 @@ static void UnitTestFeat() {
   UnitTestHTKCompare4();
 }
 
-
-
-
 int main() {
   try {
-    for (int i = 0; i < 5; i++)
-      UnitTestFeat();
+    for (int i = 0; i < 5; i++) UnitTestFeat();
     std::cout << "Tests succeeded.\n";
     return 0;
   } catch (const std::exception &e) {
@@ -466,5 +465,3 @@ int main() {
     return 1;
   }
 }
-
-

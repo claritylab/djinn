@@ -22,9 +22,9 @@
 #define KALDI_THREAD_KALDI_THREAD_H_ 1
 
 #if defined(_MSC_VER)
-# define KALDI_PTHREAD_PTR(thread) (thread.p)
+#define KALDI_PTHREAD_PTR(thread) (thread.p)
 #else
-# define KALDI_PTHREAD_PTR(thread) (thread)
+#define KALDI_PTHREAD_PTR(thread) (thread)
 #endif
 
 #include <pthread.h>
@@ -33,13 +33,13 @@
 // that you have some range of integers, e.g. A ... B-1 (with B > A), and some
 // function call that takes a range of integers, and you partition these up into
 // a number of blocks.
-// Also see kaldi-task-sequence.h which is suitable for parallelizing the processing
+// Also see kaldi-task-sequence.h which is suitable for parallelizing the
+// processing
 // of tasks coming in sequentially from somewhere.
 
 // TODO: if needed, provide a workaround for Windows and other
 // non-POSIX-compliant systems, possibly one that does not actually do
 // multi-threading.
-
 
 // Description of MultiThreadPool and its usage:
 //
@@ -72,7 +72,7 @@ class MultiThreadable {
   //  thread_id_ and num_threads_
   // Note: example implementations are in thread/kaldi-thread-test.cc
  public:
-  virtual void operator() () = 0;
+  virtual void operator()() = 0;
   // Does the main function of the class
   //  Subclasses have to redefine this
   virtual ~MultiThreadable();
@@ -81,12 +81,12 @@ class MultiThreadable {
   // watch out.
 
   static void *run(void *m_in) {
-    MultiThreadable *m = static_cast<MultiThreadable*>(m_in);
+    MultiThreadable *m = static_cast<MultiThreadable *>(m_in);
     (*m)();  // call operator () on it.  This is a virtual
     // function so the one in the child class will be called.
     return NULL;
   }
-  
+
  public:
   // Do not redeclare thread_id_ and num_threads_ in derived classes.
   int32 thread_id_;  // 0 <= thread_id_ < num_threads_
@@ -96,18 +96,18 @@ class MultiThreadable {
   // Have additional member variables as needed.
 };
 
-
-class ExampleClass: public MultiThreadable {
+class ExampleClass : public MultiThreadable {
  public:
-  ExampleClass(int32 *foo); // Typically there will be an initializer that
+  ExampleClass(int32 *foo);  // Typically there will be an initializer that
   // takes arguments.
-  
-  ExampleClass(const ExampleClass &other); // A copy constructor is also needed;
+
+  ExampleClass(
+      const ExampleClass &other);  // A copy constructor is also needed;
   // some example classes use the default version of this.
 
-  void operator() () {
+  void operator()() {
     // Does the main function of the class.  This
-    // function will typically want to look at the values of the 
+    // function will typically want to look at the values of the
     // member variables thread_id_ and num_threads_, inherited
     // from MultiThreadable.
   }
@@ -116,18 +116,17 @@ class ExampleClass: public MultiThreadable {
     // for example summing up of certain quantities.  See code
     // that uses RunMultiThreaded for examples.
   }
+
  private:
   // Have additional member variables as needed.
 };
 
-
-template<class C>
+template <class C>
 class MultiThreader {
  public:
-  MultiThreader(int32 num_threads,
-                const C &c_in):
-    threads_(new pthread_t[std::max<int32>(1, num_threads)]),
-    cvec_(std::max<int32>(1, num_threads), c_in) {
+  MultiThreader(int32 num_threads, const C &c_in)
+      : threads_(new pthread_t[std::max<int32>(1, num_threads)]),
+        cvec_(std::max<int32>(1, num_threads), c_in) {
     if (num_threads == 0) {
       // This is a special case with num_threads == 0, which behaves like with
       // num_threads == 1 but without creating extra threads.  This can be
@@ -143,10 +142,12 @@ class MultiThreader {
         cvec_[thread].thread_id_ = thread;
         cvec_[thread].num_threads_ = num_threads;
         int32 ret;
-        if ((ret=pthread_create(&(threads_[thread]),
-                                &pthread_attr, C::run, &(cvec_[thread])))) {
+        if ((ret = pthread_create(&(threads_[thread]), &pthread_attr, C::run,
+                                  &(cvec_[thread])))) {
           const char *c = strerror(ret);
-          if (c == NULL) { c = "[NULL]"; }
+          if (c == NULL) {
+            c = "[NULL]";
+          }
           KALDI_ERR << "Error creating thread, errno was: " << c;
         }
       }
@@ -157,8 +158,9 @@ class MultiThreader {
       if (KALDI_PTHREAD_PTR(threads_[thread]) != 0)
         if (pthread_join(threads_[thread], NULL))
           KALDI_ERR << "Error rejoining thread.";
-    delete [] threads_;
+    delete[] threads_;
   }
+
  private:
   pthread_t *threads_;
   std::vector<C> cvec_;
@@ -168,11 +170,10 @@ class MultiThreader {
 /// control the number of threads yourself, or need to do something in the main
 /// thread of the program while the objects exist, just initialize the
 /// MultiThreader<C> object yourself.
-template<class C> void RunMultiThreaded(const C &c_in) {
+template <class C>
+void RunMultiThreaded(const C &c_in) {
   MultiThreader<C> m(g_num_threads, c_in);
 }
 
-
-
-} // namespace kaldi
+}  // namespace kaldi
 #endif  // KALDI_THREAD_KALDI_THREAD_H_

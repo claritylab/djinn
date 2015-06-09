@@ -40,12 +40,10 @@
    as this is a possibility too.
 */
 
-
 #include <fst/fstlib.h>
 #include <fst/fst-decl.h>
 #include "fstext/context-fst.h"
 #include "itf/context-dep-itf.h"
-
 
 namespace fst {
 
@@ -54,7 +52,7 @@ namespace fst {
 //! state-names that contain sufficient information to obtain the phone ids.
 //! ctx_dep [in] object that
 
-template<typename L>
+template <typename L>
 bool ContextExpandLeaves(const kaldi::ContextDependencyInterface &ctx_dep,
                          const vector<L> &phones,
                          const vector<L> &disambig_syms,
@@ -63,9 +61,6 @@ bool ContextExpandLeaves(const kaldi::ContextDependencyInterface &ctx_dep,
                          vector<L> *aug_to_leaf_out,
                          vector<L> *aug_to_phone_out);
 
-
-
-
 /// DfsSort sorts the states in an FST in depth-first-search order.
 /// May be useful after ExpandSequences.  This is equivalent to TopSort
 /// for acyclic FSTs but it does apply the DFS order even for FSTs with cycles.
@@ -73,14 +68,15 @@ template <class Arc>
 void DfsSort(MutableFst<Arc> *fst);
 
 /// The following function doesn't exactly belong here.
-/// It creates an FST that transduces the isymbol to its matching osymbols, wherever
+/// It creates an FST that transduces the isymbol to its matching osymbols,
+/// wherever
 /// they share the same string.  It's useful for remapping symbol tables.
-/// You will have to explicitly specify the Arc template argument when you call this
+/// You will have to explicitly specify the Arc template argument when you call
+/// this
 /// function, e.g. MakeRemapper<StdArc>(isyms, osyms).
-template<class Arc>
-VectorFst<Arc> *MakeRemapper(const SymbolTable *isymbols, const SymbolTable *osymbols);
-
-
+template <class Arc>
+VectorFst<Arc> *MakeRemapper(const SymbolTable *isymbols,
+                             const SymbolTable *osymbols);
 
 }  // namespace fst
 

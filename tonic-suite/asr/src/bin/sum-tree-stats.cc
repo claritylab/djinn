@@ -29,7 +29,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Sum statistics for phonetic-context tree building.\n"
-        "Usage:  sum-tree-stats [options] tree-accs-out tree-accs-in1 tree-accs-in2 ...\n"
+        "Usage:  sum-tree-stats [options] tree-accs-out tree-accs-in1 "
+        "tree-accs-in2 ...\n"
         "e.g.: \n"
         " sum-tree-stats treeacc 1.treeacc 2.treeacc 3.treeacc\n";
 
@@ -44,26 +45,29 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::map<EventType, Clusterable*> tree_stats;
-    
+    std::map<EventType, Clusterable *> tree_stats;
+
     std::string tree_stats_wxfilename = po.GetArg(1);
 
     // A reminder on what BuildTreeStatsType is:
-    // typedef std::vector<std::pair<EventType, Clusterable*> > BuildTreeStatsType;
-    
+    // typedef std::vector<std::pair<EventType, Clusterable*> >
+    // BuildTreeStatsType;
+
     for (int32 arg = 2; arg <= po.NumArgs(); arg++) {
       std::string tree_stats_rxfilename = po.GetArg(arg);
       bool binary_in;
       Input ki(tree_stats_rxfilename, &binary_in);
       BuildTreeStatsType stats_array;
-      GaussClusterable example; // Lets ReadBuildTreeStats know which type to read..
+      GaussClusterable
+          example;  // Lets ReadBuildTreeStats know which type to read..
       ReadBuildTreeStats(ki.Stream(), binary_in, example, &stats_array);
       for (BuildTreeStatsType::iterator iter = stats_array.begin();
            iter != stats_array.end(); ++iter) {
         EventType e = iter->first;
         Clusterable *c = iter->second;
-        std::map<EventType, Clusterable*>::iterator map_iter = tree_stats.find(e);
-        if (map_iter == tree_stats.end()) { // Not already present.
+        std::map<EventType, Clusterable *>::iterator map_iter =
+            tree_stats.find(e);
+        if (map_iter == tree_stats.end()) {  // Not already present.
           tree_stats[e] = c;
         } else {
           map_iter->second->Add(*c);
@@ -74,9 +78,9 @@ int main(int argc, char *argv[]) {
 
     BuildTreeStatsType stats;  // vectorized form.
 
-    for (std::map<EventType, Clusterable*>::const_iterator iter = tree_stats.begin();  
-        iter != tree_stats.end();
-        iter++ ) {
+    for (std::map<EventType, Clusterable *>::const_iterator iter =
+             tree_stats.begin();
+         iter != tree_stats.end(); iter++) {
       stats.push_back(std::make_pair(iter->first, iter->second));
     }
     tree_stats.clear();
@@ -88,10 +92,8 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Wrote summed accs ( " << stats.size() << " individual stats)";
     DeleteBuildTreeStats(&stats);
     return (stats.size() != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

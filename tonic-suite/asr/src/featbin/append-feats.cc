@@ -22,7 +22,6 @@
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -30,18 +29,22 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Append 2 feature-streams [and possibly change format]\n"
         "Note, this is deprecated; please use paste-feats\n"
-        "Usage: append-feats [options] <in-rspecifier1> <in-rspecifier2> <out-wspecifier>\n"
+        "Usage: append-feats [options] <in-rspecifier1> <in-rspecifier2> "
+        "<out-wspecifier>\n"
         "\n"
-        "e.g.: append-feats --feats-offset-in1 5 --num-feats-in1 5 scp:list1.scp "
+        "e.g.: append-feats --feats-offset-in1 5 --num-feats-in1 5 "
+        "scp:list1.scp "
         "scp:list2.scp ark:-\n";
 
     ParseOptions po(usage);
 
     bool truncate_frames = false;
-    
-    po.Register("truncate-frames", &truncate_frames, "If true, do not treat it "
-                "as an error when files differ in number of frames, but truncate "
-                "the longest one.");
+
+    po.Register(
+        "truncate-frames", &truncate_frames,
+        "If true, do not treat it "
+        "as an error when files differ in number of frames, but truncate "
+        "the longest one.");
 
     po.Read(argc, argv);
 
@@ -68,7 +71,7 @@ int main(int argc, char *argv[]) {
         num_err++;
         continue;
       }
-      
+
       const Matrix<BaseFloat> &feats1 = feats_reader1.Value();
       const Matrix<BaseFloat> &feats2 = feats_reader2.Value(utt);
       if (feats1.NumRows() != feats2.NumRows() && !truncate_frames) {
@@ -80,20 +83,20 @@ int main(int argc, char *argv[]) {
         continue;
       }
       int32 num_frames = std::min(feats1.NumRows(), feats2.NumRows()),
-          dim1 = feats1.NumCols(), dim2 = feats2.NumCols();
+            dim1 = feats1.NumCols(), dim2 = feats2.NumCols();
       Matrix<BaseFloat> output(num_frames, dim1 + dim2, kUndefined);
-      output.Range(0, num_frames, 0, dim1).CopyFromMat(
-          feats1.Range(0, num_frames, 0, dim1));
-      output.Range(0, num_frames, dim1, dim2).CopyFromMat(
-          feats2.Range(0, num_frames, 0, dim2));
-      
+      output.Range(0, num_frames, 0, dim1)
+          .CopyFromMat(feats1.Range(0, num_frames, 0, dim1));
+      output.Range(0, num_frames, dim1, dim2)
+          .CopyFromMat(feats2.Range(0, num_frames, 0, dim2));
+
       feats_writer.Write(utt, output);
       num_done++;
     }
     KALDI_LOG << "Appended " << num_done << " feats; " << num_err
               << " with errors.";
     return (num_done != 0 ? 0 : 1);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

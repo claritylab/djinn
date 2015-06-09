@@ -18,13 +18,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/table-matcher.h"
 #include "fstext/fstext-utils.h"
-
 
 /*
 The following commands represent a basic test of this program.
@@ -48,7 +46,7 @@ fstrhocompose 100 a.fst g.fst | fstprint
 # gives, again correctly:
 #0    1    10    10    1
 #1
- 
+
 
 */
 
@@ -67,7 +65,7 @@ int main(int argc, char *argv[]) {
       (I think)... but typically the rho FST will be an acceptor.
       We can add options for this later if needed.
     */
-      
+
     const char *usage =
         "Composition, where the right FST has \"rest\" (rho) transition\n"
         "that are only taken where there was no match of a \"real\" label\n"
@@ -77,7 +75,7 @@ int main(int argc, char *argv[]) {
         "(fst2-rxfilename|fst2-rspecifier) [(out-rxfilename|out-rspecifier)]\n"
         "E.g.: fstrhocompose 54 a.fst b.fst c.fst\n"
         "or: fstrhocompose 11 ark:a.fsts G.fst ark:b.fsts\n";
-        
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -87,43 +85,39 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        rho_str = po.GetArg(1),
-        fst1_in_str = po.GetArg(2),
-        fst2_in_str = po.GetArg(3),
-        fst_out_str = po.GetOptArg(4);
-    
+    std::string rho_str = po.GetArg(1), fst1_in_str = po.GetArg(2),
+                fst2_in_str = po.GetArg(3), fst_out_str = po.GetOptArg(4);
+
     bool is_table_1 =
-        (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_2 =
-        (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_out =
-        (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) != kNoWspecifier);
+             (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_2 =
+             (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_out = (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) !=
+                         kNoWspecifier);
 
     int32 rho_label;
-    if (!ConvertStringToInteger(rho_str, &rho_label)
-        || rho_label <= 0)
-      KALDI_ERR << "Invalid first argument (rho label), expect positive integer.";
-    
+    if (!ConvertStringToInteger(rho_str, &rho_label) || rho_label <= 0)
+      KALDI_ERR
+          << "Invalid first argument (rho label), expect positive integer.";
+
     if (is_table_out != (is_table_1 || is_table_2))
       KALDI_ERR << "Incompatible combination of archives and files";
-    
-    if (!is_table_1 && !is_table_2) { // Only dealing with files...
+
+    if (!is_table_1 && !is_table_2) {  // Only dealing with files...
       VectorFst<StdArc> *fst1 = ReadFstKaldi(fst1_in_str);
-      
+
       VectorFst<StdArc> *fst2 = ReadFstKaldi(fst2_in_str);
 
       VectorFst<StdArc> composed_fst;
 
       RhoCompose(*fst1, *fst2, rho_label, &composed_fst);
-      
+
       delete fst1;
       delete fst2;
 
       WriteFstKaldi(composed_fst, fst_out_str);
       return 0;
     } else if (is_table_1 && !is_table_2) {
-
       VectorFst<StdArc> *fst2 = ReadFstKaldi(fst2_in_str);
 
       SequentialTableReader<VectorFstHolder> fst1_reader(fst1_in_str);
@@ -138,12 +132,13 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Composed " << n_done << " FSTs.";
       return (n_done != 0 ? 0 : 1);
     } else {
-      KALDI_ERR << "The combination of tables/non-tables that you "
-                << "supplied is not currently supported.  Either implement this, "
-                << "ask the maintainers to implement it, or call this program "
-                << "differently.";
+      KALDI_ERR
+          << "The combination of tables/non-tables that you "
+          << "supplied is not currently supported.  Either implement this, "
+          << "ask the maintainers to implement it, or call this program "
+          << "differently.";
     }
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

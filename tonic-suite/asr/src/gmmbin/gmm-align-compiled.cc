@@ -3,7 +3,6 @@
 // Copyright 2009-2013  Microsoft Corporation
 //                      Johns Hopkins University (author: Daniel Povey)
 
-
 // See ../../COPYING for clarification regarding multiple authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +27,7 @@
 #include "decoder/faster-decoder.h"
 #include "decoder/training-graph-compiler.h"
 #include "gmm/decodable-am-diag-gmm.h"
-#include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
+#include "lat/kaldi-lattice.h"  // for {Compact}LatticeArc
 
 int main(int argc, char *argv[]) {
   try {
@@ -56,10 +55,15 @@ int main(int argc, char *argv[]) {
     BaseFloat self_loop_scale = 1.0;
 
     po.Register("beam", &beam, "Decoding beam");
-    po.Register("retry-beam", &retry_beam, "Decoding beam for second try at alignment");
-    po.Register("transition-scale", &transition_scale, "Transition-probability scale [relative to acoustics]");
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("self-loop-scale", &self_loop_scale, "Scale of self-loop versus non-self-loop log probs [relative to acoustics]");
+    po.Register("retry-beam", &retry_beam,
+                "Decoding beam for second try at alignment");
+    po.Register("transition-scale", &transition_scale,
+                "Transition-probability scale [relative to acoustics]");
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("self-loop-scale", &self_loop_scale,
+                "Scale of self-loop versus non-self-loop log probs [relative "
+                "to acoustics]");
     po.Read(argc, argv);
 
     if (po.NumArgs() < 4 || po.NumArgs() > 5) {
@@ -67,9 +71,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     if (retry_beam != 0 && retry_beam <= beam)
-      KALDI_WARN << "Beams do not make sense: beam " << beam
-                 << ", retry-beam " << retry_beam;
-    
+      KALDI_WARN << "Beams do not make sense: beam " << beam << ", retry-beam "
+                 << retry_beam;
+
     FasterDecoderOptions decode_opts;
     decode_opts.beam = beam;  // Don't set the other options.
 
@@ -120,32 +124,33 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        {  // Add transition-probs to the FST.
+        {                                    // Add transition-probs to the FST.
           std::vector<int32> disambig_syms;  // empty.
-          AddTransitionProbs(trans_model, disambig_syms,
-                             transition_scale, self_loop_scale,
-                             &decode_fst);
+          AddTransitionProbs(trans_model, disambig_syms, transition_scale,
+                             self_loop_scale, &decode_fst);
         }
 
         // SimpleDecoder decoder(decode_fst, beam);
         FasterDecoder decoder(decode_fst, decode_opts);
-        // makes it a bit faster: 37 sec -> 26 sec on 1000 RM utterances @ beam 200.
+        // makes it a bit faster: 37 sec -> 26 sec on 1000 RM utterances @ beam
+        // 200.
 
         DecodableAmDiagGmmScaled gmm_decodable(am_gmm, trans_model, features,
                                                acoustic_scale);
         decoder.Decode(&gmm_decodable);
 
-        VectorFst<LatticeArc> decoded;  // linear FST.
-        bool ans = decoder.ReachedFinal() // consider only final states.
-            && decoder.GetBestPath(&decoded);  
+        VectorFst<LatticeArc> decoded;     // linear FST.
+        bool ans = decoder.ReachedFinal()  // consider only final states.
+                   && decoder.GetBestPath(&decoded);
         if (!ans && retry_beam != 0.0) {
           num_retry++;
-          KALDI_WARN << "Retrying utterance " << key << " with beam " << retry_beam;
+          KALDI_WARN << "Retrying utterance " << key << " with beam "
+                     << retry_beam;
           decode_opts.beam = retry_beam;
           decoder.SetOptions(decode_opts);
           decoder.Decode(&gmm_decodable);
-          ans = decoder.ReachedFinal() // consider only final states.
-              && decoder.GetBestPath(&decoded);  
+          ans = decoder.ReachedFinal()  // consider only final states.
+                && decoder.GetBestPath(&decoded);
           decode_opts.beam = beam;
           decoder.SetOptions(decode_opts);
         }
@@ -156,37 +161,39 @@ int main(int argc, char *argv[]) {
           frame_count += features.NumRows();
 
           GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
-          BaseFloat like = -(weight.Value1()+weight.Value2()) / acoustic_scale;
+          BaseFloat like =
+              -(weight.Value1() + weight.Value2()) / acoustic_scale;
           tot_like += like;
           if (scores_writer.IsOpen())
-            scores_writer.Write(key, -(weight.Value1()+weight.Value2()));
+            scores_writer.Write(key, -(weight.Value1() + weight.Value2()));
           alignment_writer.Write(key, alignment);
-          num_success ++;
-          if (num_success % 50  == 0) {
+          num_success++;
+          if (num_success % 50 == 0) {
             KALDI_LOG << "Processed " << num_success << " utterances, "
                       << "log-like per frame for " << key << " is "
                       << (like / features.NumRows()) << " over "
                       << features.NumRows() << " frames.";
           }
         } else {
-          KALDI_WARN << "Did not successfully decode file " << key << ", len = "
-                     << (features.NumRows());
+          KALDI_WARN << "Did not successfully decode file " << key
+                     << ", len = " << (features.NumRows());
           num_other_error++;
         }
       }
     }
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count)
-              << " over " << frame_count<< " frames.";
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
     KALDI_LOG << "Retried " << num_retry << " out of "
               << (num_success + num_other_error) << " utterances.";
     KALDI_LOG << "Done " << num_success << ", could not find features for "
               << num_no_feat << ", other errors on " << num_other_error;
-    if (num_success != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_success != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

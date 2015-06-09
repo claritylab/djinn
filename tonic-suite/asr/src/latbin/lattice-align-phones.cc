@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "lat/kaldi-lattice.h"
@@ -31,19 +30,24 @@ int main(int argc, char *argv[]) {
     using kaldi::int32;
 
     const char *usage =
-        "Convert lattices so that the arcs in the CompactLattice format correspond with\n"
-        "phones.  The output symbols are still words, unless you specify --replace-output-symbols=true\n"
-        "Usage: lattice-align-phones [options] <model> <lattice-rspecifier> <lattice-wspecifier>\n"
-        " e.g.: lattice-align-phones final.mdl ark:1.lats ark:phone_aligned.lats\n"
+        "Convert lattices so that the arcs in the CompactLattice format "
+        "correspond with\n"
+        "phones.  The output symbols are still words, unless you specify "
+        "--replace-output-symbols=true\n"
+        "Usage: lattice-align-phones [options] <model> <lattice-rspecifier> "
+        "<lattice-wspecifier>\n"
+        " e.g.: lattice-align-phones final.mdl ark:1.lats "
+        "ark:phone_aligned.lats\n"
         "Note: word-boundary file has format (on each line):\n"
         "<integer-phone-id> [begin|end|singleton|internal|nonword]\n";
-    
+
     ParseOptions po(usage);
     bool output_if_error = true;
-    
-    po.Register("output-error-lats", &output_if_error, "Output lattices that aligned "
+
+    po.Register("output-error-lats", &output_if_error,
+                "Output lattices that aligned "
                 "with errors (e.g. due to force-out");
-    
+
     PhoneAlignLatticeOptions opts;
     opts.Register(&po);
 
@@ -54,26 +58,24 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        model_rxfilename = po.GetArg(1),
-        lats_rspecifier = po.GetArg(2),
-        lats_wspecifier = po.GetArg(3);
-    
+    std::string model_rxfilename = po.GetArg(1), lats_rspecifier = po.GetArg(2),
+                lats_wspecifier = po.GetArg(3);
+
     TransitionModel tmodel;
     ReadKaldiObject(model_rxfilename, &tmodel);
-    
+
     SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-    CompactLatticeWriter clat_writer(lats_wspecifier); 
+    CompactLatticeWriter clat_writer(lats_wspecifier);
 
     int32 num_done = 0, num_err = 0;
-    
+
     for (; !clat_reader.Done(); clat_reader.Next()) {
       std::string key = clat_reader.Key();
       const CompactLattice &clat = clat_reader.Value();
 
       CompactLattice aligned_clat;
       bool ok = PhoneAlignLattice(clat, tmodel, opts, &aligned_clat);
-      
+
       if (!ok) {
         num_err++;
         if (!output_if_error)
@@ -97,12 +99,14 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    KALDI_LOG << "Successfully aligned " << num_done << " lattices; "
-              << num_err << " had errors.";
-    return (num_done > num_err ? 0 : 1); // We changed the error condition slightly here,
+    KALDI_LOG << "Successfully aligned " << num_done << " lattices; " << num_err
+              << " had errors.";
+    return (num_done > num_err
+                ? 0
+                : 1);  // We changed the error condition slightly here,
     // if there are errors in the word-boundary phones we can get situations
     // where most lattices give an error.
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

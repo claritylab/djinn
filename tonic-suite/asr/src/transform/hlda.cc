@@ -24,7 +24,6 @@
 
 namespace kaldi {
 
-
 void HldaAccsDiagGmm::Read(std::istream &is, bool binary, bool add) {
   ExpectToken(is, binary, "<HldaAccsDiagGmm>");
   ExpectToken(is, binary, "<S>");
@@ -33,8 +32,7 @@ void HldaAccsDiagGmm::Read(std::istream &is, bool binary, bool add) {
   if (add && S_.size() != 0 && static_cast<size_t>(dim) != S_.size())
     KALDI_ERR << "HldaAccsDiagGmm::Read, summing accs of different size.";
   if (!add || S_.empty()) S_.resize(dim);
-  for (size_t i = 0; i < S_.size(); i++)
-    S_[i].Read(is, binary, add);
+  for (size_t i = 0; i < S_.size(); i++) S_[i].Read(is, binary, add);
   ExpectToken(is, binary, "<occs>");
   int32 npdfs;
   ReadBasicType(is, binary, &npdfs);
@@ -44,8 +42,7 @@ void HldaAccsDiagGmm::Read(std::istream &is, bool binary, bool add) {
     occs_.resize(npdfs);
     mean_accs_.resize(npdfs);
   }
-  for (size_t i = 0; i < occs_.size(); i++)
-    occs_[i].Read(is, binary, add);
+  for (size_t i = 0; i < occs_.size(); i++) occs_[i].Read(is, binary, add);
   ExpectToken(is, binary, "<mean_accs>");
   for (size_t i = 0; i < mean_accs_.size(); i++)
     mean_accs_[i].Read(is, binary, add);
@@ -79,36 +76,30 @@ void HldaAccsDiagGmm::Write(std::ostream &os, bool binary) const {
   WriteToken(os, binary, "<occs>");
   int32 npdfs = occs_.size();
   WriteBasicType(os, binary, npdfs);
-  for (int32 i = 0; i < npdfs; i++)
-    occs_[i].Write(os, binary);
+  for (int32 i = 0; i < npdfs; i++) occs_[i].Write(os, binary);
   WriteToken(os, binary, "<mean_accs>");
-  for (int32 i = 0; i < npdfs; i++)
-    mean_accs_[i].Write(os, binary);
+  for (int32 i = 0; i < npdfs; i++) mean_accs_[i].Write(os, binary);
   WriteToken(os, binary, "<speedup>");
   WriteBasicType(os, binary, speedup_);
   if (speedup_ != 1.0) {
     WriteToken(os, binary, "<occs_sub>");
-    for (int32 i = 0; i < npdfs; i++)
-      occs_sub_[i].Write(os, binary);
+    for (int32 i = 0; i < npdfs; i++) occs_sub_[i].Write(os, binary);
     WriteToken(os, binary, "<mean_accs_sub>");
-    for (int32 i = 0; i < npdfs; i++)
-      mean_accs_sub_[i].Write(os, binary);
+    for (int32 i = 0; i < npdfs; i++) mean_accs_sub_[i].Write(os, binary);
   }
   WriteToken(os, binary, "<sample_gconst>");
   WriteBasicType(os, binary, sample_gconst_);
   WriteToken(os, binary, "</HldaAccsDiagGmm>");
 }
 
-void HldaAccsDiagGmm::Init(const AmDiagGmm &am,
-                           int32 orig_feat_dim,
+void HldaAccsDiagGmm::Init(const AmDiagGmm &am, int32 orig_feat_dim,
                            BaseFloat speedup) {
   KALDI_ASSERT(am.Dim() != 0);
   int32 num_pdfs = am.NumPdfs(), model_dim = am.Dim();
   KALDI_ASSERT(orig_feat_dim > 0 && orig_feat_dim >= model_dim);
 
-  S_.resize(model_dim+1);
-  for (int32 i = 0; i <= model_dim; i++)
-    S_[i].Resize(orig_feat_dim);
+  S_.resize(model_dim + 1);
+  for (int32 i = 0; i <= model_dim; i++) S_[i].Resize(orig_feat_dim);
   occs_.resize(num_pdfs);
   mean_accs_.resize(num_pdfs);
   for (int32 i = 0; i < num_pdfs; i++) {
@@ -129,21 +120,16 @@ void HldaAccsDiagGmm::Init(const AmDiagGmm &am,
   }
 
   sample_gconst_ = am.GetPdf(0).gconsts()(0);
-
 }
 
-
-void
-HldaAccsDiagGmm::
-AccumulateFromPosteriors(int32 pdf_id,
-                         const DiagGmm &gmm,
-                         const VectorBase<BaseFloat> &data,
-                         const VectorBase<BaseFloat> &posteriors) {
+void HldaAccsDiagGmm::AccumulateFromPosteriors(
+    int32 pdf_id, const DiagGmm &gmm, const VectorBase<BaseFloat> &data,
+    const VectorBase<BaseFloat> &posteriors) {
   Vector<double> data_dbl(data);
-  KALDI_ASSERT(static_cast<size_t>(pdf_id) < occs_.size()
-               && occs_[pdf_id].Dim() == posteriors.Dim());
-  KALDI_ASSERT(mean_accs_[pdf_id].NumCols() == data.Dim()
-               && "Feature dim mismatch in HLDA computation ");
+  KALDI_ASSERT(static_cast<size_t>(pdf_id) < occs_.size() &&
+               occs_[pdf_id].Dim() == posteriors.Dim());
+  KALDI_ASSERT(mean_accs_[pdf_id].NumCols() == data.Dim() &&
+               "Feature dim mismatch in HLDA computation ");
   double tot_occ = 0.0;
   int32 model_dim = S_.size() - 1;
   Vector<BaseFloat> tot_occ_times_inv_var(model_dim);
@@ -166,7 +152,8 @@ AccumulateFromPosteriors(int32 pdf_id,
     Vector<double> posteriors_dbl(posteriors);
     occs_[pdf_id].AddVec(1.0, posteriors_dbl);
     mean_accs_[pdf_id].AddVecVec(1.0, posteriors_dbl, data_dbl);
-    if (RandUniform() > speedup_) return;  // continue with probability "speedup".
+    if (RandUniform() > speedup_)
+      return;  // continue with probability "speedup".
 
     for (int32 i = 0; i < posteriors.Dim(); i++) {
       if (posteriors(i) > 1.0e-05) {
@@ -179,7 +166,6 @@ AccumulateFromPosteriors(int32 pdf_id,
         tot_occ_times_inv_var.AddVec(occ, inv_var);
       }
     }
-
   }
   if (tot_occ != 0.0) {
     for (int32 i = 0; i < model_dim; i++)
@@ -188,9 +174,7 @@ AccumulateFromPosteriors(int32 pdf_id,
   }
 }
 
-
-void HldaAccsDiagGmm::Update(AmDiagGmm *am,
-                             MatrixBase<BaseFloat> *Mfull,
+void HldaAccsDiagGmm::Update(AmDiagGmm *am, MatrixBase<BaseFloat> *Mfull,
                              MatrixBase<BaseFloat> *M_out,
                              BaseFloat *objf_impr_out,
                              BaseFloat *count_out) const {
@@ -199,7 +183,7 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
 
   if (!ApproxEqual(sample_gconst_, am->GetPdf(0).gconsts()(0), 1.0e-05)) {
     KALDI_ERR << "You have to call the HLDA update with the same model as used "
-        "for accumulation.";
+                 "for accumulation.";
   }
 
   int32 model_dim = S_.size() - 1;
@@ -225,9 +209,10 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
     }
   }
 
-  const std::vector<Vector<double> > &occs = (speedup_ == 1.0 ? occs_ : occs_sub_);
-  const std::vector<Matrix<double> > &mean_accs = (speedup_ == 1.0 ? mean_accs_ :
-                                                   mean_accs_sub_);
+  const std::vector<Vector<double> > &occs =
+      (speedup_ == 1.0 ? occs_ : occs_sub_);
+  const std::vector<Matrix<double> > &mean_accs =
+      (speedup_ == 1.0 ? mean_accs_ : mean_accs_sub_);
 
   int32 num_pdfs = occs.size();
   Vector<double> tot_mean_acc(feat_dim);
@@ -237,18 +222,19 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
     const DiagGmm &gmm = am->GetPdf(p);
     KALDI_ASSERT(num_gauss == gmm.NumGauss());
     for (int32 g = 0; g < num_gauss; g++) {
-      double occ = occs[p](g), inv_occ = (occ == 0.0 ? 0.0 : 1.0/occ);
+      double occ = occs[p](g), inv_occ = (occ == 0.0 ? 0.0 : 1.0 / occ);
       Vector<double> mean(feat_dim);
       mean.AddVec(inv_occ, mean_accs[p].Row(g));
       tot_mean_acc.AddVec(1.0, mean_accs[p].Row(g));
       tot_occ += occ;
       // update G matrices (subtracting outer-product of means, scaled by
-      // occ and inverse-var); has same effect as if G is summed outer product of
+      // occ and inverse-var); has same effect as if G is summed outer product
+      // of
       // (x-mu)^2, scaled by occ and inverse-var.
 
       SubVector<BaseFloat> inv_var(gmm.inv_vars(), g);  // this inv-var.
       for (int32 d = 0; d < model_dim; d++) {
-        G[d].AddVec2(-1.0*occ*inv_var(d), mean);
+        G[d].AddVec2(-1.0 * occ * inv_var(d), mean);
       }
     }
   }
@@ -258,11 +244,9 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
   // subtract total occ times outer product of global mean, from
   // dimensions of G that correspond to "rejected dimensions"
   // (with unit-var, global mean).
-  for (int32 d = model_dim; d < feat_dim; d++)
-    G[d].AddVec2(-tot_occ, tot_mean);
+  for (int32 d = model_dim; d < feat_dim; d++) G[d].AddVec2(-tot_occ, tot_mean);
 
-  for (int32 d = 0; d < feat_dim; d++)
-    KALDI_ASSERT(G[d].IsPosDef());
+  for (int32 d = 0; d < feat_dim; d++) KALDI_ASSERT(G[d].IsPosDef());
 
   MlltAccs::Update(tot_occ, G, Mfull, objf_impr_out, count_out);
 
@@ -279,10 +263,11 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
   double tot_occ_means = 0;
   for (int32 p = 0; p < num_pdfs; p++) {
     int32 num_gauss = static_cast<int32>(occs_[p].Dim());
-    for (int32 g  = 0; g < num_gauss; g++) {
+    for (int32 g = 0; g < num_gauss; g++) {
       double occ = occs_[p](g);
       tot_occ_means += occ;
-      if (occ == 0.0) num_no_data++;  // and don't update Gaussian.
+      if (occ == 0.0)
+        num_no_data++;  // and don't update Gaussian.
       else {
         SubVector<double> mean_stats(mean_accs_[p], g);
         // project mean with transform, to accepted dim.
@@ -293,12 +278,11 @@ void HldaAccsDiagGmm::Update(AmDiagGmm *am,
     }
     am->GetPdf(p).ComputeGconsts();
   }
-  KALDI_LOG << "Occupancy count used to update means was "
-            << tot_occ_means;
+  KALDI_LOG << "Occupancy count used to update means was " << tot_occ_means;
   if (num_no_data > 0) {
     KALDI_WARN << num_no_data << " Gaussians not updated due to no data; "
-        "be careful not to set your silence-weight to exactly zero (e.g. use 0.01).";
+                                 "be careful not to set your silence-weight to "
+                                 "exactly zero (e.g. use 0.01).";
   }
 }
-
 }

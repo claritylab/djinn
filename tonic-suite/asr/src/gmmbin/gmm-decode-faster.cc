@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -27,15 +26,15 @@
 #include "decoder/faster-decoder.h"
 #include "gmm/decodable-am-diag-gmm.h"
 #include "base/timer.h"
-#include "lat/kaldi-lattice.h" // for CompactLatticeArc
+#include "lat/kaldi-lattice.h"  // for CompactLatticeArc
 
 namespace kaldi {
 
 fst::Fst<fst::StdArc> *ReadNetwork(std::string filename) {
   // read decoding network FST
-  Input ki(filename); // use ki.Stream() instead of is.
-  if (!ki.Stream().good()) KALDI_ERR << "Could not open decoding-graph FST "
-                                      << filename;
+  Input ki(filename);  // use ki.Stream() instead of is.
+  if (!ki.Stream().good())
+    KALDI_ERR << "Could not open decoding-graph FST " << filename;
   fst::FstHeader hdr;
   if (!hdr.Read(ki.Stream(), "<unknown>")) {
     KALDI_ERR << "Reading FST: error reading FST header.";
@@ -54,14 +53,13 @@ fst::Fst<fst::StdArc> *ReadNetwork(std::string filename) {
   } else {
     KALDI_ERR << "Reading FST: unsupported FST type: " << hdr.FstType();
   }
-  if (decode_fst == NULL) { // fst code will warn.
+  if (decode_fst == NULL) {  // fst code will warn.
     KALDI_ERR << "Error reading FST (after reading header).";
     return NULL;
   } else {
     return decode_fst;
   }
 }
-
 }
 
 int main(int argc, char *argv[]) {
@@ -71,13 +69,16 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Decode features using GMM-based model.\n"
-        "Usage:  gmm-decode-faster [options] model-in fst-in features-rspecifier words-wspecifier [alignments-wspecifier [lattice-wspecifier]]\n"
-        "Note: lattices, if output, will just be linear sequences; use gmm-latgen-faster\n"
+        "Usage:  gmm-decode-faster [options] model-in fst-in "
+        "features-rspecifier words-wspecifier [alignments-wspecifier "
+        "[lattice-wspecifier]]\n"
+        "Note: lattices, if output, will just be linear sequences; use "
+        "gmm-latgen-faster\n"
         "  if you want \"real\" lattices.\n";
     ParseOptions po(usage);
     bool allow_partial = true;
     BaseFloat acoustic_scale = 0.1;
-    
+
     std::string word_syms_filename;
     FasterDecoderOptions decoder_opts;
     decoder_opts.Register(&po, true);  // true == include obscure settings.
@@ -94,12 +95,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1),
-        fst_rxfilename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        words_wspecifier = po.GetArg(4),
-        alignment_wspecifier = po.GetOptArg(5),
-        lattice_wspecifier = po.GetOptArg(6);
+    std::string model_rxfilename = po.GetArg(1), fst_rxfilename = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                words_wspecifier = po.GetArg(4),
+                alignment_wspecifier = po.GetOptArg(5),
+                lattice_wspecifier = po.GetOptArg(6);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -117,10 +117,10 @@ int main(int argc, char *argv[]) {
     CompactLatticeWriter clat_writer(lattice_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "") 
+    if (word_syms_filename != "")
       if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
         KALDI_ERR << "Could not read symbol table from file "
-                   << word_syms_filename;
+                  << word_syms_filename;
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     // large process: the page-table entries are duplicated, which requires a
     // lot of virtual memory.
     fst::Fst<fst::StdArc> *decode_fst = ReadNetwork(fst_rxfilename);
-    
+
     BaseFloat tot_like = 0.0;
     kaldi::int64 frame_count = 0;
     int num_success = 0, num_fail = 0;
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
     for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string key = feature_reader.Key();
-      Matrix<BaseFloat> features (feature_reader.Value());
+      Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
       if (features.NumRows() == 0) {
         KALDI_WARN << "Zero-length utterance: " << key;
@@ -154,11 +154,12 @@ int main(int argc, char *argv[]) {
 
       fst::VectorFst<LatticeArc> decoded;  // linear FST.
 
-      if ( (allow_partial || decoder.ReachedFinal())
-           && decoder.GetBestPath(&decoded) ) {
+      if ((allow_partial || decoder.ReachedFinal()) &&
+          decoder.GetBestPath(&decoded)) {
         if (!decoder.ReachedFinal())
-          KALDI_WARN << "Decoder did not reach end-state, "
-                     << "outputting partial traceback since --allow-partial=true";
+          KALDI_WARN
+              << "Decoder did not reach end-state, "
+              << "outputting partial traceback since --allow-partial=true";
         num_success++;
         std::vector<int32> alignment;
         std::vector<int32> words;
@@ -168,9 +169,8 @@ int main(int argc, char *argv[]) {
         GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
 
         words_writer.Write(key, words);
-        if (alignment_writer.IsOpen())
-          alignment_writer.Write(key, alignment);
-          
+        if (alignment_writer.IsOpen()) alignment_writer.Write(key, alignment);
+
         if (lattice_wspecifier != "") {
           // We'll write the lattice without acoustic scaling.
           if (acoustic_scale != 0.0)
@@ -180,18 +180,18 @@ int main(int argc, char *argv[]) {
           ConvertLattice(decoded, &clat, true);
           clat_writer.Write(key, clat);
         }
-          
+
         if (word_syms != NULL) {
           std::cerr << key << ' ';
           for (size_t i = 0; i < words.size(); i++) {
             std::string s = word_syms->Find(words[i]);
             if (s == "")
-              KALDI_ERR << "Word-id " << words[i] <<" not in symbol table.";
+              KALDI_ERR << "Word-id " << words[i] << " not in symbol table.";
             std::cerr << s << ' ';
           }
           std::cerr << '\n';
         }
-        BaseFloat like = -weight.Value1() -weight.Value2();
+        BaseFloat like = -weight.Value1() - weight.Value2();
         tot_like += like;
         KALDI_LOG << "Log-like per frame for utterance " << key << " is "
                   << (like / features.NumRows()) << " over "
@@ -206,21 +206,20 @@ int main(int argc, char *argv[]) {
     }
 
     double elapsed = timer.Elapsed();
-    KALDI_LOG << "Time taken [excluding initialization] "<< elapsed
+    KALDI_LOG << "Time taken [excluding initialization] " << elapsed
               << "s: real-time factor assuming 100 frames/sec is "
-              << (elapsed*100.0/frame_count);
+              << (elapsed * 100.0 / frame_count);
     KALDI_LOG << "Done " << num_success << " utterances, failed for "
               << num_fail;
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count) << " over "
-              << frame_count<<" frames.";
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
 
-    if (word_syms) delete word_syms;    
+    if (word_syms) delete word_syms;
     delete decode_fst;
     return (num_success != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

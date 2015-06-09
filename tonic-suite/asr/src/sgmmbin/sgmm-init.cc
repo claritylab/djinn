@@ -24,7 +24,6 @@
 #include "hmm/transition-model.h"
 #include "tree/context-dep.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
     po.Register("phn-space-dim", &phn_space_dim, "Phonetic space dimension.");
     po.Register("spk-space-dim", &spk_space_dim, "Speaker space dimension.");
     po.Register("init-from-sgmm", &init_from_sgmm,
-        "Initialize from another SGMM (instead of a UBM).");
+                "Initialize from another SGMM (instead of a UBM).");
 
     po.Read(argc, argv);
 
@@ -54,9 +53,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string topo_in_filename = po.GetArg(1),
-        tree_in_filename = po.GetArg(2),
-        init_model_filename = po.GetArg(3),
-        sgmm_out_filename = po.GetArg(4);
+                tree_in_filename = po.GetArg(2),
+                init_model_filename = po.GetArg(3),
+                sgmm_out_filename = po.GetArg(4);
 
     ContextDependency ctx_dep;
     {
@@ -64,7 +63,6 @@ int main(int argc, char *argv[]) {
       Input ki(tree_in_filename.c_str(), &binary_in);
       ctx_dep.Read(ki.Stream(), binary_in);
     }
-
 
     HmmTopology topo;
     ReadKaldiObject(topo_in_filename, &topo);
@@ -102,10 +100,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written model to " << sgmm_out_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

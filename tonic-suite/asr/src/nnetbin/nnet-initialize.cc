@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         "e.g.:\n"
         " nnet-copy --binary=false nnet.conf nnet.init\n";
 
-    SetVerboseLevel(1); // be verbose by default
+    SetVerboseLevel(1);  // be verbose by default
 
     ParseOptions po(usage);
     bool binary_write = true;
@@ -49,24 +49,22 @@ int main(int argc, char *argv[]) {
     }
 
     std::string nnet_config_in_filename = po.GetArg(1),
-        nnet_out_filename = po.GetArg(2);
+                nnet_out_filename = po.GetArg(2);
 
     std::srand(seed);
 
     // initialize the network
     Nnet nnet;
-    nnet.Init(nnet_config_in_filename); 
-    
+    nnet.Init(nnet_config_in_filename);
+
     // store the network
     Output ko(nnet_out_filename, binary_write);
     nnet.Write(ko.Stream(), binary_write);
 
     KALDI_LOG << "Written initialized model to " << nnet_out_filename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

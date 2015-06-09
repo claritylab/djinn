@@ -25,22 +25,23 @@ namespace nnet2 {
 
 class LimitRankClass {
  public:
-  LimitRankClass(const NnetLimitRankOpts &opts,
-                 int32 c,
-                 Nnet *nnet): opts_(opts), c_(c), nnet_(nnet) { }
-  void operator () () {
-    AffineComponent *ac = dynamic_cast<AffineComponent*>(
-        &(nnet_->GetComponent(c_)));
+  LimitRankClass(const NnetLimitRankOpts &opts, int32 c, Nnet *nnet)
+      : opts_(opts), c_(c), nnet_(nnet) {}
+  void operator()() {
+    AffineComponent *ac =
+        dynamic_cast<AffineComponent *>(&(nnet_->GetComponent(c_)));
     KALDI_ASSERT(ac != NULL);
 
-    // We'll limit the rank of just the linear part, keeping the bias vector full.
-    Matrix<BaseFloat> M (ac->LinearParams());
+    // We'll limit the rank of just the linear part, keeping the bias vector
+    // full.
+    Matrix<BaseFloat> M(ac->LinearParams());
     int32 rows = M.NumRows(), cols = M.NumCols(), rc_min = std::min(rows, cols);
     Vector<BaseFloat> s(rc_min);
     Matrix<BaseFloat> U(rows, rc_min), Vt(rc_min, cols);
-    // Do the destructive svd M = U diag(s) V^T.  It actually outputs the transpose of V.
+    // Do the destructive svd M = U diag(s) V^T.  It actually outputs the
+    // transpose of V.
     M.DestructiveSvd(&s, &U, &Vt);
-    SortSvd(&s, &U, &Vt); // Sort the singular values from largest to smallest.
+    SortSvd(&s, &U, &Vt);  // Sort the singular values from largest to smallest.
 
     int32 d = GetRetainedDim(rows, cols);
     BaseFloat old_svd_sum = s.Sum();
@@ -48,12 +49,13 @@ class LimitRankClass {
     s.Resize(d, kCopyData);
     Vt.Resize(d, cols, kCopyData);
     BaseFloat new_svd_sum = s.Sum();
-    KALDI_LOG << "For component " << c_ << " of dimension " << rows
-              << " x " << cols << ", reduced rank from "
-              << rc_min <<  " to " << d << ", SVD sum reduced from "
-              << old_svd_sum << " to " << new_svd_sum;
-    Vt.MulRowsVec(s); // Vt <-- diag(s) Vt.
-    M.AddMatMat(1.0, U, kNoTrans, Vt, kNoTrans, 0.0); // Reconstruct with reduced
+    KALDI_LOG << "For component " << c_ << " of dimension " << rows << " x "
+              << cols << ", reduced rank from " << rc_min << " to " << d
+              << ", SVD sum reduced from " << old_svd_sum << " to "
+              << new_svd_sum;
+    Vt.MulRowsVec(s);  // Vt <-- diag(s) Vt.
+    M.AddMatMat(1.0, U, kNoTrans, Vt, kNoTrans,
+                0.0);  // Reconstruct with reduced
     // rank.
     Vector<BaseFloat> bias_params(ac->BiasParams());
     ac->SetParams(bias_params, M);
@@ -63,10 +65,12 @@ class LimitRankClass {
     if (opts_.parameter_proportion <= 0.0 || opts_.parameter_proportion > 1.0)
       KALDI_ERR << "bad --parameter-proportion " << opts_.parameter_proportion;
     // If we do SVD to dimension d, so that it's U diag(s) V^T where
-    // U is rows * d, s is d, and V is cols * d, then the #params is as follows...
+    // U is rows * d, s is d, and V is cols * d, then the #params is as
+    // follows...
     //   the first column of U has free parameters (#rows - 1) [the -1 is due to
     //   the length constraint]; the second has (#rows - 2) [subtract 1 for the
-    //   length constraint and one for orthogonality with the previous row], etc.
+    //   length constraint and one for orthogonality with the previous row],
+    //   etc.
     //   Total is params(U) = (rows * d) - ((d(d+1))/2),
     //            params(s) = d,
     //            params(V) = (cols * d) - ((d(d+1))/2),
@@ -81,32 +85,30 @@ class LimitRankClass {
     //   c = rows * cols * parameter_proportion.
     //   Take smaller solution.
     BaseFloat a = 1.0, b = -(rows + cols),
-        c = rows * cols * opts_.parameter_proportion;
+              c = rows * cols * opts_.parameter_proportion;
     BaseFloat x = (-b - sqrt(b * b - 4 * a * c)) / (2.0 * a);
     int32 ans = static_cast<int32>(x);
     KALDI_ASSERT(ans > 0 && ans <= std::min(rows, cols));
     return ans;
   }
-  
-  ~LimitRankClass() { }
+
+  ~LimitRankClass() {}
+
  private:
   const NnetLimitRankOpts &opts_;
   int32 c_;
   Nnet *nnet_;
 };
 
-
-void LimitRankParallel(const NnetLimitRankOpts &opts,
-                            Nnet *nnet) {
+void LimitRankParallel(const NnetLimitRankOpts &opts, Nnet *nnet) {
   TaskSequencerConfig task_config;
   task_config.num_threads = opts.num_threads;
   TaskSequencer<LimitRankClass> tc(task_config);
   for (int32 c = 0; c < nnet->NumComponents(); c++) {
-    if (dynamic_cast<AffineComponent*>(&(nnet->GetComponent(c))) != NULL)
+    if (dynamic_cast<AffineComponent *>(&(nnet->GetComponent(c))) != NULL)
       tc.Run(new LimitRankClass(opts, c, nnet));
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi

@@ -27,39 +27,39 @@
 namespace kaldi {
 namespace nnet2 {
 
-/** Configuration class that controls neural net "widening", which means increasing
+/** Configuration class that controls neural net "widening", which means
+   increasing
     the dimension of the hidden layers of an already-trained neural net.
  */
 struct NnetWidenConfig {
   int32 hidden_layer_dim;
   BaseFloat param_stddev_factor;
   BaseFloat bias_stddev;
-  
-  NnetWidenConfig(): hidden_layer_dim(-1),
-                     param_stddev_factor(1.0),
-                     bias_stddev(0.5) { }
+
+  NnetWidenConfig()
+      : hidden_layer_dim(-1), param_stddev_factor(1.0), bias_stddev(0.5) {}
 
   void Register(OptionsItf *po) {
-    po->Register("hidden-layer-dim", &hidden_layer_dim, "[required option]: "
+    po->Register("hidden-layer-dim", &hidden_layer_dim,
+                 "[required option]: "
                  "target dimension of hidden layers");
-    po->Register("param-stddev-factor", &param_stddev_factor, "Factor in "
+    po->Register("param-stddev-factor", &param_stddev_factor,
+                 "Factor in "
                  "standard deviation of linear parameters of new part of "
                  "transform (multiply by 1/sqrt of input-dim)");
-    po->Register("bias-stddev", &bias_stddev, "Standard deviation of added "
+    po->Register("bias-stddev", &bias_stddev,
+                 "Standard deviation of added "
                  "bias parameters");
-  }  
+  }
 };
 
 /**
    This function widens a neural network by increasing the hidden-layer
    dimensions to the target. */
 
-void WidenNnet(const NnetWidenConfig &widen_config,
-               Nnet *nnet);
-  
+void WidenNnet(const NnetWidenConfig &widen_config, Nnet *nnet);
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

@@ -32,8 +32,7 @@ using std::vector;
 
 namespace kaldi {
 void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
-                            const Posterior &post,
-                            const DiagGmm &gmm,
+                            const Posterior &post, const DiagGmm &gmm,
                             FmllrDiagGmmAccs *spk_stats) {
   KALDI_ASSERT(static_cast<int32>(post.size()) == feats.NumRows());
   for (size_t i = 0; i < post.size(); i++) {
@@ -45,13 +44,10 @@ void AccumulateForUtterance(const Matrix<BaseFloat> &feats,
       gselect[j] = g;
       this_post(j) = weight;
     }
-    spk_stats->AccumulateFromPosteriorsPreselect(gmm, gselect,
-                                                 feats.Row(i),
+    spk_stats->AccumulateFromPosteriorsPreselect(gmm, gselect, feats.Row(i),
                                                  this_post);
   }
 }
-
-
 }
 
 int main(int argc, char *argv[]) {
@@ -61,23 +57,30 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Estimate linear-VTLN transforms, either per utterance or for "
         "the supplied set of speakers (spk2utt option); this version\n"
-        "is for a global diagonal GMM (also known as a UBM).  Reads posteriors\n"
+        "is for a global diagonal GMM (also known as a UBM).  Reads "
+        "posteriors\n"
         "indicating Gaussian indexes in the UBM.\n"
         "\n"
         "Usage: gmm-global-est-lvtln-trans [options] <gmm-in> <lvtln-in> "
-        "<feature-rspecifier> <gpost-rspecifier> <lvtln-trans-wspecifier> [<warp-wspecifier>]\n"
-        "e.g.: gmm-global-est-lvtln-trans 0.ubm 0.lvtln '$feats' ark,s,cs:- ark:1.trans ark:1.warp\n"
-        "(where the <gpost-rspecifier> will likely come from gmm-global-get-post or\n"
+        "<feature-rspecifier> <gpost-rspecifier> <lvtln-trans-wspecifier> "
+        "[<warp-wspecifier>]\n"
+        "e.g.: gmm-global-est-lvtln-trans 0.ubm 0.lvtln '$feats' ark,s,cs:- "
+        "ark:1.trans ark:1.warp\n"
+        "(where the <gpost-rspecifier> will likely come from "
+        "gmm-global-get-post or\n"
         "gmm-global-gselect-to-post\n";
-    
+
     ParseOptions po(usage);
     string spk2utt_rspecifier;
     BaseFloat logdet_scale = 1.0;
     std::string norm_type = "offset";
-    po.Register("norm-type", &norm_type, "type of fMLLR applied (\"offset\"|\"none\"|\"diag\")");
-    po.Register("spk2utt", &spk2utt_rspecifier, "rspecifier for speaker to "
+    po.Register("norm-type", &norm_type,
+                "type of fMLLR applied (\"offset\"|\"none\"|\"diag\")");
+    po.Register("spk2utt", &spk2utt_rspecifier,
+                "rspecifier for speaker to "
                 "utterance-list map");
-    po.Register("logdet-scale", &logdet_scale, "Scale on log-determinant term in auxiliary function");
+    po.Register("logdet-scale", &logdet_scale,
+                "Scale on log-determinant term in auxiliary function");
 
     po.Read(argc, argv);
 
@@ -86,19 +89,14 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    string
-        model_rxfilename = po.GetArg(1),
-        lvtln_rxfilename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        post_rspecifier = po.GetArg(4),
-        trans_wspecifier = po.GetArg(5),
-        warp_wspecifier = po.GetOptArg(6);
+    string model_rxfilename = po.GetArg(1), lvtln_rxfilename = po.GetArg(2),
+           feature_rspecifier = po.GetArg(3), post_rspecifier = po.GetArg(4),
+           trans_wspecifier = po.GetArg(5), warp_wspecifier = po.GetOptArg(6);
 
     DiagGmm gmm;
     ReadKaldiObject(model_rxfilename, &gmm);
     LinearVtln lvtln;
     ReadKaldiObject(lvtln_rxfilename, &lvtln);
-
 
     RandomAccessPosteriorReader post_reader(post_rspecifier);
 
@@ -145,33 +143,26 @@ int main(int argc, char *argv[]) {
 
         BaseFloat impr, spk_tot_t;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim()+1);
+          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim() + 1);
           int32 class_idx;
-          lvtln.ComputeTransform(spk_stats,
-                                 norm_type,
-                                 logdet_scale,
-                                 &transform,
-                                 &class_idx,
-                                 NULL,
-                                 &impr,
-                                 &spk_tot_t);
+          lvtln.ComputeTransform(spk_stats, norm_type, logdet_scale, &transform,
+                                 &class_idx, NULL, &impr, &spk_tot_t);
           class_counts[class_idx]++;
           transform_writer.Write(spk, transform);
           if (warp_wspecifier != "")
             warp_writer.Write(spk, lvtln.GetWarp(class_idx));
         }
         KALDI_LOG << "For speaker " << spk << ", auxf-impr from LVTLN is "
-                  << (impr/spk_tot_t) << ", over " << spk_tot_t << " frames.";
+                  << (impr / spk_tot_t) << ", over " << spk_tot_t << " frames.";
         tot_lvtln_impr += impr;
         tot_t += spk_tot_t;
-      }  // end looping over speakers
+      }       // end looping over speakers
     } else {  // per-utterance adaptation
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !feature_reader.Done(); feature_reader.Next()) {
         string utt = feature_reader.Key();
         if (!post_reader.HasKey(utt)) {
-          KALDI_WARN << "Did not find posterior for utterance "
-                     << utt;
+          KALDI_WARN << "Did not find posterior for utterance " << utt;
           num_no_post++;
           continue;
         }
@@ -179,8 +170,8 @@ int main(int argc, char *argv[]) {
         const Posterior &post = post_reader.Value(utt);
 
         if (static_cast<int32>(post.size()) != feats.NumRows()) {
-          KALDI_WARN << "Posterior has wrong size " << post.size()
-              << " vs. " << feats.NumRows();
+          KALDI_WARN << "Posterior has wrong size " << post.size() << " vs. "
+                     << feats.NumRows();
           num_other_error++;
           continue;
         }
@@ -188,20 +179,13 @@ int main(int argc, char *argv[]) {
 
         FmllrDiagGmmAccs spk_stats(lvtln.Dim());
 
-        AccumulateForUtterance(feats, post, gmm,
-                               &spk_stats);
+        AccumulateForUtterance(feats, post, gmm, &spk_stats);
         BaseFloat impr, utt_tot_t = spk_stats.beta_;
         {  // Compute the transform and write it out.
-          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim()+1);
+          Matrix<BaseFloat> transform(lvtln.Dim(), lvtln.Dim() + 1);
           int32 class_idx;
-          lvtln.ComputeTransform(spk_stats,
-                                 norm_type,
-                                 logdet_scale,
-                                 &transform,
-                                 &class_idx,
-                                 NULL,
-                                 &impr,
-                                 &utt_tot_t);
+          lvtln.ComputeTransform(spk_stats, norm_type, logdet_scale, &transform,
+                                 &class_idx, NULL, &impr, &utt_tot_t);
           class_counts[class_idx]++;
           transform_writer.Write(utt, transform);
           if (warp_wspecifier != "")
@@ -209,7 +193,7 @@ int main(int argc, char *argv[]) {
         }
 
         KALDI_LOG << "For utterance " << utt << ", auxf-impr from LVTLN is "
-                  << (impr/utt_tot_t) << ", over " << utt_tot_t << " frames.";
+                  << (impr / utt_tot_t) << ", over " << utt_tot_t << " frames.";
         tot_lvtln_impr += impr;
         tot_t += utt_tot_t;
       }
@@ -223,13 +207,13 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Done " << num_done << " files, " << num_no_post
-              << " with no posteriors, " << num_other_error << " with other errors.";
+              << " with no posteriors, " << num_other_error
+              << " with other errors.";
     KALDI_LOG << "Overall LVTLN auxf impr per frame is "
               << (tot_lvtln_impr / tot_t) << " over " << tot_t << " frames.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

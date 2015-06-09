@@ -33,7 +33,6 @@ class Sgmm2Project {
   // hasn't been written up yet.  We don't make any functions const or
   // static, because there are no member variables.
  public:
-
   // If inv_lda_mllt is the matrix that projects from the space the SGMM is
   // in, typically back to the spliced-MFCC space, and begin_dim and end_dim
   // represent the range of dims we want to model, then "projection" will be
@@ -42,9 +41,8 @@ class Sgmm2Project {
   // is of dimension e.g. 40 x 117, and omits the space that the model's states
   // all treat the same.
   void ComputeProjection(const AmSgmm2 &sgmm,
-                         const Matrix<BaseFloat> &inv_lda_mllt,
-                         int32 begin_dim,
-                         int32 end_dim, // last dim plus one that we keep.
+                         const Matrix<BaseFloat> &inv_lda_mllt, int32 begin_dim,
+                         int32 end_dim,  // last dim plus one that we keep.
                          Matrix<BaseFloat> *projection);
 
   // This function applies the feature-space projection to the SGMM.
@@ -55,32 +53,24 @@ class Sgmm2Project {
   // extended with a unit matrix.
   void ApplyProjection(const Matrix<BaseFloat> &total_projection,
                        AmSgmm2 *sgmm);
-                         
+
  private:
   // Computes statistics for LDA, in the SGMM's feature space.
   // This only needs to be approximate, so we use stats based
   // on the means in the UBM.
-  void ComputeLdaStats(const FullGmm &full_ubm,
-                       SpMatrix<double> *between_covar,
+  void ComputeLdaStats(const FullGmm &full_ubm, SpMatrix<double> *between_covar,
                        SpMatrix<double> *within_covar);
 
-  void ProjectVariance (const Matrix<double> &total_projection,
-                        bool inverse,
-                        SpMatrix<double> *variance);
-  
-  void ProjectVariance (const Matrix<double> &total_projection,
-                        bool inverse,
-                        SpMatrix<float> *variance);
-  
-  void ComputeLdaTransform(const SpMatrix<double> &B,
-                           const SpMatrix<double> &W,
-                           int32 dim_to_retain, 
-                           Matrix<double> *Projection);
-  
+  void ProjectVariance(const Matrix<double> &total_projection, bool inverse,
+                       SpMatrix<double> *variance);
+
+  void ProjectVariance(const Matrix<double> &total_projection, bool inverse,
+                       SpMatrix<float> *variance);
+
+  void ComputeLdaTransform(const SpMatrix<double> &B, const SpMatrix<double> &W,
+                           int32 dim_to_retain, Matrix<double> *Projection);
 };
 
-
-
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #endif  // KALDI_SGMM_AM_SGMM_PROJECT_H_

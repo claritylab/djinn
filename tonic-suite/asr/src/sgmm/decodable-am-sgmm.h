@@ -32,17 +32,20 @@ namespace kaldi {
 
 class DecodableAmSgmm : public DecodableInterface {
  public:
-  DecodableAmSgmm(const SgmmGselectConfig &opts,
-                  const AmSgmm &am,
+  DecodableAmSgmm(const SgmmGselectConfig &opts, const AmSgmm &am,
                   const SgmmPerSpkDerivedVars &spk,  // may be empty
-                  const TransitionModel &tm,
-                  const Matrix<BaseFloat> &feats,
+                  const TransitionModel &tm, const Matrix<BaseFloat> &feats,
                   const std::vector<std::vector<int32> > &gselect_all,
-                  BaseFloat log_prune):  // gselect_all may be empty
-      acoustic_model_(am), sgmm_config_(opts), spk_(spk),
-      trans_model_(tm), feature_matrix_(feats),
-      gselect_all_(gselect_all), previous_frame_(-1),
-      log_prune_(log_prune) {
+                  BaseFloat log_prune)
+      :  // gselect_all may be empty
+        acoustic_model_(am),
+        sgmm_config_(opts),
+        spk_(spk),
+        trans_model_(tm),
+        feature_matrix_(feats),
+        gselect_all_(gselect_all),
+        previous_frame_(-1),
+        log_prune_(log_prune) {
     ResetLogLikeCache();
   }
 
@@ -76,7 +79,7 @@ class DecodableAmSgmm : public DecodableInterface {
   /// Defines a cache record for a state
   struct LikelihoodCacheRecord {
     BaseFloat log_like;  ///< Cache value
-    int32 hit_time;     ///< Frame for which this value is relevant
+    int32 hit_time;      ///< Frame for which this value is relevant
   };
 
   /// Cached per-frame quantities used in SGMM likelihood computation.
@@ -90,29 +93,26 @@ class DecodableAmSgmm : public DecodableInterface {
 
 class DecodableAmSgmmScaled : public DecodableAmSgmm {
  public:
-  DecodableAmSgmmScaled(const SgmmGselectConfig &opts,
-                        const AmSgmm &am,
+  DecodableAmSgmmScaled(const SgmmGselectConfig &opts, const AmSgmm &am,
                         const SgmmPerSpkDerivedVars &spk,  // may be empty
                         const TransitionModel &tm,
                         const Matrix<BaseFloat> &feats,
                         const std::vector<std::vector<int32> > &gselect_all,
                         // gselect_all may be empty
-                        BaseFloat log_prune,
-                        BaseFloat scale)
+                        BaseFloat log_prune, BaseFloat scale)
       : DecodableAmSgmm(opts, am, spk, tm, feats, gselect_all, log_prune),
         scale_(scale) {}
 
   // Note, frames are numbered from zero but transition-ids from one.
   virtual BaseFloat LogLikelihood(int32 frame, int32 tid) {
-    return LogLikelihoodZeroBased(frame, trans_model_.TransitionIdToPdf(tid))
-            * scale_;
+    return LogLikelihoodZeroBased(frame, trans_model_.TransitionIdToPdf(tid)) *
+           scale_;
   }
 
  private:
   BaseFloat scale_;
   KALDI_DISALLOW_COPY_AND_ASSIGN(DecodableAmSgmmScaled);
 };
-
 
 }  // namespace kaldi
 

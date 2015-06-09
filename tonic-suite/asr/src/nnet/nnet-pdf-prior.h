@@ -37,9 +37,8 @@ struct PdfPriorOptions {
   BaseFloat prior_scale;
   BaseFloat prior_cutoff;
 
-  PdfPriorOptions() : class_frame_counts(""),
-                      prior_scale(1.0),
-                      prior_cutoff(1e-10) {}
+  PdfPriorOptions()
+      : class_frame_counts(""), prior_scale(1.0), prior_cutoff(1e-10) {}
 
   void Register(OptionsItf *po) {
     po->Register("class-frame-counts", &class_frame_counts,
@@ -48,8 +47,9 @@ struct PdfPriorOptions {
                  " or pre-softmax activations)");
     po->Register("prior-scale", &prior_scale,
                  "Scaling factor to be applied on pdf-log-priors");
-    po->Register("prior-cutoff", &prior_cutoff,
-                 "Classes with priors lower than cutoff will have 0 likelihood");
+    po->Register(
+        "prior-cutoff", &prior_cutoff,
+        "Classes with priors lower than cutoff will have 0 likelihood");
   }
 };
 

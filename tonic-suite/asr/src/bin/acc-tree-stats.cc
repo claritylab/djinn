@@ -37,7 +37,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Accumulate statistics for phonetic-context tree building.\n"
-        "Usage:  acc-tree-stats [options] model-in features-rspecifier alignments-rspecifier [tree-accs-out]\n"
+        "Usage:  acc-tree-stats [options] model-in features-rspecifier "
+        "alignments-rspecifier [tree-accs-out]\n"
         "e.g.: \n"
         " acc-tree-stats 1.mdl scp:train.scp ark:1.ali 1.tacc\n";
     ParseOptions po(usage);
@@ -49,16 +50,18 @@ int main(int argc, char *argv[]) {
     int P = 1;
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("var-floor", &var_floor, "Variance floor for tree clustering.");
-    po.Register("ci-phones", &ci_phones_str, "Colon-separated list of integer "
+    po.Register("ci-phones", &ci_phones_str,
+                "Colon-separated list of integer "
                 "indices of context-independent phones (after mapping, if "
                 "--phone-map option is used).");
     po.Register("context-width", &N, "Context window size.");
-    po.Register("central-position", &P, "Central context-window position "
+    po.Register("central-position", &P,
+                "Central context-window position "
                 "(zero-based)");
     po.Register("phone-map", &phone_map_rxfilename,
                 "File name containing old->new phone mapping (each line is: "
                 "old-integer-id new-integer-id)");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() < 3 || po.NumArgs() > 4) {
@@ -67,16 +70,15 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        alignment_rspecifier = po.GetArg(3),
-        accs_out_wxfilename = po.GetOptArg(4);
+                feature_rspecifier = po.GetArg(2),
+                alignment_rspecifier = po.GetArg(3),
+                accs_out_wxfilename = po.GetOptArg(4);
 
     std::vector<int32> phone_map;
     if (phone_map_rxfilename != "") {  // read phone map.
-      ReadPhoneMap(phone_map_rxfilename,
-                   &phone_map);
+      ReadPhoneMap(phone_map_rxfilename, &phone_map);
     }
-    
+
     std::vector<int32> ci_phones;
     if (ci_phones_str != "") {
       SplitStringToIntegers(ci_phones_str, ":", false, &ci_phones);
@@ -85,8 +87,6 @@ int main(int argc, char *argv[]) {
         KALDI_ERR << "Invalid set of ci_phones: " << ci_phones_str;
       }
     }
-
-    
 
     TransitionModel trans_model;
     {
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     RandomAccessInt32VectorReader alignment_reader(alignment_rspecifier);
 
-    std::map<EventType, GaussClusterable*> tree_stats;
+    std::map<EventType, GaussClusterable *> tree_stats;
 
     int num_done = 0, num_no_alignment = 0, num_other_error = 0;
 
@@ -112,21 +112,16 @@ int main(int argc, char *argv[]) {
         const std::vector<int32> &alignment = alignment_reader.Value(key);
 
         if (alignment.size() != mat.NumRows()) {
-          KALDI_WARN << "Alignments has wrong size "<< (alignment.size())<<" vs. "<< (mat.NumRows());
+          KALDI_WARN << "Alignments has wrong size " << (alignment.size())
+                     << " vs. " << (mat.NumRows());
           num_other_error++;
           continue;
         }
 
         ////// This is the important part of this program.  ////////
-        AccumulateTreeStats(trans_model,
-                            var_floor,
-                            N,
-                            P,
-                            ci_phones,
-                            alignment,
-                            mat,
-                            (phone_map_rxfilename != "" ? &phone_map : NULL),
-                            &tree_stats);
+        AccumulateTreeStats(
+            trans_model, var_floor, N, P, ci_phones, alignment, mat,
+            (phone_map_rxfilename != "" ? &phone_map : NULL), &tree_stats);
         num_done++;
         if (num_done % 1000 == 0)
           KALDI_LOG << "Processed " << num_done << " utterances.";
@@ -135,9 +130,9 @@ int main(int argc, char *argv[]) {
 
     BuildTreeStatsType stats;  // vectorized form.
 
-    for (std::map<EventType, GaussClusterable*>::const_iterator iter = tree_stats.begin();  
-        iter != tree_stats.end();
-        iter++ ) {
+    for (std::map<EventType, GaussClusterable *>::const_iterator iter =
+             tree_stats.begin();
+         iter != tree_stats.end(); iter++) {
       stats.push_back(std::make_pair(iter->first, iter->second));
     }
     tree_stats.clear();
@@ -152,12 +147,12 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Number of separate stats (context-dependent states) is "
               << stats.size();
     DeleteBuildTreeStats(&stats);
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

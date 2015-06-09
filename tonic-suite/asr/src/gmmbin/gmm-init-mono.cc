@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -29,8 +28,10 @@ namespace kaldi {
 // 1 2 3
 // 4 5
 // 6 7 8
-// where each line is a list of integer id's of phones (that should have their pdfs shared).
-void ReadSharedPhonesList(std::string rxfilename, std::vector<std::vector<int32> > *list_out) {
+// where each line is a list of integer id's of phones (that should have their
+// pdfs shared).
+void ReadSharedPhonesList(std::string rxfilename,
+                          std::vector<std::vector<int32> > *list_out) {
   list_out->clear();
   Input input(rxfilename);
   std::istream &is = input.Stream();
@@ -47,7 +48,7 @@ void ReadSharedPhonesList(std::string rxfilename, std::vector<std::vector<int32>
   }
 }
 
-} // end namespace kaldi
+}  // end namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -66,10 +67,12 @@ int main(int argc, char *argv[]) {
     BaseFloat perturb_factor = 0.0;
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("train-feats", &train_feats,
-                "rspecifier for training features [used to set mean and variance]");
+    po.Register(
+        "train-feats", &train_feats,
+        "rspecifier for training features [used to set mean and variance]");
     po.Register("shared-phones", &shared_phones_rxfilename,
-                "rxfilename containing, on each line, a list of phones whose pdfs should be shared.");
+                "rxfilename containing, on each line, a list of phones whose "
+                "pdfs should be shared.");
     po.Register("perturb-factor", &perturb_factor,
                 "Perturb the means using this fraction of standard deviation.");
     po.Read(argc, argv);
@@ -79,10 +82,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-
     std::string topo_filename = po.GetArg(1);
     int dim = atoi(po.GetArg(2).c_str());
-    KALDI_ASSERT(dim> 0 && dim < 10000);
+    KALDI_ASSERT(dim > 0 && dim < 10000);
     std::string model_filename = po.GetArg(3);
     std::string tree_filename = po.GetArg(4);
 
@@ -104,12 +106,13 @@ int main(int argc, char *argv[]) {
           mean_stats.AddVec(1.0, mat.Row(i));
         }
       }
-      if (count == 0) { KALDI_ERR << "no features were seen."; }
-      var_stats.Scale(1.0/count);
-      mean_stats.Scale(1.0/count);
+      if (count == 0) {
+        KALDI_ERR << "no features were seen.";
+      }
+      var_stats.Scale(1.0 / count);
+      mean_stats.Scale(1.0 / count);
       var_stats.AddVec2(-1.0, mean_stats);
-      if (var_stats.Min() <= 0.0)
-        KALDI_ERR << "bad variance";
+      if (var_stats.Min() <= 0.0) KALDI_ERR << "bad variance";
       var_stats.InvertElements();
       glob_inv_var.CopyFromVec(var_stats);
       glob_mean.CopyFromVec(mean_stats);
@@ -122,19 +125,21 @@ int main(int argc, char *argv[]) {
 
     const std::vector<int32> &phones = topo.GetPhones();
 
-    std::vector<int32> phone2num_pdf_classes (1+phones.back());
+    std::vector<int32> phone2num_pdf_classes(1 + phones.back());
     for (size_t i = 0; i < phones.size(); i++)
       phone2num_pdf_classes[phones[i]] = topo.NumPdfClasses(phones[i]);
 
     // Now the tree [not really a tree at this point]:
     ContextDependency *ctx_dep = NULL;
-    if (shared_phones_rxfilename == "") {  // No sharing of phones: standard approach.
+    if (shared_phones_rxfilename ==
+        "") {  // No sharing of phones: standard approach.
       ctx_dep = MonophoneContextDependency(phones, phone2num_pdf_classes);
     } else {
       std::vector<std::vector<int32> > shared_phones;
       ReadSharedPhonesList(shared_phones_rxfilename, &shared_phones);
       // ReadSharedPhonesList crashes on error.
-      ctx_dep = MonophoneContextDependencyShared(shared_phones, phone2num_pdf_classes);
+      ctx_dep = MonophoneContextDependencyShared(shared_phones,
+                                                 phone2num_pdf_classes);
     }
 
     int32 num_pdfs = ctx_dep->NumPdfs();
@@ -154,8 +159,7 @@ int main(int argc, char *argv[]) {
       gmm.ComputeGconsts();
     }
 
-    for (int i = 0; i < num_pdfs; i++)
-      am_gmm.AddPdf(gmm);
+    for (int i = 0; i < num_pdfs; i++) am_gmm.AddPdf(gmm);
 
     if (perturb_factor != 0.0) {
       for (int i = 0; i < num_pdfs; i++)
@@ -172,14 +176,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Now write the tree.
-    ctx_dep->Write(Output(tree_filename, binary).Stream(),
-                   binary);
+    ctx_dep->Write(Output(tree_filename, binary).Stream(), binary);
 
     delete ctx_dep;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

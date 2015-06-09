@@ -1,6 +1,7 @@
 // online/online-audio-source.h
 
-// Copyright 2013 Polish-Japanese Institute of Information Technology (author: Danijel Korzinek)
+// Copyright 2013 Polish-Japanese Institute of Information Technology (author:
+// Danijel Korzinek)
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -27,9 +28,11 @@
 
 namespace kaldi {
 /*
- * This class implements a VectorSource that reads audio data in a special format from a socket descriptor.
+ * This class implements a VectorSource that reads audio data in a special
+ *format from a socket descriptor.
  *
- * The documentation and "interface" for this class is given in online-audio-source.h
+ * The documentation and "interface" for this class is given in
+ *online-audio-source.h
  */
 class OnlineTcpVectorSource : public OnlineAudioSourceItf {
  public:
@@ -37,14 +40,14 @@ class OnlineTcpVectorSource : public OnlineAudioSourceItf {
   ~OnlineTcpVectorSource();
 
   // Implementation of the OnlineAudioSourceItf
-  bool Read(Vector<BaseFloat> *data);
+  bool Read(Vector<BaseFloat>* data);
 
-  //returns if the socket is still connected
+  // returns if the socket is still connected
   bool IsConnected();
 
-  //returns the number of samples read since the last reset
+  // returns the number of samples read since the last reset
   size_t SamplesProcessed();
-  //resets the number of samples
+  // resets the number of samples
   void ResetSamples();
 
  private:
@@ -59,11 +62,12 @@ class OnlineTcpVectorSource : public OnlineAudioSourceItf {
 
   size_t samples_processed;
 
-  //runs the built-in "read" method as many times as needed to fill "buf" with "len" bytes
+  // runs the built-in "read" method as many times as needed to fill "buf" with
+  // "len" bytes
   bool ReadFull(char* buf, int32 len);
-  //gets the next packet of bytes and returns its size
+  // gets the next packet of bytes and returns its size
   int32 GetNextPack();
-  //runs "getNextPack" enough times to fill the frame with "size" bytes
+  // runs "getNextPack" enough times to fill the frame with "size" bytes
   int32 FillFrame(int32 size);
 
   KALDI_DISALLOW_COPY_AND_ASSIGN(OnlineTcpVectorSource);
@@ -71,6 +75,6 @@ class OnlineTcpVectorSource : public OnlineAudioSourceItf {
 
 }  // namespace kaldi
 
-#endif // !defined(_MSC_VER)
+#endif  // !defined(_MSC_VER)
 
-#endif // KALDI_ONLINE_ONLINE_TCP_SOURCE_H_
+#endif  // KALDI_ONLINE_ONLINE_TCP_SOURCE_H_

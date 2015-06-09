@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/model-common.h"
@@ -25,25 +24,29 @@
 #include "gmm/diag-gmm.h"
 #include "gmm/mle-full-gmm.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
-        "Print out per-frame log-likelihoods for each utterance, as an archive\n"
-        "of vectors of floats.  If --average=true, prints out the average per-frame\n"
+        "Print out per-frame log-likelihoods for each utterance, as an "
+        "archive\n"
+        "of vectors of floats.  If --average=true, prints out the average "
+        "per-frame\n"
         "log-likelihood for each utterance, as a single float.\n"
-        "Usage:  gmm-global-get-frame-likes [options] <model-in> <feature-rspecifier> "
+        "Usage:  gmm-global-get-frame-likes [options] <model-in> "
+        "<feature-rspecifier> "
         "<likes-out-wspecifier>\n"
         "e.g.: gmm-global-get-frame-likes 1.mdl scp:train.scp ark:1.likes\n";
 
     ParseOptions po(usage);
     bool average = false;
     std::string gselect_rspecifier;
-    po.Register("gselect", &gselect_rspecifier, "rspecifier for gselect objects "
+    po.Register("gselect", &gselect_rspecifier,
+                "rspecifier for gselect objects "
                 "to limit the #Gaussians accessed on each frame.");
-    po.Register("average", &average, "If true, print out the average per-frame "
+    po.Register("average", &average,
+                "If true, print out the average per-frame "
                 "log-likelihood as a single float per utterance.");
     po.Read(argc, argv);
 
@@ -53,8 +56,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        likes_wspecifier = po.GetArg(3);
+                feature_rspecifier = po.GetArg(2),
+                likes_wspecifier = po.GetArg(3);
 
     DiagGmm gmm;
     {
@@ -76,7 +79,7 @@ int main(int argc, char *argv[]) {
       const Matrix<BaseFloat> &mat = feature_reader.Value();
       int32 file_frames = mat.NumRows();
       Vector<BaseFloat> likes(file_frames);
-      
+
       if (gselect_rspecifier != "") {
         if (!gselect_reader.HasKey(key)) {
           KALDI_WARN << "No gselect information for utterance " << key;
@@ -92,7 +95,7 @@ int main(int argc, char *argv[]) {
           num_err++;
           continue;
         }
-        
+
         for (int32 i = 0; i < file_frames; i++) {
           SubVector<BaseFloat> data(mat, i);
           const std::vector<int32> &this_gselect = gselect[i];
@@ -102,7 +105,7 @@ int main(int argc, char *argv[]) {
           gmm.LogLikelihoodsPreselect(data, this_gselect, &loglikes);
           likes(i) = loglikes.LogSumExp();
         }
-      } else { // no gselect..
+      } else {  // no gselect..
         for (int32 i = 0; i < file_frames; i++)
           likes(i) = gmm.LogLikelihood(mat.Row(i));
       }
@@ -118,10 +121,10 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Done " << num_done << " files; " << num_err
               << " with errors.";
     KALDI_LOG << "Overall likelihood per "
-              << "frame = " << (tot_like/tot_frames) << " over " << tot_frames
+              << "frame = " << (tot_like / tot_frames) << " over " << tot_frames
               << " frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

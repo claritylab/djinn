@@ -35,8 +35,10 @@ int main(int argc, char *argv[]) {
         "Copy a (cpu-based) neural net and its associated transition model,\n"
         "but modify it to remove certain pathologies.  We use the average\n"
         "derivative statistics stored with the layers derived from\n"
-        "NonlinearComponent.  Note: some processes, such as nnet-combine-fast,\n"
-        "may not process these statistics correctly, and you may have to recover\n"
+        "NonlinearComponent.  Note: some processes, such as "
+        "nnet-combine-fast,\n"
+        "may not process these statistics correctly, and you may have to "
+        "recover\n"
         "them using the --stats-from option of nnet-am-copy before you use.\n"
         "this program.\n"
         "\n"
@@ -48,21 +50,20 @@ int main(int argc, char *argv[]) {
 
     bool binary_write = true;
     NnetFixConfig config;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(2);
-    
+    std::string nnet_rxfilename = po.GetArg(1), nnet_wxfilename = po.GetArg(2);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -73,16 +74,16 @@ int main(int argc, char *argv[]) {
     }
 
     FixNnet(config, &am_nnet.GetNnet());
-    
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
       am_nnet.Write(ko.Stream(), binary_write);
     }
-    KALDI_LOG << "Copied neural net from " << nnet_rxfilename
-              << " to " << nnet_wxfilename;
+    KALDI_LOG << "Copied neural net from " << nnet_rxfilename << " to "
+              << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Build pfiles for neural network training from alignment.\n"
-        "Usage:  build-pfile-from-ali [options] <model> <alignments-rspecifier> <feature-rspecifier> \n"
+        "Usage:  build-pfile-from-ali [options] <model> "
+        "<alignments-rspecifier> <feature-rspecifier> \n"
         "<pfile-wspecifier>\n"
         "e.g.: \n"
         " build-pfile-from-ali 1.mdl ark:1.ali features \n"
@@ -49,9 +50,10 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
 
     int32 every_nth_frame = 1;
-    po.Register("every-nth-frame", &every_nth_frame, "This option will cause it to print "
+    po.Register("every-nth-frame", &every_nth_frame,
+                "This option will cause it to print "
                 "out only every n'th frame (for subsampling)");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 4) {
@@ -60,9 +62,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        alignments_rspecifier = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3),
-        pfile_wspecifier = po.GetArg(4);
+                alignments_rspecifier = po.GetArg(2),
+                feature_rspecifier = po.GetArg(3),
+                pfile_wspecifier = po.GetArg(4);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -80,7 +82,7 @@ int main(int argc, char *argv[]) {
     int32 num_utt = 0;
 
     KALDI_ASSERT(every_nth_frame >= 1);
-    
+
     Output ko(pfile_wspecifier, false);
 
     for (; !feature_reader.Done(); feature_reader.Next()) {
@@ -93,7 +95,8 @@ int main(int argc, char *argv[]) {
 
       const Matrix<BaseFloat> &feats = feature_reader.Value();
       std::vector<int32> alignment = ali_reader.Value(key);
-      if (static_cast<int32>(feats.NumRows()) != static_cast<int32>(alignment.size())) {
+      if (static_cast<int32>(feats.NumRows()) !=
+          static_cast<int32>(alignment.size())) {
         KALDI_WARN << "Alignment vector has wrong size " << (alignment.size())
                    << " vs. " << (feats.NumRows());
         num_other_error++;
@@ -121,16 +124,15 @@ int main(int argc, char *argv[]) {
           ko.Stream() << "\n";
         }
       }
-      num_done ++; num_utt ++;
+      num_done++;
+      num_utt++;
     }
     ko.Close();
     KALDI_LOG << "Converted " << num_done << " alignments to pfiles.";
     KALDI_LOG << num_no_ali << " utterances have no alignment; "
               << num_other_error << " utterances have other errors.";
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

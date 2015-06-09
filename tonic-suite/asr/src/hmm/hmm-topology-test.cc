@@ -21,11 +21,11 @@
 
 namespace kaldi {
 
-
 void TestHmmTopology() {
-  bool binary = (Rand()%2 == 0);
+  bool binary = (Rand() % 2 == 0);
 
-  std::string input_str = "<Topology>\n"
+  std::string input_str =
+      "<Topology>\n"
       "<TopologyEntry>\n"
       "<ForPhones> 1 2 3 4 5 6 7 8 9 </ForPhones>\n"
       "<State> 0 <PdfClass> 0\n"
@@ -60,7 +60,7 @@ void TestHmmTopology() {
 
   std::istringstream iss(input_str);
   topo.Read(iss, false);
-  
+
   std::ostringstream oss;
   topo.Write(oss, binary);
 
@@ -83,8 +83,6 @@ void TestHmmTopology() {
     GetDefaultTopology(phones);
   }
 }
-
-
 }
 
 int main() {
@@ -94,4 +92,3 @@ int main() {
   }
   std::cout << "Test OK.\n";
 }
-

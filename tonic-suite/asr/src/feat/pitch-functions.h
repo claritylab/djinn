@@ -108,41 +108,40 @@ struct PitchExtractionOptions {
   // chunking, which is useful for testing purposes.
   bool nccf_ballast_online;
   bool snip_edges;
-  PitchExtractionOptions():
-      samp_freq(16000),
-      frame_shift_ms(10.0),
-      frame_length_ms(25.0),
-      preemph_coeff(0.0),
-      min_f0(50),
-      max_f0(400),
-      soft_min_f0(10.0),
-      penalty_factor(0.1),
-      lowpass_cutoff(1000),
-      resample_freq(4000),
-      delta_pitch(0.005),
-      nccf_ballast(7000),
-      lowpass_filter_width(1),
-      upsample_filter_width(5),
-      max_frames_latency(0),
-      frames_per_chunk(0),
-      simulate_first_pass_online(false),
-      recompute_frame(500),
-      nccf_ballast_online(false),
-      snip_edges(true) { }
+  PitchExtractionOptions()
+      : samp_freq(16000),
+        frame_shift_ms(10.0),
+        frame_length_ms(25.0),
+        preemph_coeff(0.0),
+        min_f0(50),
+        max_f0(400),
+        soft_min_f0(10.0),
+        penalty_factor(0.1),
+        lowpass_cutoff(1000),
+        resample_freq(4000),
+        delta_pitch(0.005),
+        nccf_ballast(7000),
+        lowpass_filter_width(1),
+        upsample_filter_width(5),
+        max_frames_latency(0),
+        frames_per_chunk(0),
+        simulate_first_pass_online(false),
+        recompute_frame(500),
+        nccf_ballast_online(false),
+        snip_edges(true) {}
 
   void Register(OptionsItf *po) {
     po->Register("sample-frequency", &samp_freq,
                  "Waveform data sample frequency (must match the waveform "
                  "file, if specified there)");
-    po->Register("frame-length", &frame_length_ms, "Frame length in "
+    po->Register("frame-length", &frame_length_ms,
+                 "Frame length in "
                  "milliseconds");
     po->Register("frame-shift", &frame_shift_ms, "Frame shift in milliseconds");
     po->Register("preemphasis-coefficient", &preemph_coeff,
                  "Coefficient for use in signal preemphasis (deprecated)");
-    po->Register("min-f0", &min_f0,
-                 "min. F0 to search for (Hz)");
-    po->Register("max-f0", &max_f0,
-                 "max. F0 to search for (Hz)");
+    po->Register("min-f0", &min_f0, "min. F0 to search for (Hz)");
+    po->Register("max-f0", &max_f0, "max. F0 to search for (Hz)");
     po->Register("soft-min-f0", &soft_min_f0,
                  "Minimum f0, applied in soft way, must not exceed min-f0");
     po->Register("penalty-factor", &penalty_factor,
@@ -165,7 +164,8 @@ struct PitchExtractionOptions {
                  "lowpass filter, more gives sharper filter");
     po->Register("upsample-filter-width", &upsample_filter_width,
                  "Integer that determines filter width when upsampling NCCF");
-    po->Register("frames-per-chunk", &frames_per_chunk, "Only relevant for "
+    po->Register("frames-per-chunk", &frames_per_chunk,
+                 "Only relevant for "
                  "offline pitch extraction (e.g. compute-kaldi-pitch-feats), "
                  "you can set it to a small nonzero value, such as 10, for "
                  "better feature compatibility with online decoding (affects "
@@ -176,23 +176,25 @@ struct PitchExtractionOptions {
                  "first pass of decoding-- not the final version of the "
                  "features, which is the default.  Relevant if "
                  "--frames-per-chunk > 0");
-    po->Register("recompute-frame", &recompute_frame, "Only relevant for "
+    po->Register("recompute-frame", &recompute_frame,
+                 "Only relevant for "
                  "online pitch extraction, or for compatibility with online "
                  "pitch extraction.  A non-critical parameter; the frame at "
                  "which we recompute some of the forward pointers, after "
                  "revising our estimate of the signal energy.  Relevant if"
                  "--frames-per-chunk > 0");
-    po->Register("max-frames-latency", &max_frames_latency, "Maximum number "
+    po->Register("max-frames-latency", &max_frames_latency,
+                 "Maximum number "
                  "of frames of latency that we allow pitch tracking to "
                  "introduce into the feature processing (affects output only "
                  "if --frames-per-chunk > 0 and "
                  "--simulate-first-pass-online=true");
-    po->Register("snip-edges", &snip_edges, "If this is set to false, the "
+    po->Register("snip-edges", &snip_edges,
+                 "If this is set to false, the "
                  "incomplete frames near the ending edge won't be snipped, so "
                  "that the number of frames is the file size divided by the "
                  "frame-shift. This makes different types of features give the "
                  "same number of frames.");
-
   }
   /// Returns the window-size in samples, after resampling.  This is the
   /// "basic window size", not the full window size after extending by max-lag.
@@ -222,27 +224,26 @@ struct ProcessPitchOptions {
 
   int32 delta_window;
   int32 delay;
-  
-  bool add_pov_feature;  
-  bool add_normalized_log_pitch;  
+
+  bool add_pov_feature;
+  bool add_normalized_log_pitch;
   bool add_delta_pitch;
   bool add_raw_log_pitch;
-  
-  ProcessPitchOptions() :
-      pitch_scale(2.0),
-      pov_scale(2.0),
-      pov_offset(0.0),
-      delta_pitch_scale(10.0),
-      delta_pitch_noise_stddev(0.005),
-      normalization_left_context(75),
-      normalization_right_context(75),
-      delta_window(2),
-      delay(0),
-      add_pov_feature(true),
-      add_normalized_log_pitch(true),
-      add_delta_pitch(true),
-      add_raw_log_pitch(false) { }
 
+  ProcessPitchOptions()
+      : pitch_scale(2.0),
+        pov_scale(2.0),
+        pov_offset(0.0),
+        delta_pitch_scale(10.0),
+        delta_pitch_noise_stddev(0.005),
+        normalization_left_context(75),
+        normalization_right_context(75),
+        delta_window(2),
+        delay(0),
+        add_pov_feature(true),
+        add_normalized_log_pitch(true),
+        add_delta_pitch(true),
+        add_raw_log_pitch(false) {}
 
   void Register(ParseOptions *po) {
     po->Register("pitch-scale", &pitch_scale,
@@ -284,15 +285,13 @@ struct ProcessPitchOptions {
   }
 };
 
-
 // We don't want to expose the pitch-extraction internals here as it's
 // quite complex, so we use a private implementation.
 class OnlinePitchFeatureImpl;
 
-
 // Note: to start on a new waveform, just construct a new version
 // of this object.
-class OnlinePitchFeature: public OnlineBaseFeature {
+class OnlinePitchFeature : public OnlineBaseFeature {
  public:
   explicit OnlinePitchFeature(const PitchExtractionOptions &opts);
 
@@ -317,29 +316,28 @@ class OnlinePitchFeature: public OnlineBaseFeature {
   OnlinePitchFeatureImpl *impl_;
 };
 
-
 /// This online-feature class implements post processing of pitch features.
 /// Inputs are original 2 dims (nccf, pitch).  It can produce various
 /// kinds of outputs, using the default options it will be (pov-feature,
 /// normalized-log-pitch, delta-log-pitch).
-class OnlineProcessPitch: public OnlineFeatureInterface {
+class OnlineProcessPitch : public OnlineFeatureInterface {
  public:
   virtual int32 Dim() const { return dim_; }
 
   virtual bool IsLastFrame(int32 frame) const {
     if (frame <= -1)
       return src_->IsLastFrame(-1);
-    else if (frame < opts_.delay) 
+    else if (frame < opts_.delay)
       return src_->IsLastFrame(-1) == true ? false : src_->IsLastFrame(0);
     else
-      return src_->IsLastFrame(frame - opts_.delay); 
+      return src_->IsLastFrame(frame - opts_.delay);
   }
 
   virtual int32 NumFramesReady() const;
 
   virtual void GetFrame(int32 frame, VectorBase<BaseFloat> *feat);
 
-  virtual ~OnlineProcessPitch() {  }
+  virtual ~OnlineProcessPitch() {}
 
   // Does not take ownership of "src".
   OnlineProcessPitch(const ProcessPitchOptions &opts,
@@ -360,8 +358,11 @@ class OnlineProcessPitch: public OnlineFeatureInterface {
     double sum_pov;            // sum of pov over relevant range
     double sum_log_pitch_pov;  // sum of log(pitch) * pov over relevant range
 
-    NormalizationStats(): cur_num_frames(-1), input_finished(false),
-                          sum_pov(0.0), sum_log_pitch_pov(0.0) { }
+    NormalizationStats()
+        : cur_num_frames(-1),
+          input_finished(false),
+          sum_pov(0.0),
+          sum_log_pitch_pov(0.0) {}
   };
 
   std::vector<BaseFloat> delta_feature_noise_;
@@ -369,15 +370,15 @@ class OnlineProcessPitch: public OnlineFeatureInterface {
   std::vector<NormalizationStats> normalization_stats_;
 
   /// Computes and returns the POV feature for this frame.
-  /// Called from GetFrame().  
-  inline BaseFloat GetPovFeature(int32 frame) const;  
+  /// Called from GetFrame().
+  inline BaseFloat GetPovFeature(int32 frame) const;
 
   /// Computes and returns the delta-log-pitch feature for this frame.
   /// Called from GetFrame().
   inline BaseFloat GetDeltaPitchFeature(int32 frame);
 
   /// Computes and returns the raw log-pitch feature for this frame.
-  /// Called from GetFrame().  
+  /// Called from GetFrame().
   inline BaseFloat GetRawLogPitchFeature(int32 frame) const;
 
   /// Computes and returns the mean-subtracted log-pitch feature for this frame.
@@ -385,8 +386,7 @@ class OnlineProcessPitch: public OnlineFeatureInterface {
   inline BaseFloat GetNormalizedLogPitchFeature(int32 frame);
 
   /// Computes the normalization window sizes.
-  inline void GetNormalizationWindow(int32 frame,
-                                     int32 src_frames_ready,
+  inline void GetNormalizationWindow(int32 frame, int32 src_frames_ready,
                                      int32 *window_begin,
                                      int32 *window_end) const;
 
@@ -394,7 +394,6 @@ class OnlineProcessPitch: public OnlineFeatureInterface {
   /// called from GetNormalizedLogPitchFeature.
   inline void UpdateNormalizationStats(int32 frame);
 };
-
 
 /// This function extracts (pitch, NCCF) per frame, using the pitch extraction
 /// method described in "A Pitch Extraction Algorithm Tuned for Automatic Speech
@@ -431,7 +430,6 @@ void ComputeAndProcessKaldiPitch(const PitchExtractionOptions &pitch_opts,
                                  const ProcessPitchOptions &process_opts,
                                  const VectorBase<BaseFloat> &wave,
                                  Matrix<BaseFloat> *output);
-
 
 /// @} End of "addtogroup feat"
 }  // namespace kaldi

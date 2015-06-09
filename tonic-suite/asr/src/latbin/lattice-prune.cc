@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -37,18 +36,21 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Apply beam pruning to lattices\n"
         "Usage: lattice-prune [options] lattice-rspecifier lattice-wspecifier\n"
-        " e.g.: lattice-prune --acoustic-scale=0.1 --beam=4.0 ark:1.lats ark:pruned.lats\n";
-      
+        " e.g.: lattice-prune --acoustic-scale=0.1 --beam=4.0 ark:1.lats "
+        "ark:pruned.lats\n";
+
     ParseOptions po(usage);
     BaseFloat acoustic_scale = 1.0;
     BaseFloat inv_acoustic_scale = 1.0;
     BaseFloat beam = 10.0;
-    
-    po.Register("acoustic-scale", &acoustic_scale, "Scaling factor for acoustic likelihoods");
-    po.Register("inv-acoustic-scale", &inv_acoustic_scale, "An alternative way of setting the "
+
+    po.Register("acoustic-scale", &acoustic_scale,
+                "Scaling factor for acoustic likelihoods");
+    po.Register("inv-acoustic-scale", &inv_acoustic_scale,
+                "An alternative way of setting the "
                 "acoustic scale: you can set its inverse.");
     po.Register("beam", &beam, "Pruning beam [applied after acoustic scaling]");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -57,24 +59,19 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_ASSERT(acoustic_scale == 1.0 || inv_acoustic_scale == 1.0);
-    if (inv_acoustic_scale != 1.0)
-      acoustic_scale = 1.0 / inv_acoustic_scale;
-    
-    std::string lats_rspecifier = po.GetArg(1),
-        lats_wspecifier = po.GetArg(2);
+    if (inv_acoustic_scale != 1.0) acoustic_scale = 1.0 / inv_acoustic_scale;
 
+    std::string lats_rspecifier = po.GetArg(1), lats_wspecifier = po.GetArg(2);
 
-    
     SequentialCompactLatticeReader compact_lattice_reader(lats_rspecifier);
-    CompactLatticeWriter compact_lattice_writer(lats_wspecifier); 
+    CompactLatticeWriter compact_lattice_writer(lats_wspecifier);
 
     int32 n_done = 0, n_err = 0;
-    int64 n_arcs_in = 0, n_arcs_out = 0,
-        n_states_in = 0, n_states_out = 0;
+    int64 n_arcs_in = 0, n_arcs_out = 0, n_states_in = 0, n_states_out = 0;
 
     if (acoustic_scale == 0.0)
       KALDI_ERR << "Do not use a zero acoustic scale (cannot be inverted)";
-    
+
     for (; !compact_lattice_reader.Done(); compact_lattice_reader.Next()) {
       std::string key = compact_lattice_reader.Key();
       CompactLattice clat = compact_lattice_reader.Value();
@@ -88,26 +85,27 @@ int main(int argc, char *argv[]) {
         KALDI_WARN << "Error pruning lattice for utterance " << key;
         n_err++;
       }
-      int64 pruned_narcs = NumArcs(pruned_clat),          
-          pruned_nstates = pruned_clat.NumStates();
+      int64 pruned_narcs = NumArcs(pruned_clat),
+            pruned_nstates = pruned_clat.NumStates();
       n_arcs_out += pruned_narcs;
       n_states_out += pruned_nstates;
       KALDI_LOG << "For utterance " << key << ", pruned #states from "
                 << nstates << " to " << pruned_nstates << " and #arcs from "
                 << narcs << " to " << pruned_narcs;
-      fst::ScaleLattice(fst::AcousticLatticeScale(1.0/acoustic_scale), &pruned_clat);
+      fst::ScaleLattice(fst::AcousticLatticeScale(1.0 / acoustic_scale),
+                        &pruned_clat);
       compact_lattice_writer.Write(key, pruned_clat);
       n_done++;
     }
 
     BaseFloat den = (n_done > 0 ? static_cast<BaseFloat>(n_done) : 1.0);
-    KALDI_LOG << "Overall, pruned from on average " << (n_states_in/den) << " to "
-              << (n_states_out/den) << " states, and from " << (n_arcs_in/den)
-              << " to " << (n_arcs_out/den) << " arcs, over " << n_done
-              << " utterances.";
+    KALDI_LOG << "Overall, pruned from on average " << (n_states_in / den)
+              << " to " << (n_states_out / den) << " states, and from "
+              << (n_arcs_in / den) << " to " << (n_arcs_out / den)
+              << " arcs, over " << n_done << " utterances.";
     KALDI_LOG << "Done " << n_done << " lattices.";
     return (n_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

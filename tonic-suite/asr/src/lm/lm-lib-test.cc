@@ -35,8 +35,8 @@ namespace kaldi {
 // hard-coded symbols (for now)
 
 #define startOfSentence "<s>"
-#define endOfSentence   "</s>"
-#define epsilon         "<eps>"
+#define endOfSentence "</s>"
+#define epsilon "<eps>"
 #define MAX_SENTENCE_LENGTH 1000
 
 /// @brief Recursively prints all complete paths starting at s and their score.
@@ -47,17 +47,17 @@ static LangModelFst::LmWeight PrintCompletePath(fst::SymbolTable *pst,
   fst::ArcIterator<fst::StdVectorFst> ai(*pfst, s);
   for (ai.Reset(); !ai.Done(); ai.Next()) {
     std::cout << pst->Find(ai.Value().ilabel) << " ";
-    fst::StdArc::Weight w = score;             // initialize with current score
+    fst::StdArc::Weight w = score;  // initialize with current score
     // reset weight to 0 if we are going through the initial state again
     if (s == pfst->Start()) {
       w = fst::StdArc::Weight::One();
     }
     std::cout << " \tcurrent score " << w;
-    w = fst::Times(w, ai.Value().weight);     // add in value from current arc
+    w = fst::Times(w, ai.Value().weight);  // add in value from current arc
     std::cout << " added arc " << ai.Value().weight;
     fst::StdArc::Weight fw = pfst->Final(ai.Value().nextstate);
     if (fw != fst::StdArc::Weight::Zero()) {
-      w = fst::Times(w, fw);   // add in destination state weight if final
+      w = fst::Times(w, fw);  // add in destination state weight if final
       std::cout << " added state weight " << w << '\n';
     }
     std::cout << '\n';
@@ -76,7 +76,7 @@ static LangModelFst::LmWeight PrintCompletePaths(fst::SymbolTable *pst,
                                                  fst::StdVectorFst *pfst) {
   KALDI_ASSERT(pst);
   KALDI_ASSERT(pfst);
-  KALDI_ASSERT(pfst->Start() >=0);
+  KALDI_ASSERT(pfst->Start() >= 0);
   return PrintCompletePath(pst, pfst, pfst->Start(),
                            fst::StdArc::Weight::One());
 }
@@ -84,7 +84,7 @@ static LangModelFst::LmWeight PrintCompletePaths(fst::SymbolTable *pst,
 /// @brief Creates an FST that generates any sequence of symbols
 /// taken from given symbol table.
 /// This FST is then associated with given symbol table.
-static fst::StdVectorFst* CreateGenFst(fst::SymbolTable *pst) {
+static fst::StdVectorFst *CreateGenFst(fst::SymbolTable *pst) {
   fst::StdArc::StateId initId, midId, finalId;
   fst::StdVectorFst *genFst = new fst::StdVectorFst;
   pst->AddSymbol(epsilon);                         // added if not there
@@ -93,32 +93,31 @@ static fst::StdVectorFst* CreateGenFst(fst::SymbolTable *pst) {
   genFst->SetInputSymbols(pst);
   genFst->SetOutputSymbols(pst);
 
-  initId  = genFst->AddState();
-  midId   = genFst->AddState();
+  initId = genFst->AddState();
+  midId = genFst->AddState();
   finalId = genFst->AddState();
-  genFst->SetStart(initId);                        // initial state
+  genFst->SetStart(initId);                               // initial state
   genFst->SetFinal(finalId, fst::StdArc::Weight::One());  // final state
   genFst->AddArc(initId, fst::StdArc(boslab, boslab, 0, midId));
-  genFst->AddArc(midId,  fst::StdArc(eoslab, eoslab, 0, finalId));
+  genFst->AddArc(midId, fst::StdArc(eoslab, eoslab, 0, finalId));
   // add a loop for each symbol except epsilon, begin and end of sentence
   fst::SymbolTableIterator si(*pst);
   for (si.Reset(); !si.Done(); si.Next()) {
-    if (si.Value() == boslab ||
-        si.Value() == eoslab ||
-        si.Value() == 0) continue;
+    if (si.Value() == boslab || si.Value() == eoslab || si.Value() == 0)
+      continue;
     genFst->AddArc(midId, fst::StdArc(si.Value(), si.Value(), 0, midId));
   }
   return genFst;
 }
 
 /// @brief Randomly generates ntests paths with uniform distribution.
-static fst::StdVectorFst* CreateRandPathFst(int n, fst::StdVectorFst *genFst) {
+static fst::StdVectorFst *CreateRandPathFst(int n, fst::StdVectorFst *genFst) {
   typedef fst::UniformArcSelector<fst::StdArc> UniformSelector;
 
   int nTrials = 50;
   UniformSelector uniform_sel;
-  fst::RandGenOptions<UniformSelector > opts(uniform_sel,
-                                             MAX_SENTENCE_LENGTH, n);
+  fst::RandGenOptions<UniformSelector> opts(uniform_sel, MAX_SENTENCE_LENGTH,
+                                            n);
 
   for (int i = 0; i < nTrials; i++) {
     fst::StdVectorFst *tmpFst = new fst::StdVectorFst;
@@ -137,8 +136,7 @@ static fst::StdVectorFst* CreateRandPathFst(int n, fst::StdVectorFst *genFst) {
 }
 
 /// @brief Tests if all paths generated from genFst are included in testFst.
-static bool coverageTests(fst::StdVectorFst *genFst,
-                          fst::StdVectorFst *testFst,
+static bool coverageTests(fst::StdVectorFst *genFst, fst::StdVectorFst *testFst,
                           int ntests) {
   bool success = true;
 #ifdef KALDI_PARANOID
@@ -162,8 +160,9 @@ static bool coverageTests(fst::StdVectorFst *genFst,
 
   // Composition result must have ntests arcs out of initial state
   int narcs = outFst->NumArcs(outFst->Start());
-  std::cout << ", composition has " << narcs << " arcs out of start state" << '\n';
-  if (narcs !=  ntests) success = false;
+  std::cout << ", composition has " << narcs << " arcs out of start state"
+            << '\n';
+  if (narcs != ntests) success = false;
 
   // std::cout << "Out  FST " << '\n';
   // printFirstCompletePath(pst, outFst, outFst->Start());
@@ -175,8 +174,7 @@ static bool coverageTests(fst::StdVectorFst *genFst,
 }
 
 /// @brief Tests read and write methods.
-bool TestLmTableReadWrite(int nTests,
-                          const string &infile,
+bool TestLmTableReadWrite(int nTests, const string &infile,
                           const string &outfile) {
   bool success = true;
   // reading test: create a language model FST from input file
@@ -196,7 +194,7 @@ bool TestLmTableReadWrite(int nTests,
     std::cout << "FAILED";
     success = false;
   }
-  std::cout <<'\n';
+  std::cout << '\n';
 
   // writing test: write out FST, read it back in a new lm
   // reading doesn't provide symbol tables automatically ?
@@ -225,15 +223,14 @@ bool TestLmTableReadWrite(int nTests,
     std::cout << "FAILED";
     success = false;
   }
-  std::cout <<'\n';
+  std::cout << '\n';
   delete genFst;
 
   return success;
 }
 
 /// @brief Tests correctness of path weights.
-bool TestLmTableEvalScore(const string &inpfile,
-                          const string &intext,
+bool TestLmTableEvalScore(const string &inpfile, const string &intext,
                           const string &refScoreFile) {
   bool success = true;
 
@@ -243,7 +240,8 @@ bool TestLmTableEvalScore(const string &inpfile,
   strm >> refScore;
   std::cout << "Reference score is " << refScore << '\n';
 
-  std::cout << "LangModelFst test: score text strings with LM " << intext << '\n';
+  std::cout << "LangModelFst test: score text strings with LM " << intext
+            << '\n';
   // use original log base for testing
   LangModelFst lm;
   if (!lm.Read(inpfile, kArpaLm, NULL, false)) return false;
@@ -264,13 +262,12 @@ bool TestLmTableEvalScore(const string &inpfile,
 
   // compose paths with language model fst
   fst::StdVectorFst composedFst;
-  fst::ComposeFstOptions < fst::StdArc,
-    fst::Matcher<fst::StdFst >,
-    fst::MatchComposeFilter< fst::Matcher<fst::StdFst > > > copts;
+  fst::ComposeFstOptions<fst::StdArc, fst::Matcher<fst::StdFst>,
+                         fst::MatchComposeFilter<fst::Matcher<fst::StdFst> > >
+      copts;
   copts.gc_limit = 0;  // Cache only the last state for fastest copy.
-  composedFst = fst::ComposeFst<fst::StdArc>(*txtString.GetFst(),
-                                             *lm.GetFst(),
-                                             copts);
+  composedFst =
+      fst::ComposeFst<fst::StdArc>(*txtString.GetFst(), *lm.GetFst(), copts);
   composedFst.Write("composed.fst");
 
   // find best path score
@@ -278,9 +275,8 @@ bool TestLmTableEvalScore(const string &inpfile,
   fst::ShortestPath(composedFst, bestFst, 1);
 
   std::cout << "Best path has " << bestFst->NumStates() << " states" << '\n';
-  LangModelFst::LmWeight testScore = PrintCompletePaths(
-      bestFst->MutableInputSymbols(),
-      bestFst);
+  LangModelFst::LmWeight testScore =
+      PrintCompletePaths(bestFst->MutableInputSymbols(), bestFst);
   std::cout << "Complete path score is " << testScore << '\n';
 
   if (testScore.Value() <= refScore.Value()) {
@@ -289,7 +285,7 @@ bool TestLmTableEvalScore(const string &inpfile,
     std::cout << "FAILED";
     success = false;
   }
-  std::cout <<'\n';
+  std::cout << '\n';
 
   delete bestFst;
 
@@ -332,9 +328,8 @@ int main(int argc, char *argv[]) {
     // by an external LM tool with results in inputN.score
     intext << "input" << i << ".txt";
     refscore << "input" << i << ".score";
-    success &= kaldi::TestLmTableEvalScore(infile,
-                                           intext.str(),
-                                           refscore.str());
+    success &=
+        kaldi::TestLmTableEvalScore(infile, intext.str(), refscore.str());
   }
 
   unlink("output.fst");
@@ -342,4 +337,3 @@ int main(int argc, char *argv[]) {
   exit(success ? 0 : 1);
 }
 /// @}
-

@@ -17,7 +17,8 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-/** @brief Converts alignments (containing transition-ids) to pdf-ids, zero-based.
+/** @brief Converts alignments (containing transition-ids) to pdf-ids,
+ * zero-based.
 */
 #include "base/kaldi-common.h"
 #include "gmm/am-diag-gmm.h"
@@ -31,8 +32,10 @@ int main(int argc, char *argv[]) {
   typedef kaldi::int32 int32;
   try {
     const char *usage =
-        "Converts alignments (containing transition-ids) to pdf-ids, zero-based.\n"
-        "Usage:  ali-to-pdf  [options] <model> <alignments-rspecifier> <pdfs-wspecifier>\n"
+        "Converts alignments (containing transition-ids) to pdf-ids, "
+        "zero-based.\n"
+        "Usage:  ali-to-pdf  [options] <model> <alignments-rspecifier> "
+        "<pdfs-wspecifier>\n"
         "e.g.: \n"
         " ali-to-pdf 1.mdl ark:1.ali ark, t:-\n";
     ParseOptions po(usage);
@@ -45,8 +48,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string model_filename = po.GetArg(1),
-        alignments_rspecifier = po.GetArg(2),
-        pdfs_wspecifier = po.GetArg(3);
+                alignments_rspecifier = po.GetArg(2),
+                pdfs_wspecifier = po.GetArg(3);
 
     TransitionModel trans_model;
     ReadKaldiObject(model_filename, &trans_model);
@@ -66,10 +69,8 @@ int main(int argc, char *argv[]) {
       num_done++;
     }
     KALDI_LOG << "Converted " << num_done << " alignments to pdf sequences.";
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

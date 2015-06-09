@@ -26,7 +26,6 @@ cublasOperation_t KaldiTransToCuTrans(MatrixTransposeType kaldi_trans) {
 }
 #endif
 
-} // namespace
-
+}  // namespace
 
 #endif  // KALDI_CUDAMATRIX_COMMON_H_

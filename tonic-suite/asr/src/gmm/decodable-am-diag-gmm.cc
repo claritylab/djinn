@@ -25,8 +25,8 @@ using std::vector;
 
 namespace kaldi {
 
-BaseFloat DecodableAmDiagGmmUnmapped::LogLikelihoodZeroBased(
-    int32 frame, int32 state) {
+BaseFloat DecodableAmDiagGmmUnmapped::LogLikelihoodZeroBased(int32 frame,
+                                                             int32 state) {
   KALDI_ASSERT(static_cast<size_t>(frame) < static_cast<size_t>(NumFrames()));
   KALDI_ASSERT(static_cast<size_t>(state) < static_cast<size_t>(NumIndices()));
 
@@ -45,12 +45,12 @@ BaseFloat DecodableAmDiagGmmUnmapped::LogLikelihoodZeroBased(
 
   // check if everything is in order
   if (pdf.Dim() != data.Dim()) {
-    KALDI_ERR << "Dim mismatch: data dim = "  << data.Dim()
-        << " vs. model dim = " << pdf.Dim();
+    KALDI_ERR << "Dim mismatch: data dim = " << data.Dim()
+              << " vs. model dim = " << pdf.Dim();
   }
   if (!pdf.valid_gconsts()) {
-    KALDI_ERR << "State "  << (state)  << ": Must call ComputeGconsts() "
-        "before computing likelihood.";
+    KALDI_ERR << "State " << (state) << ": Must call ComputeGconsts() "
+                                        "before computing likelihood.";
   }
 
   Vector<BaseFloat> loglikes(pdf.gconsts());  // need to recreate for each pdf
@@ -74,9 +74,10 @@ void DecodableAmDiagGmmUnmapped::ResetLogLikeCache() {
     log_like_cache_.resize(acoustic_model_.NumPdfs());
   }
   vector<LikelihoodCacheRecord>::iterator it = log_like_cache_.begin(),
-      end = log_like_cache_.end();
-  for (; it != end; ++it) { it->hit_time = -1; }
+                                          end = log_like_cache_.end();
+  for (; it != end; ++it) {
+    it->hit_time = -1;
+  }
 }
-
 
 }  // namespace kaldi

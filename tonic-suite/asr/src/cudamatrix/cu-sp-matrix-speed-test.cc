@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -31,29 +30,28 @@
 
 using namespace kaldi;
 
-
 namespace kaldi {
 
-template<typename Real>
+template <typename Real>
 std::string NameOf() {
   return (sizeof(Real) == 8 ? "<double>" : "<float>");
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixInvert(int32 dim) {
   BaseFloat time_in_secs = 0.01;
   int32 iter = 0;
   Timer tim;
   CuSpMatrix<Real> A(dim);
   A.SetRandn();
-  for (;tim.Elapsed() < time_in_secs; iter++) {
-    KALDI_ASSERT(A.Trace() != 0.0); // true with probability 1...
+  for (; tim.Elapsed() < time_in_secs; iter++) {
+    KALDI_ASSERT(A.Trace() != 0.0);  // true with probability 1...
     CuSpMatrix<Real> B(A);
 
-    if (iter  > 0) {
+    if (iter > 0) {
       B.Invert();
-    } else { // do some more testing...
-    
+    } else {  // do some more testing...
+
       CuMatrix<Real> D(A);
       A.AddMat2(1.0, D, kTrans, 1.0);
       A.AddToDiag(0.1 * dim);
@@ -61,10 +59,10 @@ static void UnitTestCuSpMatrixInvert(int32 dim) {
       CuMatrix<Real> C(B);
       B.AddMat2(1.0, C, kTrans, 1.0);
       B.AddToDiag(0.1 * dim);
-    
+
       A.Invert();
       B.Invert();
-    
+
       SpMatrix<Real> E(dim);
       B.CopyToSp(&E);
 
@@ -74,13 +72,12 @@ static void UnitTestCuSpMatrixInvert(int32 dim) {
   }
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * fdim * fdim * iter) / (tim.Elapsed() * 1.0e+09);
-  KALDI_LOG << "For CuSpMatrix::Invert" << NameOf<Real>() << ", for dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+  KALDI_LOG << "For CuSpMatrix::Invert" << NameOf<Real>()
+            << ", for dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixCopyFromMat(int32 dim, SpCopyType copy_type) {
   BaseFloat time_in_secs = 0.05;
   int32 iter = 0;
@@ -88,23 +85,23 @@ static void UnitTestCuSpMatrixCopyFromMat(int32 dim, SpCopyType copy_type) {
   CuMatrix<Real> A(dim, dim);
   CuSpMatrix<Real> S(dim);
 
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     S.CopyFromMat(A, copy_type);
   }
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * fdim * iter) / (tim.Elapsed() * 1.0e+09);
   KALDI_LOG << "For CuSpMatrix::CopyFromMat" << NameOf<Real>()
             << ", with copy-type "
-            <<(copy_type == kTakeLower ? "kTakeLower" :
-               (copy_type == kTakeUpper ? "kTakeUpper" :
-                "kTakeMeanAndCheck")) << " and dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+            << (copy_type == kTakeLower
+                    ? "kTakeLower"
+                    : (copy_type == kTakeUpper ? "kTakeUpper"
+                                               : "kTakeMeanAndCheck"))
+            << " and dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-
-
-template<typename Real> void CuSpMatrixSpeedTest() {
+template <typename Real>
+void CuSpMatrixSpeedTest() {
   std::vector<int32> sizes;
   sizes.push_back(16);
   sizes.push_back(32);
@@ -123,17 +120,15 @@ template<typename Real> void CuSpMatrixSpeedTest() {
   }
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main() {
-    //Select the GPU
+// Select the GPU
 #if HAVE_CUDA == 1
-    CuDevice::Instantiate().SelectGpuId("yes"); //-2 .. automatic selection
+  CuDevice::Instantiate().SelectGpuId("yes");  //-2 .. automatic selection
 #endif
 
-    kaldi::CuSpMatrixSpeedTest<float>();
+  kaldi::CuSpMatrixSpeedTest<float>();
 #if HAVE_CUDA == 1
   if (CuDevice::Instantiate().DoublePrecisionSupported()) {
     kaldi::CuSpMatrixSpeedTest<double>();

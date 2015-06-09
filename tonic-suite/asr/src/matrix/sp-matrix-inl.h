@@ -28,15 +28,16 @@ namespace kaldi {
 // These tell the compiler that we'll implement the templated function
 // separately for the different template arguments (float, double).
 
-template<>
-double SolveQuadraticProblem(const SpMatrix<double> &H, const VectorBase<double> &g,
+template <>
+double SolveQuadraticProblem(const SpMatrix<double> &H,
+                             const VectorBase<double> &g,
                              const SolverOptions &opts, VectorBase<double> *x);
 
-template<>
-float SolveQuadraticProblem(const SpMatrix<float> &H, const VectorBase<float> &g,
+template <>
+float SolveQuadraticProblem(const SpMatrix<float> &H,
+                            const VectorBase<float> &g,
                             const SolverOptions &opts, VectorBase<float> *x);
 
 }  // namespace kaldi
-
 
 #endif  // KALDI_MATRIX_SP_MATRIX_INL_H_

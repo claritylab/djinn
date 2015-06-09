@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
@@ -51,15 +50,13 @@ BaseFloat ComputeEer(std::vector<BaseFloat> *target_scores,
   KALDI_ASSERT(!target_scores->empty() && !nontarget_scores->empty());
   std::sort(target_scores->begin(), target_scores->end());
   std::sort(nontarget_scores->begin(), nontarget_scores->end());
-  
-  size_t target_position = 0,
-      target_size = target_scores->size();
+
+  size_t target_position = 0, target_size = target_scores->size();
   for (; target_position + 1 < target_size; target_position++) {
     ssize_t nontarget_size = nontarget_scores->size(),
-        nontarget_n = nontarget_size * target_position * 1.0 / target_size,
-        nontarget_position = nontarget_size - 1 - nontarget_n;
-    if (nontarget_position  < 0)
-      nontarget_position = 0;
+            nontarget_n = nontarget_size * target_position * 1.0 / target_size,
+            nontarget_position = nontarget_size - 1 - nontarget_n;
+    if (nontarget_position < 0) nontarget_position = 0;
     if ((*nontarget_scores)[nontarget_position] <
         (*target_scores)[target_position])
       break;
@@ -68,11 +65,7 @@ BaseFloat ComputeEer(std::vector<BaseFloat> *target_scores,
   BaseFloat eer = target_position * 1.0 / target_size;
   return eer;
 }
-
-
 }
-
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -87,10 +80,10 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage: compute-eer <scores-in>\n"
         "e.g.: compute-eer -\n";
-    
+
     ParseOptions po(usage);
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 1) {
       po.PrintUsage();
       exit(1);
@@ -100,19 +93,17 @@ int main(int argc, char *argv[]) {
 
     std::vector<BaseFloat> target_scores, nontarget_scores;
     Input ki(scores_rxfilename);
-    
+
     std::string line;
     while (std::getline(ki.Stream(), line)) {
       std::vector<std::string> split_line;
       SplitStringToVector(line, " \t", true, &split_line);
       BaseFloat score;
       if (split_line.size() != 2) {
-        KALDI_ERR << "Invalid input line (must have two fields): "
-                  << line;
+        KALDI_ERR << "Invalid input line (must have two fields): " << line;
       }
       if (!ConvertStringToReal(split_line[0], &score)) {
-        KALDI_ERR << "Invalid input line (first field must be float): "
-                  << line;
+        KALDI_ERR << "Invalid input line (first field must be float): " << line;
       }
       if (split_line[1] == "target")
         target_scores.push_back(score);
@@ -125,22 +116,20 @@ int main(int argc, char *argv[]) {
     }
     if (target_scores.empty() && nontarget_scores.empty())
       KALDI_ERR << "Empty input.";
-    if (target_scores.empty())
-      KALDI_ERR << "No target scores seen.";
-    if (nontarget_scores.empty())
-      KALDI_ERR << "No non-target scores seen.";
+    if (target_scores.empty()) KALDI_ERR << "No target scores seen.";
+    if (nontarget_scores.empty()) KALDI_ERR << "No non-target scores seen.";
 
     BaseFloat threshold;
     BaseFloat eer = ComputeEer(&target_scores, &nontarget_scores, &threshold);
 
-    KALDI_LOG << "Equal error rate is " << (100.0 * eer)
-              << "%, at threshold " << threshold;
+    KALDI_LOG << "Equal error rate is " << (100.0 * eer) << "%, at threshold "
+              << threshold;
 
     std::cout.precision(4);
     std::cout << (100.0 * eer);
-    
+
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -27,12 +27,14 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Sum fMPE stats\n"
-        "Usage: fmpe-sum-accs [options...] <accs-out> <stats-in1> <stats-in2> ... \n"
+        "Usage: fmpe-sum-accs [options...] <accs-out> <stats-in1> <stats-in2> "
+        "... \n"
         "E.g. fmpe-sum-accs 1.accs 1.1.accs 1.2.accs 1.3.accs 1.4.accs\n";
 
     ParseOptions po(usage);
     bool binary = true;
-    po.Register("binary", &binary, "If true, output fMPE stats in "
+    po.Register("binary", &binary,
+                "If true, output fMPE stats in "
                 "binary mode.");
     po.Read(argc, argv);
 
@@ -48,15 +50,15 @@ int main(int argc, char *argv[]) {
       std::string stats_rxfilename = po.GetArg(arg);
       bool binary;
       Input ki(stats_rxfilename, &binary);
-      stats.Read(ki.Stream(), binary, true); // true == sum accs.
+      stats.Read(ki.Stream(), binary, true);  // true == sum accs.
     }
 
     WriteKaldiObject(stats, stats_wxfilename, binary);
-    
-    KALDI_LOG << "Summed " << (po.NumArgs()-1) << " fMPE stats and wrote to "
+
+    KALDI_LOG << "Summed " << (po.NumArgs() - 1) << " fMPE stats and wrote to "
               << stats_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

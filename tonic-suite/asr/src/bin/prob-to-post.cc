@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -25,7 +24,7 @@
 #include "hmm/hmm-utils.h"
 #include "hmm/posterior.h"
 
-/* Convert a matrix probabilities 
+/* Convert a matrix probabilities
    to something of type Posterior, i.e. for each utterance, a
    vector<vector<pair<int32, BaseFloat> > >, which is a sparse representation
    of the probabilities.
@@ -41,23 +40,28 @@ int main(int argc, char *argv[]) {
   typedef kaldi::int32 int32;
   try {
     const char *usage =
-        "Convert a matrix of probabilities (e.g. from nnet-logprob2) to posteriors\n"
-        "Usage:  prob-to-post [options] <prob-matrix-rspecifier> <posteriors-wspecifier>\n"
+        "Convert a matrix of probabilities (e.g. from nnet-logprob2) to "
+        "posteriors\n"
+        "Usage:  prob-to-post [options] <prob-matrix-rspecifier> "
+        "<posteriors-wspecifier>\n"
         "e.g.:\n"
         " nnet-logprob2 [args] | prob-to-post ark:- ark:1.post\n"
-        "Caution: in this particular example, the output would be posteriors of pdf-ids,\n"
+        "Caution: in this particular example, the output would be posteriors "
+        "of pdf-ids,\n"
         "rather than transition-ids (c.f. post-to-pdf-post)\n";
-    
+
     ParseOptions po(usage);
 
     BaseFloat min_post = 0.01;
-    bool random_prune = true; // preserve expectations.
+    bool random_prune = true;  // preserve expectations.
 
-    po.Register("min-post", &min_post, "Minimum posterior we will output (smaller "
+    po.Register("min-post", &min_post,
+                "Minimum posterior we will output (smaller "
                 "ones are pruned).  Also see --random-prune");
-    po.Register("random-prune", &random_prune, "If true, prune posteriors with a "
+    po.Register("random-prune", &random_prune,
+                "If true, prune posteriors with a "
                 "randomized method that preserves expectations.");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -90,12 +94,11 @@ int main(int argc, char *argv[]) {
       }
       posterior_writer.Write(prob_reader.Key(), post);
     }
-    KALDI_LOG << "Converted " << num_done << " log-prob matrices to posteriors.";
+    KALDI_LOG << "Converted " << num_done
+              << " log-prob matrices to posteriors.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

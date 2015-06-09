@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fstext/fstext-lib.h"
@@ -34,18 +33,23 @@ int main(int argc, char *argv[]) {
     using fst::VectorFst;
     using fst::StdArc;
     typedef StdArc::StateId StateId;
-    
+
     const char *usage =
         "Compute sentence-level lattice confidence measures for each lattice.\n"
-        "The output is simly the difference between the total costs of the best and\n"
-        "second-best paths in the lattice (or a very large value if the lattice\n"
-        "had only one path).  Caution: this is not necessarily a very good confidence\n"
+        "The output is simly the difference between the total costs of the "
+        "best and\n"
+        "second-best paths in the lattice (or a very large value if the "
+        "lattice\n"
+        "had only one path).  Caution: this is not necessarily a very good "
+        "confidence\n"
         "measure.  You almost certainly want to specify the acoustic scale.\n"
         "If the input is a state-level lattice, you need to specify\n"
         "--read-compact-lattice=false, or the confidences will be very small\n"
-        "(and wrong).  You can get word-level confidence info from lattice-mbr-decode.\n"
+        "(and wrong).  You can get word-level confidence info from "
+        "lattice-mbr-decode.\n"
         "\n"
-        "Usage: lattice-confidence <lattice-rspecifier> <confidence-wspecifier>\n"
+        "Usage: lattice-confidence <lattice-rspecifier> "
+        "<confidence-wspecifier>\n"
         "E.g.: lattice-confidence --acoustic-scale=0.08333 ark:- ark,t:-\n";
 
     ParseOptions po(usage);
@@ -56,11 +60,12 @@ int main(int argc, char *argv[]) {
                 "Scaling factor for acoustic likelihoods");
     po.Register("lm-scale", &lm_scale,
                 "Scaling factor for \"graph costs\" (including LM costs)");
-    po.Register("read-compact-lattice", &read_compact_lattice,
-                "If true, read CompactLattice format; else, read Lattice format "
-                "(necessary for state-level lattices that were written in that "
-                "format).");
-    
+    po.Register(
+        "read-compact-lattice", &read_compact_lattice,
+        "If true, read CompactLattice format; else, read Lattice format "
+        "(necessary for state-level lattices that were written in that "
+        "format).");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -70,20 +75,19 @@ int main(int argc, char *argv[]) {
 
     std::string lats_rspecifier = po.GetArg(1);
     std::string confidence_wspecifier = po.GetArg(2);
-    
+
     BaseFloatWriter confidence_writer(confidence_wspecifier);
-    
+
     // Output this instead of infinity; I/O for infinity can be problematic.
-    const BaseFloat max_output = 1.0e+10; 
-    
-    int64 num_done = 0, num_empty = 0,
-        num_one_sentence = 0, num_same_sentence = 0;
+    const BaseFloat max_output = 1.0e+10;
+
+    int64 num_done = 0, num_empty = 0, num_one_sentence = 0,
+          num_same_sentence = 0;
     double sum_neg_exp = 0.0;
-    
-    
+
     if (read_compact_lattice) {
       SequentialCompactLatticeReader clat_reader(lats_rspecifier);
-      
+
       for (; !clat_reader.Done(); clat_reader.Next()) {
         CompactLattice clat = clat_reader.Value();
         std::string key = clat_reader.Key();
@@ -96,8 +100,7 @@ int main(int argc, char *argv[]) {
         int32 num_paths;
         std::vector<int32> best_sentence, second_best_sentence;
         BaseFloat confidence;
-        confidence = SentenceLevelConfidence(clat, &num_paths,
-                                             &best_sentence,
+        confidence = SentenceLevelConfidence(clat, &num_paths, &best_sentence,
                                              &second_best_sentence);
         if (num_paths == 0) {
           KALDI_WARN << "Lattice for utterance " << key << " is equivalent to "
@@ -113,13 +116,13 @@ int main(int argc, char *argv[]) {
           num_same_sentence++;
         }
         num_done++;
-        confidence = std::min(max_output, confidence); // disallow infinity.
-        sum_neg_exp += exp(-confidence); // diagnostic.
+        confidence = std::min(max_output, confidence);  // disallow infinity.
+        sum_neg_exp += exp(-confidence);                // diagnostic.
         confidence_writer.Write(key, confidence);
       }
     } else {
       SequentialLatticeReader lat_reader(lats_rspecifier);
-      
+
       for (; !lat_reader.Done(); lat_reader.Next()) {
         Lattice lat = lat_reader.Value();
         std::string key = lat_reader.Key();
@@ -131,8 +134,7 @@ int main(int argc, char *argv[]) {
         int32 num_paths;
         std::vector<int32> best_sentence, second_best_sentence;
         BaseFloat confidence;
-        confidence = SentenceLevelConfidence(lat, &num_paths,
-                                             &best_sentence,
+        confidence = SentenceLevelConfidence(lat, &num_paths, &best_sentence,
                                              &second_best_sentence);
         if (num_paths == 0) {
           KALDI_WARN << "Lattice for utterance " << key << " is equivalent to "
@@ -146,19 +148,19 @@ int main(int argc, char *argv[]) {
           KALDI_ERR << "Best and second-best sentences were identical.";
         }
         num_done++;
-        confidence = std::min(max_output, confidence); // disallow infinity.
-        sum_neg_exp += exp(-confidence); // diagnostic.
+        confidence = std::min(max_output, confidence);  // disallow infinity.
+        sum_neg_exp += exp(-confidence);                // diagnostic.
         confidence_writer.Write(key, confidence);
       }
     }
-        
+
     KALDI_LOG << "Done " << num_done << " lattices, of which "
               << num_one_sentence << " contained only one sentence. "
               << num_empty << " were equivalent to the empty lattice.";
     if (num_done != 0)
       KALDI_LOG << "Average confidence (averaged in negative-log space) is "
                 << -log(sum_neg_exp / num_done);
-    
+
     if (num_same_sentence != 0) {
       KALDI_WARN << num_same_sentence << " lattices had the same sentence on "
                  << "different paths (likely an error)";

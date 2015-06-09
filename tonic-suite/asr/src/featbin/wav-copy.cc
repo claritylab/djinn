@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         "Usage:  wav-copy [options...] <wav-rspecifier> <wav-rspecifier>\n"
         "e.g. wav-copy scp:wav.scp ark:-\n"
         "See also: wav-to-duration extract-segments\n";
-    
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -41,11 +41,10 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string wav_rspecifier = po.GetArg(1),
-        wav_wspecifier = po.GetArg(2);
+    std::string wav_rspecifier = po.GetArg(1), wav_wspecifier = po.GetArg(2);
 
     int32 num_done = 0;
-    
+
     SequentialTableReader<WaveHolder> wav_reader(wav_rspecifier);
     TableWriter<WaveHolder> wav_writer(wav_wspecifier);
 
@@ -55,9 +54,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Copied " << num_done << " wave files";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

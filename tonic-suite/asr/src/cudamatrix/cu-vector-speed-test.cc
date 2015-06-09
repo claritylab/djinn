@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -30,58 +29,59 @@
 
 using namespace kaldi;
 
-
 namespace kaldi {
 
-template<typename Real>
+template <typename Real>
 std::string NameOf() {
   return (sizeof(Real) == 8 ? "<double>" : "<float>");
 }
 
-template<typename Real> void TestCuVectorSoftmax(int32 dim) {
+template <typename Real>
+void TestCuVectorSoftmax(int32 dim) {
   BaseFloat time_in_secs = 0.05;
   CuVector<Real> M(dim);
   M.SetRandn();
 
   Timer tim;
   int32 iter = 0;
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     M.ApplySoftMax();
   }
 
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * iter) / (tim.Elapsed() * 1.0e+09);
-  KALDI_LOG << "For CuVector::Softmax" << NameOf<Real>() << ", for dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+  KALDI_LOG << "For CuVector::Softmax" << NameOf<Real>()
+            << ", for dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-template<typename Real> void TestCuVectorSum(int32 dim) {
+template <typename Real>
+void TestCuVectorSum(int32 dim) {
   BaseFloat time_in_secs = 0.05;
   CuVector<Real> M(dim);
   M.SetRandn();
 
   Timer tim;
   int32 iter = 0;
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     M.Sum();
   }
 
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * iter) / (tim.Elapsed() * 1.0e+09);
-  KALDI_LOG << "For CuVector::Sum" << NameOf<Real>() << ", for dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+  KALDI_LOG << "For CuVector::Sum" << NameOf<Real>() << ", for dim = " << dim
+            << ", speed was " << gflops << " gigaflops.";
 }
 
-
-template<typename Real> void TestCuVectorVecVecOne(int32 dim) {
+template <typename Real>
+void TestCuVectorVecVecOne(int32 dim) {
   BaseFloat time_in_secs = 0.05;
   CuVector<Real> M(dim);
   M.SetRandn();
 
   Timer tim;
   int32 iter = 0;
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     CuVector<Real> ones(dim);
     ones.Set(1.0);
     VecVec(M, ones);
@@ -89,16 +89,14 @@ template<typename Real> void TestCuVectorVecVecOne(int32 dim) {
 
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * iter) / (tim.Elapsed() * 1.0e+09);
-  KALDI_LOG << "For CuVector::VecVecOne" << NameOf<Real>() << ", for dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+  KALDI_LOG << "For CuVector::VecVecOne" << NameOf<Real>()
+            << ", for dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-
-
-template<typename Real> void TestCuVectorAddDiagMatMat(int32 dim,
-                                                       MatrixTransposeType transN,
-                                                       MatrixTransposeType transO) {
+template <typename Real>
+void TestCuVectorAddDiagMatMat(int32 dim, MatrixTransposeType transN,
+                               MatrixTransposeType transO) {
   BaseFloat time_in_secs = 0.05;
   CuVector<Real> v(dim);
   v.SetRandn();
@@ -108,21 +106,22 @@ template<typename Real> void TestCuVectorAddDiagMatMat(int32 dim,
 
   Timer tim;
   int32 iter = 0;
-  
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     v.AddDiagMatMat(1.0, N, transN, O, transO, 1.0);
   }
 
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * fdim * iter) / (tim.Elapsed() * 1.0e+09);
   KALDI_LOG << "For CuVector::AddDiagMatMat" << NameOf<Real>()
-            << (transN == kNoTrans ? "[no-trans],":"[trans],")
-            << (transO == kNoTrans ? "[no-trans],":"[trans],")
-            << " for dim = "<< dim << ", speed was " << gflops << " gigaflops.";
+            << (transN == kNoTrans ? "[no-trans]," : "[trans],")
+            << (transO == kNoTrans ? "[no-trans]," : "[trans],")
+            << " for dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-template<typename Real> void TestCuVectorAddDiagMat2(int32 dim, MatrixTransposeType trans) {
+template <typename Real>
+void TestCuVectorAddDiagMat2(int32 dim, MatrixTransposeType trans) {
   BaseFloat time_in_secs = 0.05;
   CuVector<Real> v(dim);
   v.SetRandn();
@@ -131,21 +130,21 @@ template<typename Real> void TestCuVectorAddDiagMat2(int32 dim, MatrixTransposeT
 
   Timer tim;
   int32 iter = 0;
-  
-  for (;tim.Elapsed() < time_in_secs; iter++) {
+
+  for (; tim.Elapsed() < time_in_secs; iter++) {
     v.AddDiagMat2(1.0, N, trans, 0.0);
   }
 
   BaseFloat fdim = dim;
   BaseFloat gflops = (fdim * fdim * iter) / (tim.Elapsed() * 1.0e+09);
   KALDI_LOG << "For CuVector::AddDiagMat2" << NameOf<Real>()
-            << (trans == kTrans ? "[trans]" : "[no-trans]") << ", for dim = "
-            << dim << ", speed was " << gflops << " gigaflops.";
+            << (trans == kTrans ? "[trans]" : "[no-trans]")
+            << ", for dim = " << dim << ", speed was " << gflops
+            << " gigaflops.";
 }
 
-
-
-template<typename Real> void CudaVectorSpeedTest() {
+template <typename Real>
+void CudaVectorSpeedTest() {
   std::vector<int32> sizes;
   sizes.push_back(16);
   sizes.push_back(32);
@@ -154,36 +153,30 @@ template<typename Real> void CudaVectorSpeedTest() {
   sizes.push_back(256);
   sizes.push_back(1024);
   int32 ns = sizes.size();
-  for (int32 s = 0; s < ns; s++)
-    TestCuVectorSoftmax<Real>(sizes[s]);
-  for (int32 s = 0; s < ns; s++)
-    TestCuVectorSum<Real>(sizes[s]);
-  for (int32 s = 0; s < ns; s++)
-    TestCuVectorVecVecOne<Real>(sizes[s]);
+  for (int32 s = 0; s < ns; s++) TestCuVectorSoftmax<Real>(sizes[s]);
+  for (int32 s = 0; s < ns; s++) TestCuVectorSum<Real>(sizes[s]);
+  for (int32 s = 0; s < ns; s++) TestCuVectorVecVecOne<Real>(sizes[s]);
   for (int32 s = 0; s < ns; s++) {
     TestCuVectorAddDiagMatMat<Real>(sizes[s], kNoTrans, kNoTrans);
     TestCuVectorAddDiagMatMat<Real>(sizes[s], kNoTrans, kTrans);
     TestCuVectorAddDiagMatMat<Real>(sizes[s], kTrans, kNoTrans);
     TestCuVectorAddDiagMatMat<Real>(sizes[s], kTrans, kTrans);
   }
-  for (int32 s = 0; s < ns; s++) { 
+  for (int32 s = 0; s < ns; s++) {
     TestCuVectorAddDiagMat2<Real>(sizes[s], kNoTrans);
     TestCuVectorAddDiagMat2<Real>(sizes[s], kTrans);
   }
-  
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main() {
-    //Select the GPU
+// Select the GPU
 #if HAVE_CUDA == 1
-    CuDevice::Instantiate().SelectGpuId("yes"); //-2 .. automatic selection
+  CuDevice::Instantiate().SelectGpuId("yes");  //-2 .. automatic selection
 #endif
 
-    kaldi::CudaVectorSpeedTest<float>();
+  kaldi::CudaVectorSpeedTest<float>();
 #if HAVE_CUDA == 1
   if (CuDevice::Instantiate().DoublePrecisionSupported()) {
     kaldi::CudaVectorSpeedTest<double>();
@@ -195,4 +188,3 @@ int main() {
 #endif
   std::cout << "Tests succeeded.\n";
 }
-

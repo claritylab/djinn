@@ -38,37 +38,37 @@ int main(int argc, char *argv[]) {
         "e.g.:\n"
         " raw-nnet-copy --binary=false 1.mdl text.mdl\n"
         "See also: nnet-to-raw-nnet, nnet-am-copy\n";
-    
+
     int32 truncate = -1;
     bool binary_write = true;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
-    po.Register("truncate", &truncate, "If set, will truncate the neural net "
+    po.Register("truncate", &truncate,
+                "If set, will truncate the neural net "
                 "to this many components by removing the last components.");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string raw_nnet_rxfilename = po.GetArg(1),
-        raw_nnet_wxfilename = po.GetArg(2);
-    
+                raw_nnet_wxfilename = po.GetArg(2);
+
     Nnet nnet;
     ReadKaldiObject(raw_nnet_rxfilename, &nnet);
-    
-    if (truncate >= 0)
-      nnet.Resize(truncate);
+
+    if (truncate >= 0) nnet.Resize(truncate);
 
     WriteKaldiObject(nnet, raw_nnet_wxfilename, binary_write);
 
-    KALDI_LOG << "Copied raw neural net from " << raw_nnet_rxfilename
-              << " to " << raw_nnet_wxfilename;
+    KALDI_LOG << "Copied raw neural net from " << raw_nnet_rxfilename << " to "
+              << raw_nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

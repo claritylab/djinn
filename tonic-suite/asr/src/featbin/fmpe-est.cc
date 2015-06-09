@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     FmpeUpdateOptions opts;
     bool binary = true;
-    po.Register("binary", &binary, "If true, output fMPE object in "
+    po.Register("binary", &binary,
+                "If true, output fMPE object in "
                 "binary mode.");
     opts.Register(&po);
     po.Read(argc, argv);
@@ -43,24 +44,22 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fmpe_rxfilename = po.GetArg(1),
-        stats_rxfilename = po.GetArg(2),
-        fmpe_wxfilename = po.GetArg(3);
+    std::string fmpe_rxfilename = po.GetArg(1), stats_rxfilename = po.GetArg(2),
+                fmpe_wxfilename = po.GetArg(3);
 
     Fmpe fmpe;
     ReadKaldiObject(fmpe_rxfilename, &fmpe);
     FmpeStats stats;
     ReadKaldiObject(stats_rxfilename, &stats);
 
-    stats.DoChecks(); // checks certain checksums.
+    stats.DoChecks();  // checks certain checksums.
     fmpe.Update(opts, stats);
 
     WriteKaldiObject(fmpe, fmpe_wxfilename, binary);
 
-    KALDI_LOG << "Updated fMPE object and wrote to "
-              << fmpe_wxfilename;
+    KALDI_LOG << "Updated fMPE object and wrote to " << fmpe_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

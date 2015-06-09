@@ -23,7 +23,6 @@
 #include "matrix/kaldi-matrix.h"
 #include "transform/cmvn.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -31,23 +30,29 @@ int main(int argc, char *argv[]) {
     const char *usage =
         "Apply cepstral mean and (optionally) variance normalization\n"
         "Per-utterance by default, or per-speaker if utt2spk option provided\n"
-        "Usage: apply-cmvn [options] (cmvn-stats-rspecifier|cmvn-stats-rxfilename) feats-rspecifier feats-wspecifier\n";
+        "Usage: apply-cmvn [options] "
+        "(cmvn-stats-rspecifier|cmvn-stats-rxfilename) feats-rspecifier "
+        "feats-wspecifier\n";
 
     ParseOptions po(usage);
     std::string utt2spk_rspecifier;
     bool norm_vars = false;
     bool norm_means = true;
     std::string skip_dims_str;
-    
+
     po.Register("utt2spk", &utt2spk_rspecifier,
                 "rspecifier for utterance to speaker map");
     po.Register("norm-vars", &norm_vars, "If true, normalize variances.");
-    po.Register("norm-means", &norm_means, "You can set this to false to turn off mean "
-                "normalization.  Note, the same can be achieved by using 'fake' CMVN stats; "
+    po.Register("norm-means", &norm_means,
+                "You can set this to false to turn off mean "
+                "normalization.  Note, the same can be achieved by using "
+                "'fake' CMVN stats; "
                 "see the --fake option to compute_cmvn_stats.sh");
-    po.Register("skip-dims", &skip_dims_str, "Dimensions for which to skip "
-                "normalization: colon-separated list of integers, e.g. 13:14:15)");
-    
+    po.Register(
+        "skip-dims", &skip_dims_str,
+        "Dimensions for which to skip "
+        "normalization: colon-separated list of integers, e.g. 13:14:15)");
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 3) {
@@ -62,26 +67,26 @@ int main(int argc, char *argv[]) {
                                    // dims to disable normalization.
     if (!SplitStringToIntegers(skip_dims_str, ":", false, &skip_dims)) {
       KALDI_ERR << "Bad --skip-dims option (should be colon-separated list of "
-                <<  "integers)";
+                << "integers)";
     }
-    
-    
+
     kaldi::int32 num_done = 0, num_err = 0;
-    
+
     std::string cmvn_rspecifier_or_rxfilename = po.GetArg(1);
     std::string feat_rspecifier = po.GetArg(2);
     std::string feat_wspecifier = po.GetArg(3);
-    
+
     SequentialBaseFloatMatrixReader feat_reader(feat_rspecifier);
     BaseFloatMatrixWriter feat_writer(feat_wspecifier);
-    
-    if (ClassifyRspecifier(cmvn_rspecifier_or_rxfilename, NULL, NULL)
-        != kNoRspecifier) { // reading from a Table: per-speaker or per-utt CMN/CVN.
+
+    if (ClassifyRspecifier(cmvn_rspecifier_or_rxfilename, NULL, NULL) !=
+        kNoRspecifier) {  // reading from a Table: per-speaker or per-utt
+                          // CMN/CVN.
       std::string cmvn_rspecifier = cmvn_rspecifier_or_rxfilename;
 
       RandomAccessDoubleMatrixReaderMapped cmvn_reader(cmvn_rspecifier,
                                                        utt2spk_rspecifier);
-      
+
       for (; !feat_reader.Done(); feat_reader.Next()) {
         std::string utt = feat_reader.Key();
         Matrix<BaseFloat> feat(feat_reader.Value());
@@ -93,11 +98,10 @@ int main(int argc, char *argv[]) {
             continue;
           }
           Matrix<double> cmvn_stats = cmvn_reader.Value(utt);
-          if (!skip_dims.empty())
-            FakeStatsForSomeDims(skip_dims, &cmvn_stats);
-          
+          if (!skip_dims.empty()) FakeStatsForSomeDims(skip_dims, &cmvn_stats);
+
           ApplyCmvn(cmvn_stats, norm_vars, &feat);
-        
+
           feat_writer.Write(utt, feat);
         } else {
           feat_writer.Write(utt, feat);
@@ -113,29 +117,25 @@ int main(int argc, char *argv[]) {
       Input ki(cmvn_rxfilename, &binary);
       Matrix<double> cmvn_stats;
       cmvn_stats.Read(ki.Stream(), binary);
-      if (!skip_dims.empty())
-        FakeStatsForSomeDims(skip_dims, &cmvn_stats);
-      
-      for (;!feat_reader.Done(); feat_reader.Next()) {
+      if (!skip_dims.empty()) FakeStatsForSomeDims(skip_dims, &cmvn_stats);
+
+      for (; !feat_reader.Done(); feat_reader.Next()) {
         std::string utt = feat_reader.Key();
         Matrix<BaseFloat> feat(feat_reader.Value());
-        if (norm_means)
-          ApplyCmvn(cmvn_stats, norm_vars, &feat);
+        if (norm_means) ApplyCmvn(cmvn_stats, norm_vars, &feat);
         feat_writer.Write(utt, feat);
         num_done++;
       }
     }
-    if (norm_vars) 
+    if (norm_vars)
       KALDI_LOG << "Applied cepstral mean and variance normalization to "
                 << num_done << " utterances, errors on " << num_err;
     else
-      KALDI_LOG << "Applied cepstral mean normalization to "
-                << num_done << " utterances, errors on " << num_err;
+      KALDI_LOG << "Applied cepstral mean normalization to " << num_done
+                << " utterances, errors on " << num_err;
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

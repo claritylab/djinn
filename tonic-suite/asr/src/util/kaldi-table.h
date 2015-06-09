@@ -31,9 +31,12 @@
 namespace kaldi {
 
 // Forward declarations
-template<class Holder> class RandomAccessTableReaderImplBase;
-template<class Holder>  class SequentialTableReaderImplBase;
-template<class Holder>  class TableWriterImplBase;
+template <class Holder>
+class RandomAccessTableReaderImplBase;
+template <class Holder>
+class SequentialTableReaderImplBase;
+template <class Holder>
+class TableWriterImplBase;
 
 /// \addtogroup table_group
 /// @{
@@ -44,8 +47,10 @@ template<class Holder>  class TableWriterImplBase;
 // explains the "rspecifier" and "wspecifier" concepts (these are strings that
 // explain how to read/write objects via archives or scp files.  A table is
 // conceptually a collection of objects of a particular type T indexed by keys
-// of type std::string (these Keys additionally have an order within each table).
-// The Table classes are templated on a type (call it Holder) such that Holder::T
+// of type std::string (these Keys additionally have an order within each
+// table).
+// The Table classes are templated on a type (call it Holder) such that
+// Holder::T
 // is a typedef equal to T.
 
 // see kaldi-holder.h for detail on the Holder classes.
@@ -102,7 +107,7 @@ typedef std::vector<std::string> KeyList;
 //  as we can't see a situtation where an extended filename would make sense
 //  for this (we can't fseek() in pipes).
 
-enum WspecifierType  {
+enum WspecifierType {
   kNoWspecifier,
   kArchiveWspecifier,
   kScriptWspecifier,
@@ -112,8 +117,8 @@ enum WspecifierType  {
 struct WspecifierOptions {
   bool binary;
   bool flush;
-  bool permissive; // will ignore absent scp entries.
-  WspecifierOptions(): binary(true), flush(false), permissive(false) { }
+  bool permissive;  // will ignore absent scp entries.
+  WspecifierOptions() : binary(true), flush(false), permissive(false) {}
 };
 
 // ClassifyWspecifier returns the type of the wspecifier string,
@@ -129,32 +134,37 @@ WspecifierType ClassifyWspecifier(const std::string &wspecifier,
 // (in order as it was in the scp file) in script_out_, which contains
 // pairs of (key, xfilename).  The .scp
 // file format is: on each line, key xfilename
-// where xfilename means rxfilename or wxfilename, and may contain internal spaces
+// where xfilename means rxfilename or wxfilename, and may contain internal
+// spaces
 // (we trim away any leading or trailing space).  The key is space-free.
 // ReadScriptFile returns true if the format was valid (empty files
 // are valid).
-// If 'print_warnings', it will print out warning messages that explain what kind
+// If 'print_warnings', it will print out warning messages that explain what
+// kind
 // of error there was.
-bool ReadScriptFile(const std::string &rxfilename,
-                    bool print_warnings,
-                    std::vector<std::pair<std::string, std::string> > *script_out);
+bool ReadScriptFile(
+    const std::string &rxfilename, bool print_warnings,
+    std::vector<std::pair<std::string, std::string> > *script_out);
 
 // This version of ReadScriptFile works from an istream.
-bool ReadScriptFile(std::istream &is,
-                    bool print_warnings,
-                    std::vector<std::pair<std::string, std::string> > *script_out);
+bool ReadScriptFile(
+    std::istream &is, bool print_warnings,
+    std::vector<std::pair<std::string, std::string> > *script_out);
 
-// Writes, for each entry in script, the first element, then ' ', then the second
+// Writes, for each entry in script, the first element, then ' ', then the
+// second
 // element then '\n'.  Checks that the keys (first elements of pairs) are valid
 // tokens (nonempty, no whitespace), and the values (second elements of pairs)
 // are newline-free and contain no leading or trailing space.  Returns true on
 // success.
-bool WriteScriptFile(const std::string &wxfilename,
-                     const std::vector<std::pair<std::string, std::string> > &script);
+bool WriteScriptFile(
+    const std::string &wxfilename,
+    const std::vector<std::pair<std::string, std::string> > &script);
 
 // This version writes to an ostream.
-bool WriteScriptFile(std::ostream &os,
-                     const std::vector<std::pair<std::string, std::string> > &script);
+bool WriteScriptFile(
+    std::ostream &os,
+    const std::vector<std::pair<std::string, std::string> > &script);
 
 // Documentation for "rspecifier"
 // "rspecifier" describes how we read a set of objects indexed by keys.
@@ -168,7 +178,8 @@ bool WriteScriptFile(std::ostream &os,
 //       the reader to discard already-asked-for values.
 //   s   means the keys are sorted on input (means we don't have to read till
 //       eof if someone asked for a key that wasn't there).
-//   cs  means that it is called in sorted order (we are generally asserting this
+//   cs  means that it is called in sorted order (we are generally asserting
+//   this
 //       based on knowledge of how the program works).
 //   p   means "permissive", and causes it to skip over keys whose corresponding
 //       scp-file entries cannot be read. [and to ignore errors in archives and
@@ -176,8 +187,10 @@ bool WriteScriptFile(std::ostream &os,
 //       We allow the negation of the options above, as in no, ns, np,
 //       but these aren't currently very useful (just equivalent to omitting the
 //       corresponding option).
-//      [any of the above options can be prefixed by n to negate them, e.g. no, ns,
-//       ncs, np; but these aren't currently useful as you could just omit the option].
+//      [any of the above options can be prefixed by n to negate them, e.g. no,
+//      ns,
+//       ncs, np; but these aren't currently useful as you could just omit the
+//       option].
 //
 //   b   is ignored [for scripting convenience]
 //   t   is ignored [for scripting convenience]
@@ -187,29 +200,26 @@ bool WriteScriptFile(std::ostream &os,
 //
 //   "o, s, p, ark:gunzip -c foo.gz|"
 
-struct  RspecifierOptions {
+struct RspecifierOptions {
   // These options only make a difference for the RandomAccessTableReader class.
-  bool once;   // we assert that the program will only ask for each key once.
+  bool once;    // we assert that the program will only ask for each key once.
   bool sorted;  // we assert that the keys are sorted.
   bool called_sorted;  // we assert that the (HasKey(), Value() functions will
   // also be called in sorted order.  [this implies "once" but not vice versa].
   bool permissive;  // If "permissive", when reading from scp files it treats
   // scp files that can't be read as if the corresponding key were not there.
   // For archive files it will suppress errors getting thrown if the archive
-  
+
   // is corrupted and can't be read to the end.
 
-  RspecifierOptions(): once(false), sorted(false),
-                       called_sorted(false), permissive(false) { }
+  RspecifierOptions()
+      : once(false), sorted(false), called_sorted(false), permissive(false) {}
 };
 
-enum RspecifierType  {
-  kNoRspecifier,
-  kArchiveRspecifier,
-  kScriptRspecifier
-};
+enum RspecifierType { kNoRspecifier, kArchiveRspecifier, kScriptRspecifier };
 
-RspecifierType ClassifyRspecifier(const std::string &rspecifier, std::string *rxfilename,
+RspecifierType ClassifyRspecifier(const std::string &rspecifier,
+                                  std::string *rxfilename,
                                   RspecifierOptions *opts);
 
 // Class Table<Holder> is useful when you want the entire set of
@@ -217,15 +227,14 @@ RspecifierType ClassifyRspecifier(const std::string &rspecifier, std::string *rx
 // It is the least scalable way of accessing data in Tables.
 // The *TableReader and TableWriter classes are more scalable.
 
-
 /// Allows random access to a collection
 /// of objects in an archive or script file; see \ref io_sec_tables.
-template<class Holder>
+template <class Holder>
 class RandomAccessTableReader {
  public:
   typedef typename Holder::T T;
 
-  RandomAccessTableReader(): impl_(NULL) { }
+  RandomAccessTableReader() : impl_(NULL) {}
 
   // This constructor equivalent to default constructor + "open", but
   // throws on error.
@@ -259,26 +268,27 @@ class RandomAccessTableReader {
 
   // Allow copy-constructor only for non-opened readers (needed for inclusion in
   // stl vector)
-  RandomAccessTableReader(const RandomAccessTableReader<Holder> &other):
-      impl_(NULL) { KALDI_ASSERT(other.impl_ == NULL); }
+  RandomAccessTableReader(const RandomAccessTableReader<Holder> &other)
+      : impl_(NULL) {
+    KALDI_ASSERT(other.impl_ == NULL);
+  }
+
  private:
   // Disallow assignment.
-  RandomAccessTableReader &operator=(const RandomAccessTableReader<Holder>&);
-  void CheckImpl() const; // Checks that impl_ is non-NULL; prints an error
-                          // message and dies (with KALDI_ERR) if NULL.
+  RandomAccessTableReader &operator=(const RandomAccessTableReader<Holder> &);
+  void CheckImpl() const;  // Checks that impl_ is non-NULL; prints an error
+                           // message and dies (with KALDI_ERR) if NULL.
   RandomAccessTableReaderImplBase<Holder> *impl_;
 };
 
-
-
 /// A templated class for reading objects sequentially from an archive or script
 /// file; see \ref io_sec_tables.
-template<class Holder>
+template <class Holder>
 class SequentialTableReader {
  public:
   typedef typename Holder::T T;
 
-  SequentialTableReader(): impl_(NULL) { }
+  SequentialTableReader() : impl_(NULL) {}
 
   // This constructor equivalent to default constructor + "open", but
   // throws on error.
@@ -332,8 +342,10 @@ class SequentialTableReader {
   // Close()
   bool Close();
 
-  // The destructor may throw.  This is the desired behaviour, as it's the way we
-  // signal the error to the user (to detect it, call Close().  The issue is that
+  // The destructor may throw.  This is the desired behaviour, as it's the way
+  // we
+  // signal the error to the user (to detect it, call Close().  The issue is
+  // that
   // otherwise the user has no way to tell whether Done() returned true because
   // we reached the end of the archive or script, or because there was an error
   // that prevented further reading.
@@ -341,25 +353,27 @@ class SequentialTableReader {
 
   // Allow copy-constructor only for non-opened readers (needed for inclusion in
   // stl vector)
-  SequentialTableReader(const SequentialTableReader<Holder> &other):
-      impl_(NULL) { KALDI_ASSERT(other.impl_ == NULL); }
+  SequentialTableReader(const SequentialTableReader<Holder> &other)
+      : impl_(NULL) {
+    KALDI_ASSERT(other.impl_ == NULL);
+  }
+
  private:
   // Disallow assignment.
-  SequentialTableReader &operator = (const SequentialTableReader<Holder>&); 
-  void CheckImpl() const; // Checks that impl_ is non-NULL; prints an error
-                          // message and dies (with KALDI_ERR) if NULL.
+  SequentialTableReader &operator=(const SequentialTableReader<Holder> &);
+  void CheckImpl() const;  // Checks that impl_ is non-NULL; prints an error
+                           // message and dies (with KALDI_ERR) if NULL.
   SequentialTableReaderImplBase<Holder> *impl_;
 };
 
-
 /// A templated class for writing objects to an
 /// archive or script file; see \ref io_sec_tables.
-template<class Holder>
+template <class Holder>
 class TableWriter {
  public:
   typedef typename Holder::T T;
 
-  TableWriter(): impl_(NULL) { }
+  TableWriter() : impl_(NULL) {}
 
   // This constructor equivalent to default constructor
   // + "open", but throws on error.  See docs for
@@ -377,7 +391,6 @@ class TableWriter {
   // KALDI_ERR macro)
   inline void Write(const std::string &key, const T &value) const;
 
-
   // Flush will flush any archive; it does not return error status
   // or throw, any errors will be reported on the next Write or Close.
   // Useful if we may be writing to a command in a pipe and want
@@ -391,22 +404,22 @@ class TableWriter {
   bool Close();
 
   ~TableWriter();
-  
+
   // Allow copy-constructor only for non-opened writers (needed for inclusion in
   // stl vector)
-  TableWriter(const TableWriter &other): impl_(NULL) {
+  TableWriter(const TableWriter &other) : impl_(NULL) {
     KALDI_ASSERT(other.impl_ == NULL);
   }
+
  private:
-  TableWriter &operator = (const TableWriter&); // Disallow assignment.
-  void CheckImpl() const; // Checks that impl_ is non-NULL; prints an error
-                          // message and dies (with KALDI_ERR) if NULL.
+  TableWriter &operator=(const TableWriter &);  // Disallow assignment.
+  void CheckImpl() const;  // Checks that impl_ is non-NULL; prints an error
+                           // message and dies (with KALDI_ERR) if NULL.
   TableWriterImplBase<Holder> *impl_;
 };
 
-
 /// This class is for when you are reading something in random access, but
-/// it may actually be stored per-speaker (or something similar) but the 
+/// it may actually be stored per-speaker (or something similar) but the
 /// keys you're using are per utterance.  So you also provide an "rxfilename"
 /// for a file containing lines like
 /// utt1 spk1
@@ -415,9 +428,10 @@ class TableWriter {
 /// and so on.  Note: this is optional; if it is an empty string, we just won't
 /// do the mapping.  Also, "table_rxfilename" may be the empty string (as for
 /// a regular table), in which case the table just won't be opened.
-/// We provide only the most frequently used of the functions of RandomAccessTableReader.
+/// We provide only the most frequently used of the functions of
+/// RandomAccessTableReader.
 
-template<class Holder>
+template <class Holder>
 class RandomAccessTableReaderMapped {
  public:
   typedef typename Holder::T T;
@@ -427,7 +441,7 @@ class RandomAccessTableReaderMapped {
   RandomAccessTableReaderMapped(const std::string &table_rxfilename,
                                 const std::string &utt2spk_rxfilename);
 
-  RandomAccessTableReaderMapped() {};
+  RandomAccessTableReaderMapped(){};
 
   /// Note: when calling Open, utt2spk_rxfilename may be empty.
   bool Open(const std::string &table_rxfilename,
@@ -437,22 +451,21 @@ class RandomAccessTableReaderMapped {
   const T &Value(const std::string &key);
   inline bool IsOpen() const { return reader_.IsOpen(); }
   inline bool Close() { return reader_.Close(); }
-  
-
 
   // The default copy-constructor will do what we want: it will crash
-  // for already-opened readers, by calling the member-variable copy-constructors.
+  // for already-opened readers, by calling the member-variable
+  // copy-constructors.
  private:
   // Disallow assignment.
-  RandomAccessTableReaderMapped &operator=(const RandomAccessTableReaderMapped<Holder>&);
+  RandomAccessTableReaderMapped &operator=(
+      const RandomAccessTableReaderMapped<Holder> &);
   RandomAccessTableReader<Holder> reader_;
   RandomAccessTableReader<TokenHolder> token_reader_;
-  std::string utt2spk_rxfilename_; // Used only in diagnostic messages.
+  std::string utt2spk_rxfilename_;  // Used only in diagnostic messages.
 };
 
-
 /// @} end "addtogroup table_group"
-} // end namespace kaldi
+}  // end namespace kaldi
 
 #include "kaldi-table-inl.h"
 

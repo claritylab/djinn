@@ -23,7 +23,6 @@
 #include "nnet2/nnet-example-functions.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -33,22 +32,25 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Get examples of data for discriminative neural network training;\n"
-        "each one corresponds to part of a file, of variable (and configurable\n"
+        "each one corresponds to part of a file, of variable (and "
+        "configurable\n"
         "length.\n"
         "\n"
-        "Usage:  nnet-get-egs-discriminative [options] <model|transition-model> "
+        "Usage:  nnet-get-egs-discriminative [options] "
+        "<model|transition-model> "
         "<features-rspecifier> <ali-rspecifier> <den-lat-rspecifier> "
         "<training-examples-out>\n"
         "\n"
         "An example [where $feats expands to the actual features]:\n"
         "nnet-get-egs-discriminative --acoustic-scale=0.1 \\\n"
-        "  1.mdl '$feats' 'ark,s,cs:gunzip -c ali.1.gz|' 'ark,s,cs:gunzip -c lat.1.gz|' ark:1.degs\n";
-    
+        "  1.mdl '$feats' 'ark,s,cs:gunzip -c ali.1.gz|' 'ark,s,cs:gunzip -c "
+        "lat.1.gz|' ark:1.degs\n";
+
     SplitDiscriminativeExampleConfig split_config;
-    
+
     ParseOptions po(usage);
     split_config.Register(&po);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 5) {
@@ -57,11 +59,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string nnet_rxfilename = po.GetArg(1),
-        feature_rspecifier = po.GetArg(2),
-        ali_rspecifier = po.GetArg(3),
-        clat_rspecifier = po.GetArg(4),
-        examples_wspecifier = po.GetArg(5);
-
+                feature_rspecifier = po.GetArg(2),
+                ali_rspecifier = po.GetArg(3), clat_rspecifier = po.GetArg(4),
+                examples_wspecifier = po.GetArg(5);
 
     TransitionModel trans_model;
     AmNnet am_nnet;
@@ -73,20 +73,19 @@ int main(int argc, char *argv[]) {
     }
 
     int32 left_context = am_nnet.GetNnet().LeftContext(),
-        right_context = am_nnet.GetNnet().RightContext();
+          right_context = am_nnet.GetNnet().RightContext();
 
-    
     // Read in all the training files.
     SequentialBaseFloatMatrixReader feat_reader(feature_rspecifier);
     RandomAccessInt32VectorReader ali_reader(ali_rspecifier);
     RandomAccessCompactLatticeReader clat_reader(clat_rspecifier);
     DiscriminativeNnetExampleWriter example_writer(examples_wspecifier);
-    
+
     int32 num_done = 0, num_err = 0;
-    int64 examples_count = 0; // used in generating id's.
-    
-    SplitExampleStats stats; // diagnostic.
-    
+    int64 examples_count = 0;  // used in generating id's.
+
+    SplitExampleStats stats;  // diagnostic.
+
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
       const Matrix<BaseFloat> &feats = feat_reader.Value();
@@ -102,10 +101,11 @@ int main(int argc, char *argv[]) {
         continue;
       }
       CompactLattice clat = clat_reader.Value(key);
-      CreateSuperFinal(&clat); // make sure only one state has a final-prob (of One()).
+      CreateSuperFinal(
+          &clat);  // make sure only one state has a final-prob (of One()).
       if (clat.Properties(fst::kTopSorted, true) == 0) {
         TopSort(&clat);
-      }      
+      }
 
       BaseFloat weight = 1.0;
       DiscriminativeNnetExample eg;
@@ -116,13 +116,12 @@ int main(int argc, char *argv[]) {
         num_err++;
         continue;
       }
-      
+
       std::vector<DiscriminativeNnetExample> egs;
-      SplitDiscriminativeExample(split_config, trans_model, eg,
-                                 &egs, &stats);
-      
-      KALDI_VLOG(2) << "Split lattice " << key << " into "
-                    << egs.size() << " pieces.";
+      SplitDiscriminativeExample(split_config, trans_model, eg, &egs, &stats);
+
+      KALDI_VLOG(2) << "Split lattice " << key << " into " << egs.size()
+                    << " pieces.";
       for (size_t i = 0; i < egs.size(); i++) {
         // Note: excised_egs will be of size 0 or 1.
         std::vector<DiscriminativeNnetExample> excised_egs;
@@ -139,12 +138,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (num_done > 0) stats.Print();
-    
+
     KALDI_LOG << "Finished generating examples, "
-              << "successfully processed " << num_done
-              << " feature files, " << num_err << " had errors.";
+              << "successfully processed " << num_done << " feature files, "
+              << num_err << " had errors.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

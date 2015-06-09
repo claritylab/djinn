@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "fstext/prune-special.h"
 #include "fstext/rand-fst.h"
 #include "fstext/fstext-utils.h"
@@ -60,15 +59,14 @@ static void TestPruneSpecial() {
     std::cout << endl;
   }
 
-  KALDI_ASSERT(RandEquivalent(ofst1, ofst2,
-                              5/*paths*/, 0.01/*delta*/, kaldi::Rand()/*seed*/,
-                              100/*path length-- max?*/));
+  KALDI_ASSERT(RandEquivalent(ofst1, ofst2, 5 /*paths*/, 0.01 /*delta*/,
+                              kaldi::Rand() /*seed*/,
+                              100 /*path length-- max?*/));
 
   delete ifst;
 }
 
-
-} // namespace fst
+}  // namespace fst
 
 int main() {
   kaldi::g_kaldi_verbose_level = 4;

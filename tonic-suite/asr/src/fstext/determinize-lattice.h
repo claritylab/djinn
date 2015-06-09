@@ -32,19 +32,21 @@ namespace fst {
 /// \addtogroup fst_extensions
 ///  @{
 
-
 // For example of usage, see test-determinize-lattice.cc
 
 /*
    DeterminizeLattice implements a special form of determinization
    with epsilon removal, optimized for a phase of lattice generation.
-   Its input is an FST with weight-type BaseWeightType (usually a pair of floats,
+   Its input is an FST with weight-type BaseWeightType (usually a pair of
+   floats,
    with a lexicographical type of order, such as LatticeWeightTpl<float>).
    Typically this would be a state-level lattice, with input symbols equal to
-   words, and output-symbols equal to p.d.f's (so like the inverse of HCLG).  Imagine representing this as an
+   words, and output-symbols equal to p.d.f's (so like the inverse of HCLG).
+   Imagine representing this as an
    acceptor of type CompactLatticeWeightTpl<float>, in which the input/output
    symbols are words, and the weights contain the original weights together with
-   strings (with zero or one symbol in them) containing the original output labels
+   strings (with zero or one symbol in them) containing the original output
+   labels
    (the p.d.f.'s).  We determinize this using acceptor determinization with
    epsilon removal.  Remember (from lattice-weight.h) that
    CompactLatticeWeightTpl has a special kind of semiring where we always take
@@ -69,7 +71,8 @@ namespace fst {
    words (in states), because propagating each arc involves copying a whole
    vector (of integers representing p.d.f.'s).  Instead we use a hash structure
    where each string is a pointer (Entry*), and uses a hash from (Entry*,
-   IntType), to the successor string (and a way to get the latest IntType and the
+   IntType), to the successor string (and a way to get the latest IntType and
+   the
    ancestor Entry*).  [this is the class LatticeStringRepository].
 
    Another issue is that rather than representing a determinized-state as a
@@ -78,10 +81,11 @@ namespace fst {
    this the "canonical representation".  Note: these collections are always
    normalized to remove any common weight and string part.  Define end-states as
    the subset of states that have an arc out of them with a label on, or are
-   final.  If we represent a determinized-state a the set of just its (end-state,
+   final.  If we represent a determinized-state a the set of just its
+   (end-state,
    weight) pairs, this will be a valid and more compact representation, and will
    lead to a smaller set of determinized states (like early minimization).  Call
-   this collection of (end-state, weight) pairs the "minimal representation".  As
+   this collection of (end-state, weight) pairs the "minimal representation". As
    a mechanism to reduce compute, we can also consider another representation.
    In the determinization algorithm, we start off with a set of (begin-state,
    weight) pairs (where the "begin-states" are initial or have a label on the
@@ -91,19 +95,19 @@ namespace fst {
    representation".  If two initial representations are the same, the "canonical
    representation" and hence the "minimal representation" will be the same.  We
    can use this to reduce compute.  Note that if two initial representations are
-   different, this does not preclude the other representations from being the same.
-   
-*/   
+   different, this does not preclude the other representations from being the
+   same.
+
+*/
 
 struct DeterminizeLatticeOptions {
-  float delta; // A small offset used to measure equality of weights.
-  int max_mem; // If >0, determinization will fail and return false
-  // when the algorithm's (approximate) memory consumption crosses this threshold.
-  int max_loop; // If >0, can be used to detect non-determinizable input
+  float delta;  // A small offset used to measure equality of weights.
+  int max_mem;  // If >0, determinization will fail and return false
+  // when the algorithm's (approximate) memory consumption crosses this
+  // threshold.
+  int max_loop;  // If >0, can be used to detect non-determinizable input
   // (a case that wouldn't be caught by max_mem).
-  DeterminizeLatticeOptions(): delta(kDelta),
-                               max_mem(-1),
-                               max_loop(-1) { }
+  DeterminizeLatticeOptions() : delta(kDelta), max_mem(-1), max_loop(-1) {}
 };
 
 /**
@@ -116,34 +120,32 @@ struct DeterminizeLatticeOptions {
     efficient if ifst is arc-sorted on input label.  If the number of arcs gets
     more than max_states, it will throw std::runtime_error (otherwise this code
     does not use exceptions).  This is mainly useful for debug.  */
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool DeterminizeLattice(
-    const Fst<ArcTpl<Weight> > &ifst,
-    MutableFst<ArcTpl<Weight> > *ofst,
+    const Fst<ArcTpl<Weight> > &ifst, MutableFst<ArcTpl<Weight> > *ofst,
     DeterminizeLatticeOptions opts = DeterminizeLatticeOptions(),
     bool *debug_ptr = NULL);
 
-
-/*  This is a version of DeterminizeLattice with a slightly more "natural" output format,
-    where the output sequences are encoded using the CompactLatticeArcTpl template
+/*  This is a version of DeterminizeLattice with a slightly more "natural"
+   output format,
+    where the output sequences are encoded using the CompactLatticeArcTpl
+   template
     (i.e. the sequences of output symbols are represented directly as strings)
     More efficient if ifst is arc-sorted on input label.
-    If the #arcs gets more than max_arcs, it will throw std::runtime_error (otherwise
+    If the #arcs gets more than max_arcs, it will throw std::runtime_error
+   (otherwise
     this code does not use exceptions).  This is mainly useful for debug.
 */
-template<class Weight, class IntType>
+template <class Weight, class IntType>
 bool DeterminizeLattice(
-    const Fst<ArcTpl<Weight> >&ifst,
+    const Fst<ArcTpl<Weight> > &ifst,
     MutableFst<ArcTpl<CompactLatticeWeightTpl<Weight, IntType> > > *ofst,
     DeterminizeLatticeOptions opts = DeterminizeLatticeOptions(),
     bool *debug_ptr = NULL);
 
-
-
-
 /// @} end "addtogroup fst_extensions"
 
-} // end namespace fst
+}  // end namespace fst
 
 #include "fstext/determinize-lattice-inl.h"
 

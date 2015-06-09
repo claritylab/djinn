@@ -22,14 +22,14 @@
 #include "feat/feature-functions.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
 
     const char *usage =
         "Remove mean from each feature file\n"
-        " [ for per-speaker normalization, use add-cmvn-stats and apply-cmvn ]\n"
+        " [ for per-speaker normalization, use add-cmvn-stats and apply-cmvn "
+        "]\n"
         "Usage: remove-mean [options] in-rspecifier out-wspecifier\n";
 
     ParseOptions po(usage);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feat_reader(rspecifier);
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
-      Matrix<BaseFloat> feats (feat_reader.Value());
+      Matrix<BaseFloat> feats(feat_reader.Value());
       if (feats.NumRows() == 0) {
         KALDI_WARN << "Empty feature matrix for key " << key;
         continue;
@@ -61,10 +61,8 @@ int main(int argc, char *argv[]) {
       feat_writer.Write(key, feats);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

@@ -25,14 +25,11 @@
 
 namespace kaldi {
 
-
 // Compute derivative of GMM log-likelihood w.r.t. features.
 // Note: this code copied from gmm-get-feat-deriv.cc; had
 // to simplify a bit.
-void GetFeatDeriv(const DiagGmm &gmm,
-                  const Matrix<BaseFloat> &feats,
+void GetFeatDeriv(const DiagGmm &gmm, const Matrix<BaseFloat> &feats,
                   Matrix<BaseFloat> *deriv) {
-  
   deriv->Resize(feats.NumRows(), feats.NumCols());
 
   Vector<BaseFloat> gauss_posteriors;
@@ -51,14 +48,13 @@ void GetFeatDeriv(const DiagGmm &gmm,
     // the posteriors.  This comes from the term
     //  feat^T * inv_var * mean
     // in the objective function.
-    this_deriv.AddMatVec(1.0, gmm.means_invvars(), kTrans,
-                         gauss_posteriors, 1.0);
+    this_deriv.AddMatVec(1.0, gmm.means_invvars(), kTrans, gauss_posteriors,
+                         1.0);
 
     // next line does temp_vec == inv_vars^T * gauss_posteriors,
     // which sets temp_vec to a weighted sum of the inv_vars,
     // weighed by Gaussian posterior.
-    temp_vec.AddMatVec(1.0, gmm.inv_vars(), kTrans,
-                       gauss_posteriors, 0.0);
+    temp_vec.AddMatVec(1.0, gmm.inv_vars(), kTrans, gauss_posteriors, 0.0);
     // Add to the derivative, -(this_feat .* temp_vec),
     // which is the term that comes from the -0.5 * inv_var^T feat_sq,
     // in the objective function (where inv_var is a vector, and feat_sq
@@ -68,8 +64,7 @@ void GetFeatDeriv(const DiagGmm &gmm,
 }
 
 // Gets total log-likelihood, summed over all frames.
-BaseFloat GetGmmLike(const DiagGmm &gmm,
-                     const Matrix<BaseFloat> &feats) {
+BaseFloat GetGmmLike(const DiagGmm &gmm, const Matrix<BaseFloat> &feats) {
   BaseFloat ans = 0.0;
   for (int32 i = 0; i < feats.NumRows(); i++)
     ans += gmm.LogLikelihood(feats.Row(i));
@@ -81,15 +76,14 @@ void TestFmpe() {
   int32 num_comp = 10 + (Rand() % 10);
   DiagGmm gmm;
   unittest::InitRandDiagGmm(dim, num_comp, &gmm);
-  
+
   int32 num_frames = 20;
   Matrix<BaseFloat> feats(num_frames, dim);
 
   for (int32 i = 0; i < num_frames; i++)
-    for (int32 j = 0; j < dim; j++)
-      feats(i, j) = RandGauss();
+    for (int32 j = 0; j < dim; j++) feats(i, j) = RandGauss();
 
-  FmpeOptions opts; // Default.
+  FmpeOptions opts;  // Default.
   {
     Fmpe fmpe(gmm, opts);
     {
@@ -116,28 +110,27 @@ void TestFmpe() {
     BaseFloat like_before = GetGmmLike(gmm, feats);
     feats.AddMat(1.0, random_offset);
     BaseFloat like_after = GetGmmLike(gmm, feats);
-    feats.AddMat(-1.0, random_offset); // undo the change.
+    feats.AddMat(-1.0, random_offset);  // undo the change.
     GetFeatDeriv(gmm, feats, &deriv);
     BaseFloat change1 = like_after - like_before,
-        change2 = TraceMatMat(random_offset, deriv, kTrans);
-    KALDI_LOG << "Random offset led to like change "
-              << change1 << " (manually), and " << change2
-              << " (derivative)";
+              change2 = TraceMatMat(random_offset, deriv, kTrans);
+    KALDI_LOG << "Random offset led to like change " << change1
+              << " (manually), and " << change2 << " (derivative)";
     // note: not making this threshold smaller, as don't want
     // spurious failures.  Seems to be OK though.
-    KALDI_ASSERT( fabs(change1-change2) < 0.15*fabs(change1+change2));
+    KALDI_ASSERT(fabs(change1 - change2) < 0.15 * fabs(change1 + change2));
   }
 
-  std::vector<std::vector<int32> > gselect(feats.NumRows()); // make it have all Gaussians...
+  std::vector<std::vector<int32> > gselect(
+      feats.NumRows());  // make it have all Gaussians...
   for (int32 i = 0; i < feats.NumRows(); i++)
-    for (int32 j = 0; j < gmm.NumGauss(); j++)
-      gselect[i].push_back(j);
+    for (int32 j = 0; j < gmm.NumGauss(); j++) gselect[i].push_back(j);
 
   Matrix<BaseFloat> fmpe_offset;
   // Check that the fMPE feature offset is zero.
   fmpe.ComputeFeatures(feats, gselect, &fmpe_offset);
   KALDI_ASSERT(fmpe_offset.IsZero());
-  
+
   // Note: we're just using the ML objective function here.
   // This is just to make sure the derivatives are all computed
   // correctly.
@@ -148,7 +141,7 @@ void TestFmpe() {
   GetFeatDeriv(gmm, feats, &deriv);
   fmpe.AccStats(feats, gselect, deriv, NULL, &stats);
   FmpeUpdateOptions update_opts;
-  update_opts.learning_rate = 0.001; // so linear assumption is more valid.
+  update_opts.learning_rate = 0.001;  // so linear assumption is more valid.
   BaseFloat delta = fmpe.Update(update_opts, stats);
 
   fmpe.ComputeFeatures(feats, gselect, &fmpe_offset);
@@ -157,21 +150,16 @@ void TestFmpe() {
   BaseFloat like_after_update = GetGmmLike(gmm, feats);
 
   BaseFloat delta2 = like_after_update - like_before_update;
-  KALDI_LOG << "Change predicted by fMPE Update function is "
-            << delta << ", change computed directly is "
-            << delta2;
-  KALDI_ASSERT(fabs(delta-delta2) < 0.15 * fabs(delta+delta2));
-  
+  KALDI_LOG << "Change predicted by fMPE Update function is " << delta
+            << ", change computed directly is " << delta2;
+  KALDI_ASSERT(fabs(delta - delta2) < 0.15 * fabs(delta + delta2));
+
   unlink("tmpf");
 }
-
 }
-
 
 int main() {
   kaldi::g_kaldi_verbose_level = 5;
-  for (int i = 0; i <= 10; i++)
-    kaldi::TestFmpe();
+  for (int i = 0; i <= 10; i++) kaldi::TestFmpe();
   std::cout << "Test OK.\n";
 }
-

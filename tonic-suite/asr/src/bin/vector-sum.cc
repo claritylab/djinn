@@ -29,30 +29,28 @@ using std::string;
 #include "matrix/kaldi-vector.h"
 #include "transform/transform-common.h"
 
-
 namespace kaldi {
 
 // sums a bunch of archives to produce one archive
 int32 TypeOneUsage(const ParseOptions &po) {
   int32 num_args = po.NumArgs();
-  std::string vector_in_fn1 = po.GetArg(1),
-      vector_out_fn = po.GetArg(num_args);
+  std::string vector_in_fn1 = po.GetArg(1), vector_out_fn = po.GetArg(num_args);
 
   // Output vector
   BaseFloatVectorWriter vector_writer(vector_out_fn);
 
   // Input vectors
   SequentialBaseFloatVectorReader vector_reader1(vector_in_fn1);
-  std::vector<RandomAccessBaseFloatVectorReader*> vector_readers(num_args-2, 
-                                                                 static_cast<RandomAccessBaseFloatVectorReader*>(NULL));
-  std::vector<std::string> vector_in_fns(num_args-2);
+  std::vector<RandomAccessBaseFloatVectorReader *> vector_readers(
+      num_args - 2, static_cast<RandomAccessBaseFloatVectorReader *>(NULL));
+  std::vector<std::string> vector_in_fns(num_args - 2);
   for (int32 i = 2; i < num_args; ++i) {
-    vector_readers[i-2] = new RandomAccessBaseFloatVectorReader(po.GetArg(i));
-    vector_in_fns[i-2] = po.GetArg(i);
+    vector_readers[i - 2] = new RandomAccessBaseFloatVectorReader(po.GetArg(i));
+    vector_in_fns[i - 2] = po.GetArg(i);
   }
 
-  int32 n_utts = 0, n_total_vectors = 0, 
-      n_success = 0, n_missing = 0, n_other_errors = 0;
+  int32 n_utts = 0, n_total_vectors = 0, n_success = 0, n_missing = 0,
+        n_other_errors = 0;
 
   for (; !vector_reader1.Done(); vector_reader1.Next()) {
     std::string key = vector_reader1.Key();
@@ -63,24 +61,25 @@ int32 TypeOneUsage(const ParseOptions &po) {
 
     Vector<BaseFloat> vector_out(vector1);
 
-    for (int32 i = 0; i < num_args-2; ++i) {
+    for (int32 i = 0; i < num_args - 2; ++i) {
       if (vector_readers[i]->HasKey(key)) {
         Vector<BaseFloat> vector2 = vector_readers[i]->Value(key);
         n_total_vectors++;
         if (vector2.Dim() == vector_out.Dim()) {
           vector_out.AddVec(1.0, vector2);
         } else {
-          KALDI_WARN << "Dimension mismatch for utterance " << key 
-                     << " : " << vector2.Dim() << " for "
-                     << "system " << (i + 2) << ", rspecifier: "
-                     << vector_in_fns[i] << " vs " << vector_out.Dim() 
+          KALDI_WARN << "Dimension mismatch for utterance " << key << " : "
+                     << vector2.Dim() << " for "
+                     << "system " << (i + 2)
+                     << ", rspecifier: " << vector_in_fns[i] << " vs "
+                     << vector_out.Dim()
                      << " primary vector, rspecifier:" << vector_in_fn1;
           n_other_errors++;
         }
       } else {
         KALDI_WARN << "No vector found for utterance " << key << " for "
-                   << "system " << (i + 2) << ", rspecifier: "
-                   << vector_in_fns[i];
+                   << "system " << (i + 2)
+                   << ", rspecifier: " << vector_in_fns[i];
         n_missing++;
       }
     }
@@ -90,18 +89,17 @@ int32 TypeOneUsage(const ParseOptions &po) {
   }
 
   KALDI_LOG << "Processed " << n_utts << " utterances: with a total of "
-            << n_total_vectors << " vectors across " << (num_args-1)
+            << n_total_vectors << " vectors across " << (num_args - 1)
             << " different systems";
   KALDI_LOG << "Produced output for " << n_success << " utterances; "
             << n_missing << " total missing vectors";
-  
+
   DeletePointers(&vector_readers);
-  
+
   return (n_success != 0 && n_missing < (n_success - n_missing)) ? 0 : 1;
 }
 
-int32 TypeTwoUsage(const ParseOptions &po,
-                   bool binary) {
+int32 TypeTwoUsage(const ParseOptions &po, bool binary) {
   KALDI_ASSERT(po.NumArgs() == 2);
   KALDI_ASSERT(ClassifyRspecifier(po.GetArg(1), NULL, NULL) != kNoRspecifier &&
                "vector-sum: first argument must be an rspecifier");
@@ -112,7 +110,7 @@ int32 TypeTwoUsage(const ParseOptions &po,
   SequentialBaseFloatVectorReader vec_reader(po.GetArg(1));
 
   Vector<double> sum;
-  
+
   int32 num_done = 0, num_err = 0;
 
   for (; !vec_reader.Done(); vec_reader.Next()) {
@@ -123,8 +121,8 @@ int32 TypeTwoUsage(const ParseOptions &po,
     } else {
       if (sum.Dim() == 0) sum.Resize(vec.Dim());
       if (sum.Dim() != vec.Dim()) {
-        KALDI_WARN << "Dimension mismatch for key " << vec_reader.Key()
-                   << ": " << vec.Dim() << " vs. " << sum.Dim();
+        KALDI_WARN << "Dimension mismatch for key " << vec_reader.Key() << ": "
+                   << vec.Dim() << " vs. " << sum.Dim();
         num_err++;
       } else {
         sum.AddVec(1.0, vec);
@@ -136,16 +134,15 @@ int32 TypeTwoUsage(const ParseOptions &po,
   Vector<BaseFloat> sum_float(sum);
   WriteKaldiObject(sum_float, po.GetArg(2), binary);
 
-  KALDI_LOG << "Summed " << num_done << " vectors, "
-            << num_err << " with errors; wrote sum to "
+  KALDI_LOG << "Summed " << num_done << " vectors, " << num_err
+            << " with errors; wrote sum to "
             << PrintableWxfilename(po.GetArg(2));
   return (num_done > 0 && num_err < num_done) ? 0 : 1;
 }
 
 // sum a bunch of single files to produce a single file [including
 // extended filenames, of course]
-int32 TypeThreeUsage(const ParseOptions &po,
-                     bool binary) {
+int32 TypeThreeUsage(const ParseOptions &po, bool binary) {
   KALDI_ASSERT(po.NumArgs() >= 2);
   for (int32 i = 1; i <= po.NumArgs(); i++) {
     if (ClassifyRspecifier(po.GetArg(1), NULL, NULL) != kNoRspecifier) {
@@ -168,9 +165,7 @@ int32 TypeThreeUsage(const ParseOptions &po,
   return 0;
 }
 
-
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -184,21 +179,25 @@ int main(int argc, char *argv[]) {
         " vector-sum [options] <vector-in-rspecifier1> [<vector-in-rspecifier2>"
         " <vector-in-rspecifier3> ...] <vector-out-wspecifier>\n"
         "  e.g.: vector-sum ark:1.weights ark:2.weights ark:combine.weights\n"
-        "Type two usage (sums a single table input to produce a single output):\n"
+        "Type two usage (sums a single table input to produce a single "
+        "output):\n"
         " vector-sum [options] <vector-in-rspecifier> <vector-out-wxfilename>\n"
         " e.g.: vector-sum --binary=false vecs.ark sum.vec\n"
-        "Type three usage (sums single-file inputs to produce a single output):\n"
-        " vector-sum [options] <vector-in-rxfilename1> <vector-in-rxfilename2> ..."
+        "Type three usage (sums single-file inputs to produce a single "
+        "output):\n"
+        " vector-sum [options] <vector-in-rxfilename1> <vector-in-rxfilename2> "
+        "..."
         " <vector-out-wxfilename>\n"
         " e.g.: vector-sum --binary=false 1.vec 2.vec 3.vec sum.vec\n";
-        
+
     bool binary;
-    
+
     ParseOptions po(usage);
 
-    po.Register("binary", &binary, "If true, write output as binary (only "
+    po.Register("binary", &binary,
+                "If true, write output as binary (only "
                 "relevant for usage types two or three");
-    
+
     po.Read(argc, argv);
 
     int32 N = po.NumArgs(), exit_status;
@@ -209,8 +208,7 @@ int main(int argc, char *argv[]) {
       exit_status = TypeOneUsage(po);
     } else if (po.NumArgs() == 2 &&
                ClassifyRspecifier(po.GetArg(1), NULL, NULL) != kNoRspecifier &&
-               ClassifyRspecifier(po.GetArg(N), NULL, NULL) ==
-               kNoRspecifier) {
+               ClassifyRspecifier(po.GetArg(N), NULL, NULL) == kNoRspecifier) {
       // input from a single table, output not to table.
       exit_status = TypeTwoUsage(po, binary);
     } else if (po.NumArgs() >= 2 &&
@@ -218,12 +216,12 @@ int main(int argc, char *argv[]) {
                ClassifyRspecifier(po.GetArg(N), NULL, NULL) == kNoRspecifier) {
       // summing flat files.
       exit_status = TypeThreeUsage(po, binary);
-    } else {      
+    } else {
       po.PrintUsage();
       exit(1);
     }
     return exit_status;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

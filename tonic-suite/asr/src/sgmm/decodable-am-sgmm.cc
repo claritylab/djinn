@@ -35,8 +35,8 @@ BaseFloat DecodableAmSgmm::LogLikelihoodZeroBased(int32 frame, int32 pdf_id) {
   const VectorBase<BaseFloat> &data = feature_matrix_.Row(frame);
   // check if everything is in order
   if (acoustic_model_.FeatureDim() != data.Dim()) {
-    KALDI_ERR << "Dim mismatch: data dim = "  << data.Dim()
-        << "vs. model dim = " << acoustic_model_.FeatureDim();
+    KALDI_ERR << "Dim mismatch: data dim = " << data.Dim()
+              << "vs. model dim = " << acoustic_model_.FeatureDim();
   }
 
   if (frame != previous_frame_) {  // Per-frame precomputation for SGMM.
@@ -51,8 +51,8 @@ BaseFloat DecodableAmSgmm::LogLikelihoodZeroBased(int32 frame, int32 pdf_id) {
     previous_frame_ = frame;
   }
 
-  BaseFloat loglike = acoustic_model_.LogLikelihood(per_frame_vars_, pdf_id,
-                                                    log_prune_);
+  BaseFloat loglike =
+      acoustic_model_.LogLikelihood(per_frame_vars_, pdf_id, log_prune_);
   if (KALDI_ISNAN(loglike) || KALDI_ISINF(loglike))
     KALDI_ERR << "Invalid answer (overflow or invalid variances/features?)";
   log_like_cache_[pdf_id].log_like = loglike;
@@ -65,8 +65,10 @@ void DecodableAmSgmm::ResetLogLikeCache() {
     log_like_cache_.resize(acoustic_model_.NumPdfs());
   }
   vector<LikelihoodCacheRecord>::iterator it = log_like_cache_.begin(),
-      end = log_like_cache_.end();
-  for (; it != end; ++it) { it->hit_time = -1; }
+                                          end = log_like_cache_.end();
+  for (; it != end; ++it) {
+    it->hit_time = -1;
+  }
 }
 
 }  // namespace kaldi

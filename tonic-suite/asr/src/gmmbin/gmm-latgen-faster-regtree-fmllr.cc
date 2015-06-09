@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
@@ -41,8 +40,10 @@ int main(int argc, char *argv[]) {
     using fst::StdArc;
 
     const char *usage =
-        "Generate lattices using GMM-based model and RegTree-FMLLR adaptation.\n"
-        "Usage: gmm-latgen-faster-regtree-fmllr [options] model-in regtree-in (fst-in|fsts-rspecifier) features-rspecifier transform-rspecifier"
+        "Generate lattices using GMM-based model and RegTree-FMLLR "
+        "adaptation.\n"
+        "Usage: gmm-latgen-faster-regtree-fmllr [options] model-in regtree-in "
+        "(fst-in|fsts-rspecifier) features-rspecifier transform-rspecifier"
         " lattice-wspecifier [ words-wspecifier [alignments-wspecifier] ]\n";
     ParseOptions po(usage);
     Timer timer;
@@ -52,7 +53,8 @@ int main(int argc, char *argv[]) {
 
     std::string word_syms_filename, utt2spk_rspecifier;
     config.Register(&po);
-    po.Register("utt2spk", &utt2spk_rspecifier, "rspecifier for utterance to "
+    po.Register("utt2spk", &utt2spk_rspecifier,
+                "rspecifier for utterance to "
                 "speaker map used to load the transform");
     po.Register("acoustic-scale", &acoustic_scale,
                 "Scaling factor for acoustic likelihoods");
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
                 "Symbol table for words [for debug output]");
     po.Register("allow-partial", &allow_partial,
                 "If true, produce output even if end state was not reached.");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() < 4 || po.NumArgs() > 6) {
@@ -68,14 +70,12 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_in_filename = po.GetArg(1),
-        regtree_in_str = po.GetArg(2),
-        fst_in_str = po.GetArg(3),
-        feature_rspecifier = po.GetArg(4),
-        xforms_rspecifier = po.GetArg(5),
-        lattice_wspecifier = po.GetArg(6),
-        words_wspecifier = po.GetOptArg(7),
-        alignment_wspecifier = po.GetOptArg(8);
+    std::string model_in_filename = po.GetArg(1), regtree_in_str = po.GetArg(2),
+                fst_in_str = po.GetArg(3), feature_rspecifier = po.GetArg(4),
+                xforms_rspecifier = po.GetArg(5),
+                lattice_wspecifier = po.GetArg(6),
+                words_wspecifier = po.GetOptArg(7),
+                alignment_wspecifier = po.GetOptArg(8);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -93,26 +93,26 @@ int main(int argc, char *argv[]) {
       regtree.Read(in.Stream(), binary_read, am_gmm);
     }
 
-    RandomAccessRegtreeFmllrDiagGmmReaderMapped fmllr_reader(xforms_rspecifier,
-                                                             utt2spk_rspecifier);
+    RandomAccessRegtreeFmllrDiagGmmReaderMapped fmllr_reader(
+        xforms_rspecifier, utt2spk_rspecifier);
 
     bool determinize = config.determinize_lattice;
     CompactLatticeWriter compact_lattice_writer;
     LatticeWriter lattice_writer;
-    if (! (determinize ? compact_lattice_writer.Open(lattice_wspecifier)
-           : lattice_writer.Open(lattice_wspecifier)))
+    if (!(determinize ? compact_lattice_writer.Open(lattice_wspecifier)
+                      : lattice_writer.Open(lattice_wspecifier)))
       KALDI_ERR << "Could not open table for writing lattices: "
-                 << lattice_wspecifier;
+                << lattice_wspecifier;
 
     Int32VectorWriter words_writer(words_wspecifier);
 
     Int32VectorWriter alignment_writer(alignment_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "") 
+    if (word_syms_filename != "")
       if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
         KALDI_ERR << "Could not read symbol table from file "
-                   << word_syms_filename;
+                  << word_syms_filename;
 
     double tot_like = 0.0;
     kaldi::int64 frame_count = 0;
@@ -122,13 +122,13 @@ int main(int argc, char *argv[]) {
       SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
       // Input FST is just one FST, not a table of FSTs.
       VectorFst<StdArc> *decode_fst = fst::ReadFstKaldi(fst_in_str);
-      
+
       {
         LatticeFasterDecoder decoder(*decode_fst, config);
-    
+
         for (; !feature_reader.Done(); feature_reader.Next()) {
           std::string utt = feature_reader.Key();
-          Matrix<BaseFloat> features (feature_reader.Value());
+          Matrix<BaseFloat> features(feature_reader.Value());
           feature_reader.FreeCurrent();
           if (features.NumRows() == 0) {
             KALDI_WARN << "Zero-length utterance: " << utt;
@@ -144,25 +144,25 @@ int main(int argc, char *argv[]) {
 
           RegtreeFmllrDiagGmm fmllr(fmllr_reader.Value(utt));
 
-          kaldi::DecodableAmDiagGmmRegtreeFmllr gmm_decodable(am_gmm, trans_model,
-                                                            features, fmllr,
-                                                            regtree,
-                                                            acoustic_scale);
+          kaldi::DecodableAmDiagGmmRegtreeFmllr gmm_decodable(
+              am_gmm, trans_model, features, fmllr, regtree, acoustic_scale);
           double like;
           if (DecodeUtteranceLatticeFaster(
-                  decoder, gmm_decodable, trans_model, word_syms, utt, acoustic_scale,
-                  determinize, allow_partial, &alignment_writer, &words_writer,
-                  &compact_lattice_writer, &lattice_writer, &like)) {
+                  decoder, gmm_decodable, trans_model, word_syms, utt,
+                  acoustic_scale, determinize, allow_partial, &alignment_writer,
+                  &words_writer, &compact_lattice_writer, &lattice_writer,
+                  &like)) {
             tot_like += like;
             frame_count += features.NumRows();
             num_done++;
-          } else num_err++;
+          } else
+            num_err++;
         }
       }
-      delete decode_fst; // delete this only after decoder goes out of scope.
-    } else { // We have different FSTs for different utterances.
+      delete decode_fst;  // delete this only after decoder goes out of scope.
+    } else {              // We have different FSTs for different utterances.
       SequentialTableReader<fst::VectorFstHolder> fst_reader(fst_in_str);
-      RandomAccessBaseFloatMatrixReader feature_reader(feature_rspecifier);          
+      RandomAccessBaseFloatMatrixReader feature_reader(feature_rspecifier);
       for (; !fst_reader.Done(); fst_reader.Next()) {
         std::string utt = fst_reader.Key();
         const Matrix<BaseFloat> &features = feature_reader.Value(utt);
@@ -179,37 +179,39 @@ int main(int argc, char *argv[]) {
         }
 
         RegtreeFmllrDiagGmm fmllr(fmllr_reader.Value(utt));
-        kaldi::DecodableAmDiagGmmRegtreeFmllr gmm_decodable(am_gmm, trans_model,
-                                                            features, fmllr,
-                                                            regtree,
-                                                            acoustic_scale);
+        kaldi::DecodableAmDiagGmmRegtreeFmllr gmm_decodable(
+            am_gmm, trans_model, features, fmllr, regtree, acoustic_scale);
 
         LatticeFasterDecoder decoder(fst_reader.Value(), config);
         double like;
         if (DecodeUtteranceLatticeFaster(
-                decoder, gmm_decodable, trans_model, word_syms, utt, acoustic_scale,
-                determinize, allow_partial, &alignment_writer, &words_writer,
-                &compact_lattice_writer, &lattice_writer, &like)) {
+                decoder, gmm_decodable, trans_model, word_syms, utt,
+                acoustic_scale, determinize, allow_partial, &alignment_writer,
+                &words_writer, &compact_lattice_writer, &lattice_writer,
+                &like)) {
           tot_like += like;
           frame_count += features.NumRows();
           num_done++;
-        } else num_err++;
+        } else
+          num_err++;
       }
     }
-      
+
     double elapsed = timer.Elapsed();
-    KALDI_LOG << "Time taken "<< elapsed
+    KALDI_LOG << "Time taken " << elapsed
               << "s: real-time factor assuming 100 frames/sec is "
-              << (elapsed*100.0/frame_count);
-    KALDI_LOG << "Done " << num_done << " utterances, failed for "
-              << num_err;
-    KALDI_LOG << "Overall log-likelihood per frame is " << (tot_like/frame_count) << " over "
-              << frame_count << " frames.";
+              << (elapsed * 100.0 / frame_count);
+    KALDI_LOG << "Done " << num_done << " utterances, failed for " << num_err;
+    KALDI_LOG << "Overall log-likelihood per frame is "
+              << (tot_like / frame_count) << " over " << frame_count
+              << " frames.";
 
     if (word_syms) delete word_syms;
-    if (num_done != 0) return 0;
-    else return 1;
-  } catch(const std::exception &e) {
+    if (num_done != 0)
+      return 0;
+    else
+      return 1;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

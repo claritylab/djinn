@@ -18,7 +18,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_SGMM_FMLLR_SGMM_H_
 #define KALDI_SGMM_FMLLR_SGMM_H_
 
@@ -39,7 +38,7 @@ namespace kaldi {
  */
 struct SgmmFmllrConfig {
   int32 fmllr_iters;  ///< Number of iterations in FMLLR estimation.
-  int32 step_iters;  ///< Iterations to find optimal FMLLR step size.
+  int32 step_iters;   ///< Iterations to find optimal FMLLR step size.
   /// Minimum occupancy count to estimate FMLLR using basis matrices.
   BaseFloat fmllr_min_count_basis;
   /// Minimum occupancy count to estimate FMLLR without basis matrices.
@@ -68,22 +67,28 @@ struct SgmmFmllrConfig {
 
 inline void SgmmFmllrConfig::Register(OptionsItf *po) {
   std::string module = "SgmmFmllrConfig: ";
-  po->Register("fmllr-iters", &fmllr_iters, module+
-               "Number of iterations in FMLLR estimation.");
-  po->Register("fmllr-step-iters", &step_iters, module+
-               "Number of iterations to find optimal FMLLR step size.");
-  po->Register("fmllr-min-count-bases", &fmllr_min_count_basis, module+
-               "Minimum occupancy count to estimate FMLLR using basis matrices.");
-  po->Register("fmllr-min-count", &fmllr_min_count, module+
-               "Minimum occupancy count to estimate FMLLR (without bases).");
-  po->Register("fmllr-min-count-full", &fmllr_min_count_full, module+
-      "Minimum occupancy count to stop using basis matrices for FMLLR.");
-  po->Register("fmllr-num-bases", &num_fmllr_bases, module+
-               "Number of FMLLR basis matrices.");
-  po->Register("fmllr-bases-occ-scale", &bases_occ_scale, module+
-               "Scale per-speaker count to determine number of CMLLR bases.");
+  po->Register("fmllr-iters", &fmllr_iters,
+               module + "Number of iterations in FMLLR estimation.");
+  po->Register(
+      "fmllr-step-iters", &step_iters,
+      module + "Number of iterations to find optimal FMLLR step size.");
+  po->Register(
+      "fmllr-min-count-bases", &fmllr_min_count_basis,
+      module +
+          "Minimum occupancy count to estimate FMLLR using basis matrices.");
+  po->Register(
+      "fmllr-min-count", &fmllr_min_count,
+      module + "Minimum occupancy count to estimate FMLLR (without bases).");
+  po->Register(
+      "fmllr-min-count-full", &fmllr_min_count_full,
+      module +
+          "Minimum occupancy count to stop using basis matrices for FMLLR.");
+  po->Register("fmllr-num-bases", &num_fmllr_bases,
+               module + "Number of FMLLR basis matrices.");
+  po->Register(
+      "fmllr-bases-occ-scale", &bases_occ_scale,
+      module + "Scale per-speaker count to determine number of CMLLR bases.");
 }
-
 
 /** \class SgmmFmllrGlobalParams
  *  Global adaptation parameters.
@@ -106,7 +111,7 @@ class SgmmFmllrGlobalParams {
   /// Diagonal of mean-scatter matrix. Dim is [D]
   Vector<BaseFloat> mean_scatter_;
   /// \tilde{W}_b.  [b][d][d], dim is [B][D][D+1].
-  std::vector< Matrix<BaseFloat> > fmllr_bases_;
+  std::vector<Matrix<BaseFloat> > fmllr_bases_;
 };
 
 inline void SgmmFmllrGlobalParams::Init(const AmSgmm &sgmm,
@@ -135,8 +140,7 @@ class FmllrSgmmAccs {
   /// The 'data' argument is not FMLLR-transformed and is needed in addition
   /// to the the 'frame_vars' since the latter only contains a copy of the
   /// transformed feature vector.
-  BaseFloat Accumulate(const AmSgmm &sgmm,
-                       const SgmmPerSpkDerivedVars &spk,
+  BaseFloat Accumulate(const AmSgmm &sgmm, const SgmmPerSpkDerivedVars &spk,
                        const VectorBase<BaseFloat> &data,
                        const SgmmPerFrameDerivedVars &frame_vars,
                        int32 state_index, BaseFloat weight);
@@ -152,8 +156,7 @@ class FmllrSgmmAccs {
                                   const SgmmFmllrGlobalParams &fmllr_globals,
                                   SpMatrix<double> *grad_scatter);
 
-  BaseFloat FmllrObjGradient(const AmSgmm &sgmm,
-                             const Matrix<BaseFloat> &xform,
+  BaseFloat FmllrObjGradient(const AmSgmm &sgmm, const Matrix<BaseFloat> &xform,
                              Matrix<BaseFloat> *grad_out,
                              Matrix<BaseFloat> *G_out) const;
 
@@ -161,8 +164,7 @@ class FmllrSgmmAccs {
   /// pre-transforms in fmllr_globals. Expects the transform matrix out_xform
   /// to be initialized to the correct size. Returns true if the transform was
   /// updated (i.e. had enough counts).
-  bool Update(const AmSgmm &model,
-              const SgmmFmllrGlobalParams &fmllr_globals,
+  bool Update(const AmSgmm &model, const SgmmFmllrGlobalParams &fmllr_globals,
               const SgmmFmllrConfig &opts, Matrix<BaseFloat> *out_xform,
               BaseFloat *frame_count, BaseFloat *auxf_improv) const;
 
@@ -172,7 +174,7 @@ class FmllrSgmmAccs {
 
  private:
   AffineXformStats stats_;  ///< Accumulated stats
-  int32 dim_;  ///< Dimension of feature vectors
+  int32 dim_;               ///< Dimension of feature vectors
 
   // Cannot have copy constructor and assigment operator
   KALDI_DISALLOW_COPY_AND_ASSIGN(FmllrSgmmAccs);

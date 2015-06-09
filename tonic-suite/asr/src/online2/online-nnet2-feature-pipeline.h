@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_ONLINE2_ONLINE_NNET2_FEATURE_PIPELINE_H_
 #define KALDI_ONLINE2_ONLINE_NNET2_FEATURE_PIPELINE_H_
 
@@ -41,7 +40,8 @@ namespace kaldi {
 /// \ref online-feature-pipeline.h, specialized for use in neural network
 /// decoding with iVectors.  Our recipe is that we extract iVectors that will
 /// be used as an additional input to the neural network, in addition to
-/// a window of several frames of spliced raw features (MFCC, PLP or filterbanks).
+/// a window of several frames of spliced raw features (MFCC, PLP or
+/// filterbanks).
 /// The iVectors are extracted on top of a (splice+LDA+MLLT) feature pipeline,
 /// with the added complication that the GMM posteriors used for the iVector
 /// extraction are obtained with a version of the features that has online
@@ -52,7 +52,6 @@ namespace kaldi {
 ///
 /// Most of the logic for the actual iVector estimation is in \ref
 /// online-ivector-feature.h, this header contains mostly glue.
-
 
 /// This configuration class is to set up OnlineNnet2FeaturePipelineInfo, which
 /// in turn is the configuration class for OnlineNnet2FeaturePipeline.
@@ -80,22 +79,26 @@ struct OnlineNnet2FeaturePipelineConfig {
   // OnlineIvectorExtractionConfig.
   std::string ivector_extraction_config;
 
-  OnlineNnet2FeaturePipelineConfig():
-      feature_type("mfcc"), add_pitch(false) { }
-      
+  OnlineNnet2FeaturePipelineConfig() : feature_type("mfcc"), add_pitch(false) {}
 
   void Register(OptionsItf *po) {
     po->Register("feature-type", &feature_type,
                  "Base feature type [mfcc, plp, fbank]");
-    po->Register("mfcc-config", &mfcc_config, "Configuration file for "
+    po->Register("mfcc-config", &mfcc_config,
+                 "Configuration file for "
                  "MFCC features (e.g. conf/mfcc.conf)");
-    po->Register("plp-config", &plp_config, "Configuration file for "
+    po->Register("plp-config", &plp_config,
+                 "Configuration file for "
                  "PLP features (e.g. conf/plp.conf)");
-    po->Register("fbank-config", &fbank_config, "Configuration file for "
+    po->Register("fbank-config", &fbank_config,
+                 "Configuration file for "
                  "filterbank features (e.g. conf/fbank.conf)");
-    po->Register("add-pitch", &add_pitch, "Append pitch features to raw "
-                 "MFCC/PLP/filterbank features [but not for iVector extraction]");
-    po->Register("online-pitch-config", &online_pitch_config, "Configuration "
+    po->Register(
+        "add-pitch", &add_pitch,
+        "Append pitch features to raw "
+        "MFCC/PLP/filterbank features [but not for iVector extraction]");
+    po->Register("online-pitch-config", &online_pitch_config,
+                 "Configuration "
                  "file for online pitch features, if --add-pitch=true (e.g. "
                  "conf/online_pitch.conf)");
     po->Register("ivector-extraction-config", &ivector_extraction_config,
@@ -103,7 +106,6 @@ struct OnlineNnet2FeaturePipelineConfig {
                  "see class OnlineIvectorExtractionConfig in the code");
   }
 };
-
 
 /// This class is responsible for storing configuration variables, objects and
 /// options for OnlineNnet2FeaturePipeline (including the actual LDA and
@@ -114,16 +116,15 @@ struct OnlineNnet2FeaturePipelineConfig {
 /// it this way is to make it easier to configure from code as well as from the
 /// command line, as well as for easiter multithreaded operation.
 struct OnlineNnet2FeaturePipelineInfo {
-  OnlineNnet2FeaturePipelineInfo():
-      feature_type("mfcc"), add_pitch(false) { }
+  OnlineNnet2FeaturePipelineInfo() : feature_type("mfcc"), add_pitch(false) {}
 
   OnlineNnet2FeaturePipelineInfo(
       const OnlineNnet2FeaturePipelineConfig &config);
-  
+
   BaseFloat FrameShiftInSeconds() const;
 
   std::string feature_type;  // "mfcc" or "plp" or "fbank"
-  
+
   MfccOptions mfcc_opts;  // options for MFCC computation,
                           // if feature_type == "mfcc"
   PlpOptions plp_opts;  // Options for PLP computation, if feature_type == "plp"
@@ -133,7 +134,6 @@ struct OnlineNnet2FeaturePipelineInfo {
   bool add_pitch;
   PitchExtractionOptions pitch_opts;  // Options for pitch extraction, if done.
   ProcessPitchOptions pitch_process_opts;  // Options for pitch post-processing
-
 
   // If the user specified --ivector-extraction-config, we assume we're using
   // iVectors as an extra input to the neural net.  Actually, we don't
@@ -145,8 +145,6 @@ struct OnlineNnet2FeaturePipelineInfo {
   KALDI_DISALLOW_COPY_AND_ASSIGN(OnlineNnet2FeaturePipelineInfo);
 };
 
-
-
 /// OnlineNnet2FeaturePipeline is a class that's responsible for putting
 /// together the various parts of the feature-processing pipeline for neural
 /// networks, in an online setting.  The recipe here does not include fMLLR;
@@ -155,11 +153,13 @@ struct OnlineNnet2FeaturePipelineInfo {
 /// these with an iVector that describes the speaker characteristics.  The
 /// iVector is extracted using class OnlineIvectorFeature (see that class for
 /// more info on how it's done).
-/// No splicing is currently done in this code, as we're currently only supporting
+/// No splicing is currently done in this code, as we're currently only
+/// supporting
 /// the nnet2 neural network in which the splicing is done inside the network.
-/// Probably our strategy for nnet1 network conversion would be to convert to nnet2
+/// Probably our strategy for nnet1 network conversion would be to convert to
+/// nnet2
 /// and just add layers to do the splicing.
-class OnlineNnet2FeaturePipeline: public OnlineFeatureInterface {
+class OnlineNnet2FeaturePipeline : public OnlineFeatureInterface {
  public:
   /// Constructor from the "info" object.  After calling this for a
   /// non-initial utterance of a speaker, you may want to call
@@ -184,7 +184,6 @@ class OnlineNnet2FeaturePipeline: public OnlineFeatureInterface {
   /// Copy().
   void SetAdaptationState(
       const OnlineIvectorExtractorAdaptationState &adaptation_state);
-  
 
   /// Get the adaptation state; you may want to call this before destroying this
   /// object, to get adaptation state that can be used to improve decoding of
@@ -194,17 +193,14 @@ class OnlineNnet2FeaturePipeline: public OnlineFeatureInterface {
   void GetAdaptationState(
       OnlineIvectorExtractorAdaptationState *adaptation_state) const;
 
-  
   /// Accept more data to process.  It won't actually process it until you call
   /// GetFrame() [probably indirectly via (decoder).AdvanceDecoding()], when you
   /// call this function it will just copy it).  sampling_rate is necessary just
   /// to assert it equals what's in the config.
   void AcceptWaveform(BaseFloat sampling_rate,
                       const VectorBase<BaseFloat> &waveform);
-  
-  BaseFloat FrameShiftInSeconds() const {
-    return info_.FrameShiftInSeconds();
-  }
+
+  BaseFloat FrameShiftInSeconds() const { return info_.FrameShiftInSeconds(); }
 
   /// If you call InputFinished(), it tells the class you won't be providing any
   /// more waveform.  This will help flush out the last few frames of delta or
@@ -214,38 +210,32 @@ class OnlineNnet2FeaturePipeline: public OnlineFeatureInterface {
   void InputFinished();
 
   virtual ~OnlineNnet2FeaturePipeline();
- private:
 
+ private:
   const OnlineNnet2FeaturePipelineInfo &info_;
 
-  OnlineBaseFeature *base_feature_;        // MFCC/PLP/filterbank
-  
-  OnlinePitchFeature *pitch_;              // Raw pitch, if used
-  OnlineProcessPitch *pitch_feature_;  // Processed pitch, if pitch used.
+  OnlineBaseFeature *base_feature_;  // MFCC/PLP/filterbank
 
+  OnlinePitchFeature *pitch_;          // Raw pitch, if used
+  OnlineProcessPitch *pitch_feature_;  // Processed pitch, if pitch used.
 
   // feature_plus_pitch_ is the base_feature_ appended (OnlineAppendFeature)
   /// with pitch_feature_, if used; otherwise, points to the same address as
   /// base_feature_.
-  OnlineFeatureInterface *feature_plus_optional_pitch_;  
-  
+  OnlineFeatureInterface *feature_plus_optional_pitch_;
+
   OnlineIvectorFeature *ivector_feature_;  // iVector feature, if used.
 
   // final_feature_ is feature_plus_optional_pitch_ appended
   // (OnlineAppendFeature) with ivector_feature_, if ivector_feature_ is used;
   // otherwise, points to the same address as feature_plus_optional_pitch_.
   OnlineFeatureInterface *final_feature_;
- 
+
   // we cache the feature dimension, to save time when calling Dim().
   int32 dim_;
 };
 
-
-
-
 /// @} End of "addtogroup onlinefeat"
 }  // namespace kaldi
-
-
 
 #endif  // KALDI_ONLINE2_ONLINE_FEATURE_PIPELINE_H_

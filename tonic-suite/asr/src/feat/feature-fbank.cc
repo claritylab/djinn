@@ -17,19 +17,17 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "feat/feature-fbank.h"
-
 
 namespace kaldi {
 
 Fbank::Fbank(const FbankOptions &opts)
     : opts_(opts), feature_window_function_(opts.frame_opts), srfft_(NULL) {
-  if (opts.energy_floor > 0.0)
-    log_energy_floor_ = log(opts.energy_floor);
+  if (opts.energy_floor > 0.0) log_energy_floor_ = log(opts.energy_floor);
 
   int32 padded_window_size = opts.frame_opts.PaddedWindowSize();
-  if ((padded_window_size & (padded_window_size-1)) == 0)  // Is a power of two...
+  if ((padded_window_size & (padded_window_size - 1)) ==
+      0)  // Is a power of two...
     srfft_ = new SplitRadixRealFft<BaseFloat>(padded_window_size);
 
   // We'll definitely need the filterbanks info for VTLN warping factor 1.0.
@@ -39,21 +37,17 @@ Fbank::Fbank(const FbankOptions &opts)
 }
 
 Fbank::~Fbank() {
-  for (std::map<BaseFloat, MelBanks*>::iterator iter = mel_banks_.begin();
-      iter != mel_banks_.end();
-      ++iter)
+  for (std::map<BaseFloat, MelBanks *>::iterator iter = mel_banks_.begin();
+       iter != mel_banks_.end(); ++iter)
     delete iter->second;
-  if (srfft_ != NULL)
-    delete srfft_;
+  if (srfft_ != NULL) delete srfft_;
 }
 
 const MelBanks *Fbank::GetMelBanks(BaseFloat vtln_warp) {
   MelBanks *this_mel_banks = NULL;
-  std::map<BaseFloat, MelBanks*>::iterator iter = mel_banks_.find(vtln_warp);
+  std::map<BaseFloat, MelBanks *>::iterator iter = mel_banks_.find(vtln_warp);
   if (iter == mel_banks_.end()) {
-    this_mel_banks = new MelBanks(opts_.mel_opts,
-                                  opts_.frame_opts,
-                                  vtln_warp);
+    this_mel_banks = new MelBanks(opts_.mel_opts, opts_.frame_opts, vtln_warp);
     mel_banks_[vtln_warp] = this_mel_banks;
   } else {
     this_mel_banks = iter->second;
@@ -64,12 +58,10 @@ const MelBanks *Fbank::GetMelBanks(BaseFloat vtln_warp) {
 const MelBanks *Fbank::GetMelBanks(BaseFloat vtln_warp,
                                    bool *must_delete) const {
   MelBanks *this_mel_banks = NULL;
-  std::map<BaseFloat, MelBanks*>::const_iterator iter =
+  std::map<BaseFloat, MelBanks *>::const_iterator iter =
       mel_banks_.find(vtln_warp);
   if (iter == mel_banks_.end()) {
-    this_mel_banks = new MelBanks(opts_.mel_opts,
-                                  opts_.frame_opts,
-                                  vtln_warp);
+    this_mel_banks = new MelBanks(opts_.mel_opts, opts_.frame_opts, vtln_warp);
     *must_delete = true;
   } else {
     this_mel_banks = iter->second;
@@ -78,28 +70,23 @@ const MelBanks *Fbank::GetMelBanks(BaseFloat vtln_warp,
   return this_mel_banks;
 }
 
-void Fbank::Compute(const VectorBase<BaseFloat> &wave,
-                    BaseFloat vtln_warp,
+void Fbank::Compute(const VectorBase<BaseFloat> &wave, BaseFloat vtln_warp,
                     Matrix<BaseFloat> *output,
                     Vector<BaseFloat> *wave_remainder) {
   const MelBanks *this_mel_banks = GetMelBanks(vtln_warp);
-  ComputeInternal(wave, *this_mel_banks, output, wave_remainder);  
+  ComputeInternal(wave, *this_mel_banks, output, wave_remainder);
 }
 
-void Fbank::Compute(const VectorBase<BaseFloat> &wave,
-                    BaseFloat vtln_warp,
+void Fbank::Compute(const VectorBase<BaseFloat> &wave, BaseFloat vtln_warp,
                     Matrix<BaseFloat> *output,
                     Vector<BaseFloat> *wave_remainder) const {
   bool must_delete_mel_banks;
-  const MelBanks *mel_banks = GetMelBanks(vtln_warp,
-                                          &must_delete_mel_banks);
-  
-  ComputeInternal(wave, *mel_banks, output, wave_remainder);
-  
-  if (must_delete_mel_banks)
-    delete mel_banks;
-}
+  const MelBanks *mel_banks = GetMelBanks(vtln_warp, &must_delete_mel_banks);
 
+  ComputeInternal(wave, *mel_banks, output, wave_remainder);
+
+  if (must_delete_mel_banks) delete mel_banks;
+}
 
 void Fbank::ComputeInternal(const VectorBase<BaseFloat> &wave,
                             const MelBanks &mel_banks,
@@ -122,7 +109,7 @@ void Fbank::ComputeInternal(const VectorBase<BaseFloat> &wave,
   // Buffers
   Vector<BaseFloat> window;  // windowed waveform.
   Vector<BaseFloat> mel_energies;
-  std::vector<BaseFloat> temp_buffer;  // used by srfft.  
+  std::vector<BaseFloat> temp_buffer;  // used by srfft.
   BaseFloat log_energy;
 
   // Compute all the freames, r is frame index..
@@ -143,7 +130,7 @@ void Fbank::ComputeInternal(const VectorBase<BaseFloat> &wave,
 
     // Convert the FFT into a power spectrum.
     ComputePowerSpectrum(&window);
-    SubVector<BaseFloat> power_spectrum(window, 0, window.Dim()/2 + 1);
+    SubVector<BaseFloat> power_spectrum(window, 0, window.Dim() / 2 + 1);
 
     // Sum with MelFiterbank over power spectrum
     mel_banks.Compute(power_spectrum, &mel_energies);
@@ -155,8 +142,8 @@ void Fbank::ComputeInternal(const VectorBase<BaseFloat> &wave,
 
     // Output buffers
     SubVector<BaseFloat> this_output(output->Row(r));
-    SubVector<BaseFloat> this_fbank(this_output.Range((opts_.use_energy? 1 : 0),
-                                                      opts_.mel_opts.num_bins));
+    SubVector<BaseFloat> this_fbank(
+        this_output.Range((opts_.use_energy ? 1 : 0), opts_.mel_opts.num_bins));
 
     // Copy to output
     this_fbank.CopyFromVec(mel_energies);
@@ -172,7 +159,7 @@ void Fbank::ComputeInternal(const VectorBase<BaseFloat> &wave,
     if (opts_.htk_compat && opts_.use_energy) {
       BaseFloat energy = this_output(0);
       for (int32 i = 0; i < opts_.mel_opts.num_bins; i++) {
-        this_output(i) = this_output(i+1);
+        this_output(i) = this_output(i + 1);
       }
       this_output(opts_.mel_opts.num_bins) = energy;
     }

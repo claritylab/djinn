@@ -18,11 +18,9 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "transform/lvtln.h"
-
 
 int main(int argc, char *argv[]) {
   try {
@@ -33,7 +31,8 @@ int main(int argc, char *argv[]) {
         "Initialize lvtln transforms\n"
         "Usage:  gmm-init-lvtln [options] <lvtln-out>\n"
         "e.g.: \n"
-        " gmm-init-lvtln --dim=13 --num-classes=21 --default-class=10 1.lvtln\n";
+        " gmm-init-lvtln --dim=13 --num-classes=21 --default-class=10 "
+        "1.lvtln\n";
 
     bool binary = true;
     int32 dim = 13;
@@ -43,8 +42,10 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("dim", &dim, "feature dimension");
-    po.Register("num-classes", &num_classes, "Number of transforms to be trained");
-    po.Register("default-class", &default_class, "Index of default transform, "
+    po.Register("num-classes", &num_classes,
+                "Number of transforms to be trained");
+    po.Register("default-class", &default_class,
+                "Index of default transform, "
                 "to be used if no data is available for training");
 
     po.Read(argc, argv);
@@ -59,11 +60,11 @@ int main(int argc, char *argv[]) {
     // We'll set the transforms separately using gmm-train-lvtln-special
     LinearVtln lvtln(dim, num_classes, default_class);
     WriteKaldiObject(lvtln, lvtln_wxfilename, binary);
-    
+
     KALDI_LOG << "Initialized LVTLN object and wrote it to "
               << PrintableWxfilename(lvtln_wxfilename);
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

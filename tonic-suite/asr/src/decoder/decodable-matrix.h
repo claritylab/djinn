@@ -29,15 +29,13 @@
 
 namespace kaldi {
 
-
-class DecodableMatrixScaledMapped: public DecodableInterface {
+class DecodableMatrixScaledMapped : public DecodableInterface {
  public:
   // This constructor creates an object that will not delete "likes"
   // when done.
   DecodableMatrixScaledMapped(const TransitionModel &tm,
-                              const Matrix<BaseFloat> &likes,
-                              BaseFloat scale): trans_model_(tm), likes_(&likes),
-                                                scale_(scale), delete_likes_(false) {
+                              const Matrix<BaseFloat> &likes, BaseFloat scale)
+      : trans_model_(tm), likes_(&likes), scale_(scale), delete_likes_(false) {
     if (likes.NumCols() != tm.NumPdfs())
       KALDI_ERR << "DecodableMatrixScaledMapped: mismatch, matrix has "
                 << likes.NumCols() << " rows but transition-model has "
@@ -46,16 +44,14 @@ class DecodableMatrixScaledMapped: public DecodableInterface {
 
   // This constructor creates an object that will delete "likes"
   // when done.
-  DecodableMatrixScaledMapped(const TransitionModel &tm,
-                              BaseFloat scale,
-                              const Matrix<BaseFloat> *likes):
-      trans_model_(tm), likes_(likes),
-      scale_(scale), delete_likes_(true) {
+  DecodableMatrixScaledMapped(const TransitionModel &tm, BaseFloat scale,
+                              const Matrix<BaseFloat> *likes)
+      : trans_model_(tm), likes_(likes), scale_(scale), delete_likes_(true) {
     if (likes->NumCols() != tm.NumPdfs())
       KALDI_ERR << "DecodableMatrixScaledMapped: mismatch, matrix has "
                 << likes->NumCols() << " rows but transition-model has "
                 << tm.NumPdfs() << " pdf-ids.";
-  }  
+  }
 
   virtual int32 NumFrames() const { return likes_->NumRows(); }
 
@@ -75,6 +71,7 @@ class DecodableMatrixScaledMapped: public DecodableInterface {
   virtual ~DecodableMatrixScaledMapped() {
     if (delete_likes_) delete likes_;
   }
+
  private:
   const TransitionModel &trans_model_;  // for tid to pdf mapping
   const Matrix<BaseFloat> *likes_;
@@ -83,20 +80,18 @@ class DecodableMatrixScaledMapped: public DecodableInterface {
   KALDI_DISALLOW_COPY_AND_ASSIGN(DecodableMatrixScaledMapped);
 };
 
-
-class DecodableMatrixScaled: public DecodableInterface {
+class DecodableMatrixScaled : public DecodableInterface {
  public:
-  DecodableMatrixScaled(const Matrix<BaseFloat> &likes,
-                        BaseFloat scale): likes_(likes),
-                                          scale_(scale) { }
-  
+  DecodableMatrixScaled(const Matrix<BaseFloat> &likes, BaseFloat scale)
+      : likes_(likes), scale_(scale) {}
+
   virtual int32 NumFrames() const { return likes_.NumRows(); }
-  
+
   virtual bool IsLastFrame(int32 frame) const {
     KALDI_ASSERT(frame < NumFrames());
     return (frame == NumFrames() - 1);
   }
-  
+
   // Note, frames are numbered from zero.
   virtual BaseFloat LogLikelihood(int32 frame, int32 tid) {
     return scale_ * likes_(frame, tid);
@@ -110,7 +105,6 @@ class DecodableMatrixScaled: public DecodableInterface {
   BaseFloat scale_;
   KALDI_DISALLOW_COPY_AND_ASSIGN(DecodableMatrixScaled);
 };
-
 
 }  // namespace kaldi
 

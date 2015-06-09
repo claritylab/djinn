@@ -18,15 +18,15 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "hash-list.h"
-#include <map> // for baseline.
+#include <map>  // for baseline.
 #include <cstdlib>
 #include <iostream>
 
 namespace kaldi {
 
-template<class Int, class T> void TestHashList() {
+template <class Int, class T>
+void TestHashList() {
   typedef typename HashList<Int, T>::Elem Elem;
 
   HashList<Int, T> hash;
@@ -37,27 +37,29 @@ template<class Int, class T> void TestHashList() {
     T val = Rand() % 50;
     m1[key] = val;
     Elem *e = hash.Find(key);
-    if (e) e->val = val;
-    else  hash.Insert(key, val);
+    if (e)
+      e->val = val;
+    else
+      hash.Insert(key, val);
   }
-
 
   std::map<Int, T> m2;
 
   for (int i = 0; i < 100; i++) {
-
     m2.clear();
     for (typename std::map<Int, T>::const_iterator iter = m1.begin();
-        iter != m1.end();
-        iter++) {
+         iter != m1.end(); iter++) {
       m2[iter->first + 1] = iter->second;
     }
     std::swap(m1, m2);
 
     Elem *h = hash.Clear(), *tmp;
 
-    hash.SetSize(100 + Rand() % 100);  // note, SetSize is relatively cheap operation as long
-    // as we are not increasing the size more than it's ever previously been increased to.
+    hash.SetSize(
+        100 +
+        Rand() % 100);  // note, SetSize is relatively cheap operation as long
+    // as we are not increasing the size more than it's ever previously been
+    // increased to.
 
     for (; h != NULL; h = tmp) {
       hash.Insert(h->key + 1, h->val);
@@ -77,25 +79,19 @@ template<class Int, class T> void TestHashList() {
       bool found_m1 = (m1.find(key) != m1.end());
       if (found_m1) m1[key];
       Elem *e = hash.Find(key);
-      KALDI_ASSERT( (e != NULL) == found_m1 );
-      if (found_m1)
-        KALDI_ASSERT(m1[key] == e->val);
+      KALDI_ASSERT((e != NULL) == found_m1);
+      if (found_m1) KALDI_ASSERT(m1[key] == e->val);
     }
 
     KALDI_ASSERT(m1.size() == count);
   }
 }
 
-
-
-
-} // end namespace kaldi
-
-
+}  // end namespace kaldi
 
 int main() {
   using namespace kaldi;
-  for (size_t i = 0;i < 3;i++) {
+  for (size_t i = 0; i < 3; i++) {
     TestHashList<int, unsigned int>();
     TestHashList<unsigned int, int>();
     TestHashList<short int, long int>();

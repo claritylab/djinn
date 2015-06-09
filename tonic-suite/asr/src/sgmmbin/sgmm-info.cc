@@ -25,7 +25,6 @@
 #include "sgmm/am-sgmm.h"
 #include "hmm/transition-model.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -64,15 +63,16 @@ int main(int argc, char *argv[]) {
         using namespace std;
         cout.setf(ios::left);
         cout << "\nModel file: " << model_in_filename << endl;
-        cout << " SGMM information:\n"
-          << setw(40) << "  # of HMM states" << am_sgmm.NumPdfs() << endl
-          << setw(40) << "  # of Gaussians per state" << am_sgmm.NumGauss() << endl
-          << setw(40) << "  Dimension of phone vector space"
-          << am_sgmm.PhoneSpaceDim() << endl
-          << setw(40) << "  Dimension of speaker vector space"
-          << am_sgmm.SpkSpaceDim() << endl
-          << setw(40) << "  Dimension of feature vectors"
-          << am_sgmm.FeatureDim() << endl;
+        cout << " SGMM information:\n" << setw(40) << "  # of HMM states"
+             << am_sgmm.NumPdfs() << endl
+             << setw(40) << "  # of Gaussians per state" << am_sgmm.NumGauss()
+             << endl
+             << setw(40) << "  Dimension of phone vector space"
+             << am_sgmm.PhoneSpaceDim() << endl
+             << setw(40) << "  Dimension of speaker vector space"
+             << am_sgmm.SpkSpaceDim() << endl
+             << setw(40) << "  Dimension of feature vectors"
+             << am_sgmm.FeatureDim() << endl;
         int32 total_substates = 0;
         for (int32 j = 0; j < am_sgmm.NumPdfs(); j++) {
           total_substates += am_sgmm.NumSubstates(j);
@@ -81,30 +81,29 @@ int main(int argc, char *argv[]) {
                  << am_sgmm.NumSubstates(j) << endl;
           }
         }
-        cout << setw(40) << "  Total # of substates " << total_substates << endl;
+        cout << setw(40) << "  Total # of substates " << total_substates
+             << endl;
 
-        cout << "\nTransition model information:\n"
-             << setw(40) << " # of HMM states" << trans_model.NumPdfs() << endl
+        cout << "\nTransition model information:\n" << setw(40)
+             << " # of HMM states" << trans_model.NumPdfs() << endl
              << setw(40) << " # of transition states"
              << trans_model.NumTransitionStates() << endl;
-          int32 total_indices = 0;
-          for (int32 s = 0; s < trans_model.NumTransitionStates(); s++) {
-            total_indices += trans_model.NumTransitionIndices(s);
-            if (trans_detailed) {
-              cout << "  # of transition ids for state " << setw(8) << s
-                   << trans_model.NumTransitionIndices(s) << endl;
-            }
+        int32 total_indices = 0;
+        for (int32 s = 0; s < trans_model.NumTransitionStates(); s++) {
+          total_indices += trans_model.NumTransitionIndices(s);
+          if (trans_detailed) {
+            cout << "  # of transition ids for state " << setw(8) << s
+                 << trans_model.NumTransitionIndices(s) << endl;
           }
-          cout << setw(40) << "  Total # of transition ids " << total_indices
-               << endl;
+        }
+        cout << setw(40) << "  Total # of transition ids " << total_indices
+             << endl;
       }
     }
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-

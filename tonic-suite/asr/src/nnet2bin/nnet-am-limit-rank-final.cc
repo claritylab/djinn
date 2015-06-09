@@ -41,25 +41,23 @@ int main(int argc, char *argv[]) {
         "Usage:  nnet-am-limit-rank-final [options] <nnet-in> <nnet-out>\n"
         "e.g.:\n"
         " nnet-am-limit-rank-final --dim=200 1.mdl 1_limited.mdl\n";
-    
 
     bool binary_write = true;
     int32 dim = 200;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     po.Register("dim", &dim, "Dimension to retain");
 
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        nnet_wxfilename = po.GetArg(2);
-    
+    std::string nnet_rxfilename = po.GetArg(1), nnet_wxfilename = po.GetArg(2);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -70,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
 
     am_nnet.GetNnet().LimitRankOfLastLayer(dim);
-    
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -79,7 +77,7 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Limited rank of neural net " << nnet_rxfilename
               << " and copied to " << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

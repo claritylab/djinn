@@ -34,22 +34,19 @@ struct DummyOptions {
   }
 
   void Register(ParseOptions *po) {
-    po->Register("my-int", &my_int,
-                 "An int32 variable in DummyOptions.");
-    po->Register("my-bool", &my_bool,
-                 "A Boolean varaible in DummyOptions.");
-    po->Register("my-str", &my_string,
-                 "A string varaible in DummyOptions.");
+    po->Register("my-int", &my_int, "An int32 variable in DummyOptions.");
+    po->Register("my-bool", &my_bool, "A Boolean varaible in DummyOptions.");
+    po->Register("my-str", &my_string, "A string varaible in DummyOptions.");
   }
 };
 
 void UnitTestParseOptions() {
   int argc = 7;
-  std::string str="default_for_str";
+  std::string str = "default_for_str";
   int32 num = 1;
   uint32 unum = 2;
-  const char *argv[7] = { "program_name", "--unum=5", "--num=3", "--i=boo",
-    "a", "b", "c" };
+  const char *argv[7] = {"program_name", "--unum=5", "--num=3", "--i=boo", "a",
+                         "b", "c"};
   ParseOptions po("my usage msg");
   po.Register("i", &str, "My variable");
   po.Register("num", &num, "My int32 variable");
@@ -65,8 +62,8 @@ void UnitTestParseOptions() {
 
   ParseOptions po2("my another msg");
   int argc2 = 4;
-  const char *argv2[4] = { "program_name", "--i=foo",
-    "--to-be-NORMALIZED=test", "c" };
+  const char *argv2[4] = {"program_name", "--i=foo", "--to-be-NORMALIZED=test",
+                          "c"};
   std::string str2 = "default_for_str2";
   po2.Register("To_Be_Normalized", &str2,
                "My variable (name has to be normalized)");
@@ -78,7 +75,7 @@ void UnitTestParseOptions() {
   KALDI_ASSERT(str == "foo");
 
   ParseOptions po3("now checking options with prefix");
-  ParseOptions ro3("prefix", &po3);  // to register with prefix
+  ParseOptions ro3("prefix", &po3);   // to register with prefix
   ParseOptions so3("prefix2", &ro3);  // to register with prefix, recursively.
   DummyOptions dummy_opts;
   po3.Register("str", &str, "My string variable");
@@ -90,11 +87,11 @@ void UnitTestParseOptions() {
   so3.Register("unum", &unum2, "Another uint32 variable");
 
   int argc3 = 10;
-  const char *argv3[10] = {
-    "program_name", "--prefix.unum=5", "--num=3",
-    "--prefix.str=foo", "--str=bar", "--prefix.my-bool=false",
-    "--prefix.my-str=baz", "--prefix.prefix2.unum=42", "a", "b" };
-  
+  const char *argv3[10] = {"program_name", "--prefix.unum=5", "--num=3",
+                           "--prefix.str=foo", "--str=bar",
+                           "--prefix.my-bool=false", "--prefix.my-str=baz",
+                           "--prefix.prefix2.unum=42", "a", "b"};
+
   dummy_opts.Register(&ro3);
   po3.PrintUsage(false);
 
@@ -110,46 +107,45 @@ void UnitTestParseOptions() {
   KALDI_ASSERT(dummy_opts.my_bool == false);
   KALDI_ASSERT(dummy_opts.my_string == "baz");
 
-
-  try {   // test error with --option=, which is not a valid way to set boolean options. 
+  try {  // test error with --option=, which is not a valid way to set boolean
+         // options.
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option="};
+    const char *argv4[2] = {"program_name", "--option="};
     ParseOptions po4("my usage msg");
     bool val = false;
     po4.Register("option", &val, "My boolean");
     po4.Read(argc4, argv4);
-    KALDI_ASSERT(false); // Should not reach this part of code.
+    KALDI_ASSERT(false);  // Should not reach this part of code.
   } catch (std::exception e) {
     KALDI_LOG << "Failed to read option (this is expected).";
   }
 
-  { // test that --option sets "option" to true, if bool.
+  {  // test that --option sets "option" to true, if bool.
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option"};
+    const char *argv4[2] = {"program_name", "--option"};
     ParseOptions po4("my usage msg");
     bool val = false;
     po4.Register("option", &val, "My boolean");
     po4.Read(argc4, argv4);
     KALDI_ASSERT(val == true);
   }
-  
 
-
-  try {   // test error with --option, which is not a valid way to set string-valued options. 
+  try {  // test error with --option, which is not a valid way to set
+         // string-valued options.
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option"};
+    const char *argv4[2] = {"program_name", "--option"};
     ParseOptions po4("my usage msg");
     std::string val;
     po4.Register("option", &val, "My string");
     po4.Read(argc4, argv4);
-    KALDI_ASSERT(false); // Should not reach this part of code.
+    KALDI_ASSERT(false);  // Should not reach this part of code.
   } catch (std::exception e) {
     KALDI_LOG << "Failed to read option (this is expected).";
   }
 
-  { // test that --option= sets "option" to empty, if string.
+  {  // test that --option= sets "option" to empty, if string.
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option="};
+    const char *argv4[2] = {"program_name", "--option="};
     ParseOptions po4("my usage msg");
     std::string val = "foo";
     po4.Register("option", &val, "My boolean");
@@ -157,9 +153,9 @@ void UnitTestParseOptions() {
     KALDI_ASSERT(val.empty());
   }
 
-  { // integer options test
+  {  // integer options test
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=8"};
+    const char *argv4[2] = {"program_name", "--option=8"};
     ParseOptions po4("my usage msg");
     int32 val = 32;
     po4.Register("option", &val, "My int");
@@ -167,69 +163,66 @@ void UnitTestParseOptions() {
     KALDI_ASSERT(val == 8);
   }
 
-  { // float
+  {  // float
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=8.5"};
+    const char *argv4[2] = {"program_name", "--option=8.5"};
     ParseOptions po4("my usage msg");
     BaseFloat val = 32.0;
     po4.Register("option", &val, "My float");
     po4.Read(argc4, argv4);
     KALDI_ASSERT(val == 8.5);
   }
-  
-  { // string options test
+
+  {  // string options test
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=bar"};
+    const char *argv4[2] = {"program_name", "--option=bar"};
     ParseOptions po4("my usage msg");
     std::string val = "foo";
     po4.Register("option", &val, "My string");
     po4.Read(argc4, argv4);
     KALDI_ASSERT(val == "bar");
   }
-  
 
-  try {   // test error with --float=string
+  try {  // test error with --float=string
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=foo"};
+    const char *argv4[2] = {"program_name", "--option=foo"};
     ParseOptions po4("my usage msg");
     BaseFloat val = 32.0;
     po4.Register("option", &val, "My float");
     po4.Read(argc4, argv4);
-    KALDI_ASSERT(false); // Should not reach this part of code.
+    KALDI_ASSERT(false);  // Should not reach this part of code.
   } catch (std::exception e) {
     KALDI_LOG << "Failed to read option (this is expected).";
   }
 
-
-  try {   // test error with --int=string
+  try {  // test error with --int=string
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=foo"};
+    const char *argv4[2] = {"program_name", "--option=foo"};
     ParseOptions po4("my usage msg");
     int32 val = 32;
     po4.Register("option", &val, "My int");
     po4.Read(argc4, argv4);
-    KALDI_ASSERT(false); // Should not reach this part of code.
+    KALDI_ASSERT(false);  // Should not reach this part of code.
   } catch (std::exception e) {
     KALDI_LOG << "Failed to read option (this is expected).";
   }
 
-  try {   // test error with --bool=string
+  try {  // test error with --bool=string
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--option=foo"};
+    const char *argv4[2] = {"program_name", "--option=foo"};
     ParseOptions po4("my usage msg");
     bool val = false;
     po4.Register("option", &val, "My bool");
     po4.Read(argc4, argv4);
-    KALDI_ASSERT(false); // Should not reach this part of code.
+    KALDI_ASSERT(false);  // Should not reach this part of code.
   } catch (std::exception e) {
     KALDI_LOG << "Failed to read option (this is expected).";
   }
 
-  
-  // test error with --= 
+  // test error with --=
   try {
     int argc4 = 2;
-    const char *argv4[2] = { "program_name", "--=8"};
+    const char *argv4[2] = {"program_name", "--=8"};
     int32 num = 0;
     ParseOptions po4("my usage msg");
     po4.Register("num", &num, "My int32 variable");
@@ -242,7 +235,7 @@ void UnitTestParseOptions() {
   // test "--" (no more options)
   int argc4 = 5;
   unum = 2;
-  const char *argv4[5] = { "program_name", "--unum=6", "--",  "a", "b" };
+  const char *argv4[5] = {"program_name", "--unum=6", "--", "a", "b"};
   ParseOptions po4("my usage msg");
   po4.Register("unum", &unum, "My uint32 variable");
   po4.Read(argc4, argv4);
@@ -254,7 +247,7 @@ void UnitTestParseOptions() {
   // test obsolete "--" (no more options)
   int argc5 = 3;
   unum = 2;
-  const char *argv5[3] = { "program_name", "--unum=7", "--" };
+  const char *argv5[3] = {"program_name", "--unum=7", "--"};
   ParseOptions po5("my usage msg");
   po5.Register("unum", &unum, "My uint32 variable");
   po5.Read(argc5, argv5);
@@ -264,15 +257,13 @@ void UnitTestParseOptions() {
   // test that "--foo=bar" after "--" is interpreted as argument
   int argc6 = 4;
   unum = 2;
-  const char *argv6[5] = { "program_name", "--unum=8", "--", "--foo=8" };
+  const char *argv6[5] = {"program_name", "--unum=8", "--", "--foo=8"};
   ParseOptions po6("my usage msg");
   po6.Register("unum", &unum, "My uint32 variable");
   po6.Read(argc6, argv6);
   KALDI_ASSERT(po6.NumArgs() == 1);
   KALDI_ASSERT(po6.GetArg(1) == "--foo=8");
-
 }
-
 
 }  // end namespace kaldi.
 
@@ -281,5 +272,3 @@ int main() {
   UnitTestParseOptions();
   return 0;
 }
-
-

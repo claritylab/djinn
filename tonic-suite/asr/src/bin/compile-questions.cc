@@ -22,24 +22,28 @@
 #include "hmm/hmm-topology.h"
 #include "tree/build-tree-questions.h"
 
-
 namespace kaldi {
-int32 ProcessTopo(const HmmTopology &topo, const std::vector<std::vector<int32> > &questions) {
+int32 ProcessTopo(const HmmTopology &topo,
+                  const std::vector<std::vector<int32> > &questions) {
   std::vector<int32> seen_phones;  // ids of phones seen in questions.
   for (size_t i = 0; i < questions.size(); i++)
-    for (size_t j= 0; j < questions[i].size(); j++) seen_phones.push_back(questions[i][j]);
+    for (size_t j = 0; j < questions[i].size(); j++)
+      seen_phones.push_back(questions[i][j]);
   SortAndUniq(&seen_phones);
-  // topo_phones is also sorted and uniq; a list of phones defined in the topology.
+  // topo_phones is also sorted and uniq; a list of phones defined in the
+  // topology.
   const std::vector<int32> &topo_phones = topo.GetPhones();
   if (seen_phones != topo_phones) {
     std::ostringstream ss_seen, ss_topo;
     WriteIntegerVector(ss_seen, false, seen_phones);
     WriteIntegerVector(ss_topo, false, topo_phones);
-    KALDI_WARN << "ProcessTopo: phones seen in questions differ from those in topology: "
-               << ss_seen.str() << " vs. " << ss_topo.str();
+    KALDI_WARN << "ProcessTopo: phones seen in questions differ from those in "
+                  "topology: " << ss_seen.str() << " vs. " << ss_topo.str();
     if (seen_phones.size() > topo_phones.size()) {
-      KALDI_ERR << "ProcessTopo: phones are asked about that are undefined in the topology.";
-    } // we accept the reverse (not asking about all phones), even though it's very bad.
+      KALDI_ERR << "ProcessTopo: phones are asked about that are undefined in "
+                   "the topology.";
+    }  // we accept the reverse (not asking about all phones), even though it's
+       // very bad.
   }
 
   int32 max_num_pdf_classes = 0;
@@ -52,7 +56,7 @@ int32 ProcessTopo(const HmmTopology &topo, const std::vector<std::vector<int32> 
   return max_num_pdf_classes;
 }
 
-} // end namespace kaldi.
+}  // end namespace kaldi.
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -62,19 +66,24 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Compile questions\n"
-        "Usage:  compile-questions [options] <topo> <questions-text-file> <questions-out>\n"
+        "Usage:  compile-questions [options] <topo> <questions-text-file> "
+        "<questions-out>\n"
         "e.g.: \n"
         " compile-questions questions.txt questions.qst\n";
     bool binary = true;
     int32 P = 1, N = 3;
     int32 num_iters_refine = 0;
 
-
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
-    po.Register("context-width", &N, "Context window size [must match acc-tree-stats].");
-    po.Register("central-position", &P, "Central position in phone context window [must match acc-tree-stats]");
-    po.Register("num-iters-refine", &num_iters_refine, "Number of iters of refining questions at each node.  >0 --> questions not shared");
+    po.Register("context-width", &N,
+                "Context window size [must match acc-tree-stats].");
+    po.Register(
+        "central-position", &P,
+        "Central position in phone context window [must match acc-tree-stats]");
+    po.Register("num-iters-refine", &num_iters_refine,
+                "Number of iters of refining questions at each node.  >0 --> "
+                "questions not shared");
 
     po.Read(argc, argv);
 
@@ -83,10 +92,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        topo_filename = po.GetArg(1),
-        questions_rxfilename = po.GetArg(2),
-        questions_out_filename = po.GetArg(3);
+    std::string topo_filename = po.GetArg(1),
+                questions_rxfilename = po.GetArg(2),
+                questions_out_filename = po.GetArg(3);
 
     HmmTopology topo;  // just needed for checking, and to get the
     // largest number of pdf-classes for any phone.
@@ -95,7 +103,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::vector<int32> > questions;  // sets of phones.
     if (!ReadIntegerVectorVectorSimple(questions_rxfilename, &questions))
       KALDI_ERR << "Could not read questions from "
-                 << PrintableRxfilename(questions_rxfilename);
+                << PrintableRxfilename(questions_rxfilename);
     for (size_t i = 0; i < questions.size(); i++) {
       std::sort(questions[i].begin(), questions[i].end());
       if (!IsSortedAndUniq(questions[i]))
@@ -104,7 +112,7 @@ int main(int argc, char *argv[]) {
     size_t nq = static_cast<int32>(questions.size());
     SortAndUniq(&questions);
     if (questions.size() != nq)
-      KALDI_WARN << (nq-questions.size())
+      KALDI_WARN << (nq - questions.size())
                  << " duplicate questions present in " << questions_rxfilename;
 
     // ProcessTopo checks that all phones in the topo are
@@ -120,23 +128,25 @@ int main(int argc, char *argv[]) {
     // represent the phonetic context positions (including the central phone).
     phone_opts.initial_questions = questions;
     for (int32 n = 0; n < N; n++) {
-      KALDI_LOG << "Setting questions for phonetic-context position "<< n;
+      KALDI_LOG << "Setting questions for phonetic-context position " << n;
       qo.SetQuestionsOf(n, phone_opts);
     }
 
     QuestionsForKey pdfclass_opts(num_iters_refine);
-    std::vector<std::vector<int32> > pdfclass_questions(max_num_pdfclasses-1);
+    std::vector<std::vector<int32> > pdfclass_questions(max_num_pdfclasses - 1);
     for (int32 i = 0; i < max_num_pdfclasses - 1; i++)
-      for (int32 j = 0; j <= i; j++)
-        pdfclass_questions[i].push_back(j);
-    // E.g. if max_num_pdfclasses == 3,  pdfclass_questions is now [ [0], [0, 1] ].
+      for (int32 j = 0; j <= i; j++) pdfclass_questions[i].push_back(j);
+    // E.g. if max_num_pdfclasses == 3,  pdfclass_questions is now [ [0], [0, 1]
+    // ].
     pdfclass_opts.initial_questions = pdfclass_questions;
-    KALDI_LOG << "Setting questions for hmm-position [hmm-position ranges from 0 to "<< (max_num_pdfclasses-1) <<"]";
+    KALDI_LOG
+        << "Setting questions for hmm-position [hmm-position ranges from 0 to "
+        << (max_num_pdfclasses - 1) << "]";
     qo.SetQuestionsOf(kPdfClass, pdfclass_opts);
 
     WriteKaldiObject(qo, questions_out_filename, binary);
-    KALDI_LOG << "Wrote questions to "<<questions_out_filename;
-  } catch(const std::exception &e) {
+    KALDI_LOG << "Wrote questions to " << questions_out_filename;
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

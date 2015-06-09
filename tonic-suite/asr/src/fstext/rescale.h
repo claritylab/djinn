@@ -26,9 +26,7 @@
 #include <fst/fstlib.h>
 #include <fst/fst-decl.h>
 
-
 namespace fst {
-
 
 /// ComputeTotalWeight computes (approximately) the total weight of the FST,
 /// i.e. the sum of all paths.  It will only work for arcs of StdArc/LogArc type
@@ -36,19 +34,15 @@ namespace fst {
 /// than max_weight, we just return max_weight (this enables us to avoid
 /// pathological cases that would not terminate).
 
-template<class Arc>
-inline typename Arc::Weight
-ComputeTotalWeight(ExpandedFst<Arc> &fst,
-                   typename Arc::Weight max_weight,
-                   float delta = kDelta);
-
+template <class Arc>
+inline typename Arc::Weight ComputeTotalWeight(ExpandedFst<Arc> &fst,
+                                               typename Arc::Weight max_weight,
+                                               float delta = kDelta);
 
 /// Rescale multiplies (in the semiring) all weights and final probabilities in
 /// the FST by this weight.  Does not preserve equivalence.
-template<class Arc>
-inline void Rescale(MutableFst<Arc> *fst,
-                    typename Arc::Weight rescale);
-
+template <class Arc>
+inline void Rescale(MutableFst<Arc> *fst, typename Arc::Weight rescale);
 
 /// RescaleToStochastic uses a form of line search to compute the weight we must
 /// apply to the FST using Rescale to make it so that the "total weight" of the
@@ -62,9 +56,7 @@ inline LogWeight RescaleToStochastic(MutableFst<LogArc> *fst,
                                      float approx_delta = 0.001,
                                      float delta = kDelta);
 
-
-} // end namespace fst
-
+}  // end namespace fst
 
 #include "fstext/rescale-inl.h"
 

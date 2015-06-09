@@ -26,20 +26,19 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <stdexcept> // this algorithm uses exceptions
+#include <stdexcept>  // this algorithm uses exceptions
 
 namespace fst {
 
 /// \addtogroup fst_extensions
 ///  @{
 
-
 // For example of usage, see test-determinize-star.cc
 
 /*
    DeterminizeStar implements determinization with epsilon removal, which we
    distinguish with a star.
-   
+
    We define a determinized* FST as one in which no state has more than one
    transition with the same input-label.  Epsilon input labels are not allowed
    except starting from states that have exactly one arc exiting them (and are
@@ -53,8 +52,8 @@ namespace fst {
    float-weight.  It does epsilon removal and determinization.
    This algorithm may fail if the input has epsilon cycles under
    certain circumstances (i.e. the semiring is non-idempotent, e.g. the log
-   semiring, or there are negative cost epsilon cycles).  
-   
+   semiring, or there are negative cost epsilon cycles).
+
    This implementation is much less fancy than the one in fst/determinize.h, and
    does not have an "on-demand" version.
 
@@ -64,8 +63,8 @@ namespace fst {
    treat them "specially".
 */
 
-
-// This algorithm will be slightly faster if you sort the input fst on input label.
+// This algorithm will be slightly faster if you sort the input fst on input
+// label.
 
 /**
     This function implements the normal version of DeterminizeStar, in which the
@@ -82,17 +81,15 @@ namespace fst {
     The function will return false if partial FST is generated, and true if the
     complete determinized FST is generated.
 */
-template<class Arc>
+template <class Arc>
 bool DeterminizeStar(Fst<Arc> &ifst, MutableFst<Arc> *ofst,
-                     float delta = kDelta,
-                     bool *debug_ptr = NULL,
-                     int max_states = -1,
-                     bool allow_partial = false);
+                     float delta = kDelta, bool *debug_ptr = NULL,
+                     int max_states = -1, bool allow_partial = false);
 
-
-
-/*  This is a version of DeterminizeStar with a slightly more "natural" output format,
-    where the output sequences are encoded using the GallicArc (i.e. the output symbols
+/*  This is a version of DeterminizeStar with a slightly more "natural" output
+   format,
+    where the output sequences are encoded using the GallicArc (i.e. the output
+   symbols
     are strings.
     If max_states is positive, it will stop determinization and throw an
     exception as soon as the max-states is reached.  This can be useful in test.
@@ -102,16 +99,14 @@ bool DeterminizeStar(Fst<Arc> &ifst, MutableFst<Arc> *ofst,
     The function will return false if partial FST is generated, and true if the
     complete determinized FST is generated.
 */
-template<class Arc>
+template <class Arc>
 bool DeterminizeStar(Fst<Arc> &ifst, MutableFst<GallicArc<Arc> > *ofst,
                      float delta = kDelta, bool *debug_ptr = NULL,
-                     int max_states = -1,
-                     bool allow_partial = false);
-
+                     int max_states = -1, bool allow_partial = false);
 
 /// @} end "addtogroup fst_extensions"
 
-} // end namespace fst
+}  // end namespace fst
 
 #include "fstext/determinize-star-inl.h"
 

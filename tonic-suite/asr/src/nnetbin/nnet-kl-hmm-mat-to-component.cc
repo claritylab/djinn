@@ -22,7 +22,6 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 
-
 int main(int argc, char *argv[]) {
   using namespace kaldi;
   using namespace kaldi::nnet1;
@@ -39,7 +38,8 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write output in binary mode");
     po.Register("nkl-states", &n_kl_states, "Number of states in Kl-HMM");
-    po.Register("posterior-dim", &n_posterior_dim, "Dimensionality of posterior features");
+    po.Register("posterior-dim", &n_posterior_dim,
+                "Dimensionality of posterior features");
     po.Read(argc, argv);
 
     if (po.NumArgs() < 2) {
@@ -49,17 +49,16 @@ int main(int argc, char *argv[]) {
 
     std::string nnet_component_filename = po.GetArg(1);
     std::string mat_filename = po.GetArg(2);
-    
+
     Matrix<BaseFloat> kl_stats;
     {
       bool binary_read;
       Input ki(mat_filename, &binary_read);
       kl_stats.Read(ki.Stream(), binary_read);
     }
-    
+
     KlHmm kl_hmm(kl_stats.NumCols(), kl_stats.NumRows());
     kl_hmm.SetStats(kl_stats);
-    
 
     // Write out the accs
     {
@@ -68,10 +67,8 @@ int main(int argc, char *argv[]) {
     }
 
     KALDI_LOG << "Written nnet component to " << nnet_component_filename;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

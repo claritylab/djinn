@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <iostream>
 
 #include "feat/feature-mfcc.h"
@@ -25,8 +24,7 @@
 #include "matrix/kaldi-matrix-inl.h"
 #include "feat/wave-reader.h"
 
-
-// TODO: some of the other functions should be tested.  
+// TODO: some of the other functions should be tested.
 namespace kaldi {
 
 void UnitTestOnlineCmvn() {
@@ -38,11 +36,9 @@ void UnitTestOnlineCmvn() {
     opts.normalize_variance = (Rand() % 2 == 0);
     opts.cmn_window = 5 + Rand() % 50;
     opts.min_window = 1 + Rand() % 100;
-    if (opts.min_window > opts.cmn_window)
-      opts.min_window = opts.cmn_window;
+    if (opts.min_window > opts.cmn_window) opts.min_window = opts.cmn_window;
 
-    Matrix<BaseFloat> feats(num_frames, dim),
-        output_feats(num_frames, dim),
+    Matrix<BaseFloat> feats(num_frames, dim), output_feats(num_frames, dim),
         output_feats2(num_frames, dim);
     feats.SetRandn();
     SlidingWindowCmn(opts, feats, &output_feats);
@@ -51,7 +47,7 @@ void UnitTestOnlineCmvn() {
       int32 window_begin, window_end;
       if (opts.center) {
         window_begin = t - (opts.cmn_window / 2),
-            window_end = window_begin + opts.cmn_window;
+        window_end = window_begin + opts.cmn_window;
         int32 shift = 0;
         if (window_begin < 0)
           shift = -window_begin;
@@ -62,8 +58,7 @@ void UnitTestOnlineCmvn() {
       } else {
         window_begin = t - opts.cmn_window;
         window_end = t + 1;
-        if (window_end < opts.min_window)
-            window_end = opts.min_window;
+        if (window_end < opts.min_window) window_end = opts.min_window;
       }
       if (window_begin < 0) window_begin = 0;
       if (window_end > num_frames) window_end = num_frames;
@@ -75,27 +70,25 @@ void UnitTestOnlineCmvn() {
           sumsq += feats(t2, d) * feats(t2, d);
         }
         double mean = sum / window_size, uncentered_covar = sumsq / window_size,
-            covar = uncentered_covar - mean * mean;
+               covar = uncentered_covar - mean * mean;
         covar = std::max(covar, 1.0e-20);
-        double data = feats(t, d),
-            norm_data = data - mean;
+        double data = feats(t, d), norm_data = data - mean;
         if (opts.normalize_variance) {
-          if (window_size == 1) norm_data = 0.0;
-          else norm_data /= sqrt(covar);
+          if (window_size == 1)
+            norm_data = 0.0;
+          else
+            norm_data /= sqrt(covar);
         }
         output_feats2(t, d) = norm_data;
       }
     }
-    if (! output_feats.ApproxEqual(output_feats2, 0.0001)) {
-      KALDI_ERR << "Features differ " << output_feats << " vs. " << output_feats2;
+    if (!output_feats.ApproxEqual(output_feats2, 0.0001)) {
+      KALDI_ERR << "Features differ " << output_feats << " vs. "
+                << output_feats2;
     }
   }
 }
-
-
 }
-
-
 
 int main() {
   using namespace kaldi;
@@ -108,5 +101,3 @@ int main() {
     return 1;
   }
 }
-
-

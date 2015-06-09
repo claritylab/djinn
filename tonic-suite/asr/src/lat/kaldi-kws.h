@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef KALDI_LAT_KALDI_KWS_H_
 #define KALDI_LAT_KALDI_KWS_H_
 
@@ -32,12 +31,14 @@ using fst::ArcticWeight;
 
 // The T*T*T semiring
 typedef fst::LexicographicWeight<TropicalWeight, TropicalWeight> StdLStdWeight;
-typedef fst::LexicographicWeight<TropicalWeight, StdLStdWeight> StdLStdLStdWeight;
+typedef fst::LexicographicWeight<TropicalWeight, StdLStdWeight>
+    StdLStdLStdWeight;
 typedef fst::ArcTpl<StdLStdLStdWeight> StdLStdLStdArc;
 
 // The LxTxT' semiring
 typedef fst::ProductWeight<TropicalWeight, ArcticWeight> StdXStdprimeWeight;
-typedef fst::ProductWeight<LogWeight, StdXStdprimeWeight> LogXStdXStdprimeWeight;
+typedef fst::ProductWeight<LogWeight, StdXStdprimeWeight>
+    LogXStdXStdprimeWeight;
 typedef fst::ArcTpl<LogXStdXStdprimeWeight> LogXStdXStdprimeArc;
 
 // Rename the weight and arc types to make them look more "friendly".
@@ -47,8 +48,7 @@ typedef fst::VectorFst<KwsLexicographicArc> KwsLexicographicFst;
 typedef LogXStdXStdprimeWeight KwsProductWeight;
 typedef LogXStdXStdprimeArc KwsProductArc;
 typedef fst::VectorFst<KwsProductArc> KwsProductFst;
-           
 
-} // namespace kaldi
+}  // namespace kaldi
 
 #endif  // KALDI_LAT_KALDI_KWS_H_

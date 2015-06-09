@@ -44,22 +44,21 @@ int main(int argc, char *argv[]) {
 
     bool binary_write = true;
     NnetRescaleConfig config;
-    
+
     ParseOptions po(usage);
     po.Register("binary", &binary_write, "Write output in binary mode");
     config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string nnet_rxfilename = po.GetArg(1),
-        egs_rspecifier = po.GetArg(2), 
-        nnet_wxfilename = po.GetArg(3);
-    
+    std::string nnet_rxfilename = po.GetArg(1), egs_rspecifier = po.GetArg(2),
+                nnet_wxfilename = po.GetArg(3);
+
     TransitionModel trans_model;
     AmNnet am_nnet;
     {
@@ -72,15 +71,14 @@ int main(int argc, char *argv[]) {
     std::vector<NnetExample> egs;
 
     // This block adds samples to "egs".
-    SequentialNnetExampleReader example_reader(
-        egs_rspecifier);
+    SequentialNnetExampleReader example_reader(egs_rspecifier);
     for (; !example_reader.Done(); example_reader.Next())
       egs.push_back(example_reader.Value());
     KALDI_LOG << "Read " << egs.size() << " examples.";
     KALDI_ASSERT(!egs.empty());
-    
+
     RescaleNnet(config, egs, &am_nnet.GetNnet());
-    
+
     {
       Output ko(nnet_wxfilename, binary_write);
       trans_model.Write(ko.Stream(), binary_write);
@@ -88,7 +86,7 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Rescaled neural net and wrote it to " << nnet_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

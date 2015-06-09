@@ -31,29 +31,28 @@ namespace nnet2 {
     scaling on the parameters of each of the updatable layers.
  */
 struct NnetShrinkConfig {
-  int32 num_bfgs_iters; // The dimension is small (e.g. 3 to 5) so we do
+  int32 num_bfgs_iters;  // The dimension is small (e.g. 3 to 5) so we do
   // BFGS.  We actually implement this as L-BFGS but setting the number of
   // vectors to be the same as the dimension of the space.  Note: this
   // num-iters is in reality the number of function evaluations.
 
   BaseFloat initial_step;
-  
-  NnetShrinkConfig(): num_bfgs_iters(10), initial_step(0.1) { }
+
+  NnetShrinkConfig() : num_bfgs_iters(10), initial_step(0.1) {}
   void Register(OptionsItf *po) {
-    po->Register("num-bfgs-iters", &num_bfgs_iters, "Number of iterations of "
+    po->Register("num-bfgs-iters", &num_bfgs_iters,
+                 "Number of iterations of "
                  "BFGS to use when optimizing shrinkage parameters");
-    po->Register("initial-step", &initial_step, "Parameter in the optimization, "
+    po->Register("initial-step", &initial_step,
+                 "Parameter in the optimization, "
                  "used to set the initial step length");
-  }  
+  }
 };
 
 void ShrinkNnet(const NnetShrinkConfig &shrink_config,
-                const std::vector<NnetExample> &validation_set,
-                Nnet *nnet);
-  
+                const std::vector<NnetExample> &validation_set, Nnet *nnet);
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #endif

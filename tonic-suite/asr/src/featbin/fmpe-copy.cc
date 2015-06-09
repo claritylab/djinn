@@ -32,7 +32,8 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     FmpeOptions opts;
     bool binary = true;
-    po.Register("binary", &binary, "If true, output fMPE object in binary mode.");
+    po.Register("binary", &binary,
+                "If true, output fMPE object in binary mode.");
     opts.Register(&po);
     po.Read(argc, argv);
 
@@ -41,19 +42,17 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string fmpe_rxfilename = po.GetArg(1),
-        fmpe_wxfilename = po.GetArg(2);
+    std::string fmpe_rxfilename = po.GetArg(1), fmpe_wxfilename = po.GetArg(2);
 
     Fmpe fmpe;
     ReadKaldiObject(fmpe_rxfilename, &fmpe);
-    
 
     Output ko(fmpe_wxfilename, binary);
     fmpe.Write(ko.Stream(), binary);
 
     KALDI_LOG << "Copyied fMPE object to " << fmpe_wxfilename;
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

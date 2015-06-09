@@ -17,13 +17,11 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "fst/fstlib.h"
 #include "fstext/table-matcher.h"
 #include "fstext/fstext-utils.h"
-
 
 /*
 The following commands represent a basic test of this program.
@@ -50,7 +48,7 @@ fstphicompose 100 a.fst g.fst | fstprint
 #0    1    10    10    2
 #0    1    11    11    7.5999999
 #1
- 
+
 Next, test that it's working as desired for final-probs,
 i.e. it takes the backoff arc when looking for a final-prob,
 only if no final-prob present at current state.
@@ -96,7 +94,7 @@ int main(int argc, char *argv[]) {
       for a final-prob.  This would not work if there were
       epsilons.
     */
-      
+
     const char *usage =
         "Composition, where the right FST has \"failure\" (phi) transitions\n"
         "that are only taken where there was no match of a \"real\" label\n"
@@ -106,7 +104,7 @@ int main(int argc, char *argv[]) {
         "(fst2-rxfilename|fst2-rspecifier) [(out-rxfilename|out-rspecifier)]\n"
         "E.g.: fstphicompose 54 a.fst b.fst c.fst\n"
         "or: fstphicompose 11 ark:a.fsts G.fst ark:b.fsts\n";
-        
+
     ParseOptions po(usage);
 
     po.Read(argc, argv);
@@ -116,48 +114,44 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string
-        phi_str = po.GetArg(1),
-        fst1_in_str = po.GetArg(2),
-        fst2_in_str = po.GetArg(3),
-        fst_out_str = po.GetOptArg(4);
-    
+    std::string phi_str = po.GetArg(1), fst1_in_str = po.GetArg(2),
+                fst2_in_str = po.GetArg(3), fst_out_str = po.GetOptArg(4);
+
     bool is_table_1 =
-        (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_2 =
-        (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
-        is_table_out =
-        (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) != kNoWspecifier);
+             (ClassifyRspecifier(fst1_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_2 =
+             (ClassifyRspecifier(fst2_in_str, NULL, NULL) != kNoRspecifier),
+         is_table_out = (ClassifyWspecifier(fst_out_str, NULL, NULL, NULL) !=
+                         kNoWspecifier);
 
     int32 phi_label;
-    if (!ConvertStringToInteger(phi_str, &phi_label)
-        || phi_label <= 0)
-      KALDI_ERR << "Invalid first argument (phi label), expect positive integer.";
-    
+    if (!ConvertStringToInteger(phi_str, &phi_label) || phi_label <= 0)
+      KALDI_ERR
+          << "Invalid first argument (phi label), expect positive integer.";
+
     if (is_table_out != (is_table_1 || is_table_2))
       KALDI_ERR << "Incompatible combination of archives and files";
-    
-    if (!is_table_1 && !is_table_2) { // Only dealing with files...
+
+    if (!is_table_1 && !is_table_2) {  // Only dealing with files...
       VectorFst<StdArc> *fst1 = ReadFstKaldi(fst1_in_str);
-      
+
       VectorFst<StdArc> *fst2 = ReadFstKaldi(fst2_in_str);
 
-      PropagateFinal(phi_label, fst2); // makes it work correctly
+      PropagateFinal(phi_label, fst2);  // makes it work correctly
       // w.r.t. final-probs.
-      
+
       VectorFst<StdArc> composed_fst;
 
       PhiCompose(*fst1, *fst2, phi_label, &composed_fst);
-      
+
       delete fst1;
       delete fst2;
 
       WriteFstKaldi(composed_fst, fst_out_str);
       return 0;
     } else if (is_table_1 && !is_table_2) {
-
       VectorFst<StdArc> *fst2 = ReadFstKaldi(fst2_in_str);
-      PropagateFinal(phi_label, fst2); // makes it work correctly
+      PropagateFinal(phi_label, fst2);  // makes it work correctly
       // w.r.t. final-probs.
       SequentialTableReader<VectorFstHolder> fst1_reader(fst1_in_str);
       TableWriter<VectorFstHolder> fst_writer(fst_out_str);
@@ -171,12 +165,13 @@ int main(int argc, char *argv[]) {
       KALDI_LOG << "Composed " << n_done << " FSTs.";
       return (n_done != 0 ? 0 : 1);
     } else {
-      KALDI_ERR << "The combination of tables/non-tables that you "
-                << "supplied is not currently supported.  Either implement this, "
-                << "ask the maintainers to implement it, or call this program "
-                << "differently.";
+      KALDI_ERR
+          << "The combination of tables/non-tables that you "
+          << "supplied is not currently supported.  Either implement this, "
+          << "ask the maintainers to implement it, or call this program "
+          << "differently.";
     }
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

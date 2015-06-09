@@ -23,7 +23,6 @@
 #include "nnet2/train-nnet.h"
 #include "nnet2/am-nnet.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
@@ -39,26 +38,29 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage:  nnet-am-compute [options] <model-in> <feature-rspecifier> "
         "<feature-or-loglikes-wspecifier>\n";
-    
+
     bool apply_log = false;
     bool pad_input = true;
     ParseOptions po(usage);
-    po.Register("apply-log", &apply_log, "Apply a log to the result of the computation "
+    po.Register("apply-log", &apply_log,
+                "Apply a log to the result of the computation "
                 "before outputting.");
-    po.Register("pad-input", &pad_input, "If true, duplicate the first and last frames "
-                "of input features as required for temporal context, to prevent #frames "
+    po.Register("pad-input", &pad_input,
+                "If true, duplicate the first and last frames "
+                "of input features as required for temporal context, to "
+                "prevent #frames "
                 "of output being less than those of input.");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 3) {
       po.PrintUsage();
       exit(1);
     }
-    
+
     std::string nnet_rxfilename = po.GetArg(1),
-        features_rspecifier = po.GetArg(2),
-        features_or_loglikes_wspecifier = po.GetArg(3);
+                features_rspecifier = po.GetArg(2),
+                features_or_loglikes_wspecifier = po.GetArg(3);
 
     TransitionModel trans_model;
     AmNnet am_nnet;
@@ -70,18 +72,17 @@ int main(int argc, char *argv[]) {
     }
 
     Nnet &nnet = am_nnet.GetNnet();
-    
+
     int64 num_done = 0, num_frames = 0;
     SequentialBaseFloatCuMatrixReader feature_reader(features_rspecifier);
     BaseFloatCuMatrixWriter writer(features_or_loglikes_wspecifier);
-    
-    for (; !feature_reader.Done();  feature_reader.Next()) {
+
+    for (; !feature_reader.Done(); feature_reader.Next()) {
       std::string utt = feature_reader.Key();
-      const CuMatrix<BaseFloat> &feats  = feature_reader.Value();
+      const CuMatrix<BaseFloat> &feats = feature_reader.Value();
 
       int32 output_frames = feats.NumRows(), output_dim = nnet.OutputDim();
-      if (!pad_input)
-        output_frames -= nnet.LeftContext() + nnet.RightContext();
+      if (!pad_input) output_frames -= nnet.LeftContext() + nnet.RightContext();
       if (output_frames <= 0) {
         KALDI_WARN << "Skipping utterance " << utt << " because output "
                    << "would be empty.";
@@ -98,15 +99,13 @@ int main(int argc, char *argv[]) {
       num_frames += feats.NumRows();
       num_done++;
     }
-    
-    KALDI_LOG << "Processed " << num_done << " feature files, "
-              << num_frames << " frames of input were processed.";
+
+    KALDI_LOG << "Processed " << num_done << " feature files, " << num_frames
+              << " frames of input were processed.";
 
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

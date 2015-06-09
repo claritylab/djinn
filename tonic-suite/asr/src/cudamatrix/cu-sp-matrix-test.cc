@@ -40,8 +40,8 @@ namespace kaldi {
 /*
  * Unit Tests
  */
-template<typename Real>
-static void UnitTestCuSpMatrixConstructor() { 
+template <typename Real>
+static void UnitTestCuSpMatrixConstructor() {
   for (MatrixIndexT i = 1; i < 10; i++) {
     MatrixIndexT dim = 10 * i;
 
@@ -56,9 +56,9 @@ static void UnitTestCuSpMatrixConstructor() {
     D.CopyToSp(&E);
 
     SpMatrix<Real> F(D);
-    
+
     AssertEqual(F, B);
-     //added by hxu, to test copy from SpMatrix to CuSpMatrix
+    // added by hxu, to test copy from SpMatrix to CuSpMatrix
 
     AssertEqual(B, E);
 
@@ -69,9 +69,8 @@ static void UnitTestCuSpMatrixConstructor() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixApproxEqual() {
-
   for (int32 i = 0; i < 10; i++) {
     int32 dim = 1 + Rand() % 10;
     SpMatrix<Real> A(dim), B(dim);
@@ -82,17 +81,14 @@ static void UnitTestCuSpMatrixApproxEqual() {
       bool b1 = A.ApproxEqual(B, threshold);
       SpMatrix<Real> diff(A);
       diff.AddSp(-1.0, B);
-      bool b2 = (diff.FrobeniusNorm() < threshold * std::max(A.FrobeniusNorm(),
-                                                             B.FrobeniusNorm()));
+      bool b2 = (diff.FrobeniusNorm() <
+                 threshold * std::max(A.FrobeniusNorm(), B.FrobeniusNorm()));
       KALDI_ASSERT(b1 == b2);
     }
   }
-  
 }
 
-
-
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixOperator() {
   SpMatrix<Real> A(100);
   A.SetRandn();
@@ -106,57 +102,57 @@ static void UnitTestCuSpMatrixOperator() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixAddToDiag() {
   for (MatrixIndexT i = 1; i < 10; i++) {
-    MatrixIndexT dim = 10*i;
+    MatrixIndexT dim = 10 * i;
     SpMatrix<Real> A(dim);
     A.SetRandn();
     CuSpMatrix<Real> B(A);
-    
+
     Matrix<Real> D(A);
     A.AddToDiag(i);
 
     CuMatrix<Real> C(B);
     B.AddToDiag(i);
-    
+
     SpMatrix<Real> E(dim);
     B.CopyToSp(&E);
-    
-    AssertEqual(A, E);    
+
+    AssertEqual(A, E);
   }
 }
 
-
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixCopyFromMat() {
   for (MatrixIndexT i = 1; i < 10; i++) {
-    SpCopyType copy_type = (i % 3 == 0 ? kTakeMean :
-                            (i % 3 == 1 ? kTakeLower : kTakeUpper));
+    SpCopyType copy_type =
+        (i % 3 == 0 ? kTakeMean : (i % 3 == 1 ? kTakeLower : kTakeUpper));
     MatrixIndexT dim = 10 * i + Rand() % 5;
     CuMatrix<Real> A(dim, dim);
     A.SetRandn();
     Matrix<Real> A2(A);
-    
+
     CuSpMatrix<Real> B(A, copy_type);
     SpMatrix<Real> B2(A2, copy_type);
     SpMatrix<Real> B3(B);
-    if (!ApproxEqual(B2, B3) ) {
-      KALDI_ERR << "Matrices differ, A = " << A << ", B2 = " << B2 << ", B3(CUDA) = " << B3;
+    if (!ApproxEqual(B2, B3)) {
+      KALDI_ERR << "Matrices differ, A = " << A << ", B2 = " << B2
+                << ", B3(CUDA) = " << B3;
     }
     KALDI_ASSERT(B3.Trace() != 0);
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixInvert() {
   for (MatrixIndexT i = 1; i < 10; i++) {
-    MatrixIndexT dim = 10*i + Rand() % 5;
+    MatrixIndexT dim = 10 * i + Rand() % 5;
     CuSpMatrix<Real> A(dim);
     A.SetRandn();
-    KALDI_ASSERT(A.Trace() != 0.0); // true with probability 1...
+    KALDI_ASSERT(A.Trace() != 0.0);  // true with probability 1...
     SpMatrix<Real> B(A);
-    
+
     CuMatrix<Real> D(A);
     A.AddMat2(1.0, D, kTrans, 1.0);
     A.AddToDiag(i);
@@ -168,25 +164,26 @@ static void UnitTestCuSpMatrixInvert() {
     CuSpMatrix<Real> Acopy(A);
     A.Invert();
     B.Invert();
-    
+
     SpMatrix<Real> A2(A);
     AssertEqual(A2, B);
 
     CuMatrix<Real> I(dim, dim);
-    I.AddMatMat(1.0, CuMatrix<Real>(Acopy), kNoTrans, CuMatrix<Real>(A), kNoTrans, 0.0);
+    I.AddMatMat(1.0, CuMatrix<Real>(Acopy), kNoTrans, CuMatrix<Real>(A),
+                kNoTrans, 0.0);
     KALDI_ASSERT(I.IsUnit(0.01));
   }
 }
 
-// TODO (variani) : fails for dim = 0 
-template<typename Real>
+// TODO (variani) : fails for dim = 0
+template <typename Real>
 static void UnitTestCuSpMatrixAddVec2() {
   for (int32 i = 0; i < 50; i++) {
     MatrixIndexT dim = 1 + Rand() % 200;
     SpMatrix<Real> A(dim);
     A.SetRandn();
     CuSpMatrix<Real> B(A);
-    
+
     Vector<Real> C(dim);
     C.SetRandn();
     CuVector<Real> D(C);
@@ -202,11 +199,11 @@ static void UnitTestCuSpMatrixAddVec2() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixAddMat2() {
   for (MatrixIndexT i = 1; i < 10; i++) {
     MatrixIndexT dim_row = 15 * i + Rand() % 10;
-    MatrixIndexT dim_col = 7 *i + Rand() % 10;
+    MatrixIndexT dim_col = 7 * i + Rand() % 10;
     Matrix<Real> A(dim_row, dim_col);
     A.SetRandn();
     CuMatrix<Real> B(A);
@@ -228,11 +225,11 @@ static void UnitTestCuSpMatrixAddMat2() {
   }
 }
 
-template<typename Real>
+template <typename Real>
 static void UnitTestCuSpMatrixAddSp() {
   for (MatrixIndexT i = 1; i < 50; i++) {
     MatrixIndexT dim = 7 * i + Rand() % 10;
-    
+
     SpMatrix<Real> A(dim);
     A.SetRandn();
     CuSpMatrix<Real> B(A);
@@ -242,7 +239,7 @@ static void UnitTestCuSpMatrixAddSp() {
     const CuSpMatrix<Real> D(C);
 
     const Real alpha = 2.0;
-    
+
     A.AddSp(alpha, C);
     B.AddSp(alpha, D);
 
@@ -253,11 +250,11 @@ static void UnitTestCuSpMatrixAddSp() {
   }
 }
 
-template<typename Real, typename OtherReal>
+template <typename Real, typename OtherReal>
 static void UnitTestCuSpMatrixTraceSpSp() {
   for (MatrixIndexT i = 1; i < 2; i++) {
     MatrixIndexT dim = 100 + Rand() % 255;
-    
+
     SpMatrix<Real> A(dim);
     A.SetRandn();
     const CuSpMatrix<Real> B(A);
@@ -270,8 +267,7 @@ static void UnitTestCuSpMatrixTraceSpSp() {
   }
 }
 
-
-template<typename Real>
+template <typename Real>
 void UnitTestCuSpMatrixSetUnit() {
   for (MatrixIndexT i = 1; i < 10; i++) {
     MatrixIndexT dim = 100 * i + Rand() % 255;
@@ -297,12 +293,14 @@ void UnitTestCuSpMatrixSetUnit() {
     AssertEqual(S4, cu_S3);
   }
 }
-   
-template<class Real>
+
+template <class Real>
 static void UnitTestCuSpMatrixIO() {
   for (int32 i = 0; i < 10; i++) {
     int32 dimM = Rand() % 255;
-    if (i % 5 == 0) { dimM = 0; }
+    if (i % 5 == 0) {
+      dimM = 0;
+    }
     CuSpMatrix<Real> mat(dimM);
     mat.SetRandn();
     std::ostringstream os;
@@ -316,30 +314,27 @@ static void UnitTestCuSpMatrixIO() {
   }
 }
 
-
-
-
-template<typename Real, typename OtherReal>
+template <typename Real, typename OtherReal>
 static void UnitTestCuSpMatrixAddSp() {
   for (MatrixIndexT i = 1; i < 10; i++) {
     MatrixIndexT dim = 100 * i + Rand() % 255;
-    
+
     SpMatrix<Real> A(dim);
     A.SetRandn();
     const CuSpMatrix<Real> B(A);
     SpMatrix<OtherReal> C(dim);
     C.SetRandn();
     const CuSpMatrix<OtherReal> D(C);
-    
+
     A.AddSp(1.0, C);
     B.AddSp(1.0, D);
-    
-    AssertEqual(A, B);
 
+    AssertEqual(A, B);
   }
 }
 
-template<typename Real> void CudaSpMatrixUnitTest() {
+template <typename Real>
+void CudaSpMatrixUnitTest() {
   UnitTestCuSpMatrixIO<Real>();
   UnitTestCuSpMatrixConstructor<Real>();
   UnitTestCuSpMatrixOperator<Real>();
@@ -353,13 +348,12 @@ template<typename Real> void CudaSpMatrixUnitTest() {
   UnitTestCuSpMatrixSetUnit<Real>();
 }
 
-template<typename Real, typename OtherReal> void CudaSpMatrixUnitTest() {
+template <typename Real, typename OtherReal>
+void CudaSpMatrixUnitTest() {
   UnitTestCuSpMatrixTraceSpSp<Real, OtherReal>();
-
 }
 
-} // namespace kaldi
-
+}  // namespace kaldi
 
 int main() {
   using namespace kaldi;
@@ -367,9 +361,9 @@ int main() {
   for (int32 loop = 0; loop < 2; loop++) {
 #if HAVE_CUDA == 1
     if (loop == 0)
-      CuDevice::Instantiate().SelectGpuId("no"); // -1 means no GPU
+      CuDevice::Instantiate().SelectGpuId("no");  // -1 means no GPU
     else
-      CuDevice::Instantiate().SelectGpuId("yes"); // -2 .. automatic selection
+      CuDevice::Instantiate().SelectGpuId("yes");  // -2 .. automatic selection
 #endif
 
     kaldi::CudaSpMatrixUnitTest<float>();

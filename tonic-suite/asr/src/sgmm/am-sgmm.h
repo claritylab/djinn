@@ -48,10 +48,12 @@ struct SgmmGselectConfig {
   }
 
   void Register(OptionsItf *po) {
-    po->Register("full-gmm-nbest", &full_gmm_nbest, "Number of highest-scoring"
-        " full-covariance Gaussians selected per frame.");
-    po->Register("diag-gmm-nbest", &diag_gmm_nbest, "Number of highest-scoring"
-        " diagonal-covariance Gaussians selected per frame.");
+    po->Register("full-gmm-nbest", &full_gmm_nbest,
+                 "Number of highest-scoring"
+                 " full-covariance Gaussians selected per frame.");
+    po->Register("diag-gmm-nbest", &diag_gmm_nbest,
+                 "Number of highest-scoring"
+                 " diagonal-covariance Gaussians selected per frame.");
   }
 };
 
@@ -75,8 +77,8 @@ struct SgmmPerFrameDerivedVars {
     nti.Resize(ngauss);
   }
   bool IsEmpty() const {
-    return (xt.Dim() == 0 || xti.NumRows() == 0 || zti.NumRows() == 0
-        || nti.Dim() == 0);
+    return (xt.Dim() == 0 || xti.NumRows() == 0 || zti.NumRows() == 0 ||
+            nti.Dim() == 0);
   }
   bool NeedsResizing(int32 ngauss, int32 feat_dim, int32 phn_dim) const {
     /*    if (xt.Dim() != feat_dim)
@@ -90,12 +92,11 @@ struct SgmmPerFrameDerivedVars {
     if (nti.Dim() != ngauss)
       KALDI_LOG << "nti dim = " << nti.Dim() << ", ngauss = " << ngauss;
     */
-    return (xt.Dim() != feat_dim || xti.NumRows() != ngauss
-        || xti.NumCols() != feat_dim || zti.NumRows() != ngauss
-        || zti.NumCols() != phn_dim || nti.Dim() != ngauss);
+    return (xt.Dim() != feat_dim || xti.NumRows() != ngauss ||
+            xti.NumCols() != feat_dim || zti.NumRows() != ngauss ||
+            zti.NumCols() != phn_dim || nti.Dim() != ngauss);
   }
 };
-
 
 struct SgmmPerSpkDerivedVars {
   // To set this up, call ComputePerSpkDerivedVars from the sgmm object.
@@ -106,7 +107,6 @@ struct SgmmPerSpkDerivedVars {
   Vector<BaseFloat> v_s;  ///< Speaker adaptation vector v_^{(s)}. Dim is [T]
   Matrix<BaseFloat> o_s;  ///< Per-speaker offsets o_{i}. Dimension is [I][D]
 };
-
 
 /** \class AmSgmm
  *  Class for definition of the subspace Gmm acoustic model
@@ -161,7 +161,7 @@ class AmSgmm {
                            const SgmmPerSpkDerivedVars &spk_vars,
                            BaseFloat logdet_s,
                            SgmmPerFrameDerivedVars *per_frame_vars) const;
-  
+
   /// Computes the per-speaker derived vars; assumes vars->v_s is already
   /// set up.
   void ComputePerSpkDerivedVars(SgmmPerSpkDerivedVars *vars) const;
@@ -180,10 +180,8 @@ class AmSgmm {
 
   /// Increases the total number of substates based on the state occupancies.
   void SplitSubstates(const Vector<BaseFloat> &state_occupancies,
-                      int32 target_nsubstates,
-                      BaseFloat perturb,
-                      BaseFloat power, 
-                      BaseFloat cond);
+                      int32 target_nsubstates, BaseFloat perturb,
+                      BaseFloat power, BaseFloat cond);
 
   /// Functions for increasing the phonetic and speaker space dimensions.
   /// The argument norm_xform is a LDA-like feature normalizing transform,
@@ -205,7 +203,7 @@ class AmSgmm {
   /// among each of the sets in "normalize_sets": these sets should
   /// be disjoint and their union should be all the indices 0 ... I-1.
   void ComputeNormalizersNormalized(
-      const std::vector< std::vector<int32> > &normalize_sets);
+      const std::vector<std::vector<int32> > &normalize_sets);
 
   /// Computes the LDA-like pre-transform and its inverse as well as the
   /// eigenvalues of the scatter of the means used in FMLLR estimation.
@@ -225,52 +223,51 @@ class AmSgmm {
   void RemoveSpeakerSpace() { N_.clear(); }
 
   /// Accessors
-  const FullGmm & full_ubm() const { return full_ubm_; }
-  const DiagGmm & diag_ubm() const { return diag_ubm_; }
+  const FullGmm &full_ubm() const { return full_ubm_; }
+  const DiagGmm &diag_ubm() const { return diag_ubm_; }
 
-  const Matrix<BaseFloat>& StateVectors(int32 state_index) const {
+  const Matrix<BaseFloat> &StateVectors(int32 state_index) const {
     return v_[state_index];
   }
-  const SpMatrix<BaseFloat>& GetInvCovars(int32 gauss_index) const {
+  const SpMatrix<BaseFloat> &GetInvCovars(int32 gauss_index) const {
     return SigmaInv_[gauss_index];
   }
-  const Matrix<BaseFloat>& GetPhoneProjection(int32 gauss_index) const {
+  const Matrix<BaseFloat> &GetPhoneProjection(int32 gauss_index) const {
     return M_[gauss_index];
   }
 
   /// Templated accessors (used to accumulate in different precision)
-  template<typename Real>
+  template <typename Real>
   void GetInvCovars(int32 gauss_index, SpMatrix<Real> *out) const;
 
-  template<typename Real>
+  template <typename Real>
   void GetSubstateMean(int32 j, int32 m, int32 i,
                        VectorBase<Real> *mean_out) const;
 
-  template<typename Real>
+  template <typename Real>
   void GetSubstateSpeakerMean(int32 state, int32 substate, int32 gauss,
                               const SgmmPerSpkDerivedVars &spk,
                               VectorBase<Real> *mean_out) const;
 
-  template<typename Real>
-  void GetVarScaledSubstateSpeakerMean(int32 state, int32 substate,
-                                       int32 gauss,
+  template <typename Real>
+  void GetVarScaledSubstateSpeakerMean(int32 state, int32 substate, int32 gauss,
                                        const SgmmPerSpkDerivedVars &spk,
                                        VectorBase<Real> *mean_out) const;
-  
-  template<typename Real>
-  void GetNtransSigmaInv(std::vector< Matrix<Real> > *out) const;
+
+  template <typename Real>
+  void GetNtransSigmaInv(std::vector<Matrix<Real> > *out) const;
 
   /// Computes quantities H = M_i Sigma_i^{-1} M_i^T.
-  template<class Real>
-  void ComputeH(std::vector< SpMatrix<Real> > *H_i) const;
-  
+  template <class Real>
+  void ComputeH(std::vector<SpMatrix<Real> > *H_i) const;
+
  protected:
   friend class ComputeNormalizersClass;
+
  private:
   /// Compute a subset of normalizers; used in multi-threaded implementation.
   void ComputeNormalizersInternal(int32 num_threads, int32 thread,
                                   int32 *entropy_count, double *entropy_sum);
-  
 
   /// Initializes the matrices M_ and w_
   void InitializeMw(int32 phn_subspace_dim,
@@ -281,7 +278,7 @@ class AmSgmm {
   void InitializeCovars();  ///< initializes the within-class covariances.
 
   void ComputeSmoothingTermsFromModel(
-      const std::vector< SpMatrix<BaseFloat> > &H,
+      const std::vector<SpMatrix<BaseFloat> > &H,
       const Vector<BaseFloat> &state_occupancies, SpMatrix<BaseFloat> *H_sm,
       BaseFloat max_cond) const;
 
@@ -296,29 +293,29 @@ class AmSgmm {
   /// J = number of states, M_{j} = number of substates of state j.
 
   /// Inverse within-class (full) covariances; dim is [I][D][D].
-  std::vector< SpMatrix<BaseFloat> > SigmaInv_;
+  std::vector<SpMatrix<BaseFloat> > SigmaInv_;
   /// Phonetic-subspace projections. Dimension is [I][D][S]
-  std::vector< Matrix<BaseFloat> > M_;
+  std::vector<Matrix<BaseFloat> > M_;
   /// Speaker-subspace projections. Dimension is [I][D][T]
-  std::vector< Matrix<BaseFloat> > N_;
+  std::vector<Matrix<BaseFloat> > N_;
   /// Weight projection vectors. Dimension is [I][S]
   Matrix<BaseFloat> w_;
 
   /// The parameters in a particular SGMM state.
 
   /// v_{jm}, per-state phonetic-subspace vectors. Dimension is [J][M_{j}][S].
-  std::vector< Matrix<BaseFloat> > v_;
+  std::vector<Matrix<BaseFloat> > v_;
   /// c_{jm}, mixture weights. Dimension is [J][M_{j}]
-  std::vector< Vector<BaseFloat> > c_;
+  std::vector<Vector<BaseFloat> > c_;
   /// n_{jim}, per-Gaussian normalizer. Dimension is [J][I][M_{j}]
-  std::vector< Matrix<BaseFloat> > n_;
+  std::vector<Matrix<BaseFloat> > n_;
 
   // Priors for MAP adaptation of M -- keeping them here for now but they may
   // be moved somewhere else eventually
   // These are parameters of a matrix-variate normal distribution. The means are
   // the unadapted M_i, and we have 2 separate covaraince matrices for the rows
   // and columns of M.
-  std::vector< Matrix<BaseFloat> > M_prior_;  // Matrix-variate Gaussian mean
+  std::vector<Matrix<BaseFloat> > M_prior_;  // Matrix-variate Gaussian mean
   SpMatrix<BaseFloat> row_cov_inv_;
   SpMatrix<BaseFloat> col_cov_inv_;
 
@@ -330,14 +327,13 @@ class AmSgmm {
   friend class MleAmSgmmUpdaterMulti;
 };
 
-template<typename Real>
-inline void AmSgmm::GetInvCovars(int32 gauss_index,
-                                        SpMatrix<Real> *out) const {
+template <typename Real>
+inline void AmSgmm::GetInvCovars(int32 gauss_index, SpMatrix<Real> *out) const {
   out->Resize(SigmaInv_[gauss_index].NumRows(), kUndefined);
   out->CopyFromSp(SigmaInv_[gauss_index]);
 }
 
-template<typename Real>
+template <typename Real>
 inline void AmSgmm::GetSubstateMean(int32 j, int32 m, int32 i,
                                     VectorBase<Real> *mean_out) const {
   KALDI_ASSERT(mean_out != NULL);
@@ -348,8 +344,7 @@ inline void AmSgmm::GetSubstateMean(int32 j, int32 m, int32 i,
   mean_out->CopyFromVec(mean_tmp);
 }
 
-
-template<typename Real>
+template <typename Real>
 inline void AmSgmm::GetSubstateSpeakerMean(int32 j, int32 m, int32 i,
                                            const SgmmPerSpkDerivedVars &spk,
                                            VectorBase<Real> *mean_out) const {
@@ -358,7 +353,7 @@ inline void AmSgmm::GetSubstateSpeakerMean(int32 j, int32 m, int32 i,
     mean_out->AddVec(1.0, spk.o_s.Row(i));
 }
 
-template<typename Real>
+template <typename Real>
 void AmSgmm::GetVarScaledSubstateSpeakerMean(int32 j, int32 m, int32 i,
                                              const SgmmPerSpkDerivedVars &spk,
                                              VectorBase<Real> *mean_out) const {
@@ -368,12 +363,10 @@ void AmSgmm::GetVarScaledSubstateSpeakerMean(int32 j, int32 m, int32 i,
   mean_out->CopyFromVec(tmp_mean2);
 }
 
-
 /// Computes the inverse of an LDA transform (without dimensionality reduction)
 /// The computed transform is used in initializing the phonetic and speaker
 /// subspaces, as well as while increasing the dimensions of those spaces.
 void ComputeFeatureNormalizer(const FullGmm &gmm, Matrix<BaseFloat> *xform);
-
 
 /// This is the entry for a single time.
 struct SgmmGauPostElement {
@@ -384,9 +377,8 @@ struct SgmmGauPostElement {
   std::vector<Matrix<BaseFloat> > posteriors;
 };
 
-
 /// indexed by time.
-class SgmmGauPost: public std::vector<SgmmGauPostElement> {
+class SgmmGauPost : public std::vector<SgmmGauPostElement> {
  public:
   // Add the standard Kaldi Read and Write routines so
   // we can use KaldiObjectHolder with this type.
@@ -397,7 +389,8 @@ class SgmmGauPost: public std::vector<SgmmGauPostElement> {
 };
 
 typedef KaldiObjectHolder<SgmmGauPost> SgmmGauPostHolder;
-typedef RandomAccessTableReader<SgmmGauPostHolder> RandomAccessSgmmGauPostReader;
+typedef RandomAccessTableReader<SgmmGauPostHolder>
+    RandomAccessSgmmGauPostReader;
 typedef SequentialTableReader<SgmmGauPostHolder> SequentialSgmmGauPostReader;
 typedef TableWriter<SgmmGauPostHolder> SgmmGauPostWriter;
 
@@ -415,6 +408,5 @@ class AmSgmmFunctions {
 };
 
 }  // namespace kaldi
-
 
 #endif  // KALDI_SGMM_AM_SGMM_H_

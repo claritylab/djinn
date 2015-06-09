@@ -1,7 +1,7 @@
 // gmm/diag-gmm-normal.h
 
 // Copyright 2009-2011  Saarland University  Korbinian Riedhammer  Yanmin Qian
-//                      
+//
 
 // See ../../COPYING for clarification regarding multiple authors
 //
@@ -30,7 +30,6 @@
 
 namespace kaldi {
 
-
 class DiagGmm;
 
 /** \class DiagGmmNormal
@@ -45,11 +44,9 @@ class DiagGmm;
 class DiagGmmNormal {
  public:
   /// Empty constructor.
-  DiagGmmNormal() { }
+  DiagGmmNormal() {}
 
-  explicit DiagGmmNormal(const DiagGmm &gmm) {
-    CopyFromDiagGmm(gmm);
-  }
+  explicit DiagGmmNormal(const DiagGmm &gmm) { CopyFromDiagGmm(gmm); }
 
   /// Resizes arrays to this dim. Does not initialize data.
   void Resize(int32 nMix, int32 dim);

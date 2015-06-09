@@ -37,23 +37,17 @@ int32 GetCount(double expected_count) {
     ans++;
     expected_count--;
   }
-  if (WithProb(expected_count))
-    ans++;
+  if (WithProb(expected_count)) ans++;
   return ans;
 }
 
 static void ProcessFile(const MatrixBase<BaseFloat> &feats,
                         const Posterior &pdf_post,
-                        const Vector<BaseFloat> &weights,
-                        int32 left_context,
-                        int32 right_context,
-                        int32 const_feat_dim,
-                        BaseFloat keep_proportion,
-                        BaseFloat weight_threshold,
-                        bool use_frame_selection,
-                        bool use_frame_weights,
-                        int64 *num_frames_written,
-                        int64 *num_frames_skipped,
+                        const Vector<BaseFloat> &weights, int32 left_context,
+                        int32 right_context, int32 const_feat_dim,
+                        BaseFloat keep_proportion, BaseFloat weight_threshold,
+                        bool use_frame_selection, bool use_frame_weights,
+                        int64 *num_frames_written, int64 *num_frames_skipped,
                         NnetExampleWriter *example_writer) {
   KALDI_ASSERT(feats.NumRows() == static_cast<int32>(pdf_post.size()));
   int32 feat_dim = feats.NumCols();
@@ -64,7 +58,7 @@ static void ProcessFile(const MatrixBase<BaseFloat> &feats,
                                  basic_feat_dim);
   eg.left_context = left_context;
   for (int32 i = 0; i < feats.NumRows(); i++) {
-    int32 count = GetCount(keep_proportion); // number of times
+    int32 count = GetCount(keep_proportion);  // number of times
     // we'll write this out (1 by default).
     if (count > 0) {
       // Set up "input_frames".
@@ -72,16 +66,16 @@ static void ProcessFile(const MatrixBase<BaseFloat> &feats,
         int32 j2 = j + i;
         if (j2 < 0) j2 = 0;
         if (j2 >= feats.NumRows()) j2 = feats.NumRows() - 1;
-        SubVector<BaseFloat> src(feats, j2), dest(input_frames,
-                                                  j + left_context);
+        SubVector<BaseFloat> src(feats, j2),
+            dest(input_frames, j + left_context);
         dest.CopyFromVec(src);
       }
       eg.labels = pdf_post[i];
       eg.input_frames = input_frames;
       if (const_feat_dim > 0) {
         // we'll normally reach here if we're using online-estimated iVectors.
-        SubVector<BaseFloat> const_part(feats.Row(i),
-                                        basic_feat_dim, const_feat_dim);
+        SubVector<BaseFloat> const_part(feats.Row(i), basic_feat_dim,
+                                        const_feat_dim);
         eg.spk_info.CopyFromVec(const_part);
       }
       if (use_frame_selection) {
@@ -92,17 +86,16 @@ static void ProcessFile(const MatrixBase<BaseFloat> &feats,
       }
       std::ostringstream os;
       os << ((*num_frames_written)++);
-      std::string key = os.str(); // key in the archive is the number of the example
+      std::string key =
+          os.str();  // key in the archive is the number of the example
 
-      for (int32 c = 0; c < count; c++)
-        example_writer->Write(key, eg);
+      for (int32 c = 0; c < count; c++) example_writer->Write(key, eg);
     }
   }
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 int main(int argc, char *argv[]) {
   try {
@@ -122,62 +115,73 @@ int main(int argc, char *argv[]) {
         "<pdf-post-rspecifier> <weights-rspecifier> <training-examples-out>\n"
         "\n"
         "An example [where $feats expands to the actual features]:\n"
-        "nnet-get-weighted-egs --left-context=8 --right-context=8 \"$feats\" \\\n"
-        "  \"ark:gunzip -c exp/nnet/ali.1.gz | ali-to-pdf exp/nnet/1.nnet ark:- ark:- | ali-to-post ark:- ark:- |\" \\\n"
+        "nnet-get-weighted-egs --left-context=8 --right-context=8 \"$feats\" "
+        "\\\n"
+        "  \"ark:gunzip -c exp/nnet/ali.1.gz | ali-to-pdf exp/nnet/1.nnet "
+        "ark:- ark:- | ali-to-post ark:- ark:- |\" \\\n"
         "   ark:- \n"
         "Note: the --left-context and --right-context would be derived from\n"
         "the output of nnet-info.";
-        
-    
+
     int32 left_context = 0, right_context = 0, const_feat_dim = 0;
     int32 srand_seed = 0;
     BaseFloat keep_proportion = 1.0;
     BaseFloat weight_threshold = 0.0;
-    bool use_frame_selection = true, use_frame_weights=false;
-    
+    bool use_frame_selection = true, use_frame_weights = false;
+
     ParseOptions po(usage);
-    po.Register("left-context", &left_context, "Number of frames of left context "
+    po.Register("left-context", &left_context,
+                "Number of frames of left context "
                 "the neural net requires.");
-    po.Register("right-context", &right_context, "Number of frames of right context "
+    po.Register("right-context", &right_context,
+                "Number of frames of right context "
                 "the neural net requires.");
-    po.Register("const-feat-dim", &const_feat_dim, "If specified, the last "
+    po.Register("const-feat-dim", &const_feat_dim,
+                "If specified, the last "
                 "const-feat-dim dimensions of the feature input are treated as "
                 "constant over the context window (so are not spliced)");
-    po.Register("keep-proportion", &keep_proportion, "If <1.0, this program will "
-                "randomly keep this proportion of the input samples.  If >1.0, it will "
-                "in expectation copy a sample this many times.  It will copy it a number "
-                "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
-    po.Register("srand", &srand_seed, "Seed for random number generator "
+    po.Register(
+        "keep-proportion", &keep_proportion,
+        "If <1.0, this program will "
+        "randomly keep this proportion of the input samples.  If >1.0, it will "
+        "in expectation copy a sample this many times.  It will copy it a "
+        "number "
+        "of times equal to floor(keep-proportion) or ceil(keep-proportion).");
+    po.Register("srand", &srand_seed,
+                "Seed for random number generator "
                 "(only relevant if --keep-proportion != 1.0)");
-    po.Register("weight-threshold", &weight_threshold, "Keep only frames with weights "
+    po.Register("weight-threshold", &weight_threshold,
+                "Keep only frames with weights "
                 "above this threshold.");
-    po.Register("use-frame-selection", &use_frame_selection, "Remove the frames below threshold.");
-    po.Register("use-frame-weights", &use_frame_weights, "Scale the error derivatives by the weight");
-    
+    po.Register("use-frame-selection", &use_frame_selection,
+                "Remove the frames below threshold.");
+    po.Register("use-frame-weights", &use_frame_weights,
+                "Scale the error derivatives by the weight");
+
     po.Read(argc, argv);
 
     srand(srand_seed);
-    
+
     if (po.NumArgs() != 4) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string feature_rspecifier = po.GetArg(1),
-        pdf_post_rspecifier = po.GetArg(2),
-        weights_rspecifier = po.GetArg(3),
-        examples_wspecifier = po.GetArg(4);
+                pdf_post_rspecifier = po.GetArg(2),
+                weights_rspecifier = po.GetArg(3),
+                examples_wspecifier = po.GetArg(4);
 
     // Read in all the training files.
     SequentialBaseFloatMatrixReader feat_reader(feature_rspecifier);
     RandomAccessPosteriorReader pdf_post_reader(pdf_post_rspecifier);
     RandomAccessBaseFloatVectorReader weights_reader(weights_rspecifier);
     NnetExampleWriter example_writer(examples_wspecifier);
-    
+
     int32 num_done = 0, num_err = 0;
     int64 num_frames_written = 0;
     int64 num_frames_skipped = 0;
-    
+
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string key = feat_reader.Key();
       const Matrix<BaseFloat> &feats = feat_reader.Value();
@@ -194,23 +198,24 @@ int main(int argc, char *argv[]) {
         }
         if (!weights_reader.HasKey(key)) {
           KALDI_ERR << "No weights for utterance " << key;
-          //ProcessFile(feats, pdf_post, NULL,
+          // ProcessFile(feats, pdf_post, NULL,
           //    left_context, right_context, const_feat_dim, keep_proportion,
-          //    weight_threshold, false, false, &num_frames_written, 
+          //    weight_threshold, false, false, &num_frames_written,
           //    &num_frames_skipped, &example_writer);
         } else {
           Vector<BaseFloat> weights = weights_reader.Value(key);
           if (weights.Dim() != static_cast<int32>(pdf_post.size())) {
             KALDI_WARN << "Weights for utterance " << key
-              << " have wrong size, " << weights.Dim()
-              << " vs. " << pdf_post.size();
+                       << " have wrong size, " << weights.Dim() << " vs. "
+                       << pdf_post.size();
             num_err++;
             continue;
           }
           ProcessFile(feats, pdf_post, weights, left_context, right_context,
                       const_feat_dim, keep_proportion, weight_threshold,
                       use_frame_selection, use_frame_weights,
-                      &num_frames_written, &num_frames_skipped, &example_writer);
+                      &num_frames_written, &num_frames_skipped,
+                      &example_writer);
         }
         num_done++;
       }
@@ -219,10 +224,10 @@ int main(int argc, char *argv[]) {
     KALDI_LOG << "Finished generating examples, "
               << "successfully processed " << num_done
               << " feature files, wrote " << num_frames_written << " examples, "
-              << "skipped " << num_frames_skipped << " examples, "
-              << num_err << " files had errors.";
+              << "skipped " << num_frames_skipped << " examples, " << num_err
+              << " files had errors.";
     return (num_done == 0 ? 1 : 0);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }

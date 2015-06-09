@@ -30,25 +30,32 @@ struct LdaEstimateOptions {
   bool remove_offset;
   int32 dim;
   bool allow_large_dim;
-  BaseFloat within_class_factor; // TODO: remove this eventually, it
+  BaseFloat within_class_factor;  // TODO: remove this eventually, it
   // is deprecated (that code is now in ../nnet2/get-feature-transform.{h,cc})
-  LdaEstimateOptions(): remove_offset(false), dim(40), allow_large_dim(false),
-                        within_class_factor(1.0) { }
-  
+  LdaEstimateOptions()
+      : remove_offset(false),
+        dim(40),
+        allow_large_dim(false),
+        within_class_factor(1.0) {}
+
   void Register(OptionsItf *po) {
-    po->Register("remove-offset", &remove_offset, "If true, output an affine "
+    po->Register("remove-offset", &remove_offset,
+                 "If true, output an affine "
                  "transform that makes the projected data mean equal to zero.");
     po->Register("dim", &dim, "Dimension to project to with LDA");
-    po->Register("allow-large-dim", &allow_large_dim, "If true, allow an LDA "
+    po->Register("allow-large-dim", &allow_large_dim,
+                 "If true, allow an LDA "
                  "dimension larger than the number of classes.");
-    po->Register("within-class-factor", &within_class_factor, "(Deprecated) If 1.0, do "
-                 "conventional LDA where the within-class variance will be "
-                 "unit in the projected space.  May be set to less than 1.0, "
-                 "which scales the features to have less variance, particularly "
-                 "for dimensions where between-class variance is small; "
-                 "this is a feature being experimented with for neural-net "
-                 "input.");
-  }    
+    po->Register(
+        "within-class-factor", &within_class_factor,
+        "(Deprecated) If 1.0, do "
+        "conventional LDA where the within-class variance will be "
+        "unit in the projected space.  May be set to less than 1.0, "
+        "which scales the features to have less variance, particularly "
+        "for dimensions where between-class variance is small; "
+        "this is a feature being experimented with for neural-net "
+        "input.");
+  }
 };
 
 /** Class for computing linear discriminant analysis (LDA) transform.
@@ -70,18 +77,19 @@ class LdaEstimate {
   void Scale(BaseFloat f);
 
   /// Accumulates data
-  void Accumulate(const VectorBase<BaseFloat> &data, int32 class_id, BaseFloat weight = 1.0);
+  void Accumulate(const VectorBase<BaseFloat> &data, int32 class_id,
+                  BaseFloat weight = 1.0);
 
   /// Estimates the LDA transform matrix m.  If Mfull != NULL, it also outputs
   /// the full matrix (without dimensionality reduction), which is useful for
-  /// some purposes.  If opts.remove_offset == true, it will output both matrices
+  /// some purposes.  If opts.remove_offset == true, it will output both
+  /// matrices
   /// with an extra column which corresponds to mean-offset removal (the matrix
   /// should be multiplied by the feature with a 1 appended to give the correct
   /// result, as with other Kaldi transforms.)
   /// The "remove_offset" argument is new and should be set to false for back
   /// compatibility.
-  void Estimate(const LdaEstimateOptions &opts, 
-                Matrix<BaseFloat> *M,
+  void Estimate(const LdaEstimateOptions &opts, Matrix<BaseFloat> *M,
                 Matrix<BaseFloat> *Mfull = NULL) const;
 
   void Read(std::istream &in_stream, bool binary, bool add);
@@ -98,16 +106,13 @@ class LdaEstimate {
                             Matrix<BaseFloat> *projection);
 
   /// Extract a more processed form of the stats.
-  void GetStats(SpMatrix<double> *total_covar,
-                SpMatrix<double> *between_covar,
-                Vector<double> *total_mean,
-                double *sum) const;
-  
+  void GetStats(SpMatrix<double> *total_covar, SpMatrix<double> *between_covar,
+                Vector<double> *total_mean, double *sum) const;
+
   // Disallow assignment operator.
-  LdaEstimate &operator = (const LdaEstimate &other);
+  LdaEstimate &operator=(const LdaEstimate &other);
 };
 
 }  // End namespace kaldi
 
 #endif  // KALDI_TRANSFORM_LDA_ESTIMATE_H_
-

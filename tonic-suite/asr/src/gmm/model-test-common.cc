@@ -49,14 +49,12 @@ void RandPosdefSpMatrix(int32 dim, SpMatrix<BaseFloat> *matrix,
   }
 }
 
-void RandDiagGaussFeatures(int32 num_samples,
-                           const VectorBase<BaseFloat> &mean,
+void RandDiagGaussFeatures(int32 num_samples, const VectorBase<BaseFloat> &mean,
                            const VectorBase<BaseFloat> &sqrt_var,
                            MatrixBase<BaseFloat> *feats) {
   int32 dim = mean.Dim();
   KALDI_ASSERT(feats != NULL);
-  KALDI_ASSERT(feats->NumRows() == num_samples &&
-               feats->NumCols() == dim);
+  KALDI_ASSERT(feats->NumRows() == num_samples && feats->NumCols() == dim);
   KALDI_ASSERT(sqrt_var.Dim() == dim);
 
   Vector<BaseFloat> rnd_vec(dim);
@@ -69,8 +67,7 @@ void RandDiagGaussFeatures(int32 num_samples,
   }
 }
 
-void RandFullGaussFeatures(int32 num_samples,
-                           const VectorBase<BaseFloat> &mean,
+void RandFullGaussFeatures(int32 num_samples, const VectorBase<BaseFloat> &mean,
                            const TpMatrix<BaseFloat> &sqrt_var,
                            MatrixBase<BaseFloat> *feats) {
   int32 dim = mean.Dim();
@@ -94,7 +91,7 @@ void InitRandDiagGmm(int32 dim, int32 num_comp, DiagGmm *gmm) {
 
   for (int32 m = 0; m < num_comp; m++) {
     weights(m) = exp(RandGauss());
-    for (int32 d= 0; d < dim; d++) {
+    for (int32 d = 0; d < dim; d++) {
       means(m, d) = RandGauss() / (1 + d);
       inv_vars(m, d) = exp(RandGauss() / (1 + d)) + 1e-2;
     }
@@ -110,7 +107,7 @@ void InitRandDiagGmm(int32 dim, int32 num_comp, DiagGmm *gmm) {
 void InitRandFullGmm(int32 dim, int32 num_comp, FullGmm *gmm) {
   Vector<BaseFloat> weights(num_comp);
   Matrix<BaseFloat> means(num_comp, dim);
-  std::vector< SpMatrix<BaseFloat> > invcovars(num_comp);
+  std::vector<SpMatrix<BaseFloat> > invcovars(num_comp);
   for (int32 mix = 0; mix < num_comp; mix++) {
     invcovars[mix].Resize(dim);
   }
@@ -118,14 +115,14 @@ void InitRandFullGmm(int32 dim, int32 num_comp, FullGmm *gmm) {
   BaseFloat tot_weight = 0.0;
   for (int32 m = 0; m < num_comp; m++) {
     weights(m) = RandUniform() + 1e-2;
-    for (int32 d= 0; d < dim; d++) {
+    for (int32 d = 0; d < dim; d++) {
       means(m, d) = RandGauss();
     }
     RandPosdefSpMatrix(dim, &invcovars[m], NULL, NULL);
     invcovars[m].InvertDouble();
     tot_weight += weights(m);
   }
-  weights.Scale(1/tot_weight);
+  weights.Scale(1 / tot_weight);
 
   gmm->Resize(num_comp, dim);
   gmm->SetWeights(weights);

@@ -23,10 +23,8 @@ namespace kaldi {
 namespace nnet2 {
 
 /// See below for comment.
-void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
-                            double lambda,
+void PreconditionDirections(const CuMatrixBase<BaseFloat> &R, double lambda,
                             CuMatrixBase<BaseFloat> *P) {
-  
   int32 N = R.NumRows(), D = R.NumCols();
   KALDI_ASSERT(SameDim(R, *P) && N > 0);
   if (N == 1) {
@@ -36,14 +34,14 @@ void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
     return;
   }
   CuMatrixBase<BaseFloat> &Q = *P;
-  
+
   if (N >= D) {
     // Compute G = (\lambda I + 1/(N-1) R^T R)^{-1} by direct inversion.
     // G <-- lambda I.
     CuMatrix<BaseFloat> G(D, D);
     G.AddToDiag(lambda);
     // G += 1.0/(N-1) * R^T R.
-    G.SymAddMat2(1.0 / (N-1), R, kTrans, 1.0);
+    G.SymAddMat2(1.0 / (N - 1), R, kTrans, 1.0);
     G.CopyLowerToUpper();
     if (GetVerboseLevel() >= 5 && Rand() % 20 == 0) {
       CuSpMatrix<BaseFloat> tmp(G, kTakeLower);
@@ -66,7 +64,7 @@ void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
     S.AddToDiag(lambda);
     // S += (N-1) R R^T.
     // the following function only updates the lower triangle.
-    S.SymAddMat2(1.0 / (N-1), R, kNoTrans, 1.0);
+    S.SymAddMat2(1.0 / (N - 1), R, kNoTrans, 1.0);
     S.CopyLowerToUpper();
     // invert S, so now S = (\lambda I + (N-1) R R^T)^{-1}.
     if (GetVerboseLevel() >= 5 && Rand() % 20 == 0) {
@@ -99,7 +97,7 @@ void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
   Vector<BaseFloat> cpu_gamma(gamma), cpu_beta(N, kUndefined);
   for (int32 n = 0; n < N; n++) {
     BaseFloat this_gamma = cpu_gamma(n),
-        this_beta = 1.0 + this_gamma / (N - 1 - this_gamma);
+              this_beta = 1.0 + this_gamma / (N - 1 - this_gamma);
     if (!(this_gamma >= 0.0 && this_beta > 0.0))
       KALDI_ERR << "Bad values encountered in preconditioning: gamma = "
                 << this_gamma << ", beta = " << this_beta;
@@ -110,17 +108,13 @@ void PreconditionDirections(const CuMatrixBase<BaseFloat> &R,
 #endif
 }
 
-
-void PreconditionDirectionsAlpha(
-    const CuMatrixBase<BaseFloat> &R,
-    double alpha,
-    CuMatrixBase<BaseFloat> *P) {
+void PreconditionDirectionsAlpha(const CuMatrixBase<BaseFloat> &R, double alpha,
+                                 CuMatrixBase<BaseFloat> *P) {
   KALDI_ASSERT(alpha > 0.0);
   // probably does not really make sense.
   double t = TraceMatMat(R, R, kTrans), floor = 1.0e-20;
   if (t < floor) {
-    KALDI_WARN << "Flooring trace from " << t
-               << " to " << floor;
+    KALDI_WARN << "Flooring trace from " << t << " to " << floor;
     t = floor;
   }
   double lambda = t * alpha / R.NumRows() / R.NumCols();
@@ -134,12 +128,10 @@ void PreconditionDirectionsAlpha(
   PreconditionDirections(R, lambda, P);
 }
 
-
-void PreconditionDirectionsAlphaRescaled(
-    const CuMatrixBase<BaseFloat> &R,
-    double alpha,
-    CuMatrixBase<BaseFloat> *P) {
-  KALDI_ASSERT(alpha > 0.0); // alpha > 1.0
+void PreconditionDirectionsAlphaRescaled(const CuMatrixBase<BaseFloat> &R,
+                                         double alpha,
+                                         CuMatrixBase<BaseFloat> *P) {
+  KALDI_ASSERT(alpha > 0.0);  // alpha > 1.0
   // probably does not really make sense.
   double t = TraceMatMat(R, R, kTrans), floor = 1.0e-20;
   if (t == 0.0) {
@@ -147,23 +139,20 @@ void PreconditionDirectionsAlphaRescaled(
     return;
   }
   if (t < floor) {
-    KALDI_WARN << "Flooring trace from " << t
-               << " to " << floor;
+    KALDI_WARN << "Flooring trace from " << t << " to " << floor;
     t = floor;
   }
   double lambda = t * alpha / R.NumRows() / R.NumCols();
   // see the extended comment below for an explanation of this.
   KALDI_ASSERT(lambda != 0.0);
   PreconditionDirections(R, lambda, P);
-  double p_trace = TraceMatMat(*P, *P, kTrans),
-      rescale = sqrt(t / p_trace);
+  double p_trace = TraceMatMat(*P, *P, kTrans), rescale = sqrt(t / p_trace);
   KALDI_ASSERT(p_trace != 0.0);
   P->Scale(rescale);
 }
 
-
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 /*
   Notes for an idea on preconditioning.
@@ -207,7 +196,7 @@ void PreconditionDirectionsAlphaRescaled(
    G_n = F_n + \lambda_n I
   where I is the identity.  A suitable formula for \lambda_n is to define
   a small constant \alpha (say, \alpha=0.1), and let
-  
+
    \lambda_n =  (\alpha/dim(F)) trace(F_n) .
 
   In practice (although we lost strict convergence guarantees) it will be easier
@@ -215,7 +204,7 @@ void PreconditionDirectionsAlphaRescaled(
 
    \lambda  =  (\alpha/dim(S)) trace(S)
             = (\alpha/(R.NumRows()*R.NumCols()) * trace(R^T R)).
-  
+
   This is an easy way to set it.  Let's define P_n as the inverse of G_n.  This
   is what we'll be multiplying the input values by:
 
@@ -247,7 +236,8 @@ We can get it from the previous minibatch.
 
  and using the Sherman-Morrison formula, this may be written as:
 
-   G_n = G  +  \alpha_n q_n q_n^T  # Caution: \alpha_n has nothing to do with \alpha.
+   G_n = G  +  \alpha_n q_n q_n^T  # Caution: \alpha_n has nothing to do with
+\alpha.
 
  where q_n = G r_n, and
 
@@ -270,10 +260,10 @@ We can get it from the previous minibatch.
 
   where, defining \gamma_n = r_n^T q_n, we have
 
-  \beta_n = 1 + \gamma_n \alpha_n 
+  \beta_n = 1 + \gamma_n \alpha_n
           = 1  +  \gamma_n / ((N-1) (1 - \gamma_n/(N-1)))
           = 1  +  \gamma_n / (N - 1 - \gamma_n)
-  
+
 */
 
 /*
@@ -285,21 +275,30 @@ We can get it from the previous minibatch.
    The dimension of R is N x D, where N is the minibatch size and D is the
    dimension of the input to this layer of the network.
 
-   We'll be computing a matrix P, each row p_n of which will be the corresponding
+   We'll be computing a matrix P, each row p_n of which will be the
+  corresponding
    row r_n of R, multiplied by a positive definite preconditioning matrix G_n.
    [we can check that for each i, p_n^T r_n >= 0].
    The following computation obtains P:
 
-   C <-- 3/4.  # C is a constant that determines when to use the Morrison-Woodbury formula
-               # or to do direct inversion.  It needs to be tuned empirically based on speed,
-               # if we plan to use minibatch sizes about equal to the dimension of
+   C <-- 3/4.  # C is a constant that determines when to use the
+  Morrison-Woodbury formula
+               # or to do direct inversion.  It needs to be tuned empirically
+  based on speed,
+               # if we plan to use minibatch sizes about equal to the dimension
+  of
                # the hidden layers.
-   
-   \lambda <-- (\alpha/N) \trace(R R^T).   # 0 < \alpha <= 1 is a global constant, e.g.
-                                           # \alpha = 0.1, but should try different
-                                           # values, this will be important (note: if the
-                                           # minibatch size is >= the dimension (N >= D),
-                                           # then we can let \alpha be quite small, e.g.
+
+   \lambda <-- (\alpha/N) \trace(R R^T).   # 0 < \alpha <= 1 is a global
+  constant, e.g.
+                                           # \alpha = 0.1, but should try
+  different
+                                           # values, this will be important
+  (note: if the
+                                           # minibatch size is >= the dimension
+  (N >= D),
+                                           # then we can let \alpha be quite
+  small, e.g.
                                            # 0.001.
 
    if N >= C D, then
@@ -328,7 +327,7 @@ We can get it from the previous minibatch.
       # if we let L' = \lambda/(N-1) L, so that
       # L' = (lambda I + 1/(N-1) R R^T)
       # then
-      # S = (\lambda I + 1/(N-1) R R^T)^{-1}. 
+      # S = (\lambda I + 1/(N-1) R R^T)^{-1}.
 
       S <-- (\lambda I + 1/(N-1) R R^T)^{-1}.
       Q <- R S
@@ -338,11 +337,14 @@ We can get it from the previous minibatch.
 
 
 
-   Here, we're right multiplying each row r_n of r by the symmetric matrix G, to get
-   the corresponding row q_n of q.  Note: in practice Q will be the same memory as P.
+   Here, we're right multiplying each row r_n of r by the symmetric matrix G, to
+  get
+   the corresponding row q_n of q.  Note: in practice Q will be the same memory
+  as P.
    Next we work out for each n:
      \gamma_n = r_n^T q_n     # This should be nonnegative!  Check this.
-      \beta_n = 1  +  \gamma_n / (N - 1 - \gamma_n)  # This should be positive; check this.
+      \beta_n = 1  +  \gamma_n / (N - 1 - \gamma_n)  # This should be positive;
+  check this.
   For each n, we'll do (for the corresponding rows of P and Q):
      p_n <-- \beta_n q_n.
   In practice, we'd do this computation in-place, with P and Q using the
@@ -354,7 +356,5 @@ We can get it from the previous minibatch.
 
   This is exact mathematically, but there could be differences due to roundoff,
   and if \alpha is quite small, these differences could be substantial.
-  
- */
-    
 
+ */

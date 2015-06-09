@@ -24,49 +24,47 @@ namespace kaldi {
 
 static bool RuleActivated(const OnlineEndpointRule &rule,
                           const std::string &rule_name,
-                          BaseFloat trailing_silence,
-                          BaseFloat relative_cost,
+                          BaseFloat trailing_silence, BaseFloat relative_cost,
                           BaseFloat utterance_length) {
   bool contains_nonsilence = (utterance_length > trailing_silence);
-  
+
   bool ans = (contains_nonsilence || !rule.must_contain_nonsilence) &&
-      trailing_silence >= rule.min_trailing_silence &&
-      relative_cost <= rule.max_relative_cost &&
-      utterance_length >= rule.min_utterance_length;
+             trailing_silence >= rule.min_trailing_silence &&
+             relative_cost <= rule.max_relative_cost &&
+             utterance_length >= rule.min_utterance_length;
   if (ans) {
-    KALDI_VLOG(2) << "Endpointing rule " << rule_name << " activated: "
-                  << (contains_nonsilence ? "true" : "false" ) << ','
-                  << trailing_silence << ',' << relative_cost << ','
+    KALDI_VLOG(2) << "Endpointing rule " << rule_name
+                  << " activated: " << (contains_nonsilence ? "true" : "false")
+                  << ',' << trailing_silence << ',' << relative_cost << ','
                   << utterance_length;
   }
   return ans;
 }
 
 bool EndpointDetected(const OnlineEndpointConfig &config,
-                      int32 num_frames_decoded,
-                      int32 trailing_silence_frames,
+                      int32 num_frames_decoded, int32 trailing_silence_frames,
                       BaseFloat frame_shift_in_seconds,
                       BaseFloat final_relative_cost) {
   KALDI_ASSERT(final_relative_cost >= 0.0 &&
                num_frames_decoded >= trailing_silence_frames);
 
   BaseFloat utterance_length = num_frames_decoded * frame_shift_in_seconds,
-      trailing_silence = trailing_silence_frames * frame_shift_in_seconds;
-  
-  if (RuleActivated(config.rule1, "rule1",
-                    trailing_silence, final_relative_cost, utterance_length))
+            trailing_silence = trailing_silence_frames * frame_shift_in_seconds;
+
+  if (RuleActivated(config.rule1, "rule1", trailing_silence,
+                    final_relative_cost, utterance_length))
     return true;
-  if (RuleActivated(config.rule2, "rule2",
-                    trailing_silence, final_relative_cost, utterance_length))
+  if (RuleActivated(config.rule2, "rule2", trailing_silence,
+                    final_relative_cost, utterance_length))
     return true;
-  if (RuleActivated(config.rule3, "rule3",
-                    trailing_silence, final_relative_cost, utterance_length))
+  if (RuleActivated(config.rule3, "rule3", trailing_silence,
+                    final_relative_cost, utterance_length))
     return true;
-  if (RuleActivated(config.rule4, "rule4",
-                    trailing_silence, final_relative_cost, utterance_length))
+  if (RuleActivated(config.rule4, "rule4", trailing_silence,
+                    final_relative_cost, utterance_length))
     return true;
-  if (RuleActivated(config.rule5, "rule5",
-                    trailing_silence, final_relative_cost, utterance_length))
+  if (RuleActivated(config.rule5, "rule5", trailing_silence,
+                    final_relative_cost, utterance_length))
     return true;
   return false;
 }
@@ -81,8 +79,9 @@ int32 TrailingSilenceLength(const TransitionModel &tmodel,
   std::sort(silence_phones.begin(), silence_phones.end());
   KALDI_ASSERT(IsSortedAndUniq(silence_phones) &&
                "Duplicates in --silence-phones option in endpointing config");
-  KALDI_ASSERT(!silence_phones.empty() &&
-               "Endpointing requires nonempty --endpoint.silence-phones option");
+  KALDI_ASSERT(
+      !silence_phones.empty() &&
+      "Endpointing requires nonempty --endpoint.silence-phones option");
   ConstIntegerSet<int32> silence_set(silence_phones);
 
   bool use_final_probs = false;
@@ -98,30 +97,27 @@ int32 TrailingSilenceLength(const TransitionModel &tmodel,
       if (silence_set.count(phone) != 0) {
         num_silence_frames++;
       } else {
-        break; // stop counting as soon as we hit non-silence.
+        break;  // stop counting as soon as we hit non-silence.
       }
     }
   }
   return num_silence_frames;
 }
 
-bool EndpointDetected(
-    const OnlineEndpointConfig &config,
-    const TransitionModel &tmodel,    
-    BaseFloat frame_shift_in_seconds,
-    const LatticeFasterOnlineDecoder &decoder) {
+bool EndpointDetected(const OnlineEndpointConfig &config,
+                      const TransitionModel &tmodel,
+                      BaseFloat frame_shift_in_seconds,
+                      const LatticeFasterOnlineDecoder &decoder) {
   if (decoder.NumFramesDecoded() == 0) return false;
 
   BaseFloat final_relative_cost = decoder.FinalRelativeCost();
 
   int32 num_frames_decoded = decoder.NumFramesDecoded(),
-      trailing_silence_frames = TrailingSilenceLength(tmodel,
-                                                      config.silence_phones,
-                                                      decoder);
+        trailing_silence_frames =
+            TrailingSilenceLength(tmodel, config.silence_phones, decoder);
 
   return EndpointDetected(config, num_frames_decoded, trailing_silence_frames,
-                          frame_shift_in_seconds, final_relative_cost);  
+                          frame_shift_in_seconds, final_relative_cost);
 }
-
 
 }  // namespace kaldi

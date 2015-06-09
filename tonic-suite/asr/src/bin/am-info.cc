@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
         "Usage:  am-info [options] <model-in>\n"
         "e.g.:\n"
         " am-info 1.mdl\n";
-    
+
     ParseOptions po(usage);
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 1) {
@@ -58,10 +58,8 @@ int main(int argc, char *argv[]) {
               << '\n';
     std::cout << "number of transition-states "
               << trans_model.NumTransitionStates() << '\n';
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
   }
 }
-
-

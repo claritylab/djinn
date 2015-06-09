@@ -17,57 +17,49 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "util/simple-options.h"
-
 
 namespace kaldi {
 
-void SimpleOptions::Register(const std::string &name,
-                             bool *value,
+void SimpleOptions::Register(const std::string &name, bool *value,
                              const std::string &doc) {
   bool_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kBool)));
 }
 
-void SimpleOptions::Register(const std::string &name,
-                             int32 *value,
+void SimpleOptions::Register(const std::string &name, int32 *value,
                              const std::string &doc) {
   int_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kInt32)));
 }
 
-void SimpleOptions::Register(const std::string &name,
-                             uint32 *value,
+void SimpleOptions::Register(const std::string &name, uint32 *value,
                              const std::string &doc) {
   uint_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kUint32)));
 }
 
-void SimpleOptions::Register(const std::string &name,
-                             float *value,
+void SimpleOptions::Register(const std::string &name, float *value,
                              const std::string &doc) {
   float_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kFloat)));
 }
 
-void SimpleOptions::Register(const std::string &name,
-                             double *value,
+void SimpleOptions::Register(const std::string &name, double *value,
                              const std::string &doc) {
   double_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kDouble)));
 }
 
-void SimpleOptions::Register(const std::string &name,
-                             std::string *value,
+void SimpleOptions::Register(const std::string &name, std::string *value,
                              const std::string &doc) {
   string_map_[name] = value;
   option_info_list_.push_back(std::make_pair(name, OptionInfo(doc, kString)));
 }
 
-template<typename T>
+template <typename T>
 static bool SetOptionImpl(const std::string &key, const T &value,
-                          std::map<std::string, T*> &some_map) {
+                          std::map<std::string, T *> &some_map) {
   if (some_map.end() != some_map.find(key)) {
     *(some_map[key]) = value;
     return true;
@@ -125,11 +117,10 @@ bool SimpleOptions::SetOption(const std::string &key, const char *value) {
   return SetOptionImpl(key, str_value, string_map_);
 }
 
-
-template<typename T>
+template <typename T>
 static bool GetOptionImpl(const std::string &key, T *value,
-                          std::map<std::string, T*> &some_map) {
-  typename std::map<std::string, T*>::iterator it  = some_map.find(key);
+                          std::map<std::string, T *> &some_map) {
+  typename std::map<std::string, T *>::iterator it = some_map.find(key);
   if (it != some_map.end()) {
     *value = *(it->second);
     return true;
@@ -167,9 +158,9 @@ SimpleOptions::GetOptionInfoList() {
 }
 
 bool SimpleOptions::GetOptionType(const std::string &key, OptionType *type) {
-  for (std::vector <std::pair<std::string,
-      OptionInfo> >::iterator dx = option_info_list_.begin();
-      dx != option_info_list_.end(); dx++) {
+  for (std::vector<std::pair<std::string, OptionInfo> >::iterator dx =
+           option_info_list_.begin();
+       dx != option_info_list_.end(); dx++) {
     std::pair<std::string, SimpleOptions::OptionInfo> info_pair = (*dx);
     if (info_pair.first == key) {
       *type = info_pair.second.type;
@@ -178,7 +169,5 @@ bool SimpleOptions::GetOptionType(const std::string &key, OptionType *type) {
   }
   return false;
 }
-
-
 
 }  // namespace kaldi

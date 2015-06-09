@@ -1,7 +1,8 @@
 // onlinebin/online-audio-client.cc
 
 // Copyright 2012 Cisco Systems (author: Matthias Paulik)
-// Copyright 2013 Polish-Japanese Institute of Information Technology (author: Danijel Korzinek)
+// Copyright 2013 Polish-Japanese Institute of Information Technology (author:
+// Danijel Korzinek)
 
 //   Modifications to the original contribution by Cisco Systems made by:
 //   Vassil Panayotov
@@ -47,18 +48,20 @@ struct RecognizedWord {
   float start, end;
 };
 
-}  //namespace kaldi
+}  // namespace kaldi
 
 int main(int argc, char** argv) {
   using namespace kaldi;
   typedef kaldi::int32 int32;
-  #if !defined(_MSC_VER)
+#if !defined(_MSC_VER)
   try {
-
-    const char *usage =
-        "Sends an audio file to the KALDI audio server (onlinebin/online-audio-server-decode-faster)\n"
-            "and prints the result optionally saving it to an HTK label file or WebVTT subtitles file\n\n"
-            "e.g.: ./online-audio-client 192.168.50.12 9012 'scp:wav_files.scp'\n\n";
+    const char* usage =
+        "Sends an audio file to the KALDI audio server "
+        "(onlinebin/online-audio-server-decode-faster)\n"
+        "and prints the result optionally saving it to an HTK label file or "
+        "WebVTT subtitles file\n\n"
+        "e.g.: ./online-audio-client 192.168.50.12 9012 "
+        "'scp:wav_files.scp'\n\n";
     ParseOptions po(usage);
 
     bool htk = false, vtt = false;
@@ -102,71 +105,71 @@ int main(int argc, char** argv) {
         return -1;
       }
 
-      addr = *((unsigned long*) hp->h_addr);
+      addr = *((unsigned long*)hp->h_addr);
     }
 
     sockaddr_in server;
     server.sin_addr.s_addr = addr;
     server.sin_family = AF_INET;
     server.sin_port = htons(server_port);
-    if (::connect(client_desc, (struct sockaddr*) &server, sizeof(server))) {
+    if (::connect(client_desc, (struct sockaddr*)&server, sizeof(server))) {
       std::cerr << "ERROR: couldn't connect to server!" << std::endl;
       close(client_desc);
       return -1;
     }
 
     KALDI_VLOG(2) << "Connected to KALDI server at host " << server_addr_str
-        << " port " << server_port << std::endl;
+                  << " port " << server_port << std::endl;
 
     char* pack_buffer = new char[packet_size];
 
-    SequentialTableReader < WaveHolder > reader(wav_rspecifier);
+    SequentialTableReader<WaveHolder> reader(wav_rspecifier);
     for (; !reader.Done(); reader.Next()) {
       std::string wav_key = reader.Key();
 
       KALDI_VLOG(2) << "File: " << wav_key << std::endl;
 
-      const WaveData &wav_data = reader.Value();
+      const WaveData& wav_data = reader.Value();
 
       if (wav_data.SampFreq() != 16000)
         KALDI_ERR << "Sampling rates other than 16kHz are not supported!";
 
       int32 num_chan = wav_data.Data().NumRows(), this_chan = channel;
-      {   // This block works out the channel (0=left, 1=right...)
+      {  // This block works out the channel (0=left, 1=right...)
         KALDI_ASSERT(num_chan > 0);  // should have been caught in
         // reading code if no channels.
         if (channel == -1) {
           this_chan = 0;
           if (num_chan != 1)
             KALDI_WARN << "Channel not specified but you have data with "
-                << num_chan << " channels; defaulting to zero";
+                       << num_chan << " channels; defaulting to zero";
         } else {
           if (this_chan >= num_chan) {
             KALDI_WARN << "File with id " << wav_key << " has " << num_chan
-                << " channels but you specified channel " << channel
-                << ", producing no output.";
+                       << " channels but you specified channel " << channel
+                       << ", producing no output.";
             continue;
           }
         }
       }
 
       OnlineVectorSource au_src(wav_data.Data().Row(this_chan));
-      Vector < BaseFloat > data(packet_size / 2);
+      Vector<BaseFloat> data(packet_size / 2);
       while (au_src.Read(&data)) {
         for (int32 i = 0; i < data.Dim(); i++) {
-          short sample = (short) data(i);
-          memcpy(&pack_buffer[i * 2], (char*) &sample, 2);
+          short sample = (short)data(i);
+          memcpy(&pack_buffer[i * 2], (char*)&sample, 2);
         }
 
         int32 size = data.Dim() * 2;
-        WriteFull(client_desc, (char*) &size, 4);
+        WriteFull(client_desc, (char*)&size, 4);
 
         WriteFull(client_desc, pack_buffer, size);
       }
 
-      //send last packet
+      // send last packet
       int32 size = 0;
-      WriteFull(client_desc, (char*) &size, 4);
+      WriteFull(client_desc, (char*)&size, 4);
 
       std::string reco_output;
       std::vector<RecognizedWord> results;
@@ -174,8 +177,7 @@ int main(int argc, char** argv) {
 
       while (true) {
         std::string line;
-        if (!ReadLine(client_desc, &line))
-          KALDI_ERR << "Server disconnected!";
+        if (!ReadLine(client_desc, &line)) KALDI_ERR << "Server disconnected!";
 
         if (line.substr(0, 7) != "RESULT:") {
           if (line.substr(0, 8) == "PARTIAL:") {
@@ -187,8 +189,7 @@ int main(int argc, char** argv) {
 
         std::cout << std::endl;
 
-        if (line == "RESULT:DONE")
-          break;
+        if (line == "RESULT:DONE") break;
 
         int32 res_num = 0;
         float input_dur = 0;
@@ -258,15 +259,16 @@ int main(int argc, char** argv) {
       {
         float speed = total_input_dur / total_reco_dur;
         KALDI_VLOG(2) << "Recognized (" << speed << "xRT): " << reco_output
-            << std::endl;
+                      << std::endl;
       }
 
       if (htk) {
         std::string name = wav_key + ".lab";
         std::ofstream htk_file(name.c_str());
         for (size_t i = 0; i < results.size(); i++)
-          htk_file << (int) (results[i].start * 10000000) << " "
-              << (int) (results[i].end * 10000000) << " " << results[i].word << std::endl;
+          htk_file << (int)(results[i].start * 10000000) << " "
+                   << (int)(results[i].end * 10000000) << " " << results[i].word
+                   << std::endl;
         htk_file.close();
       }
 
@@ -280,9 +282,8 @@ int main(int argc, char** argv) {
 
         for (size_t i = 0; i < results.size(); i++) {
           if (subtitle_cue.end >= 0) {
-            if (results[i].start - subtitle_cue.end > 3.0f
-                || results[i].word.size() + subtitle_cue.word.size() > 64) {
-
+            if (results[i].start - subtitle_cue.end > 3.0f ||
+                results[i].word.size() + subtitle_cue.word.size() > 64) {
               if (results[i].start - subtitle_cue.end < 0.1f)
                 subtitle_cue.end = results[i].start - 0.1f;
 
@@ -290,7 +291,6 @@ int main(int argc, char** argv) {
               subtitle_cue.start = -1;
               subtitle_cue.end = -1;
               subtitle_cue.word = "";
-
             }
           }
 
@@ -309,12 +309,15 @@ int main(int argc, char** argv) {
         std::string name = wav_key + ".vtt";
         std::ofstream vtt_file(name.c_str());
 
-        vtt_file << "WEBVTT FILE" << std::endl << std::endl;
+        vtt_file << "WEBVTT FILE" << std::endl
+                 << std::endl;
 
         for (size_t i = 0; i < subtitles.size(); i++)
-          vtt_file << (i + 1) << std::endl << TimeToTimecode(subtitles[i].start)
-              << " --> " << TimeToTimecode(subtitles[i].end) << std::endl
-              << subtitles[i].word << std::endl << std::endl;
+          vtt_file << (i + 1) << std::endl
+                   << TimeToTimecode(subtitles[i].start) << " --> "
+                   << TimeToTimecode(subtitles[i].end) << std::endl
+                   << subtitles[i].word << std::endl
+                   << std::endl;
 
         vtt_file.close();
       }
@@ -333,7 +336,6 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-
 namespace kaldi {
 
 bool WriteFull(int32 desc, char* data, int32 size) {
@@ -341,8 +343,7 @@ bool WriteFull(int32 desc, char* data, int32 size) {
   int32 wrote = 0;
   while (to_write > 0) {
     int32 ret = write(desc, data + wrote, to_write);
-    if (ret <= 0)
-      return false;
+    if (ret <= 0) return false;
 
     to_write -= ret;
     wrote += ret;
@@ -362,8 +363,7 @@ bool ReadLine(int32 desc, std::string* str) {
     if (buffer_offset >= buffer_fill) {
       buffer_fill = read(desc, read_buffer, 1024);
 
-      if (buffer_fill <= 0)
-        break;
+      if (buffer_fill <= 0) break;
 
       buffer_offset = 0;
     }
@@ -399,12 +399,11 @@ bool ReadLine(int32 desc, std::string* str) {
 }
 
 std::string TimeToTimecode(float time) {
-
   char buf[64];
 
   int32 h, m, s, ms;
-  s = (int32) time;
-  ms = (int32)((time - (float) s) * 1000.0f);
+  s = (int32)time;
+  ms = (int32)((time - (float)s) * 1000.0f);
   m = s / 60;
   s %= 60;
   h = m / 60;
@@ -417,4 +416,4 @@ std::string TimeToTimecode(float time) {
   return buf;
 }
 
-}  //namespace kaldi
+}  // namespace kaldi

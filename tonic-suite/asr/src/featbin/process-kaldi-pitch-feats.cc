@@ -22,38 +22,46 @@
 #include "feat/pitch-functions.h"
 #include "feat/wave-reader.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     const char *usage =
-        "Post-process Kaldi pitch features, consisting of pitch and NCCF, into\n"
+        "Post-process Kaldi pitch features, consisting of pitch and NCCF, "
+        "into\n"
         "features suitable for input to ASR system.  Default setup produces\n"
         "3-dimensional features consisting of (pov-feature, pitch-feature,\n"
-        "delta-pitch-feature), where pov-feature is warped NCCF, pitch-feature\n"
-        "is log-pitch with POV-weighted mean subtraction over 1.5 second window,\n"
+        "delta-pitch-feature), where pov-feature is warped NCCF, "
+        "pitch-feature\n"
+        "is log-pitch with POV-weighted mean subtraction over 1.5 second "
+        "window,\n"
         "and delta-pitch-feature is delta feature computed on raw log pitch.\n"
         "In general, you can select from four features: (pov-feature, \n"
-        "pitch-feature, delta-pitch-feature, raw-log-pitch), produced in that \n"
+        "pitch-feature, delta-pitch-feature, raw-log-pitch), produced in that "
+        "\n"
         "order, by setting the boolean options (--add-pov-feature, \n"
-        "--add-normalized-log-pitch, --add-delta-pitch and --add-raw-log-pitch)\n"
+        "--add-normalized-log-pitch, --add-delta-pitch and "
+        "--add-raw-log-pitch)\n"
         "\n"
-        "Usage: process-kaldi-pitch-feats [options...] <feat-rspecifier> <feats-wspecifier>\n"
+        "Usage: process-kaldi-pitch-feats [options...] <feat-rspecifier> "
+        "<feats-wspecifier>\n"
         "\n"
-        "e.g.: compute-kaldi-pitch-feats [args] ark:- | process-kaldi-pitch-feats ark:- ark:feats.ark\n"
+        "e.g.: compute-kaldi-pitch-feats [args] ark:- | "
+        "process-kaldi-pitch-feats ark:- ark:feats.ark\n"
         "\n"
-        "See also: compute-kaldi-pitch-feats, compute-and-process-kaldi-pitch-feats\n";
+        "See also: compute-kaldi-pitch-feats, "
+        "compute-and-process-kaldi-pitch-feats\n";
 
     ParseOptions po(usage);
 
     int32 srand_seed = 0;
-    
+
     ProcessPitchOptions process_opts;
     process_opts.Register(&po);
 
-    po.Register("srand", &srand_seed, "Seed for random number generator, used to "
+    po.Register("srand", &srand_seed,
+                "Seed for random number generator, used to "
                 "add noise to delta-log-pitch features");
-    
+
     po.Read(argc, argv);
 
     if (po.NumArgs() != 2) {
@@ -62,9 +70,8 @@ int main(int argc, char *argv[]) {
     }
 
     srand(srand_seed);
-    
-    std::string feat_rspecifier = po.GetArg(1),
-        feat_wspecifier = po.GetArg(2);
+
+    std::string feat_rspecifier = po.GetArg(1), feat_wspecifier = po.GetArg(2);
 
     SequentialBaseFloatMatrixReader feat_reader(feat_rspecifier);
     BaseFloatMatrixWriter feat_writer(feat_wspecifier);
@@ -82,9 +89,8 @@ int main(int argc, char *argv[]) {
     }
     KALDI_LOG << "Post-processed pitch for " << num_done << " utterances.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-

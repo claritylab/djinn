@@ -17,11 +17,9 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "ivector/plda.h"
-
 
 int main(int argc, char *argv[]) {
   using namespace kaldi;
@@ -33,36 +31,35 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage: ivector-copy-plda <plda-in> <plda-out>\n"
         "e.g.: ivector-copy-plda --smoothing=0.1 plda plda.smooth0.1\n";
-    
+
     ParseOptions po(usage);
 
     BaseFloat smoothing = 0.0;
     bool binary = true;
-    po.Register("smoothing", &smoothing, "Factor used in smoothing within-class "
+    po.Register("smoothing", &smoothing,
+                "Factor used in smoothing within-class "
                 "covariance (add this factor times between-class covar)");
     po.Register("binary", &binary, "Write output in binary mode");
-    
+
     PldaConfig plda_config;
     plda_config.Register(&po);
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
     }
 
-    std::string plda_rxfilename = po.GetArg(1),
-        plda_wxfilename = po.GetArg(2);
+    std::string plda_rxfilename = po.GetArg(1), plda_wxfilename = po.GetArg(2);
 
     Plda plda;
     ReadKaldiObject(plda_rxfilename, &plda);
-    if (smoothing != 0.0)
-      plda.SmoothWithinClassCovariance(smoothing);
+    if (smoothing != 0.0) plda.SmoothWithinClassCovariance(smoothing);
     WriteKaldiObject(plda, plda_wxfilename, binary);
 
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

@@ -26,12 +26,11 @@
 #include "util/common-utils.h"
 #include "matrix/kaldi-matrix.h"
 
-
 int main(int argc, char *argv[]) {
   try {
     using namespace kaldi;
     using namespace std;
-    
+
     const char *usage =
         "Sub-samples features by taking every n'th frame."
         "With negative values of n, will repeat each frame n times\n"
@@ -39,55 +38,57 @@ int main(int argc, char *argv[]) {
         "\n"
         "Usage: subsample-feats [options] <in-rspecifier> <out-wspecifier>\n"
         "  e.g. subsample-feats --n=2 ark:- ark:-\n";
-    
+
     ParseOptions po(usage);
-    
+
     int32 n = 1, offset = 0;
 
-    po.Register("n", &n, "Take every n'th feature, for this value of n"
+    po.Register("n", &n,
+                "Take every n'th feature, for this value of n"
                 "(with negative value, repeats each feature n times)");
-    po.Register("offset", &offset, "Start with the feature with this offset, "
+    po.Register("offset", &offset,
+                "Start with the feature with this offset, "
                 "then take every n'th feature.");
 
     KALDI_ASSERT(n != 0);
     if (n < 0)
       KALDI_ASSERT(offset == 0 &&
                    "--offset option cannot be used with negative n.");
-    
+
     po.Read(argc, argv);
-    
+
     if (po.NumArgs() != 2) {
       po.PrintUsage();
       exit(1);
-    }    
+    }
 
     string rspecifier = po.GetArg(1);
     string wspecifier = po.GetArg(2);
-    
+
     SequentialBaseFloatMatrixReader feat_reader(rspecifier);
     BaseFloatMatrixWriter feat_writer(wspecifier);
 
     int32 num_done = 0, num_err = 0;
     int64 frames_in = 0, frames_out = 0;
-    
+
     // process all keys
     for (; !feat_reader.Done(); feat_reader.Next()) {
       std::string utt = feat_reader.Key();
       const Matrix<BaseFloat> feats(feat_reader.Value());
-
 
       if (n > 0) {
         // This code could, of course, be much more efficient; I'm just
         // keeping it simple.
         int32 num_indexes = 0;
         for (int32 k = offset; k < feats.NumRows(); k += n)
-          num_indexes++; // k is the index.
+          num_indexes++;  // k is the index.
 
         frames_in += feats.NumRows();
         frames_out += num_indexes;
-      
+
         if (num_indexes == 0) {
-          KALDI_WARN << "For utterance " << utt << ", output would have no rows, "
+          KALDI_WARN << "For utterance " << utt
+                     << ", output would have no rows, "
                      << "producing no output.";
           num_err++;
           continue;
@@ -108,16 +109,16 @@ int main(int argc, char *argv[]) {
           output.Row(i).CopyFromVec(feats.Row(i / repeat));
         frames_in += feats.NumRows();
         frames_out += feats.NumRows() * repeat;
-        feat_writer.Write(utt, output);        
+        feat_writer.Write(utt, output);
         num_done++;
       }
     }
     KALDI_LOG << "Processed " << num_done << " feature matrices; " << num_err
               << " with errors.";
-    KALDI_LOG << "Processed " << frames_in << " input frames and "
-              << frames_out << " output frames.";
+    KALDI_LOG << "Processed " << frames_in << " input frames and " << frames_out
+              << " output frames.";
     return (num_done != 0 ? 0 : 1);
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }

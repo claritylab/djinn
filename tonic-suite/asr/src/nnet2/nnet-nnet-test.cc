@@ -22,7 +22,6 @@
 namespace kaldi {
 namespace nnet2 {
 
-
 void UnitTestNnet() {
   int32 input_dim = 40, output_dim = 500;
   Nnet *nnet = GenRandomNnet(input_dim, output_dim);
@@ -41,11 +40,10 @@ void UnitTestNnet() {
   delete nnet;
 }
 
-} // namespace nnet2
-} // namespace kaldi
+}  // namespace nnet2
+}  // namespace kaldi
 
 #include "matrix/matrix-functions.h"
-
 
 int main() {
   using namespace kaldi;
@@ -54,4 +52,3 @@ int main() {
   UnitTestNnet();
   return 0;
 }
-  

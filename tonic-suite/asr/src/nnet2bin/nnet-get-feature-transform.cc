@@ -17,7 +17,6 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "nnet2/get-feature-transform.h"
@@ -31,7 +30,8 @@ int main(int argc, char *argv[]) {
         "See comments in the code of nnet2/get-feature-transform.h for more\n"
         "information.\n"
         "\n"
-        "Usage:  nnet-get-feature-transform [options] <matrix-out> <lda-acc-1> <lda-acc-2> ...\n";
+        "Usage:  nnet-get-feature-transform [options] <matrix-out> <lda-acc-1> "
+        "<lda-acc-2> ...\n";
 
     bool binary = true;
     FeatureTransformEstimateOptions opts;
@@ -39,13 +39,17 @@ int main(int argc, char *argv[]) {
     std::string write_within_covar;
     ParseOptions po(usage);
     po.Register("binary", &binary, "Write outputs in binary mode.");
-    po.Register("write-cholesky", &write_cholesky, "If supplied, write to this "
-                "wxfilename the Cholesky factor of the within-class covariance. "
-                "Can be used for perturbing features.  E.g. "
-                "--write-cholesky=exp/nnet5/cholesky.tpmat");
-    po.Register("write-within-covar", &write_within_covar, "If supplied, write "
-                "to this wxfilename the within-class covariance (as a symmetric "
-                "matrix). E.g. --write-within-covar=exp/nnet5/within_covar.mat");
+    po.Register(
+        "write-cholesky", &write_cholesky,
+        "If supplied, write to this "
+        "wxfilename the Cholesky factor of the within-class covariance. "
+        "Can be used for perturbing features.  E.g. "
+        "--write-cholesky=exp/nnet5/cholesky.tpmat");
+    po.Register(
+        "write-within-covar", &write_within_covar,
+        "If supplied, write "
+        "to this wxfilename the within-class covariance (as a symmetric "
+        "matrix). E.g. --write-within-covar=exp/nnet5/within_covar.mat");
     opts.Register(&po);
     po.Read(argc, argv);
 
@@ -65,9 +69,9 @@ int main(int argc, char *argv[]) {
 
     Matrix<BaseFloat> mat;
     TpMatrix<BaseFloat> cholesky;
-    fte.Estimate(opts, &mat,
-                 (write_cholesky != "" || write_within_covar != "" ?
-                  &cholesky : NULL));
+    fte.Estimate(
+        opts, &mat,
+        (write_cholesky != "" || write_within_covar != "" ? &cholesky : NULL));
     WriteKaldiObject(mat, projection_wxfilename, binary);
     if (write_cholesky != "") {
       WriteKaldiObject(cholesky, write_cholesky, binary);
@@ -78,10 +82,8 @@ int main(int argc, char *argv[]) {
       WriteKaldiObject(within_var, write_within_covar, binary);
     }
     return 0;
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what();
     return -1;
   }
 }
-
-
