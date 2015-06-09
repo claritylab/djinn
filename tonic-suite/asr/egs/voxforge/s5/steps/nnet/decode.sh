@@ -35,7 +35,7 @@ hostname=
 portno=
 common=
 network=
-weights=
+weight=
 
 # End configuration section.
 
@@ -45,20 +45,21 @@ weights=
 . parse_options.sh || exit 1;
 
 if [ $# != 3 ]; then
-   echo "Usage: $0 [options] <graph-dir> <data-dir> <decode-dir>"
-   echo "... where <decode-dir> is assumed to be a sub-directory of the directory"
-   echo " where the DNN and transition model is."
-   echo "e.g.: $0 exp/dnn1/graph_tgpr data/test exp/dnn1/decode_tgpr"
+   echo "Usage: $0 [options] <graph-dir> <data-dir> <target-dir>"
+   echo "e.g.: $0 exp/tri3b exp/data-fmllr-tri3b exp/djinn_decode/decode_local"
    echo ""
    echo "This script works on plain or modified features (CMN,delta+delta-delta),"
    echo "which are then sent through feature-transform. It works out what type"
    echo "of features you used from content of srcdir."
    echo ""
    echo "main options (for others, see top of script file)"
-   echo "  --config <config-file>                           # config containing options"
-   echo "  --nj <nj>                                        # number of parallel jobs"
-   echo "  --cmd (utils/run.pl|utils/queue.pl <queue opts>) # how to run jobs."
-   echo ""
+   echo "  --djinn <1,0>                                    # User DjiNN service ?"
+   echo "  --hostname <server ip>                           # server ip address"
+   echo "  --portno <server portno>                         # server portno"
+   echo "  --common <common dir>                            # directory with DNN configs and weights"
+   echo "  --weight <asr.caffemodel>                        # pretrained weights"
+   echo "  --network <asr.protoxt>                          # DNN configuration file"
+   echo "  --config <config-file>                           # config containing options for decoding"
    echo "  --acwt <float>                                   # select acoustic scale for decoding"
    echo "  --scoring-opts <opts>                            # options forwarded to local/score.sh"
    echo "  --num-threads <N>                                # N>1: run multi-threaded decoder"
@@ -76,7 +77,6 @@ mkdir -p $dir/log
 echo $nj > $dir/num_jobs
 
 # Select default locations to model files (if not already set externally)
-if [ -z "$nnet" ]; then nnet=$srcdir/final.nnet; fi
 if [ -z "$model" ]; then model=$srcdir/final.mdl; fi
 if [ -z "$feature_transform" ]; then feature_transform=$srcdir/final.feature_transform; fi
 if [ -z "$class_frame_counts" ]; then class_frame_counts=$srcdir/ali_train_pdf.counts; fi
@@ -114,7 +114,7 @@ fi
 # Run the decoding in the queue
 if [ $stage -le 0 ]; then
   $cmd $parallel_opts JOB=1:$nj $dir/log/decode.JOB.log \
-  nnet-forward --djinn=$djinn --hostname=$hostname --portno=$portno --feature-transform=$feature_transform --class-frame-counts=$class_frame_counts --gpu=$gpu --common=$common --network=$network --weights=$weights "$feats" ark:- \| \
+  nnet-forward --djinn=$djinn --hostname=$hostname --portno=$portno --feature-transform=$feature_transform --class-frame-counts=$class_frame_counts --gpu=$gpu --common=$common --network=$network --weight=$weight "$feats" ark:- \| \
   latgen-faster-mapped$thread_string --min-active=$min_active --max-active=$max_active --max-mem=$max_mem --beam=$beam \
     --lattice-beam=$lattice_beam --acoustic-scale=$acwt --allow-partial=true --word-symbol-table=$graphdir/words.txt \
     $model $graphdir/HCLG.fst ark:- "ark:|gzip -c > $dir/lat.JOB.gz" || exit 1;

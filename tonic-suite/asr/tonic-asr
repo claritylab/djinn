@@ -79,7 +79,7 @@ fi
 steps/nnet/decode.sh --djinn $djinn --hostname $hostname --portno $portno \
                     --nj 1 --cmd "$decode_cmd" --config conf/decode_dnn.config \
                     --acwt 0.1 \
-                    --common $common --network $network --weights $weight \
+                    --common $common --network $network --weight $weight \
                     $graph_dir/graph/ $data_dir $target_dir;
 
 if [ $? != 0 ];

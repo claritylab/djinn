@@ -28,7 +28,6 @@
 #include <vector>
 
 #include "nnet/nnet-nnet.h"
-//#include "nnet/nnet-loss.h"
 #include "nnet/nnet-pdf-prior.h"
 #include "nnet/nnet-rbm.h"
 #include "base/kaldi-common.h"
@@ -63,8 +62,8 @@ int main(int argc, char *argv[]) {
     po.Register("common", &common, "Directory with configs and weights");
     string network = "asr.prototxt";
     po.Register("network", &network, "Network config file (.prototxt)");
-    string weights = "asr.caffemodel";
-    po.Register("weights", &weights, "Pretrained weights (.caffemodel)");
+    string weight = "asr.caffemodel";
+    po.Register("weight", &weight, "Pretrained weight (.caffemodel)");
     int batch = 1;
     po.Register("batch", &batch, "Batch size");
 
@@ -102,13 +101,13 @@ int main(int argc, char *argv[]) {
                 feature_wspecifier = po.GetArg(2);
 
     network = common + "configs/" + network;
-    weights = common + "weights/" + weights;
+    weight = common + "weights/" + weight;
 
     // Initialize tonic app
     TonicSuiteApp app;
     app.task = "asr";
     app.network = network;
-    app.weights = weights;
+    app.weights = weight;
 
     app.djinn = djinn;
     app.gpu = gpu;
