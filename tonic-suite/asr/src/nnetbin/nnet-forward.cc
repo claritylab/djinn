@@ -17,9 +17,19 @@
 // See the Apache 2 License for the specific language governing permissions and
 // limitations under the License.
 
-/* Yiping Kang
- * ypkang@umich.edu
- * 2014
+/*
+ *  Copyright (c) 2015, University of Michigan.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ *
+ */
+
+/**
+ * @author: Yiping Kang, Johann Hauswald 
+ * @contact: ypkang@umich.edu, jahausw@umich.edu
  */
 
 #include <limits>
