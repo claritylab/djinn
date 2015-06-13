@@ -19,4 +19,4 @@ Visit the [DjiNN webpage](http://djinn.clarity-lab.org/djinn) for more informati
 
 [Tonic suite](tonic-suite) contains 7 applications that use the DjiNN DNN
 service. Visit the [Tonic suite
-webpage](http://djinn.clarity-lab.org/djinn-suite) for more information.
+webpage](http://djinn.clarity-lab.org/tonic-suite) for more information.
