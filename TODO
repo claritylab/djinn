@@ -1,9 +1,2 @@
-implement face
-find clean default config to make all clients<->services
-retrain asr model in kaldi with full dataset
-add a readme and install for kaldi's installation and running
-do feature transformation on full test set and push the input
-Implement live models
-add support/flag(?) for thread to stay open without closing everytime
-test multigpu support
-move reshape code out
+heres a commit
+another one
