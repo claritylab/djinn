@@ -27,6 +27,7 @@ common=../../../../../common/
 network=asr.prototxt
 weight=asr.caffemodel
 input=asr-list.txt
+gpu=0 # Use GPU for local inference ?
 
 . parse_options.sh || exit 1;
 # Prepare data
@@ -76,7 +77,7 @@ then
 fi
 
 # Running decode
-steps/nnet/decode.sh --djinn $djinn --hostname $hostname --portno $portno \
+steps/nnet/decode.sh --djinn $djinn --hostname $hostname --portno $portno --gpu $gpu \
                     --nj 1 --cmd "$decode_cmd" --config conf/decode_dnn.config \
                     --acwt 0.1 \
                     --common $common --network $network --weight $weight \

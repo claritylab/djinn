@@ -27,7 +27,7 @@ scoring_opts="--min-lmwt 4 --max-lmwt 15"
 num_threads=1 # if >1, will use latgen-faster-parallel
 #parallel_opts="-pe smp $((num_threads+1))" # use 2 CPUs (1 DNN-forward, 1 decoder)
 parallel_opts=
-gpu="false"  
+gpu=0 
 
 # Additional arguments to talk to dnn service
 djinn=0
