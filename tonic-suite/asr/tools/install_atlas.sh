@@ -47,7 +47,7 @@ if [ "$x" == "i686" -o "$x" == "x86" ]; then
 fi
 
 ../configure $opt --shared --prefix=`pwd`/install || exit 1;
-make -j 4 || exit 1;
+make || exit 1;
 cd lib
 make shared || exit 1;
 cd ..
