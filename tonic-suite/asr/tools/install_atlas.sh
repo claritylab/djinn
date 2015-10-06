@@ -49,6 +49,6 @@ fi
 ../configure $opt --shared --prefix=`pwd`/install || exit 1;
 make || exit 1;
 cd lib
-make shared || exit 1;
+sudo make shared || exit 1;
 cd ..
-make install || exit 1;
+sudo make install || exit 1;
