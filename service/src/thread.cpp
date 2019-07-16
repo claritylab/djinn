@@ -145,5 +145,7 @@ void* request_handler(void* sock) {
   free(in);
   free(out);
 
+  SOCKET_close(socknum, false);
+
   return (void*)0;
 }
